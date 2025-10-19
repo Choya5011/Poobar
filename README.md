@@ -18,15 +18,18 @@ Optional:
 
 ## Packages
 [Biographyy](https://github.com/Wil-B/Biography)  
-Optional: [Library Tree](https://github.com/Wil-B/Library-Tree) [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
+Optional:  
+[Library Tree](https://github.com/Wil-B/Library-Tree)  
+[Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
 
 # Installation Instructions
 1.  Install required components if not yet installed: Preferences -> Components -> Install -> Restart
 2.  Set display to CUI if not yet set: Preferences -> Display -> User Interface Module -> Columns UI -> restart
 3.  Import required packages: place a Jsplitter in fb2k -> configure -> package -> package manager -> import -> select package zip file
-4.  Place the files in their respective directories. "foobar2000-v2" is typically located at: C:\Users\yourUserName\AppData\Roaming\foobar2000-v2
-5.  Copy each file into their respective directory (user-components-x64 subfolders). Alternatively store them elsewhere, this requires adjusting the scripts.
-6.  Import layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
+4.  Place the files in their respective directories. "foobar2000-v2" is typically located at:
+    - C:\Users\yourUserName\AppData\Roaming\foobar2000-v2
+6.  Copy each file into their respective directory (user-components-x64 subfolders). Alternatively store them elsewhere, this requires adjusting the scripts.
+7.  Import layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
     - _library if LibTree is desired
     - _wfmm if waveform minibar (mod) is desired
     Errors/issues pertaining step 6:
@@ -50,5 +53,5 @@ Optional: [Library Tree](https://github.com/Wil-B/Library-Tree) [Not-A-Waveform-
 1. If there is a pop-up about the rating each time the Fluent Control Panel script is loaded: Right click the rating stars & set mode to foo_playcount. This will eliminate the popup.
 2. If ever locked out of access to preferences button: ctrl + p
 
-___
+***
 Credits to the original authors of any modified scripts.
