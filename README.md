@@ -35,7 +35,7 @@ Note: Not-A-Waveform-Seekbar-SMP can be heavier to run than Waveform minibar (mo
 6.  Copy each file into their respective directory (samples subfolders):
     - samples\complete
     - samples\js-smooth
-    - samples\poobar
+    - samples\poobar  
     Alternatively store them elsewhere, this requires adjusting the scripts.
 9.  Import layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
     - _library if LibTree is desired
