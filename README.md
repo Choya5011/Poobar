@@ -12,7 +12,7 @@ Responds to window size & seamlessly snaps to win11 snap layouts. Manual resizin
     * Relies on (custom) panel title to place panels. These are accessible inside the CUI layout editor
     * Panels can be swapped out if the same title is kept or if the script is modified
     * Refer to [Useful to know](#useful-to-know) for further info on main panel
-* Panels within the tab script are not hardcoded, they can edited.
+* Panels within the tab script are not hardcoded, they can be edited.
 
 # Install
 ## Fonts
@@ -74,6 +74,7 @@ The main panel currently has 6 panels it looks out for titled:
 * Tab Stack
 * Smooth Browser
 * Essentials Fallback Stack  
+
 If the title of any of these are changed the main panel can not fetch the panel.
 
 # Issues
