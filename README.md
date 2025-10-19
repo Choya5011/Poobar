@@ -11,13 +11,15 @@ Optional (For Biography): [Fontawesome](https://github.com/FortAwesome/Font-Awes
 [Columns UI](https://www.foobar2000.org/components/view/foo_ui_columns)  
 [OpenLyrics](https://www.foobar2000.org/components/view/foo_openlyrics)  
 [JSplitter](https://hydrogenaudio.org/index.php/topic,126743.msg1063721.html#msg1063721) (4.0.4)  
+
 Optional:  
 [Waveform minibar (mod)](https://www.foobar2000.org/components/view/foo_wave_minibar_mod)  
 [Playback Statistics](https://www.foobar2000.org/components/view/foo_playcount) (alternatively foo_lastfm_playcount_sync)  
 [Scrobble](https://www.foobar2000.org/components/view/foo_scrobble) (if last.fm sync is desired)
 
 ## Packages
-[Biographyy](https://github.com/Wil-B/Biography)  
+[Biography](https://github.com/Wil-B/Biography)  
+
 Optional:  
 [Library Tree](https://github.com/Wil-B/Library-Tree)  
 [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
@@ -53,5 +55,5 @@ Optional:
 1. If there is a pop-up about the rating each time the Fluent Control Panel script is loaded: Right click the rating stars & set mode to foo_playcount. This will eliminate the popup.
 2. If ever locked out of access to preferences button: ctrl + p
 
-***
+---
 Credits to the original authors of any modified scripts.
