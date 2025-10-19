@@ -4,10 +4,8 @@ Scripts can easily be used as individual panels.
 
 # Install
 ## Fonts
-Standard on win11:  
-[Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts)  
-Optional (For Biography):  
-[Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)  
+Standard on win11: [Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts)  
+Optional (For Biography): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)
 
 ## Components
 [Columns UI](https://www.foobar2000.org/components/view/foo_ui_columns)  
@@ -16,13 +14,11 @@ Optional (For Biography):
 Optional:  
 [Waveform minibar (mod)](https://www.foobar2000.org/components/view/foo_wave_minibar_mod)  
 [Playback Statistics](https://www.foobar2000.org/components/view/foo_playcount) (alternatively foo_lastfm_playcount_sync)  
-[Scrobble](https://www.foobar2000.org/components/view/foo_scrobble) (if last.fm sync is desired)  
+[Scrobble](https://www.foobar2000.org/components/view/foo_scrobble) (if last.fm sync is desired)
 
 ## Packages
 [Biographyy](https://github.com/Wil-B/Biography)  
-Optional:  
-[Library Tree](https://github.com/Wil-B/Library-Tree)  
-[Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)  
+Optional: [Library Tree](https://github.com/Wil-B/Library-Tree) [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
 
 # Installation Instructions
 1.  Install required components if not yet installed: Preferences -> Components -> Install -> Restart
