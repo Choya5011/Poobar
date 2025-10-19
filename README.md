@@ -22,7 +22,9 @@ Optional:
 
 Optional:  
 [Library Tree](https://github.com/Wil-B/Library-Tree)  
-[Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
+[Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)  
+
+Note: Not-A-Waveform-Seekbar-SMP can be heavier to run than Waveform minibar (mod)
 
 # Installation Instructions
 1.  Install required components if not yet installed: Preferences -> Components -> Install -> Restart
