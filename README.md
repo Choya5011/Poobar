@@ -1,6 +1,8 @@
-A shitty [Spider Monkey Panel](https://github.com/TheQwertiest/foo_spider_monkey_panel) based foobar2000 theme (CUI).  
+A shitty responsive [Spider Monkey Panel](https://github.com/TheQwertiest/foo_spider_monkey_panel) based foobar2000 theme (CUI).  
 This theme is supported in foobar2000 32-bit & 64-bit.  
 Scripts can easily be used as individual panels.
+
+![Horizontal Orientation Preview](preview.png)
 
 # Install
 ## Fonts
@@ -37,7 +39,7 @@ Note: Not-A-Waveform-Seekbar-SMP can be heavier to run than Waveform minibar (mo
     - samples\js-smooth
     - samples\poobar  
     - Alternatively store them elsewhere, this requires adjusting the scripts.
-9.  Import layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
+9.  Import fcl layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
     - _library if LibTree is desired
     - _wfmm if waveform minibar (mod) is desired
     Errors/issues pertaining step 6:
