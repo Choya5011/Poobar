@@ -31,9 +31,13 @@ Note: Not-A-Waveform-Seekbar-SMP can be heavier to run than Waveform minibar (mo
 2.  Set display to CUI if not yet set: Preferences -> Display -> User Interface Module -> Columns UI -> restart
 3.  Import required packages: place a Jsplitter in fb2k -> configure -> package -> package manager -> import -> select package zip file
 4.  Place the files in their respective directories. "foobar2000-v2" is typically located at:
-    - C:\Users\yourUserName\AppData\Roaming\foobar2000-v2
-6.  Copy each file into their respective directory (user-components-x64 subfolders). Alternatively store them elsewhere, this requires adjusting the scripts.
-7.  Import layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
+    - C:\Users\yourUserName\AppData\Roaming\foobar2000-v2\user-components-x64\foo_uie_jsplitter\samples
+6.  Copy each file into their respective directory (samples subfolders):
+    - samples\complete
+    - samples\js-smooth
+    - samples\poobar
+    Alternatively store them elsewhere, this requires adjusting the scripts.
+9.  Import layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
     - _library if LibTree is desired
     - _wfmm if waveform minibar (mod) is desired
     Errors/issues pertaining step 6:
