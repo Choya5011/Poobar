@@ -1,5 +1,5 @@
-A shitty [Spider Monkey Panel](https://github.com/TheQwertiest/foo_spider_monkey_panel) based foobar2000 theme (CUI).
-This theme is supported in foobar2000 32-bit & 64-bit.
+A shitty [Spider Monkey Panel](https://github.com/TheQwertiest/foo_spider_monkey_panel) based foobar2000 theme (CUI).  
+This theme is supported in foobar2000 32-bit & 64-bit.  
 Scripts can easily be used as individual panels.
 
 # Install
@@ -50,6 +50,5 @@ Optional: [Library Tree](https://github.com/Wil-B/Library-Tree) [Not-A-Waveform-
 1. If there is a pop-up about the rating each time the Fluent Control Panel script is loaded: Right click the rating stars & set mode to foo_playcount. This will eliminate the popup.
 2. If ever locked out of access to preferences button: ctrl + p
 
----
-
+___
 Credits to the original authors of any modified scripts.
