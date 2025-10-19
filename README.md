@@ -1,8 +1,18 @@
-A shitty responsive [Spider Monkey Panel](https://github.com/TheQwertiest/foo_spider_monkey_panel) based foobar2000 theme (CUI).  
-This theme is supported in foobar2000 32-bit & 64-bit.  
-Scripts can easily be used as individual panels.
+A crappy responsive [Spider Monkey Panel](https://github.com/TheQwertiest/foo_spider_monkey_panel) based foobar2000 theme (CUI).  
+This theme is supported in foobar2000 32-bit & 64-bit.
 
-![Horizontal Orientation Preview](preview.png)
+# Preview
+![Preview](preview.png)  
+Responds to window size & seamlessly snaps to win11 snap layouts. Manual resizing of the window however is a bit more taxing.  
+
+# Modularity
+* All panels can be used individually for other themes
+* The main panel is the blueprint for the layout & controls panel placement within the main JSplitter
+    * Can be used to easily make other themes responsive with some modding
+    * Relies on (custom) panel title to place panels. These are accessible inside the CUI layout editor
+    * Panels can be swapped out if the same title is kept or if the script is modified
+    * Refer to [Useful to know](https://github.com/Choya5011/Poobar?tab=readme-ov-file#useful-to-know) for further info on main panel
+* Panels within the tab script are not hardcoded, they can edited.
 
 # Install
 ## Fonts
@@ -24,9 +34,7 @@ Optional:
 
 Optional:  
 [Library Tree](https://github.com/Wil-B/Library-Tree)  
-[Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)  
-
-Note: Not-A-Waveform-Seekbar-SMP can be heavier to run than Waveform minibar (mod)
+[Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
 
 # Installation Instructions
 1.  Install required components if not yet installed: Preferences -> Components -> Install -> Restart
@@ -40,15 +48,15 @@ Note: Not-A-Waveform-Seekbar-SMP can be heavier to run than Waveform minibar (mo
     - samples\poobar  
     - Alternatively store them elsewhere, this requires adjusting the scripts.
 6.  Import fcl layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
-    - _library if LibTree is desired
-    - _wfmm if waveform minibar (mod) is desired  
-    Errors/issues pertaining step 6:
-    - _library & _filter contain a jsplitter that will throw an error if Not-A-Waveform-Seekbar-SMP isn't present
-    - remove this splitter if Not-A-Waveform-Seekbar-SMP is not desired. Splitter is located inside the Fluent Control Panel splitter
-    - Not-A-Waveform-Seekbar-SMP & waveform minibar (mod) are swappable, as long as the panel is named "Waveform minibar (mod)"
+    - _library if LibTree is desired else _filter
+7. Manually add waveform of choice if desired: Preferences -> Layout -> JSplitter titled 'Fluent Control Panel' -> right click -> insert panel
+    - pick either Waveform minibar (mod) or a JSplitter with the Not-A-Waveform-Seekbar-SMP package
+    - If a JSplitter is chosen set custom panel title to 'Waveform minibar (mod)' so the control panel can detect it.
+    - Note: Not-A-Waveform-Seekbar-SMP can be more taxing than Waveform minibar (mod). Configure it to use the least resources.
 
 # Useful to know
-* Tabs have a horizontal & vertical mode
+## General
+* Tabs support vertical & horizontal orientation.
 * Playcount toggle in PL view: foo_playcount or lastfm_playcount. Both store a local DB.
 * The font used for OpenLyrics in this theme is "UD Digi Kyokasho NP-R" size 12
     * To change font: Preferences -> Tools -> OpenLyrics -> Display -> check Custom font -> select font
@@ -57,11 +65,21 @@ Note: Not-A-Waveform-Seekbar-SMP can be heavier to run than Waveform minibar (mo
     * left click: add
     * right click: remove
     * middle click: clear
-    * double click then right click (reason for weird combo is it's bugged/incomplete): add randomly (requires selecting multiple tracks)
+    * double click then right click (reason for combo is it's bugged/incomplete): add randomly (requires selecting multiple tracks)
+
+## Main Panel
+The main panel currently has 6 panels it looks out for titled:
+* Fluent Control Panel
+* Playlist View
+* Tab Stack
+* Smooth Browser
+* Essentials Fallback Stack
+If the title of any of these are changed the main panel can not fetch the panel.
 
 # Issues
 1. If there is a pop-up about the rating each time the Fluent Control Panel script is loaded: Right click the rating stars & set mode to foo_playcount. This will eliminate the popup.
-2. If ever locked out of access to preferences button: ctrl + p
+2. If monitor resolution is changed while foobar is open restart to refresh.
+3. If ever locked out of access to preferences button: ctrl + p
 
 ---
-Credits to the original authors of any modified scripts.
+Credits to the original authors of any modified scripts. Names can be found in their respective scripts.
