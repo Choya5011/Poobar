@@ -6,20 +6,21 @@
  */
 
 // Album art
-let bg_img = null;
-let blur_img = null;
-let bg_img_res = 0;
-function update_album_art(bgMode, bgBlur, bgPath) {
-     let metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
+let g_img = null; // album art for fluent control panel
+let bg_img = null; // background image
+let g_img_res = 0;
+function update_album_art(bgShow, bgMode, bgBlur, bgPath, art) {
+     if (!bgShow && !art) return;
+     const metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
      if (metadb) {
-         bg_img = bgMode ? gdi.Image(bgPath) : utils.GetAlbumArtV2(metadb, 0);
-         bg_img_res = bgBlur ? 200 : bg_img.Width;
+         g_img = bgMode ? gdi.Image(bgPath) : utils.GetAlbumArtV2(metadb, 0);
+         g_img_res = bgBlur ? 200 : g_img.Width;
 
-         if (bg_img) {
-             var r = bg_img_res / bg_img.Width;
-             bg_img = bg_img.Resize(bg_img_res, bg_img.Height * r, 2);
-             blur_img = bg_img.Clone(0, 0, bg_img.Width, bg_img.Height);
-             if (bgBlur) blur_img.StackBlur(24);
+         if (g_img) {
+             const r = g_img_res / g_img.Width;
+             if (art) g_img = g_img.Resize(g_img_res, g_img.Height * r, 2);
+             bg_img = art ? g_img.Clone(0, 0, g_img.Width, g_img.Height) : g_img.Resize(g_img.Width, g_img.Height, 2);
+             if (bgBlur) bg_img.StackBlur(24);
          }
          window.Repaint();
      }
