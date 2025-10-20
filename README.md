@@ -51,8 +51,11 @@ Optional:
     - _library if LibTree is desired else _filter
 7. Manually add waveform of choice if desired: Preferences -> Layout -> JSplitter titled 'Fluent Control Panel' -> right click -> insert panel
     - pick either Waveform minibar (mod) or a JSplitter with the Not-A-Waveform-Seekbar-SMP package
-    - If a JSplitter is chosen set custom panel title to 'Waveform minibar (mod)' so the control panel can detect it.
-    - Note: Not-A-Waveform-Seekbar-SMP can be more taxing than Waveform minibar (mod). Configure it to use the least resources.
+    - If a JSplitter is chosen set custom panel title to 'Waveform minibar (mod)' so the control panel can detect it.  
+    
+   Note:
+   - NAWS-SMP can be more taxing than Waveform minibar (mod). Configure it to use the least resources.
+   - It also seems incapable of analyzing tracks whose titles contain characters (JP,KR,CN) in Audiowaveform mode.
 
 # Useful to know
 ## General
