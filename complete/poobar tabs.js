@@ -38,7 +38,7 @@ const DT_SINGLELINE = 0x00000020;
 
 initTabs();
 updateTabSize();
-update_album_art(ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
 get_colours(ppt.col_mode.value, true);
 
 function initTabs() {
@@ -90,10 +90,10 @@ function on_paint(gr) {
     const tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
     const tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
 
-    if (ppt.bgShow.enabled && bg_img) {
+    if (ppt.bgShow.enabled && g_img) {
         let switchBgW = (ppt.orientation.enabled) ? TAB_W : panel.w; TAB_H;
         let switchBgH = (ppt.orientation.enabled) ? panel.h : TAB_H;
-        _drawImage(gr, blur_img, 0, 0, switchBgW, switchBgH, image.crop);
+        _drawImage(gr, bg_img, 0, 0, switchBgW, switchBgH, image.crop);
         const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
         gr.FillSolidRect(0, 0, panel.w, panel.h, overlayColor);
     }
@@ -230,7 +230,7 @@ function on_mouse_rbtn_up(x, y) {
     case 90:
     case 91:
         ppt.orientation.toggle();
-        update_album_art(ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
         on_size();
         window.Repaint();
         break;
@@ -238,17 +238,18 @@ function on_mouse_rbtn_up(x, y) {
         ppt.bgShow.toggle();
         ppt.col_mode.value = 1;
         get_colours(ppt.col_mode.value, true);
+        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
         window.Repaint();
         break;
     case 111:
         ppt.bgBlur.toggle();
-        update_album_art(ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
         window.Repaint();
         break;
     case 112:
     case 113:
         ppt.bgMode.toggle();
-        update_album_art(ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
         window.Repaint();
         break;
     case 210:
@@ -295,8 +296,9 @@ function on_colours_changed() {
 }
 
 function on_playback_new_track() {
-    get_colours(ppt.col_mode.value, true);
-    update_album_art(ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+    on_colours_changed();
+    //get_colours(ppt.col_mode.value, true);
+    update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
 }
 
 function get_font() {

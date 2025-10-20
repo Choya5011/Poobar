@@ -121,7 +121,7 @@ const pbo_names = ['Default', 'Repeat (playlist)', 'Repeat (track)', 'Random', '
 
 get_colours(ppt.col_mode.value);
 panel.item_focus_change();
-update_album_art(ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
 
 updateNextTrackInfo(); // Initial update
 
@@ -253,7 +253,7 @@ function on_size() {
 
 function on_paint(gr) {
     if (ppt.bgShow.enabled && bg_img) {
-        _drawImage(gr, blur_img, 0, 0, panel.w, panel.h, image.crop);
+        _drawImage(gr, bg_img, 0, 0, panel.w, panel.h, image.crop);
         const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
         gr.FillSolidRect(0, 0, panel.w, panel.h, overlayColor);
     } else if (!ppt.bgShow.enabled) {
@@ -280,8 +280,8 @@ function on_paint(gr) {
             rating.paint(gr);
         }
 
-        if (ppt.art.enabled && bg_img && ww > scaler.s800) {
-            _drawImage(gr, bg_img, 0, 0, panel.h, panel.h, image.crop_top);
+        if (ppt.art.enabled && g_img && ww > scaler.s800) {
+            _drawImage(gr, g_img, 0, 0, panel.h, panel.h, image.crop_top);
         }
 
         // Track information
@@ -386,9 +386,8 @@ function on_metadb_changed() {
 
 function on_playback_new_track() {
     get_colours(ppt.col_mode.value);
-    // When a new track starts, the "next" track might change.
-    updateNextTrackInfo();
-    update_album_art(ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+    updateNextTrackInfo(); // When a new track starts, the "next" track might change.
+    update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
     panel.item_focus_change();
     buttons.update();
 }
@@ -705,35 +704,35 @@ function on_mouse_rbtn_up(x, y) {
         ppt.bgShow.toggle();
         ppt.col_mode.value = 1;
         get_colours(ppt.col_mode.value);
-		update_album_art(ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+		update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
         window.Repaint();
         break;
     case 311:
         ppt.bgBlur.toggle();
-        update_album_art(ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
         window.Repaint();
         break;
     case 312:
     case 313:
         ppt.bgMode.toggle();
-        update_album_art(ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
         window.Repaint();
         break;
     case 410:
-        ppt.col_mode.value = 1;
         ppt.bgShow.enabled = false;
+        ppt.col_mode.value = 1;
         on_colours_changed();
         window.Repaint();
         break;
     case 411:
-        ppt.col_mode.value = 2;
         ppt.bgShow.enabled = false;
+        ppt.col_mode.value = 2;
         on_colours_changed();
         window.Repaint();
         break;
     case 412:
-        ppt.col_mode.value = 3;
         ppt.bgShow.enabled = false;
+        ppt.col_mode.value = 3;
         on_colours_changed();
         window.ShowProperties();
         window.Repaint();
