@@ -80,6 +80,9 @@ The main panel currently has 6 panels it looks out for titled:
 If the title of any of these are changed the main panel can not fetch the panel.
 
 # Issues
+Memory usage spikes when playing tracks with high res (example: 3k) album art. Unfortunately not fixed.  
+
+Troubleshooting:
 1. If there is a pop-up about the rating each time the Fluent Control Panel script is loaded: Right click the rating stars & set mode to foo_playcount. This will eliminate the popup.
 2. If monitor resolution is changed while foobar is open restart to refresh.
 3. If ever locked out of access to preferences button: ctrl + p
