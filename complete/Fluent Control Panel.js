@@ -680,6 +680,7 @@ function on_mouse_rbtn_up(x, y) {
         break;
     case 210:
         ppt.art.toggle();
+        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
         on_size();
         window.Repaint();
         break;
