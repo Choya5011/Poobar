@@ -55,6 +55,7 @@ let ppt = {
     // modes
     mode: new _p('_DISPLAY: Seekbar Mode', true),
     loveMode : new _p('_PROPERTY: Love Mode', false),
+    pboMode : new _p('_PROPERTY: Playback Order Button Mode', false),
     roundBars : new _p('_DISPLAY: Show Rounded Bars', true),
     // background
     bgShow : new _p('_DISPLAY: Show Wallpaper', true),
@@ -130,8 +131,8 @@ buttons.update = () => {
     const y = ppt.mode.enabled ? seekbar.y - _scale(36) : _scale(4);
     let pbo = plman.PlaybackOrder;
 
-    let fluent_font = (panel.w < scaler.s1080) ? gdi.Font('Segoe Fluent Icons', 38) : gdi.Font('Segoe Fluent Icons', 48);
-    let fluent_font_hover = (panel.w < scaler.s1080) ? gdi.Font('Segoe Fluent Icons', 44) : gdi.Font('Segoe Fluent Icons', 54);
+    let fluent_font = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 38) : gdi.Font('Segoe Fluent Icons', 48);
+    let fluent_font_hover = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 44) : gdi.Font('Segoe Fluent Icons', 54);
 
     if (ppt.loveMode.enabled) {
         let lv = tfo.lov.Eval();
@@ -162,8 +163,11 @@ buttons.update = () => {
     buttons.buttons.previous = new _button(x + (bs * 2), y, bs, bs, {normal : _chrToImg(chara.prev, g_textcolour, fluent_font), hover : _chrToImg(chara.prev, g_textcolour_hl, fluent_font_hover)}, () => { fb.Prev(); }, '');
     buttons.buttons.play = new _button( x + (bs * 3), y, bs, bs, {normal : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour, fluent_font) : _chrToImg(chara.pause, g_textcolour, fluent_font), hover : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour_hl, fluent_font_hover) : _chrToImg(chara.pause, g_textcolour_hl, fluent_font_hover)}, () => { fb.PlayOrPause(); }, !fb.IsPlaying || fb.IsPaused ? '' : '');
     buttons.buttons.next = new _button(x + (bs * 4), y, bs, bs, {normal : _chrToImg(chara.next, g_textcolour, fluent_font), hover : _chrToImg(chara.next, g_textcolour_hl, fluent_font_hover)}, () => { fb.Next(); }, '');
-	//buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { 	plman.PlaybackOrder = (pbo >= pbo_chars.length - 1) ? 0 : pbo + 1; }, 'Playback Order: ' + pbo_names[pbo]);
-	buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { _pbo(x + (bs * 3.41), y); }, '');
+	if (ppt.pboMode.enabled) {
+	    buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { _pbo(x + (bs * 3.41), y); }, '');
+	} else {
+	    buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { 	plman.PlaybackOrder = (pbo >= pbo_chars.length - 1) ? 0 : pbo + 1; }, 'Playback Order: ' + pbo_names[pbo]);
+	}
 
     buttons.buttons.add_queue = new _button(bx + (bs * 6), y, bs, bs, {normal : _chrToImg(chara.add_queue, g_textcolour, fluent_font), hover : _chrToImg(chara.add_queue, g_textcolour_hl, fluent_font_hover)}, () => {
         let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
@@ -197,6 +201,7 @@ function on_size() {
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
+    console.log(ww);
 
     bx = ((panel.w - (bs * 7)) / 2);
     by = seekbar.y - _scale(36);
@@ -345,14 +350,10 @@ function on_paint(gr) {
             let barColor = getBarColor(volume_hover);
             let volumeWidth = panel.w > scaler.s800 ? volume.w : volume.w.value * 0.8;
 
-            if (ppt.roundBars.enabled) {
+            if (ppt.roundBars.enabled && ww > scaler.s800) { // s800 check cause of unfound stripe bug likely related to volume icon
                 let vol_radius = volume.h / 2;
-                // Draw volume background with rounded corners
                 gr.FillRoundRect(volume.x, volume.y, volumeWidth, volume.h, vol_radius, vol_radius, colours.seekbar_background);
-                // Draw the filled volume bar with rounded corners if wide enough
-                if (vol_pos >= volume.h) {
-                    gr.FillRoundRect(volume.x, volume.y, vol_pos, volume.h, vol_radius, vol_radius, barColor);
-                }
+                if (vol_pos >= volume.h) gr.FillRoundRect(volume.x, volume.y, vol_pos, volume.h, vol_radius, vol_radius, barColor); // Draw the filled volume bar with rounded corners if wide enough
             } else {
                 gr.FillSolidRect(volume.x, volume.y, volumeWidth, volume.h, colours.seekbar_background);
                 gr.FillSolidRect(volume.x, volume.y, vol_pos, volume.h, barColor);
@@ -607,12 +608,15 @@ function on_mouse_rbtn_up(x, y) {
     let s = window.CreatePopupMenu();
     let c = fb.CreateContextMenuManager();
 
-    let _menu1 = window.CreatePopupMenu(); // Mode menu
+    let _menu1 = window.CreatePopupMenu(); // Modes menu
+    let _submenu1 = window.CreatePopupMenu(); // Seekbar Mode menu
+    let _submenu11 = window.CreatePopupMenu(); // PBO Button Mode menu
+    let _submenu12 = window.CreatePopupMenu(); // // Love Mode menu
     let _menu2 = window.CreatePopupMenu(); // Show... menu
     let _menu3 = window.CreatePopupMenu(); // Background Wallpaper menu
     let _submenu4 = window.CreatePopupMenu(); // Background Colours
     let _menu4 = window.CreatePopupMenu(); // Colours menu
-    let _menu5 = window.CreatePopupMenu(); // Love Mode menu
+
     if (fb.IsPlaying) {
         c.InitNowPlaying();
         c.BuildMenu(s, 1);
@@ -620,10 +624,23 @@ function on_mouse_rbtn_up(x, y) {
         m.AppendMenuSeparator();
     }
 
-    _menu1.AppendMenuItem(MF_STRING, 110, 'Normal');
-    _menu1.AppendMenuItem(MF_STRING, 111, 'Waveform');
-    _menu1.CheckMenuRadioItem(110, 111, ppt.mode.enabled ? 110 : 111);
-    _menu1.AppendTo(m, MF_STRING, 'Mode');
+    // Modes menu
+    _submenu1.AppendMenuItem(MF_STRING, 110, 'Normal');
+    _submenu1.AppendMenuItem(MF_STRING, 111, 'Waveform');
+    _submenu1.CheckMenuRadioItem(110, 111, ppt.mode.enabled ? 110 : 111);
+    _submenu1.AppendTo(_menu1, MF_STRING, 'Seekbar');
+    
+    _submenu11.AppendMenuItem(MF_STRING, 112, 'List');
+    _submenu11.AppendMenuItem(MF_STRING, 113, 'Cycle');
+    _submenu11.CheckMenuRadioItem(112, 113, ppt.pboMode.enabled ? 112 : 113);
+    _submenu11.AppendTo(_menu1, MF_STRING, 'PBO Button');
+    
+    _submenu12.AppendMenuItem(MF_STRING, 114, 'last.fm sync');
+    _submenu12.AppendMenuItem(MF_STRING, 115, 'LOVED tag');
+    _submenu12.CheckMenuRadioItem(114, 115, ppt.loveMode.enabled ? 115 : 114);
+    _submenu12.AppendTo(_menu1, MF_STRING, 'Love Mode');
+    
+    _menu1.AppendTo(m, MF_STRING, 'Modes');
 
     _menu2.AppendMenuItem(MF_STRING, 210, 'Album art');
     _menu2.CheckMenuItem(210, ppt.art.enabled);
@@ -654,13 +671,8 @@ function on_mouse_rbtn_up(x, y) {
     _submenu4.AppendMenuItem(MF_STRING, 412, 'Custom');
     _submenu4.CheckMenuRadioItem(410, 412, Math.min(Math.max(410 + ppt.col_mode.value - 1, 410), 412));
     _submenu4.AppendTo(_menu4, MF_STRING, 'Colors');
-    _menu4.AppendMenuItem(MF_STRING, 415, 'Rating');
+    _menu4.AppendMenuItem(MF_STRING, 413, 'Rating');
     _menu4.AppendTo(m, MF_STRING, 'Colours');
-
-    _menu5.AppendMenuItem(MF_STRING, 510, 'last.fm sync');
-    _menu5.AppendMenuItem(MF_STRING, 511, 'LOVED tag');
-    _menu5.CheckMenuRadioItem(510, 511, ppt.loveMode.enabled ? 511 : 510);
-    _menu5.AppendTo(m, MF_STRING, 'Love Mode');
 
     m.AppendMenuSeparator();
 
@@ -677,6 +689,16 @@ function on_mouse_rbtn_up(x, y) {
         on_size();
         buttons.update();
         window.Repaint();
+        break;
+    case 112:
+    case 113:
+        ppt.pboMode.toggle();
+        buttons.update();
+        break;
+    case 114:
+    case 115:
+        ppt.loveMode.toggle();
+        buttons.update();
         break;
     case 210:
         ppt.art.toggle();
@@ -738,16 +760,11 @@ function on_mouse_rbtn_up(x, y) {
         window.ShowProperties();
         window.Repaint();
         break;
-    case 415:
+    case 413:
         ppt.rate.value = utils.ColourPicker(window.ID, ppt.rate.value);
         get_colours(ppt.col_mode.value);
         buttons.update();
         window.Repaint();
-        break;
-    case 510:
-    case 511:
-        ppt.loveMode.toggle();
-        buttons.update();
         break;
     case 999:
         window.ShowProperties();
