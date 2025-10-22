@@ -3035,7 +3035,8 @@ oBrowser = function (name) {
         _submenu1.AppendMenuSeparator();
         _submenu1.AppendMenuItem(MF_STRING, 115, "Last.fm sync");
         _submenu1.AppendMenuItem(MF_STRING, 116, "foo_playcount");
-        _submenu1.CheckMenuRadioItem(115, 116, ppt.playcountMode + 115);
+        let playcountModeChecked = Math.max(0, Math.min(1, ppt.playcountMode)); // clamp
+        _submenu1.CheckMenuRadioItem(115, 116, playcountModeChecked + 115);
         _submenu1.AppendTo(_menu1, MF_STRING, "Playcount Mode");
         
         _submenu11.AppendMenuItem(MF_STRING, 118, "Toggle");
@@ -3043,7 +3044,6 @@ oBrowser = function (name) {
         _submenu11.AppendMenuSeparator();
         _submenu11.AppendMenuItem(MF_STRING, 119, "Last.fm sync");
         _submenu11.AppendMenuItem(MF_STRING, 120, "LOVED tag");
-        //_submenu1.CheckMenuRadioItem(119, 120, ppt.likeMode + 119); // replaced with clamped ver
         let likeModeChecked = Math.max(0, Math.min(1, ppt.likeMode)); // clamp
         _submenu11.CheckMenuRadioItem(119, 120, 119 + likeModeChecked);
         _submenu11.AppendTo(_menu1, MF_STRING, "Love Mode");
