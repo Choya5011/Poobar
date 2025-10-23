@@ -727,6 +727,7 @@ function on_mouse_rbtn_up(x, y) {
         ppt.bgShow.toggle();
         ppt.col_mode.value = 1;
         get_colours(ppt.col_mode.value);
+        buttons.update();
 		update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
         window.Repaint();
         break;
