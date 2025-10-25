@@ -1,11 +1,5 @@
 'use strict';
 
-const metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
-if (metadb) {
-    fb.Play();
-    fb.Pause();
-}
-
 /**
  * NOTE: some variables here are probably already declared in other helpers.
  * Warning in case of redeclaration.
@@ -115,7 +109,3 @@ function get_colours(col_mode, flag) {
         }
     }
 }
-
-
-
-
