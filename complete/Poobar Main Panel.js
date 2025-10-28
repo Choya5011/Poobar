@@ -14,16 +14,6 @@ let ppt = {
 };
 
 /**
- * one quick play/pause at startup to fetch colors in other scripts
- * remove or comment out if not required for use case of main script
- */
-const metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
-if (metadb) {
-    fb.Play();
-    fb.Pause();
-}
-
-/**
  * storing in scaler instead of accessing _scale() directly
  * reason: easier to find back in script
  * s300 = 300px in 1440p
@@ -181,3 +171,4 @@ function on_size(width, height) {
     }
 
 }
+
