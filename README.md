@@ -37,6 +37,8 @@ Optional:
 [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
 
 # Installation Instructions
+Installation will be simplified at a later date.  
+
 1.  Install required components if not yet installed: Preferences -> Components -> Install -> Restart
 2.  Set display to CUI if not yet set: Preferences -> Display -> User Interface Module -> Columns UI -> restart
 3.  Import required packages: place a Jsplitter in fb2k -> configure -> package -> package manager -> import -> select package zip file
@@ -50,8 +52,11 @@ Optional:
 6.  Import fcl layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
     - _library if LibTree is desired else _filter
 7. Manually add waveform of choice if desired: Preferences -> Layout -> JSplitter titled 'Fluent Control Panel' -> right click -> insert panel
-    - pick either Waveform minibar (mod) or a JSplitter with the Not-A-Waveform-Seekbar-SMP package
-    - If a JSplitter is chosen set custom panel title to 'Waveform minibar (mod)' so the control panel can detect it.   
+   - pick either Waveform minibar (mod) or a JSplitter with the Not-A-Waveform-Seekbar-SMP package
+   - If a JSplitter is chosen set custom panel title to 'Waveform minibar (mod)' so the control panel can detect it.  
+   Transparency:
+   - WMM: preferences -> Waveform Minibar (mod) -> Transparent background (requires Columns UI)
+   - NAWS-SMP: right click -> Background -> Color Mode -> None  
    Note:
    - NAWS-SMP can be more taxing than Waveform minibar (mod). Configure it to use the least resources.
    - It also seems incapable of analyzing tracks whose titles contain characters (JP,KR,CN) in Audiowaveform mode.
@@ -70,17 +75,19 @@ Optional:
     * double click then right click (reason for combo is it's bugged/incomplete): add randomly (requires selecting multiple tracks)
 
 ## Main Panel
-The main panel currently has 6 panels it looks out for titled:
-* Fluent Control Panel
-* Playlist View
-* Tab Stack
-* Smooth Browser
-* Essentials Fallback Stack  
+All panels are placed inside one main JSplitter with the MP script as panel placement script.  
+This method can be taxing on the CPU when resizing the window. Win11 snap layouts make this less noticeable.  
 
-If the title of any of these are changed the main panel can not fetch the panel.
+The main panel currently has 4 panels it looks out for titled:
+* 'Fluent Control Panel'
+* '' (Playlist View: Segoe Fluent Icons MusicNote, unicode: ec4f)
+* '' (Tab Stack: Segoe Fluent Icons MapLayers, unicode: e81e)
+* 'Smooth Browser'
+
+If the title of any of these are changed & the MP script isn't adjusted for it the MP can not fetch the panel.
 
 # Issues
-Memory usage spikes when playing tracks with high res (example: 3k) album art. Unfortunately not fixed.  
+Memory usage spikes when playing tracks with high res (example: 3k) album art. This has been partially optimized since the latest update.  
 
 Troubleshooting:
 1. If there is a pop-up about the rating each time the Fluent Control Panel script is loaded: Right click the rating stars & set mode to foo_playcount. This will eliminate the popup.
