@@ -9,21 +9,32 @@
 let g_img = null; // album art for fluent control panel
 let bg_img = null; // background image
 let g_img_res = 0;
+//let bg_img_res = 0;
 function update_album_art(bgShow, bgMode, bgBlur, bgPath, art) {
      if (!bgShow && !art) return;
      const metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
      if (metadb) {
          g_img = bgMode ? gdi.Image(bgPath) : utils.GetAlbumArtV2(metadb, 0);
-         g_img_res = bgBlur ? 200 : g_img.Width;
+         g_img_res = _scale(200);
+         //bg_img_res = _scale(1440);
 
          if (g_img) {
              const r = g_img_res / g_img.Width;
-             if (art) g_img = g_img.Resize(g_img_res, g_img.Height * r, 2);
-             bg_img = art ? g_img.Clone(0, 0, g_img.Width, g_img.Height) : g_img.Resize(g_img.Width, g_img.Height, 2);
+             bg_img = (bgShow && art) ? g_img.Clone(0, 0, g_img.Width, g_img.Height) : g_img.Resize(g_img.Width, g_img.Height, 2);
+             if (art) g_img = g_img.Resize(g_img_res, g_img.Height * r, 2); apply_corners_mask(g_img, 0.1);
              if (bgBlur) bg_img.StackBlur(24);
          }
          window.Repaint();
      }
+}
+
+function apply_corners_mask(img, radius) {
+    let mask = gdi.CreateImage(img.Width, img.Height), g = mask.GetGraphics();
+    g.SetSmoothingMode(2);
+    g.FillSolidRect(0, 0, img.Width, img.Height, 0xFFFFFFFF);
+    g.FillRoundRect(0, 0, img.Width, img.Height, img.Width * radius, img.Height * radius, 0xFF000000);
+    mask.ReleaseGraphics(g);
+    img.ApplyMask(mask);
 }
 
 /**
@@ -73,39 +84,37 @@ function get_colours(col_mode, flag) {
         }
     }
 
-    if (col_mode !== 3) {
-        if (g_is_default_ui) {
-            if (col_mode === 1) {
-                g_textcolour = window.GetColourDUI(ColourTypeDUI.text);
-                g_textcolour_hl = window.GetColourDUI(ColourTypeDUI.highlight);
-                g_backcolour = window.GetColourDUI(ColourTypeDUI.background);
-                g_color_selected_bg = setAlpha(window.GetColourDUI(ColourTypeDUI.selection), 184);
-                //g_color_selected_bg = window.GetColourDUI(ColourTypeDUI.selection);
-                g_color_highlight = setAlpha(window.GetColourDUI(ColourTypeDUI.highlight), 144);
-            } else if (col_mode === 2) {
-                g_textcolour = nowPlayingColours[1];
-                g_textcolour_hl = nowPlayingColours[3];
-                g_backcolour = nowPlayingColours[0];
-                g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
-                g_color_highlight = setAlpha(nowPlayingColours[2], 200);
-                //g_color_highlight = nowPlayingColours[2];
-            }
-        } else { // CUI
-            if (col_mode === 1) {
-                g_textcolour = window.GetColourCUI(ColourTypeCUI.text);
-                g_textcolour_hl = window.GetColourCUI(ColourTypeCUI.selection_text);
-                g_backcolour = window.GetColourCUI(ColourTypeCUI.background);
-                g_color_selected_bg = setAlpha(window.GetColourCUI(ColourTypeCUI.inactive_selection_background), 184);
-                //g_color_selected_bg = window.GetColourCUI(ColourTypeCUI.inactive_selection_background);
-                g_color_highlight = setAlpha(window.GetColourCUI(ColourTypeCUI.selection_background), 144);
-            } else if (col_mode === 2) {
-                g_textcolour = nowPlayingColours[1];
-                g_textcolour_hl = nowPlayingColours[3];
-                g_backcolour = nowPlayingColours[0];
-                g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
-                g_color_highlight = setAlpha(nowPlayingColours[2], 200);
-                //g_color_highlight = nowPlayingColours[2];
-            }
+    if (g_is_default_ui && col_mode !== 3) {
+        if (col_mode === 1) {
+            g_textcolour = window.GetColourDUI(ColourTypeDUI.text);
+            g_textcolour_hl = window.GetColourDUI(ColourTypeDUI.highlight);
+            g_backcolour = window.GetColourDUI(ColourTypeDUI.background);
+            g_color_selected_bg = setAlpha(window.GetColourDUI(ColourTypeDUI.selection), 184);
+            //g_color_selected_bg = window.GetColourDUI(ColourTypeDUI.selection);
+            g_color_highlight = setAlpha(window.GetColourDUI(ColourTypeDUI.highlight), 144);
+        } else if (col_mode === 2) {
+            g_textcolour = nowPlayingColours[1];
+            g_textcolour_hl = nowPlayingColours[3];
+            g_backcolour = nowPlayingColours[0];
+            g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
+            g_color_highlight = setAlpha(nowPlayingColours[2], 200);
+            //g_color_highlight = nowPlayingColours[2];
+        }
+    } else { // CUI
+        if (col_mode === 1) {
+            g_textcolour = window.GetColourCUI(ColourTypeCUI.text);
+            g_textcolour_hl = window.GetColourCUI(ColourTypeCUI.selection_text);
+            g_backcolour = window.GetColourCUI(ColourTypeCUI.background);
+            g_color_selected_bg = setAlpha(window.GetColourCUI(ColourTypeCUI.inactive_selection_background), 184);
+            //g_color_selected_bg = window.GetColourCUI(ColourTypeCUI.inactive_selection_background);
+            g_color_highlight = setAlpha(window.GetColourCUI(ColourTypeCUI.selection_background), 144);
+        } else if (col_mode === 2) {
+            g_textcolour = nowPlayingColours[1];
+            g_textcolour_hl = nowPlayingColours[3];
+            g_backcolour = nowPlayingColours[0];
+            g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
+            g_color_highlight = setAlpha(nowPlayingColours[2], 200);
+            //g_color_highlight = nowPlayingColours[2];
         }
     }
 }

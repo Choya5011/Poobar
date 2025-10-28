@@ -1,7 +1,7 @@
 'use strict';
 /**
- * JSP3 Helpers. Credits to: marc 2003
- * Slight modifications done to GetNowPlayingColours
+ * JSP3 Helpers by marc 2003
+ * Slight modification done to GetNowPlayingColours
  */
 function getRed(colour) {
 	return ((colour >> 16) & 0xff);
@@ -39,7 +39,7 @@ function DetermineTextColour(background) {
 }
 
 function GetNowPlayingColours() {
- 	var metadb = fb.GetNowPlaying();
+ 	const metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
 
  	if (metadb) {
  		var img = utils.GetAlbumArtV2(metadb, 0, false); // 3rd arg is want_stub - we don't
@@ -51,6 +51,7 @@ function GetNowPlayingColours() {
                 };
             });
 
+            img = null;
  			//img.Dispose();
 
  			// Find least gray/white/black color
