@@ -2,7 +2,7 @@ A crappy responsive [Spider Monkey Panel](https://github.com/TheQwertiest/foo_sp
 This theme is supported in foobar2000 32-bit & 64-bit.
 
 # Preview
-![Preview](preview.png)  
+![Preview](gallery/preview.png)  
 Responds to window size & seamlessly snaps to win11 snap layouts. Manual resizing of the window however is a bit more taxing.  
 
 # Modularity
@@ -37,29 +37,23 @@ Optional:
 [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
 
 # Installation Instructions
-Installation will be simplified at a later date.  
-
 1.  Install required components if not yet installed: Preferences -> Components -> Install -> Restart
-2.  Set display to CUI if not yet set: Preferences -> Display -> User Interface Module -> Columns UI -> restart
-3.  Import required packages: place a Jsplitter in fb2k -> configure -> package -> package manager -> import -> select package zip file
-4.  Place the files in their respective directories. "foobar2000-v2" is typically located at:
-    - C:\Users\yourUserName\AppData\Roaming\foobar2000-v2\user-components-x64\foo_uie_jsplitter\samples
-5.  Copy each file into their respective directory (samples subfolders):
-    - samples\complete
-    - samples\js-smooth
-    - samples\poobar  
-    - Alternatively store them elsewhere, this requires adjusting the scripts.
+2.  Set display to CUI if not yet set: Preferences -> Display -> User Interface Module -> Columns UI -> restart=
+3.  Place the "Poobar" folder in the samples directory. Typically located at:
+    - Normal: C:\Users\[Username]\AppData\Roaming\foobar2000-v2\user-components-x64\foo_uie_jsplitter\samples
+    - Portable: foobar2000\profile\user-components-x64\foo_uie_jsplitter\samples
 6.  Import fcl layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
-    - _library if LibTree is desired else _filter
-7. Manually add waveform of choice if desired: Preferences -> Layout -> JSplitter titled 'Fluent Control Panel' -> right click -> insert panel
-   - pick either Waveform minibar (mod) or a JSplitter with the Not-A-Waveform-Seekbar-SMP package
-   - If a JSplitter is chosen set custom panel title to 'Waveform minibar (mod)' so the control panel can detect it.  
-   Transparency:
-   - WMM: preferences -> Waveform Minibar (mod) -> Transparent background (requires Columns UI)
-   - NAWS-SMP: right click -> Background -> Color Mode -> None  
+    - _library if LibTree is desired else _filter  
+    If waveform is desired:
+    - _wmm contains Waveform minibar (mod)
+    - _naws contains a JSplitter with NAWS-SMP  
    Note:
+   - Waveform minibar (mod) Transparency: preferences -> tools -> Waveform Minibar (mod) -> Transparent background (requires Columns UI) 
    - NAWS-SMP can be more taxing than Waveform minibar (mod). Configure it to use the least resources.
    - It also seems incapable of analyzing tracks whose titles contain characters (JP,KR,CN) in Audiowaveform mode.
+7. _library & _naws presets contain JSplitters that will throw an error if their respective packages aren't present:
+   - Import required packages: right click problem JSplitter -> configure -> package -> package manager -> import -> select package zip file
+   - Alternatively: preferences -> display -> columns UI -> layout -> select problem JSplitter -> configure panel -> package -> package manager -> import -> select package zip file
 
 # Useful to know
 ## General
@@ -87,7 +81,8 @@ The main panel currently has 4 panels it looks out for titled:
 If the title of any of these are changed & the MP script isn't adjusted for it the MP can not fetch the panel.
 
 # Issues
-Memory usage spikes when playing tracks with high res (example: 3k) album art. This has been partially optimized since the latest update.  
+Memory usage spikes when playing tracks with high res (example: 3k) album art.  
+This has been partially optimized by removing redundant panels in the latest update.  
 
 Troubleshooting:
 1. If there is a pop-up about the rating each time the Fluent Control Panel script is loaded: Right click the rating stars & set mode to foo_playcount. This will eliminate the popup.
