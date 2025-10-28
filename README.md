@@ -37,20 +37,20 @@ Optional:
 [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
 
 # Installation Instructions
-1.  Install required components if not yet installed: Preferences -> Components -> Install -> Restart
-2.  Set display to CUI if not yet set: Preferences -> Display -> User Interface Module -> Columns UI -> restart=
+1.  Install required components if not yet installed: Preferences -> Components -> Install -> Restart  
+2.  Set display to CUI if not yet set: Preferences -> Display -> User Interface Module -> Columns UI -> restart  
 3.  Place the "Poobar" folder in the samples directory. Typically located at:
     - Normal: C:\Users\[Username]\AppData\Roaming\foobar2000-v2\user-components-x64\foo_uie_jsplitter\samples
-    - Portable: foobar2000\profile\user-components-x64\foo_uie_jsplitter\samples
+    - Portable: foobar2000\profile\user-components-x64\foo_uie_jsplitter\samples  
 6.  Import fcl layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
     - _library if LibTree is desired else _filter  
     If waveform is desired:
     - _wmm contains Waveform minibar (mod)
     - _naws contains a JSplitter with NAWS-SMP  
    Note:
-   - Waveform minibar (mod) Transparency: preferences -> tools -> Waveform Minibar (mod) -> Transparent background (requires Columns UI) 
-   - NAWS-SMP can be more taxing than Waveform minibar (mod). Configure it to use the least resources.
-   - It also seems incapable of analyzing tracks whose titles contain characters (JP,KR,CN) in Audiowaveform mode.
+    - Waveform minibar (mod) Transparency: preferences -> tools -> Waveform Minibar (mod) -> Transparent background (requires Columns UI) 
+    - NAWS-SMP can be more taxing than Waveform minibar (mod). Configure it to use the least resources.
+    - It also seems incapable of analyzing tracks whose titles contain characters (JP,KR,CN) in Audiowaveform mode.  
 7. _library & _naws presets contain JSplitters that will throw an error if their respective packages aren't present:
    - Import required packages: right click problem JSplitter -> configure -> package -> package manager -> import -> select package zip file
    - Alternatively: preferences -> display -> columns UI -> layout -> select problem JSplitter -> configure panel -> package -> package manager -> import -> select package zip file
