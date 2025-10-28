@@ -1,11 +1,11 @@
-include(fb.ComponentPath + 'samples\\poobar\\poo_col_helper.js');
+include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_col_helper.js');
 
 var need_repaint = false;
 
 let ppt = {
 	tf_artist: fb.TitleFormat("%artist%"),
 	tf_albumartist: fb.TitleFormat("%album artist%"),
-	tf_groupkey: fb.TitleFormat(window.GetProperty("_PROPERTY: tf_groupkey", "$if2(%album artist%,$if(%length%,'?',%title%)) ^^ $if2(%album%,$if(%length%,'?',%path%)) ^^ %discnumber% ## [%artist%] ^^ %title% ^^ [%genre%] ^^ [%date%]")),
+	tf_groupkey: fb.TitleFormat(window.GetProperty("_PROPERTY: tf_groupkey", "$if2(%album artist%,$if(%length%,'?',%title%)) ^^ $if2(%album%,$if(%length%,'?',%path%)) ^^ %discnumber% ## [%artist%] ^^ %title% ^^ [%genre%] ^^ $year(%date%)")),
 	tf_track: fb.TitleFormat("%tracknumber% ^^ [%length%] ^^ $if2(%rating%,0) ^^ %mood%"),
 	tf_path: fb.TitleFormat("$directory_path(%path%)\\"),
 	tf_crc: fb.TitleFormat("$crc32(%path%)"),
@@ -24,11 +24,11 @@ let ppt = {
 	refreshRate: 40,
 	extraRowsNumber: window.GetProperty("_PROPERTY: Number of Extra Rows per Group", 0),
 	minimumRowsNumberPerGroup: window.GetProperty("_PROPERTY: Number minimum of Rows per Group", 0),
-	groupHeaderRowsNumber: window.GetProperty("_PROPERTY: Number of Rows for Group Header", 2),
+	groupHeaderRowsNumber: window.GetProperty("_PROPERTY: Number of Rows for Group Header", 3),
 	showHeaderBar: window.GetProperty("_DISPLAY: Show Top Bar", true),
 	defaultHeaderBarHeight: 25,
 	headerBarHeight: 25,
-	autocollapse: window.GetProperty("_PROPERTY: Autocollapse groups", false),
+	autocollapse: window.GetProperty("_PROPERTY: Autocollapse groups", true),
 	enableFullScrollEffectOnFocusChange: false,
 	//enableCustomColors: window.GetProperty("_PROPERTY: Custom Colors", false),
 	col_mode : window.GetProperty('_PROPERTY: Color Mode (1,2,3)', 1),
@@ -140,7 +140,7 @@ cover = {
 };
 
 images = {
-	path: fb.ComponentPath + "samples\\js-smooth\\images\\",
+	path: fb.ComponentPath + "samples\\poobar\\js-smooth\\images\\",
 	glass_reflect: null,
 	loading_angle: 0,
 	loading_draw: null,

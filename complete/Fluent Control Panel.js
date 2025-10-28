@@ -7,8 +7,8 @@ include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\seekbar.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\rating.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\volume.js');
-include(fb.ComponentPath + 'samples\\poobar\\poo_helpers.js');
-include(fb.ComponentPath + 'samples\\poobar\\poo_col_helper.js');
+include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_helpers.js');
+include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_col_helper.js');
 
 const scaler = {
     s600: _scale(450),

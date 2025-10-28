@@ -1,11 +1,11 @@
 ﻿'use strict';
 
-window.DefineScript('Horizontal/Vertical Poobar Tabs 0.2', {author:'Choya', options:{grab_focus:false}});
+window.DefineScript('Horizontal/Vertical Poobar Tabs', {author:'Choya', options:{grab_focus:false}});
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
-include(fb.ComponentPath + 'samples\\poobar\\poo_helpers.js');
-include(fb.ComponentPath + 'samples\\poobar\\poo_col_helper.js');
+include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_helpers.js');
+include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_col_helper.js');
 
 let ww = 0;
 let wh = 0;
@@ -30,7 +30,6 @@ let TAB_H = 0;
 const TAB_MIN_W = 45;
 const TAB_MIN_H = 45;
 
-var isPlaying = false; // To track playback state
 const SF_CENTER = 0x00000001;
 const SF_VCENTER = 0x00000004;
 const SF_CENTER_VCENTER = SF_CENTER | SF_VCENTER;

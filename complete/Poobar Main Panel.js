@@ -4,8 +4,8 @@ window.DefineScript('Poobar Main Panel', {author:'Choya', options:{grab_focus:fa
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
-include(fb.ComponentPath + 'samples\\poobar\\poo_helpers.js');
-include(fb.ComponentPath + 'samples\\poobar\\poo_col_helper.js');
+include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_helpers.js');
+include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_col_helper.js');
 
 let ppt = {
     // Main Panel properties
