@@ -65,8 +65,6 @@ update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt
 get_colours(ppt.col_mode.value, true);
 /* ============================================================= */
 
-const psH = (wh <= scaler.s730 && ww > scaler.s800) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value; // tabStack/playlistView placement ratio in horizontal orientation (.5 splitscreen)
-let psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value; // (tabStack & smoothBrowser)/playlistView placement ratio in vertical orientation
 let cpH = _scale(ppt.cpH.value); // Control Panel Height in Horizontal orientation
 let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
 
@@ -93,6 +91,9 @@ function on_size(width, height) {
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
+
+    const psH = (wh <= scaler.s730 && ww > scaler.s800) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value; // tabStack/playlistView placement ratio in horizontal orientation (.5 splitscreen)
+    let psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value; // (tabStack & smoothBrowser)/playlistView placement ratio in vertical orientation
 
 	if (checkSizeAndRatio(ww, wh, 16 / 9, 0.2) || checkSizeAndRatio(ww, wh, 3, 0.3) || checkSizeAndRatio(ww, wh, 11.11, 0.4) || checkSizeAndRatio(ww, wh, 5.4, 0.2))  {
 	    // Horizontal view
