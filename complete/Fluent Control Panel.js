@@ -201,7 +201,6 @@ function on_size() {
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
-    console.log(ww);
 
     bx = ((panel.w - (bs * 7)) / 2);
     by = seekbar.y - _scale(36);
@@ -286,7 +285,8 @@ function on_paint(gr) {
         }
 
         if (ppt.art.enabled && g_img && ww > scaler.s800) {
-            _drawImage(gr, g_img, 0, 0, panel.h, panel.h, image.crop_top);
+            const size = panel.h * 0.86
+            _drawImage(gr, g_img, panel.h * 0.06, panel.h * 0.074, size, size, image.crop_top);
         }
 
         // Track information
