@@ -106,7 +106,7 @@ function on_paint(gr) {
         if (ppt.orientation.enabled) {
             // Vertical tabs
             const y = i * TAB_H;
-            const h = (i === tabs.length - 1) ? window.Height - TAB_H * (tabs.length - 1) : TAB_H;
+            const h = (i === tabs.length - 1) ? wh - TAB_H * (tabs.length - 1) : TAB_H;
             if (!ppt.bgShow.enabled) gr.FillSolidRect(0, y, TAB_W, h, g_backcolour);
             if (i === hoveredTab) gr.FillSolidRect(0, y, TAB_W, h, g_color_highlight);
             if (i === activeTab && i !== hoveredTab) gr.FillSolidRect(0, y, TAB_W, h, tab_hl_col);
@@ -114,7 +114,7 @@ function on_paint(gr) {
         } else {
             // Horizontal tabs
             const x = i * TAB_W;
-            const w = (i === tabs.length - 1) ? window.Width - TAB_W * (tabs.length - 1) : TAB_W;
+            const w = (i === tabs.length - 1) ? ww - TAB_W * (tabs.length - 1) : TAB_W;
             if (!ppt.bgShow.enabled) gr.FillSolidRect(x, 0, w, TAB_H, g_backcolour);
             if (i === hoveredTab) gr.FillSolidRect(x, 0, w, TAB_H, g_color_highlight);
             if (i === activeTab && i !== hoveredTab) gr.FillSolidRect(x, 0, w, TAB_H, tab_hl_col);
@@ -127,11 +127,11 @@ function updateTabSize() {
     if (ppt.orientation.enabled) {
         // scale height when vertical | 45-70 clamp in 1440p
         TAB_W = Math.max(_scale(26.25), Math.min(_scale(52.5), Math.round(ww / 28.44)));
-        TAB_H = Math.max(TAB_MIN_H, Math.floor(window.Height / Math.max(1, tabs.length)));
+        TAB_H = Math.max(TAB_MIN_H, Math.floor(wh / Math.max(1, tabs.length)));
     } else {
         // scale width when horizontal | 30-50 clamp in 1440p
         TAB_H = Math.max(_scale(22.5), Math.min(_scale(37.5), Math.round(wh / 41.36)));
-        TAB_W = Math.max(TAB_MIN_W, Math.floor(window.Width / Math.max(1, tabs.length)));
+        TAB_W = Math.max(TAB_MIN_W, Math.floor(ww / Math.max(1, tabs.length)));
     }
 }
 

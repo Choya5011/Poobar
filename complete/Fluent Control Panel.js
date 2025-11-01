@@ -56,6 +56,7 @@ let ppt = {
     mode: new _p('_DISPLAY: Seekbar Mode', true),
     loveMode : new _p('_PROPERTY: Love Mode', false),
     pboMode : new _p('_PROPERTY: Playback Order Button Mode', false),
+    bar_mode : new _p('_DISPLAY: Show Bar Core', false),
     roundBars : new _p('_DISPLAY: Show Rounded Bars', true),
     // background
     bgShow : new _p('_DISPLAY: Show Wallpaper', true),
@@ -160,13 +161,13 @@ buttons.update = () => {
     }
 
     buttons.buttons.stop = new _button(x + bs, y, bs, bs, {normal : fb.StopAfterCurrent ? _chrToImg(chara.stop, colours.red, fluent_font) : _chrToImg(chara.stop, g_textcolour, fluent_font), hover : _chrToImg(chara.stop, g_textcolour_hl, fluent_font_hover)}, () => { fb.Stop(); }, '');
-    buttons.buttons.previous = new _button(x + (bs * 2), y, bs, bs, {normal : _chrToImg(chara.prev, g_textcolour, fluent_font), hover : _chrToImg(chara.prev, g_textcolour_hl, fluent_font_hover)}, () => { fb.Prev(); }, '');
+    buttons.buttons.previous = new _button(x + (bs * 2), y, bs, bs, {normal : _chrToImg(chara.prev, g_textcolour, fluent_font), hover : _chrToImg(chara.prev, g_textcolour_hl, fluent_font_hover)}, () => { plman.PlaybackOrder !== 3 ? fb.Prev() : fb.Next(); }, '');
     buttons.buttons.play = new _button( x + (bs * 3), y, bs, bs, {normal : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour, fluent_font) : _chrToImg(chara.pause, g_textcolour, fluent_font), hover : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour_hl, fluent_font_hover) : _chrToImg(chara.pause, g_textcolour_hl, fluent_font_hover)}, () => { fb.PlayOrPause(); }, !fb.IsPlaying || fb.IsPaused ? '' : '');
     buttons.buttons.next = new _button(x + (bs * 4), y, bs, bs, {normal : _chrToImg(chara.next, g_textcolour, fluent_font), hover : _chrToImg(chara.next, g_textcolour_hl, fluent_font_hover)}, () => { fb.Next(); }, '');
 	if (ppt.pboMode.enabled) {
 	    buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { _pbo(x + (bs * 3.41), y); }, '');
 	} else {
-	    buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { 	plman.PlaybackOrder = (pbo >= pbo_chars.length - 1) ? 0 : pbo + 1; }, 'Playback Order: ' + pbo_names[pbo]);
+	    buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { plman.PlaybackOrder = (pbo >= pbo_chars.length - 1) ? 0 : pbo + 1; }, 'Playback Order: ' + pbo_names[pbo]);
 	}
 
     buttons.buttons.add_queue = new _button(bx + (bs * 6), y, bs, bs, {normal : _chrToImg(chara.add_queue, g_textcolour, fluent_font), hover : _chrToImg(chara.add_queue, g_textcolour_hl, fluent_font_hover)}, () => {
@@ -322,15 +323,26 @@ function on_paint(gr) {
             if (ppt.mode.enabled) {
                 //progress_bar
                 let barColor = getBarColor(seekbar_hover);
-                if (ppt.roundBars.enabled) {
-                    if (pos >= bar_h) {
-                        gr.FillRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, radius, radius, barColor);
+                let coreColor = getCoreColor(seekbar_hover);
+
+                if (ppt.roundBars.enabled && pos >= bar_h) {
+                    if (ppt.bar_mode.enabled) {
+                        gr.FillRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, radius, radius, coreColor); //bar core
+                        gr.DrawRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, radius, radius, _scale(2), g_textcolour); //bar outline
+                    } else {
+                        gr.FillRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, radius, radius, barColor); // normal bar
                     }
                 } else {
-                    gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), barColor);
+                    if (ppt.bar_mode.enabled) {
+                        gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), coreColor); //bar core
+                        gr.DrawRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), _scale(2), g_textcolour); //bar outline
+                    } else {
+                        gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), barColor); //normal bar
+                    }
                 }
 
                 gr.FillEllipse(seekbar.x + pos - 4, seekbar.y, _scale(12), _scale(12), g_textcolour); //knob
+                if (ppt.bar_mode.enabled) gr.FillEllipse(seekbar.x + pos - 1.5, seekbar.y + 2.5, _scale(8), _scale(8), coreColor); //knob core
     			gr.GdiDrawText(tfo.playback_time.Eval(), panel.fonts.normal, g_textcolour, seekbar.x - _scale(45), seekbar.y + _scale(5), _scale(45), 0, RIGHT);
     			gr.GdiDrawText(tfo.length.Eval(), panel.fonts.normal, g_textcolour, seekbar.x + seekbar.w + _scale(6), seekbar.y + _scale(5), _scale(45), 0, LEFT);
             } else {
@@ -348,15 +360,26 @@ function on_paint(gr) {
         if (ppt.vol.enabled) {
             let vol_pos = volume.pos();
             let barColor = getBarColor(volume_hover);
+            let coreColor = getCoreColor(volume_hover);
             let volumeWidth = panel.w > scaler.s800 ? volume.w : volume.w.value * 0.8;
 
-            if (ppt.roundBars.enabled && ww > scaler.s800) { // s800 check cause of unfound stripe bug likely related to volume icon
+            if (ppt.roundBars.enabled && vol_pos >= volume.h && ww > scaler.s800) { // s800 check cause of unfound stripe bug likely related to volume icon
                 let vol_radius = volume.h / 2;
                 gr.FillRoundRect(volume.x, volume.y, volumeWidth, volume.h, vol_radius, vol_radius, colours.seekbar_background);
-                if (vol_pos >= volume.h) gr.FillRoundRect(volume.x, volume.y, vol_pos, volume.h, vol_radius, vol_radius, barColor); // Draw the filled volume bar with rounded corners if wide enough
+                if (ppt.bar_mode.enabled) {
+                    gr.FillRoundRect(volume.x, volume.y, vol_pos, volume.h, vol_radius, vol_radius, coreColor);
+                    gr.DrawRoundRect(volume.x, volume.y, vol_pos, volume.h, vol_radius, vol_radius, _scale(2), g_textcolour);
+                } else {
+                    gr.FillRoundRect(volume.x, volume.y, vol_pos, volume.h, vol_radius, vol_radius, barColor);
+                }
             } else {
                 gr.FillSolidRect(volume.x, volume.y, volumeWidth, volume.h, colours.seekbar_background);
-                gr.FillSolidRect(volume.x, volume.y, vol_pos, volume.h, barColor);
+                if (ppt.bar_mode.enabled) {
+                    gr.FillSolidRect(volume.x, volume.y, vol_pos, volume.h, coreColor);
+                    gr.DrawRect(volume.x, volume.y, vol_pos, volume.h, _scale(2), g_textcolour);
+                } else {
+                    gr.FillSolidRect(volume.x, volume.y, vol_pos, volume.h, barColor);
+                }
             }
             var dbFont = gdi.Font(panel.fonts.normal.Name, 12);
             if (panel.w > scaler.s800 && volume_hover) gr.GdiDrawText(fb.Volume.toFixed(2) + ' dB', dbFont, g_textcolour, _scale(8), volume.y + _scale(2), volume.x + _scale(106), 0, RIGHT);
@@ -366,6 +389,10 @@ function on_paint(gr) {
 
 function getBarColor(isHover) {
     return isHover ? g_textcolour_hl : g_textcolour;
+}
+
+function getCoreColor(isHover) {
+    return isHover ? g_textcolour_hl : g_backcolour;
 }
 
 rating.paint = (gr) => {
@@ -648,10 +675,12 @@ function on_mouse_rbtn_up(x, y) {
     _menu2.CheckMenuItem(211, ppt.vol.enabled);
     _menu2.AppendMenuItem(MF_STRING, 212, 'Rating');
     _menu2.CheckMenuItem(212, ppt.rating.enabled);
-    _menu2.AppendMenuItem(MF_STRING, 213, 'Rounded bars');
-    _menu2.CheckMenuItem(213, ppt.roundBars.enabled);
-    _menu2.AppendMenuItem(MF_STRING, 214, 'Next track');
-    _menu2.CheckMenuItem(214, ppt.nxt.enabled);
+    _menu2.AppendMenuItem(MF_STRING, 213, 'Bar Cores');
+    _menu2.CheckMenuItem(213, ppt.bar_mode.enabled);
+    _menu2.AppendMenuItem(MF_STRING, 214, 'Rounded bars');
+    _menu2.CheckMenuItem(214, ppt.roundBars.enabled);
+    _menu2.AppendMenuItem(MF_STRING, 215, 'Next track');
+    _menu2.CheckMenuItem(215, ppt.nxt.enabled);
     _menu2.AppendTo(m, MF_STRING, 'Show...');
 
     m.AppendMenuSeparator();
@@ -716,10 +745,14 @@ function on_mouse_rbtn_up(x, y) {
         window.Repaint();
         break;
     case 213:
-        ppt.roundBars.toggle();
+        ppt.bar_mode.toggle();
         window.Repaint();
         break;
     case 214:
+        ppt.roundBars.toggle();
+        window.Repaint();
+        break;
+    case 215:
         ppt.nxt.toggle();
         window.Repaint();
         break;
@@ -746,18 +779,21 @@ function on_mouse_rbtn_up(x, y) {
         ppt.bgShow.enabled = false;
         ppt.col_mode.value = 1;
         on_colours_changed();
+        bg_img = null;
         window.Repaint();
         break;
     case 411:
         ppt.bgShow.enabled = false;
         ppt.col_mode.value = 2;
         on_colours_changed();
+        bg_img = null;
         window.Repaint();
         break;
     case 412:
         ppt.bgShow.enabled = false;
         ppt.col_mode.value = 3;
         on_colours_changed();
+        bg_img = null;
         window.ShowProperties();
         window.Repaint();
         break;
