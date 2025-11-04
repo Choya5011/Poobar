@@ -12,7 +12,7 @@ let ppt = {
 	hPanelScale : new _p ('_MAIN_DISPLAY: Horizontal Monitor Panel Division (0-1)', 0.5),
 	vPanelScale : new _p ('_MAIN_DISPLAY: Vertical Monitor Panel Division (0-1)', 0.4),
 	cpH : new _p ('_MAIN_DISPLAY: Control Panel Height (Horizontal mode)', 105),
-	cpV : new _p ('_MAIN_DISPLAY: Control Panel Height Scale (Vertical mode)', 108),
+	cpV : new _p ('_MAIN_DISPLAY: Control Panel Height (Vertical mode)', 108),
     // Tab logic properties for main panel
 	bgShow : new _p('_TAB_DISPLAY: Show Wallpaper', true),
     bgBlur : new _p('_TAB_DISPLAY: Wallpaper Blurred', false),

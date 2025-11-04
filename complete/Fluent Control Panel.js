@@ -114,6 +114,7 @@ let buttons = new _buttons();
 let rating = new _rating(0, 0, 14, 0); // x, y, size, colour
 let volume = new _volume(0, 0, 100, 40);
 let isLoved = '';
+let ratingHover = false;
 
 const bs = _scale(32);
 
@@ -179,12 +180,13 @@ buttons.update = () => {
 
     const xx = (panel.w > scaler.s800) ? (panel.w - (bs * 2)) : (panel.w - bs);
     const yy = Math.round((panel.h - bs) / 2);
-    // right section offsets
+    // right section button offsets
     const rOff_1 = (panel.w > scaler.s800) ? 0 : -0.9;
     const rOff_2 = (panel.w > scaler.s800) ? 0 : -1.4;
     const rOff_3 = (panel.w > scaler.s800) ? 0 : -0.4;
     const rOff_4 = (panel.w > scaler.s800) ? 0 : -0.6;
     const rOff_5 = (panel.w > scaler.s800) ? 0 : -1.9;
+    //const btnOffsets = (panel.w > scaler.s800) ? [0, 0, 0, 0, 0] : [0.9, 1.4, 0.4, 0.6, 1.9];
     const rY = (panel.w > scaler.s520) ? yy : yy + _scale(36);
     const vol_x = (ppt.vol.enabled) ? xx - (bs * (2.9 + rOff_4)) : xx - (bs * (3.9 + rOff_5));
     const vol_y = (ppt.vol.enabled) ? volume.y - _scale(14) : rY + 1;
@@ -282,7 +284,10 @@ function on_paint(gr) {
 
     if (fb.IsPlaying) {
         if ((!ppt.mode.enabled && ppt.rating.enabled && ww > scaler.s600) || (ppt.mode.enabled && ppt.rating.enabled && ww > scaler.s1200)) {
+            ratingHover = true;
             rating.paint(gr);
+        } else {
+            ratingHover = false;
         }
 
         if (ppt.art.enabled && g_img && ww > scaler.s800) {
@@ -551,7 +556,7 @@ function on_mouse_move(x, y) {
         window.SetCursor(IDC_HAND);
         window.Repaint();
     }
-    if (buttons.move(x, y) || (ppt.rating.enabled && rating.move(x, y)) || seekbar.move(x, y) || volume.move(x, y)) return;
+    if (buttons.move(x, y) || (ppt.rating.enabled && ratingHover && rating.move(x, y)) || seekbar.move(x, y) || volume.move(x, y)) return;
 }
 
 function on_mouse_leave() {
@@ -569,8 +574,15 @@ function on_mouse_lbtn_down(x, y) {
 }
 
 function on_mouse_lbtn_up(x, y) {
-    if ([buttons, seekbar, rating, volume].some(el => el.lbtn_up(x, y))) {
-        return;
+    if (
+      [buttons, seekbar, rating, volume].some((el) => {
+        if (el === rating) {
+          return el.lbtn_up(x, y) && ratingHover;
+        }
+        return el.lbtn_up(x, y);
+      })
+    ) {
+      return;
     }
 
     fb.RunMainMenuCommand('View/Show now playing in playlist');
