@@ -51,7 +51,7 @@ _library & _naws presets contain JSplitters that will throw an error if their re
    - Alternatively: preferences -> display -> columns UI -> layout -> select problem JSplitter -> configure panel -> package -> package manager -> import -> select package zip file  
 
 **Waveform Notes**  
-   - Waveform minibar (mod) Transparency: preferences -> tools -> Waveform Minibar (mod) -> Transparent background (requires Columns UI) 
+   - Waveform minibar (mod) Transparency: preferences -> tools -> Waveform Minibar (mod) -> Transparent background (requires CUI) 
    - NAWS-SMP can be more taxing than Waveform minibar (mod). Configure it to use the least resources.
    - NAWS-SMP also seems incapable of analyzing tracks whose titles contain characters (JP,KR,CN) in Audiowaveform mode.
 
@@ -70,10 +70,10 @@ Memory usage spikes when playing tracks with high res (example: 3k) album art. T
 * foo_scrobble is a component that syncs playcount/scrobbles to last.fm.  
 
 **Queue button instructions:**  
-    * left click: add
-    * right click: remove
-    * middle click: clear
-    * double click then right click (reason for combo is it's bugged/incomplete): add randomly (requires selecting multiple tracks)  
+* left click: add
+* right click: remove
+* middle click: clear
+* select multiple tracks -> double click then right click (reason for combo: bugged/incomplete): adds tracks randomly
 
 **Lyric Components:**  
 * OpenLyrics: more plug & play, included in fcl presets
@@ -83,7 +83,7 @@ Memory usage spikes when playing tracks with high res (example: 3k) album art. T
     * ESLyric: Richt Click -> Panel Options... -> Font & Color  
 
 **Troubleshooting:**  
-1. If there is a pop-up about the rating each time the Fluent Control Panel script is loaded: Right click the rating stars & set mode to foo_playcount or another mode of choice. This will eliminate the popup.
+1. If there is a pop-up about the rating each time the Fluent Control Panel script is loaded: right click the rating stars & set mode to foo_playcount or another mode of choice. This will eliminate the popup.
 2. If monitor resolution is changed while foobar is open restart to refresh.
 3. If ever locked out of access to preferences button: ctrl + p
 
