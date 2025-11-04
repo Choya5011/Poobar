@@ -59,11 +59,11 @@ _library & _naws presets contain JSplitters that will throw an error if their re
 ## General
 Memory usage spikes when playing tracks with high res (example: 3k) album art. This has been partially optimized by removing redundant panels in a previous update.  
 
-**Customizing**  
+**Customizing:**  
 * Right click panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.
 * Tabs support vertical & horizontal orientation.  
 
-**Tracking stats**  
+**Stats tracking:**  
 * Playcount toggle in PL view: foo_playcount or lastfm_playcount. Both components store their own local DB.
 * The foo_lastfm_playcount_sync compnent includes the option of syncing likes to last.fm.
 * When using the like/heart buttons make sure both the control panel (seekbar section) and the PL are set to the same mode. 
@@ -99,6 +99,11 @@ The main panel currently has 4 panels it looks out for titled:
 * 'Smooth Browser'
 
 If the title of any of these are changed & the MP script isn't adjusted for it the MP can not fetch the panel.
+
+**Customization:**  
+* For basic layout adjustment such as adjusting control panel height the main panels properties need to be accessed:
+   * Preferences -> Display -> Columns UI -> Layout -> select topmost JSplitter -> Configure panel... -> Properties
+   * This provides 4 basic adjustments, deeper layout adjustment requires editing the script.
 
 ---
 Credits to the original authors of any modified scripts. Names can be found in their respective scripts.
