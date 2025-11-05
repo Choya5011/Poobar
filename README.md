@@ -124,7 +124,8 @@ Adjusts tabs to take all horizontal/vertical space.
 ![Tabs: Vertical/Horizontal](gallery/tabs.png)
 
 **Mini Player**  
-If window gets small enough. Smaller state yet to be added.  
+If window gets small enough. Smaller state yet to be added. 
+
 ![Mini Player](gallery/mini_player.png)  
 ---
 Credits to the original authors of any modified scripts. Names can be found in their respective scripts.
