@@ -26,7 +26,7 @@ Optional: [Waveform minibar (mod)](https://www.foobar2000.org/components/view/fo
 
 **Packages**  
 Required: [Biography](https://github.com/Wil-B/Biography)  
-Optional: [Library Tree](https://github.com/Wil-B/Library-Tree) | [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
+Optional: [Library Tree](https://github.com/Wil-B/Library-Tree) | [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP)
 
 # Installation
 **Instructions**  
@@ -49,7 +49,7 @@ To fix these if applicable: Right click issue panel -> Panel Properties -> clear
 
 **Errors**  
 _library & _naws presets contain JSplitters that will throw an error if their respective packages aren't present:
-   - Import required packages: right click problem JSplitter -> configure -> package -> package manager -> import -> select package zip file
+   - Import required packages: right click problem JSplitter -> configure -> package -> package manager -> import -> select package zip archive
    - Alternatively: preferences -> display -> columns UI -> layout -> select problem JSplitter -> configure panel -> package -> package manager -> import -> select package zip file  
 
 **Waveform Notes**  
