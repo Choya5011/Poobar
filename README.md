@@ -21,21 +21,14 @@ Standard already on Windows 11: [Segoe Fluent Icons](https://learn.microsoft.com
 Optional (For Biography): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)
 
 **Components**  
-Required: [Columns UI](https://www.foobar2000.org/components/view/foo_ui_columns) | [Playback Statistics](https://www.foobar2000.org/components/view/foo_playcount) | [OpenLyrics](https://www.foobar2000.org/components/view/foo_openlyrics) alternatively [ESLyric](https://github.com/ESLyric/release) | 
-[JSplitter](https://hydrogenaudio.org/index.php/topic,126743.msg1063721.html#msg1063721) (4.0.4)  
-
-Optional: [Waveform minibar (mod)](https://www.foobar2000.org/components/view/foo_wave_minibar_mod) | [Scrobble](https://www.foobar2000.org/components/view/foo_scrobble) if last.fm sync is desired | foo_lastfm_playcount_sync
+Required: [Columns UI](https://www.foobar2000.org/components/view/foo_ui_columns) | [JSplitter](https://hydrogenaudio.org/index.php/topic,126743.msg1063721.html#msg1063721) (4.0.4) | [Playback Statistics](https://www.foobar2000.org/components/view/foo_playcount) | [OpenLyrics](https://www.foobar2000.org/components/view/foo_openlyrics) alternatively [ESLyric](https://github.com/ESLyric/release)  
+Optional: [Waveform minibar (mod)](https://www.foobar2000.org/components/view/foo_wave_minibar_mod) | [Scrobble](https://www.foobar2000.org/components/view/foo_scrobble) | foo_lastfm_playcount_sync
 
 **Packages**  
 Required: [Biography](https://github.com/Wil-B/Biography)  
-
 Optional: [Library Tree](https://github.com/Wil-B/Library-Tree) | [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) (3.0.0)
 
 # Installation
-**NOTE:**  
-fcl presets can lag behind script updates, this might cause little bugs caused by incorrect/old properties.  
-To fix these if applicable: Right click issue panel -> Panel Properties -> clear -> apply -> reconfigure to taste
-
 **Instructions**  
 Skip to step 3 if required components are already installed.  
 
@@ -45,10 +38,14 @@ Skip to step 3 if required components are already installed.
 4.  Place the "Poobar" folder in the samples directory. Typically located at:
     - Normal: C:\Users\[Username]\AppData\Roaming\foobar2000-v2\user-components-x64\foo_uie_jsplitter\samples
     - Portable: foobar2000\profile\user-components-x64\foo_uie_jsplitter\samples  
-5.  Import fcl layout: Preferences -> Columns UI -> Import configuration -> poobar_filter
+5.  Import fcl layout: Preferences -> Columns UI -> Main -> Import configuration -> poobar_filter
     - _library if LibTree is desired else _filter
     - _wmm contains Waveform minibar (mod)
     - _naws contains a JSplitter with NAWS-SMP  
+
+    **NOTE:**  
+fcl presets can lag behind script updates, this might cause little bugs caused by incorrect/old properties.  
+To fix these if applicable: Right click issue panel -> Panel Properties -> clear -> apply -> reconfigure to taste
 
 **Errors**  
 _library & _naws presets contain JSplitters that will throw an error if their respective packages aren't present:
@@ -66,7 +63,8 @@ _library & _naws presets contain JSplitters that will throw an error if their re
 Memory usage spikes when playing tracks with high res (example: 3k) album art. This has been partially optimized by removing redundant panels in a previous update.  
 
 **Customizing:**  
-* Right click panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.  
+* Right click panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.
+* Component recomendations for customizing the title bar: [UI-Wizard](https://github.com/The-Wizardium/UI-Wizard/) | [foo_openhacks](https://github.com/ttsping/foo_openhacks) | UI Hacks (32-bit)
 
 **Stats tracking:**  
 * Playcount toggle in PL view: foo_playcount or lastfm_playcount. Both components store their own local DB.

@@ -1,6 +1,7 @@
 ﻿'use strict';
 
-window.DefineScript('Fluent Control Panel 0.9', {author:'eurekagliese', options:{grab_focus:false}});
+// This script is a modified version of Fluent Control Panel version 0.9 by eurekagliese
+window.DefineScript('Fluent Control Panel', {author:'eurekagliese', options:{grab_focus:false}});
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
@@ -21,6 +22,7 @@ const scaler = {
 let g_hot = false;
 let seekbar_hover = false;
 let volume_hover = false;
+let runOnce = true;
 
 let ww = 0;
 let wh = 0;
@@ -56,10 +58,10 @@ let ppt = {
     // modes
     mode: new _p('_DISPLAY: Seekbar Mode', true),
     loveMode : new _p('_PROPERTY: Love Mode', false),
-    pboMode : new _p('_PROPERTY: Playback Order Button Mode', false),
+    pboMode : new _p('_PROPERTY: Playback Order Button Mode', true),
     bar_mode : new _p('_DISPLAY: Show Bar Core', false),
     roundBars : new _p('_DISPLAY: Show Rounded Bars', true),
-    // waveform height
+    // custom waveform values
     wf_coords : new _p('_PROPERTY: Custom Waveform Values Apply', false),
     wfY : new _p('_PROPERTY: Custom Waveform Position', 52),
     wfH : new _p('_PROPERTY: Custom Waveform Height', 32),
@@ -110,7 +112,11 @@ let chara = {
 	album : '\ue93c',
 	folder : '\ued25',
 };
-//////////////////////////////////////////////////////////////
+
+const pbo_chars = [chara.repeat_off, chara.repeat_all, chara.repeat_one, chara.random, chara.shuffle, chara.album, chara.folder];
+const pbo_names = ['Default', 'Repeat (playlist)', 'Repeat (track)', 'Random', 'Shuffle (tracks)', 'Shuffle (albums)', 'Shuffle (folders)'];
+
+/*=============================================================*/
 
 let panel = new _panel();
 
@@ -122,10 +128,6 @@ let isLoved = '';
 let ratingHover = false;
 
 const bs = _scale(32);
-
-// playback order
-const pbo_chars = [chara.repeat_off, chara.repeat_all, chara.repeat_one, chara.random, chara.shuffle, chara.album, chara.folder];
-const pbo_names = ['Default', 'Repeat (playlist)', 'Repeat (track)', 'Random', 'Shuffle (tracks)', 'Shuffle (albums)', 'Shuffle (folders)'];
 
 let waveformH = 0;
 let waveformY = 0;
@@ -148,8 +150,8 @@ buttons.update = () => {
     if (ppt.loveMode.enabled) {
         let lv = tfo.lov.Eval();
         buttons.buttons.love = new _button(x, y, bs, bs, {
-            normal : lv == 1 ? _chrToImg(chara.heart_on, colours.love, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font),
-            hover : lv == 1 ? _chrToImg(chara.heart_break, colours.red, fluent_font_hover) : _chrToImg(chara.heart_on, colours.love, fluent_font_hover)}, () => {
+        normal : lv == 1 ? _chrToImg(chara.heart_on, colours.love, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font),
+        hover : lv == 1 ? _chrToImg(chara.heart_break, colours.red, fluent_font_hover) : _chrToImg(chara.heart_on, colours.love, fluent_font_hover)}, () => {
             let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
             if (selected_items && selected_items.Count !== 0) {
                 let tags = {};
@@ -157,17 +159,25 @@ buttons.update = () => {
                 selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags));
                 isLoved = !isLoved;
             }
-         }, '');
+        }, '');
     } else {
-    	let fav = tfo.lfm_loved.Eval();
-    	buttons.buttons.love = new _button(x, y, bs, bs, {
-    	normal : fav == 0 ? _chrToImg(chara.heart_off, g_textcolour, fluent_font) : _chrToImg(chara.heart_on, colours.love, fluent_font),
-    	hover : fav == 0 ? _chrToImg(chara.heart_on, colours.red, fluent_font_hover) : _chrToImg(chara.heart_break, colours.love, fluent_font_hover)}, () => {
-    		let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
-    		if (selected_items && selected_items.Count !== 0) {
-    		fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items);
-    		}
-    	 }, '');
+        if (_cc('foo_lastfm_playcount_sync')) {
+           let fav = tfo.lfm_loved.Eval();
+           buttons.buttons.love = new _button(x, y, bs, bs, {
+           normal : fav == 0 ? _chrToImg(chara.heart_off, g_textcolour, fluent_font) : _chrToImg(chara.heart_on, colours.love, fluent_font),
+           hover : fav == 0 ? _chrToImg(chara.heart_on, colours.red, fluent_font_hover) : _chrToImg(chara.heart_break, colours.love, fluent_font_hover)}, () => {
+                let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
+                if (selected_items && selected_items.Count !== 0) {
+                fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items);
+                }
+            }, '');
+        } else {
+            if (runOnce) {
+                runOnce = false;
+                ppt.loveMode.enabled = true;
+                fb.ShowPopupMessage("The 'foo_lastfm_playcount_sync' component is not present.\n\nThe Like button has been set to the 'LOVED tag' mode.\nAcquire the component to use the 'last.fm sync' mode.", window.ScriptInfo.Name + ': Missing Component');
+            }
+        }
     }
 
     buttons.buttons.stop = new _button(x + bs, y, bs, bs, {normal : fb.StopAfterCurrent ? _chrToImg(chara.stop, colours.red, fluent_font) : _chrToImg(chara.stop, g_textcolour, fluent_font), hover : _chrToImg(chara.stop, g_textcolour_hl, fluent_font_hover)}, () => { fb.Stop(); }, '');
@@ -748,6 +758,7 @@ function on_mouse_rbtn_up(x, y) {
         break;
     case 114:
     case 115:
+        runOnce = true;
         ppt.loveMode.toggle();
         buttons.update();
         break;
