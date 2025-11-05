@@ -20,7 +20,7 @@ let ppt = {
     col_mode : new _p('_TAB_PROPERTY: Color Mode (1,2,3)', 1),
     orientation : new _p('_TAB_DISPLAY: Tab Orientation', false),
     fontMode : new _p ('_TAB_DISPLAY: Switch  Icon or Text Font', false),
-    bgPath : new _p('_TAB_PROPERTY: Default Wallpaper Path', ".\\user-components\\foo_uie_jsplitter\\samples\\js-smooth\\images\\default.png"),
+    bgPath : new _p('_TAB_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
 };
 
 /**

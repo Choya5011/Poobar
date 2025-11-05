@@ -17,7 +17,7 @@ let ppt = {
     col_mode : new _p('_PROPERTY: Color Mode (1,2,3)', 1),
     orientation : new _p('_DISPLAY: Tab Orientation', false),
     fontMode : new _p ('_DISPLAY: Switch  Icon or Text Font', false),
-    bgPath : new _p('_PROPERTY: Default Wallpaper Path', ".\\user-components\\foo_uie_jsplitter\\samples\\js-smooth\\images\\default.png"),
+    bgPath : new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
 };
 
 let panel = new _panel();
@@ -89,7 +89,7 @@ function on_paint(gr) {
     const tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
     const tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
 
-    if (ppt.bgShow.enabled && g_img) {
+    if (ppt.bgShow.enabled && bg_img) {
         let switchBgW = (ppt.orientation.enabled) ? TAB_W : panel.w; TAB_H;
         let switchBgH = (ppt.orientation.enabled) ? panel.h : TAB_H;
         _drawImage(gr, bg_img, 0, 0, switchBgW, switchBgH, image.crop);
@@ -98,7 +98,6 @@ function on_paint(gr) {
     }
 
     updateTabSize();
-    let tab_hl_col = g_color_selected_bg;
     for (let i = 0; i < tabs.length; i++) {
         const text = tabs[i].name;
         let font = (i === hoveredTab) ? tabFont_hover : tabFont;
@@ -109,7 +108,7 @@ function on_paint(gr) {
             const h = (i === tabs.length - 1) ? wh - TAB_H * (tabs.length - 1) : TAB_H;
             if (!ppt.bgShow.enabled) gr.FillSolidRect(0, y, TAB_W, h, g_backcolour);
             if (i === hoveredTab) gr.FillSolidRect(0, y, TAB_W, h, g_color_highlight);
-            if (i === activeTab && i !== hoveredTab) gr.FillSolidRect(0, y, TAB_W, h, tab_hl_col);
+            if (i === activeTab && i !== hoveredTab) gr.FillSolidRect(0, y, TAB_W, h, g_color_selected_bg);
             gr.GdiDrawText(text, font, tab_textCol, 0, y, TAB_W, h, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
         } else {
             // Horizontal tabs
@@ -117,7 +116,7 @@ function on_paint(gr) {
             const w = (i === tabs.length - 1) ? ww - TAB_W * (tabs.length - 1) : TAB_W;
             if (!ppt.bgShow.enabled) gr.FillSolidRect(x, 0, w, TAB_H, g_backcolour);
             if (i === hoveredTab) gr.FillSolidRect(x, 0, w, TAB_H, g_color_highlight);
-            if (i === activeTab && i !== hoveredTab) gr.FillSolidRect(x, 0, w, TAB_H, tab_hl_col);
+            if (i === activeTab && i !== hoveredTab) gr.FillSolidRect(x, 0, w, TAB_H, g_color_selected_bg);
             gr.GdiDrawText(text, font, tab_textCol, x + 5, 0, w - 10, TAB_H, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
         }
     }

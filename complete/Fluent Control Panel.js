@@ -37,6 +37,7 @@ const SF_VCENTER = 0x00000004;
 const SF_CENTER_VCENTER = SF_CENTER | SF_VCENTER;
 
 let colours = {
+    white : _RGB(255, 255, 255),
     red : _RGB(255, 0, 0),
     love : _RGB(255, 0, 0),
     seekbar_background : _RGBA(128, 128, 128, 128),
@@ -58,11 +59,15 @@ let ppt = {
     pboMode : new _p('_PROPERTY: Playback Order Button Mode', false),
     bar_mode : new _p('_DISPLAY: Show Bar Core', false),
     roundBars : new _p('_DISPLAY: Show Rounded Bars', true),
+    // waveform height
+    wf_coords : new _p('_PROPERTY: Custom Waveform Values Apply', false),
+    wfY : new _p('_PROPERTY: Custom Waveform Position', 52),
+    wfH : new _p('_PROPERTY: Custom Waveform Height', 32),
     // background
     bgShow : new _p('_DISPLAY: Show Wallpaper', true),
     bgBlur : new _p('_DISPLAY: Wallpaper Blurred', false),
     bgMode : new _p('_DISPLAY: Wallpaper Mode', false),
-    bgPath : new _p('_PROPERTY: Default Wallpaper Path', ".\\user-components\\foo_uie_jsplitter\\samples\\js-smooth\\images\\default.png"),
+    bgPath : new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
 };
 
 let tfo = {
@@ -122,11 +127,15 @@ const bs = _scale(32);
 const pbo_chars = [chara.repeat_off, chara.repeat_all, chara.repeat_one, chara.random, chara.shuffle, chara.album, chara.folder];
 const pbo_names = ['Default', 'Repeat (playlist)', 'Repeat (track)', 'Random', 'Shuffle (tracks)', 'Shuffle (albums)', 'Shuffle (folders)'];
 
+let waveformH = 0;
+let waveformY = 0;
+let waveformPanel; try { waveformPanel = window.GetPanel('Waveform minibar (mod)'); } catch (e) { waveformPanel = null; }
+
+// Initial updates
 get_colours(ppt.col_mode.value);
 panel.item_focus_change();
 update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
-
-updateNextTrackInfo(); // Initial update
+updateNextTrackInfo();
 
 buttons.update = () => {
     const x = ((panel.w - (bs * 7)) / 2);
@@ -222,12 +231,6 @@ function on_size() {
     seekbar.h = _scale(14);
     seekbar.y = panel.h * 0.6;
 
-    let waveformPanel;
-    try {
-        waveformPanel = window.GetPanel('Waveform minibar (mod)');
-    } catch (e) {
-        waveformPanel = null;
-    }
     if (ppt.mode.enabled) {
         rating.x = bx - (bs * 3);
         rating.y = seekbar.y - _scale(24);
@@ -239,14 +242,17 @@ function on_size() {
         rating.x = ppt.art.enabled && ww > scaler.s800 ? panel.h + 10 : _scale(12);
         rating.y = panel.h - _scale(25);
 
-        const waveformH = _scale(32);
-        const waveformY = panel.h * 0.45;
+        waveformH = panel.w >= scaler.s1080 && ppt.wf_coords.enabled ? _scale(ppt.wfH.value) : _scale(32);
+        waveformY = panel.w >= scaler.s1080 && ppt.wf_coords.enabled ? _scale(ppt.wfY.value) : _scale((panel.h / 2) - (waveformH / 2));
+
         if (waveformPanel) {
             waveformPanel.Move(seekbar.x - _scale(40), waveformY, seekbar.w + _scale(80), waveformH, true);
             waveformPanel.SupportPseudoTransparency = true;
             waveformPanel.ShowCaption = false;
             waveformPanel.Hidden = false;
             waveformPanel.Locked = true;
+        } else {
+            console.log('Fluent Control Panel: No Waveform panel titled "Waveform minibar (mod)" found');
         }
     }
 
@@ -269,6 +275,7 @@ function on_paint(gr) {
 
     buttons.paint(gr);
 
+    gr.SetSmoothingMode(2);
     let bar_h = _scale(4);
     let radius = bar_h / 2;
     //seekbar_bg
@@ -278,6 +285,10 @@ function on_paint(gr) {
         } else {
             gr.FillSolidRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, colours.seekbar_background);
         }
+    } else if (!waveformPanel) {
+        gr.FillRoundRect(seekbar.x, waveformY, seekbar.w, waveformH, 10, 10, colours.red);
+        gr.GdiDrawText('No waveform panel present', panel.fonts.title, g_textcolour, seekbar.x, panel.h - 30, seekbar.w, waveformH, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
+        gr.GdiDrawText('Preferences -> Display -> Columns UI -> Layout -> JSplitter titled Fluent Control Panel -> Right click -> Insert panel ->\nWaveform minibar (mod) IF OTHER waveform panel set CUI custom title to Waveform minibar (mod) ', panel.fonts.normal, colours.white, seekbar.x, waveformY, seekbar.w, waveformH, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
     }
     // test for playback time repaint
     // gr.FillSolidRect(bx - (bs * 4), _scale(12), _scale(72), _scale(18), colours.red);
@@ -321,7 +332,6 @@ function on_paint(gr) {
             }
         }
 
-        gr.SetSmoothingMode(2);
         // seekbar
         if (fb.PlaybackLength > 0) {
             const pos = seekbar.pos();
