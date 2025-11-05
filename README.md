@@ -114,7 +114,7 @@ If the title of any of these are changed & the MP script isn't adjusted for it t
 # Gallery
 **Modded Fluent Control Panel**  
 Adjusts item placement based on panel size.  
-Clicking the album art will perform a media library search on the artist.
+Clicking the album art will perform a media library search on the artist.  
 ![Control Panel: Seekbar](gallery/control_panel_sb.png)
 ![Control Panel: Waveform](gallery/control_panel_wf.png)
 
@@ -124,7 +124,7 @@ Adjusts tabs to take all horizontal/vertical space.
 ![Tabs: Vertical/Horizontal](gallery/tabs.png)
 
 **Mini Player**  
-if window gets small enough. Smaller state yet to be added.
+If window gets small enough. Smaller state yet to be added.  
 ![Tabs: Vertical/Horizontal](gallery/mini_player.png)
 ---
 Credits to the original authors of any modified scripts. Names can be found in their respective scripts.
