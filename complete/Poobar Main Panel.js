@@ -85,6 +85,14 @@ const checkSizeAndRatio = (wh, ww, targetRatio, tolerance = 0.20) => {
   return false;
 };
 
+function debounce(func, delay) {
+  let timeoutId;
+  return function(...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
 function on_size(width, height) {
     panel.size();
 
