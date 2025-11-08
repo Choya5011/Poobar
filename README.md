@@ -1,9 +1,10 @@
-A crappy responsive [Spider Monkey Panel](https://github.com/TheQwertiest/foo_spider_monkey_panel) based foobar2000 theme (CUI).  
-This theme is supported in foobar2000 32-bit & 64-bit.
+A crappy responsive [Spider Monkey Panel](https://github.com/TheQwertiest/foo_spider_monkey_panel) based foobar2000 theme (CUI). This theme is supported in 32-bit & 64-bit.  
+For installation refer to [Installation](#installation) & [Components & Packages](#components--packages). The rest can be ignored.
 
 # Preview
 ![Preview](gallery/preview.png)  
-Responds to window size & seamlessly snaps to Windows 11 snap layouts.
+Responds to window size & seamlessly snaps to Windows 11 snap layouts.  
+[Gallery](#gallery)
 
 # Modularity
 This repo aims to provide a basic customization guide for fb2k & component suggestions for achieving this.  
@@ -60,7 +61,16 @@ _library & _naws presets contain JSplitters that will throw an error if their re
 
 # Useful to know
 ## General
-Memory usage spikes when playing tracks with high res (example: 3k) album art. This has been partially optimized by removing redundant panels in a previous update.  
+Memory usage spikes when playing tracks with high-res album art (e.g., 3k). This was partly optimized by removing redundant panels.  
+Note enabling album art in OpenLyrics increases memory use:    
+
+| Resolution | Memory | OpenLyrics AA |
+|------------|--------|---------------|
+| 600        | ~140   | yes           |
+| 1200       | ~160   | yes           |
+| 3000       | ~220   | yes           |
+| 3600       | ~290   | no            |
+| 3600       | ~340   | yes           |
 
 **Customizing:**  
 * Right click panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.
@@ -91,8 +101,7 @@ Memory usage spikes when playing tracks with high res (example: 3k) album art. T
 3. If ever locked out of access to preferences button: ctrl + p
 
 ## Main Panel
-All panels are placed inside one main JSplitter with the MP script as panel placement script.  
-This method can be a bit taxing on the CPU when resizing the window. Windows 11 snap layouts make this less noticeable.  
+All panels are placed inside one main JSplitter with the MP script as panel placement script.   
 
 Relies on (custom) panel title to place panels. These are accessible inside the CUI layout editor.  
 The main panel currently has 4 panels it looks out for titled:
