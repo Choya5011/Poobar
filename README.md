@@ -62,15 +62,15 @@ _library & _naws presets contain JSplitters that will throw an error if their re
 # Useful to know
 ## General
 Memory usage spikes when playing tracks with high-res album art (e.g., 3k). This was partly optimized by removing redundant panels.  
-Note enabling album art in OpenLyrics increases memory use:    
+Note enabling album art in OpenLyrics increases memory use. Following stats are at 1440p monitor res:    
 
-| Resolution | Memory | OpenLyrics AA |
-|------------|--------|---------------|
-| 600        | ~140   | yes           |
-| 1200       | ~160   | yes           |
-| 3000       | ~220   | yes           |
-| 3600       | ~290   | no            |
-| 3600       | ~340   | yes           |
+| AA Res | Mem (MB) | OpenLyrics AA |
+|--------|----------|---------------|
+| 600    | ~140     | yes           |
+| 1200   | ~160     | yes           |
+| 3000   | ~220     | yes           |
+| 3600   | ~290     | no            |
+| 3600   | ~340     | yes           |
 
 **Customizing:**  
 * Right click panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.
