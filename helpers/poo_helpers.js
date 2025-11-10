@@ -17,17 +17,19 @@ function update_album_art(bgShow, bgMode, bgBlur, bgPath, art) {
     if (metadb) {
        if (bgShow) {
           bg_img = bgMode ? gdi.Image(bgPath) : utils.GetAlbumArtV2(metadb, 0);
-          if (art && !bgMode) {
-              g_img = bg_img.Clone(0, 0, bg_img.Width, bg_img.Height);
-              const r = g_img_res / g_img.Width;
-              g_img = g_img.Resize(g_img_res, g_img.Height * r, 2); apply_corners_mask(g_img, 0.1);
-          }
+          if (bg_img) {
+              if (art && !bgMode) {
+                  g_img = bg_img.Clone(0, 0, bg_img.Width, bg_img.Height);
+                  const r = g_img_res / g_img.Width;
+                  g_img = g_img.Resize(g_img_res, g_img.Height * r, 2); apply_corners_mask(g_img, 0.1);
+              }
 
-          // attempt to reduce RAM usage by reducing res; experimental/marginal results
-          bg_img_res = bgBlur ? 200 : (bg_img.Width > 1280 ? 1280 : bg_img.Width);
-          const r = bg_img_res / bg_img.Width;
-          bg_img = bg_img.Resize(bg_img_res, bg_img.Height * r, 2);
-          if (bgBlur) bg_img.StackBlur(24);
+              // attempt to reduce RAM usage by reducing res; experimental/marginal results
+              bg_img_res = bgBlur ? 200 : (bg_img.Width > 1280 ? 1280 : bg_img.Width);
+              const r = bg_img_res / bg_img.Width;
+              bg_img = bg_img.Resize(bg_img_res, bg_img.Height * r, 2);
+              if (bgBlur) bg_img.StackBlur(24);
+          }
        }
 
        if ((art && bgShow && bgMode) || (art && !bgShow)) {

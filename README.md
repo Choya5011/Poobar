@@ -37,12 +37,12 @@ Skip to step 3 if required components are already installed.
 2.  Set display to CUI if not yet set: Preferences -> Display -> User Interface Module -> Columns UI -> restart  
 3.  Download Poobar: Code -> Download zip -> right click zip archive ->  7-zip (or archiver of choice) -> extract here -> rename Poobar-main to Poobar 
 4.  Place the "Poobar" folder in the samples directory. Typically located at:
-    - Normal: C:\Users\[Username]\AppData\Roaming\foobar2000-v2\user-components-x64\foo_uie_jsplitter\samples
+    - Normal: C:\Users\\[Username]\AppData\Roaming\foobar2000-v2\user-components-x64\foo_uie_jsplitter\samples
     - Portable: foobar2000\profile\user-components-x64\foo_uie_jsplitter\samples  
 5.  Import fcl layout: Preferences -> Columns UI -> Main -> Import configuration -> poobar_filter
     - _library if LibTree is desired else _filter
     - _wmm contains Waveform minibar (mod)
-    - _naws contains a JSplitter with NAWS-SMP  
+    - _naws contains a JSplitter with NAWS-SMP
 
     **NOTE:**  
 fcl presets can lag behind script updates, this might cause little bugs caused by incorrect/old properties.  
@@ -71,6 +71,8 @@ Note enabling album art in OpenLyrics increases memory use. Following stats are 
 | 3000   | ~220     | yes           |
 | 3600   | ~290     | no            |
 | 3600   | ~340     | yes           |
+
+Alternatively use the ESLyric preset which is more optimized for memory.
 
 **Customizing:**  
 * Right click panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.
