@@ -305,6 +305,7 @@ function on_mouse_rbtn_up(x, y) {
         //ppt.col_mode.value = 1;
         get_colours(ppt.col_mode.value, true);
         update_album_art_pt();
+        refresh_pt_panel();
         window.Repaint();
         break;
     case 111:
@@ -366,12 +367,16 @@ function on_playback_new_track() {
     //get_colours(ppt.col_mode.value, true);
     update_album_art_pt();
 
+    refresh_pt_panel();
+}
+
+function refresh_pt_panel() {
     const p = window.GetPanelByIndex(tabs[activeTab].index);
-    //if (p.Name === 'ESLyric') { update_album_art_pt(true); } else { update_album_art_pt(); }
     if (ptArr.includes(p.Text)) {
         p.Hidden = true;
         p.Hidden = false;
     }
+    //if (p.Name === 'ESLyric') { update_album_art_pt(true); } else { update_album_art_pt(); }
 }
 
 function get_font() {
