@@ -2127,10 +2127,6 @@ function get_font() {
 	};
 };
 
-function _RGBA(r, g, b, a) {
-	return a << 24 | r << 16 | g << 8 | b;
-}
-
 function get_colors() {
 	let arr;
 	let nowPlayingColours = [];
@@ -2143,15 +2139,15 @@ function get_colors() {
 	g_syscolor_button_txt = utils.GetSysColour(COLOR_BTNTEXT);
 
 	arr = window.GetProperty("CUSTOM COLOR TEXT NORMAL", "180-180-180-255").split("-");
-	g_color_normal_txt = _RGBA(arr[0], arr[1], arr[2], arr[3]);
+	g_color_normal_txt = RGBA(arr[0], arr[1], arr[2], arr[3]);
 	arr = window.GetProperty("CUSTOM COLOR TEXT SELECTED", "000-000-000-255").split("-");
-	g_color_selected_txt = _RGBA(arr[0], arr[1], arr[2], arr[3]);
+	g_color_selected_txt = RGBA(arr[0], arr[1], arr[2], arr[3]);
 	arr = window.GetProperty("CUSTOM COLOR BACKGROUND NORMAL", "025-025-035").split("-");
-	g_color_normal_bg = _RGBA(arr[0], arr[1], arr[2], arr[3]);
+	g_color_normal_bg = RGBA(arr[0], arr[1], arr[2], arr[3]);
 	arr = window.GetProperty("CUSTOM COLOR BACKGROUND SELECTED", "015-177-255-255").split("-");
-	g_color_selected_bg = _RGBA(arr[0], arr[1], arr[2], arr[3]);
+	g_color_selected_bg = RGBA(arr[0], arr[1], arr[2], arr[3]);
 	arr = window.GetProperty("CUSTOM COLOR HIGHLIGHT", "255-175-050-255").split("-");
-	g_color_highlight = _RGBA(arr[0], arr[1], arr[2], arr[3]);
+	g_color_highlight = RGBA(arr[0], arr[1], arr[2], arr[3]);
 
 	// get custom colors from window ppt first
 	if (ppt.col_mode !== 3) {
@@ -2164,9 +2160,9 @@ function get_colors() {
                 g_color_selected_bg = window.GetColourCUI(ColorTypeCUI.selection_background);
                 g_color_highlight = window.GetColourCUI(ColorTypeCUI.active_item_frame);
 		    } else if (ppt.col_mode === 2) {
-                g_color_normal_txt = nowPlayingColours[1];
+		        bgAlpha = window.GetProperty('_PROPERTY: Background Color Alpha (0-255)');
+                g_color_normal_txt = bgAlpha < 128 ? RGB(255, 255, 255) : nowPlayingColours[1];
                 g_color_selected_txt = nowPlayingColours[3];
-                bgAlpha = window.GetProperty('_PROPERTY: Background Color Alpha (0-255)');
                 g_color_normal_bg = setAlpha(nowPlayingColours[0], bgAlpha);
                 g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
                 g_color_highlight = setAlpha(nowPlayingColours[2], 200);
@@ -2180,9 +2176,9 @@ function get_colors() {
                 g_color_selected_bg = g_color_selected_txt;
                 g_color_highlight = window.GetColourDUI(ColorTypeDUI.highlight);
 		    } else if (ppt.col_mode === 2) {
-		        g_color_normal_txt = nowPlayingColours[1];
+		        bgAlpha = window.GetProperty('_PROPERTY: Background Color Alpha (0-255)');
+		        g_color_normal_txt = bgAlpha < 128 ? RGB(255, 255, 255) : nowPlayingColours[1];
                 g_color_selected_txt = nowPlayingColours[3];
-                bgAlpha = window.GetProperty('_PROPERTY: Background Color Alpha (0-255)');
                 g_color_normal_bg = setAlpha(nowPlayingColours[0], bgAlpha);
                 g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
                 g_color_highlight = setAlpha(nowPlayingColours[2], 200);

@@ -19,6 +19,7 @@ let ppt = {
     bgBlur : new _p('_DISPLAY: Wallpaper Blurred', false),
     bgMode : new _p('_DISPLAY: Wallpaper Mode', false),
     col_mode : new _p('_PROPERTY: Color Mode (1,2,3)', 1),
+    overlay : new _p('_DISPLAY: Show tab shadow/overlay', true),
     orientation : new _p('_DISPLAY: Tab Orientation', false),
     fontMode : new _p ('_DISPLAY: Switch  Icon or Text Font', false),
     bgPath : new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
@@ -117,11 +118,9 @@ function on_paint(gr) {
 
     const switchBgW = (ppt.orientation.enabled) ? TAB_W : panel.w; TAB_H;
     const switchBgH = (ppt.orientation.enabled) ? panel.h : TAB_H;
-    if (ppt.bgShow.enabled || ppt.bgBlur.enabled) {
-        //const overlayColor = setAlpha(g_textcolour_hl, 128);
-        const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
-        if (p.Name !== 'ESLyric') gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor);
-    }
+    //const overlayColor = setAlpha(g_textcolour_hl, 128);
+    const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
+    if (p.Text === '') { gr.FillSolidRect(0, 0, panel.w, panel.h, overlayColor); } else if (p.Name !== 'ESLyric' && ppt.overlay.enabled && (ppt.bgShow.enabled || ppt.bgBlur.enabled)) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); }
 
     if (bg_img && (ppt.bgBlur.enabled || ppt.bgMode.enabled)) {
         _drawImage(gr, bg_img, 0, 0, switchBgW, switchBgH, image.crop);

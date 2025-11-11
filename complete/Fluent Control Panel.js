@@ -131,7 +131,7 @@ const bs = _scale(32);
 
 let waveformH = 0;
 let waveformY = 0;
-let waveformPanel; try { waveformPanel = window.GetPanel('Waveform minibar (mod)'); } catch (e) { waveformPanel = null; }
+let waveformPanel; try { waveformPanel = window.GetPanelByIndex(0); } catch (e) { waveformPanel = null; }
 
 // Initial updates
 get_colours(ppt.col_mode.value);
@@ -262,7 +262,7 @@ function on_size() {
             waveformPanel.Hidden = false;
             waveformPanel.Locked = true;
         } else {
-            console.log('Fluent Control Panel: No Waveform panel titled "Waveform minibar (mod)" found');
+            console.log(window.ScriptInfo.Name + ': Missing Panel \nNo Waveform panel found: make sure the waveform panel is the topmost panel inside the control panel');
         }
     }
 
@@ -297,8 +297,8 @@ function on_paint(gr) {
         }
     } else if (!waveformPanel) {
         gr.FillRoundRect(seekbar.x, waveformY, seekbar.w, waveformH, 10, 10, colours.red);
-        gr.GdiDrawText('No waveform panel present', panel.fonts.title, g_textcolour, seekbar.x, panel.h - 30, seekbar.w, waveformH, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
-        gr.GdiDrawText('Preferences -> Display -> Columns UI -> Layout -> JSplitter titled Fluent Control Panel -> Right click -> Insert panel ->\nWaveform minibar (mod) IF OTHER waveform panel set CUI custom title to Waveform minibar (mod) ', panel.fonts.normal, colours.white, seekbar.x, waveformY, seekbar.w, waveformH, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
+        gr.GdiDrawText('No waveform panel present', panel.fonts.title, colours.white, seekbar.x, waveformY, seekbar.w, waveformH, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
+        gr.GdiDrawText('Preferences -> Display -> Columns UI -> Layout -> JSplitter titled Fluent Control Panel -> Right click -> Insert panel -> Waveform panel of choice', panel.fonts.normal, colours.white, seekbar.x, waveformY + 18, seekbar.w, waveformH, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
     }
     // test for playback time repaint
     // gr.FillSolidRect(bx - (bs * 4), _scale(12), _scale(72), _scale(18), colours.red);

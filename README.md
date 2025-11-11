@@ -13,8 +13,9 @@ This repo aims to provide a basic customization guide for fb2k & component sugge
 * The main panel is the blueprint for the layout & controls panel placement within the main JSplitter
     * Can be used to easily make other themes responsive with some modding
     * Panels can be swapped out if the same title is kept or if the script is modified
-    * Refer to [Useful to know](#useful-to-know) for further info on main panel
 * Panels within the tab script/panel are not hardcoded, they can be edited.
+
+Refer to the readme inside the 'complete' directory where the scripts are located for further info on the scripts.
 
 # Components & Packages
 **Fonts**  
@@ -55,25 +56,10 @@ _library & _naws presets contain JSplitters that will throw an error if their re
 
 **Waveform Notes**  
    - Waveform minibar (mod) Transparency: preferences -> tools -> Waveform Minibar (mod) -> Transparent background (requires CUI)
-   - If using a waveform component that is not Waveform minibar (mod) set the CUI custom title of the panel to 'Waveform minibar (mod)' 
    - NAWS-SMP can be more taxing than Waveform minibar (mod). Configure it to use the least resources.
    - NAWS-SMP also seems incapable of analyzing tracks whose titles contain characters (JP,KR,CN) in Audiowaveform mode.
 
 # Useful to know
-## General
-Memory usage spikes when playing tracks with high-res album art (e.g., 3k). This was partly optimized by removing redundant panels.  
-Note enabling album art in OpenLyrics increases memory use. Following stats are at 1440p monitor res:    
-
-| AA Res | Mem (MB) | OpenLyrics AA |
-|--------|----------|---------------|
-| 600    | ~140     | yes           |
-| 1200   | ~160     | yes           |
-| 3000   | ~220     | yes           |
-| 3600   | ~290     | no            |
-| 3600   | ~340     | yes           |
-
-Alternatively use the ESLyric preset which is more optimized for memory.
-
 **Customizing:**  
 * Right click panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.
 * Component recomendations for customizing the title bar: [UI-Wizard](https://github.com/The-Wizardium/UI-Wizard/) | [foo_openhacks](https://github.com/ttsping/foo_openhacks) | UI Hacks (32-bit)
@@ -102,34 +88,13 @@ Alternatively use the ESLyric preset which is more optimized for memory.
 2. If monitor resolution is changed while foobar is open restart to refresh.
 3. If ever locked out of access to preferences button: ctrl + p
 
-## Main Panel
-All panels are placed inside one main JSplitter with the MP script as panel placement script.   
-
-Relies on (custom) panel title to place panels. These are accessible inside the CUI layout editor.  
-The main panel currently has 4 panels it looks out for titled:
-* 'Fluent Control Panel'
-* '' (Playlist View: Segoe Fluent Icons MusicNote, unicode: ec4f)
-* '' (Tab Stack: Segoe Fluent Icons MapLayers, unicode: e81e)
-* 'Smooth Browser'
-
-If the title of any of these are changed & the MP script isn't adjusted for it the MP can not fetch the panel.
-
-**Customization:**  
-* The script contains 5 elif blocks for 5 different window states, what's set in these blocks determines panel placement per window state.
-* For basic layout adjustment such as adjusting control panel height the main panels properties need to be accessed:
-   * Preferences -> Display -> Columns UI -> Layout -> select topmost JSplitter -> Configure panel... -> Properties
-   * This provides 4 basic adjustments, deeper layout adjustment requires editing the script.
-
 # Gallery
-**Modded Fluent Control Panel**  
-Adjusts item placement based on panel size.  
-Clicking the album art will perform a media library search on the artist.  
+**Fluent Control Panel**
 ![Control Panel: Seekbar](gallery/control_panel_sb.png)
 ![Control Panel: Waveform](gallery/control_panel_wf.png)
 
 **Tabs**  
-Scales with tab panel size.  
-Adjusts tabs to take all horizontal/vertical space.  
+ 
 ![Tabs: Vertical/Horizontal](gallery/tabs.png)
 
 **Mini Player**  
