@@ -310,12 +310,14 @@ function on_mouse_rbtn_up(x, y) {
     case 111:
         ppt.bgBlur.toggle();
         update_album_art_pt();
+        refresh_pt_panel();
         window.Repaint();
         break;
     case 112:
     case 113:
         ppt.bgMode.toggle();
         update_album_art_pt();
+        refresh_pt_panel();
         window.Repaint();
         break;
     case 210:
