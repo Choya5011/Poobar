@@ -1,5 +1,5 @@
 A crappy responsive [Spider Monkey Panel](https://github.com/TheQwertiest/foo_spider_monkey_panel) based foobar2000 theme (CUI). This theme is supported in 32-bit & 64-bit.  
-For installation refer to [Installation](#installation) & [Components & Packages](#components--packages). The rest can be ignored.
+For installation refer to [Components & Packages](#components--packages) & [Installation](#installation). The rest can be ignored.
 
 # Preview
 ![Preview](gallery/preview.png)  
@@ -98,7 +98,7 @@ _library & _naws presets contain JSplitters that will throw an error if their re
 ![Tabs: Vertical/Horizontal](gallery/tabs.png)
 
 **Mini Player**  
-If window gets small enough. Smaller state yet to be added. 
+If window gets small enough. Smallest state is Fluent Control Panel only. 
 ![Mini player](gallery/mini_player.png)
 
 ---

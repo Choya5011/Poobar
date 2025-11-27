@@ -31,6 +31,8 @@ let ppt = {
 const scaler = {
     s300: _scale(225),
     s320: _scale(240),
+    s380: _scale(285),
+    s400: _scale(300),
     s600: _scale(450),
     s730: _scale(547.5),
     s800: _scale(600),
@@ -99,11 +101,12 @@ function on_size(width, height) {
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
+    console.log(wh);
 
     const psH = (wh <= scaler.s730 && ww > scaler.s800) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value; // tabStack/playlistView placement ratio in horizontal orientation (.5 splitscreen)
     let psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value; // (tabStack & smoothBrowser)/playlistView placement ratio in vertical orientation
 
-	if (checkSizeAndRatio(ww, wh, 16 / 9, 0.2) || checkSizeAndRatio(ww, wh, 3, 0.3) || checkSizeAndRatio(ww, wh, 11.11, 0.4) || checkSizeAndRatio(ww, wh, 5.4, 0.2))  {
+	if ((checkSizeAndRatio(ww, wh, 16 / 9, 0.2) || checkSizeAndRatio(ww, wh, 3, 0.3) || checkSizeAndRatio(ww, wh, 11.11, 0.4) || checkSizeAndRatio(ww, wh, 5.4, 0.2)) && wh > scaler.s380)  {
 	    // Horizontal view
 	    if (fluentControlPanel) {
             fluentControlPanel.Move(0, wh - cpH, ww, cpH);
@@ -151,7 +154,7 @@ function on_size(width, height) {
             playlistView.Locked = true;
             playlistView.Hidden = false;
         }
-    } else if (ww <= scaler.s600 && wh <= scaler.s730 || ww < scaler.s320) {
+    } else if ((ww <= scaler.s600 && wh <= scaler.s730 || ww < scaler.s320) && wh > scaler.s400) {
         // Mini player view
         initTabs(ignore);
         updateTabSize();
@@ -180,6 +183,23 @@ function on_size(width, height) {
         if (smoothBrowser) smoothBrowser.Hidden = true;
 
         window.Repaint();
+    } else if (wh <= scaler.s400) {
+        // Mini player 2: Control Panel Only
+        initTabs([3]);
+
+        for (let i = 0; i < tabs.length; i++) {
+            const p = window.GetPanelByIndex(tabs[i].index);
+            if (p) {
+                p.Hidden = true;
+            }
+        }
+
+        if (fluentControlPanel) {
+            fluentControlPanel.Move(0, 0, ww, wh);
+            fluentControlPanel.ShowCaption = false;
+            fluentControlPanel.Locked = true;
+            fluentControlPanel.Hidden = false;
+        }
     } else if (checkSizeAndRatio(wh, ww, 16 / 9, 0.4) && ww > scaler.s600 && wh > scaler.s730 || checkSizeAndRatio(wh, ww, 1.36, 0.3)) {
         // Normal vertical view
         if (fluentControlPanel) {

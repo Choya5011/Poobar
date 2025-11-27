@@ -311,18 +311,22 @@ function on_paint(gr) {
             ratingHover = false;
         }
 
+        let size; let art_x; let art_y;
         if (ppt.art.enabled && g_img && ww > scaler.s800) {
-            const size = panel.h * 0.86
-            _drawImage(gr, g_img, panel.h * 0.06, panel.h * 0.074, size, size, image.crop_top);
+            size = Math.min(seekbar.x - _scale(46), panel.h * 0.86);
+            art_x = panel.h * 0.06
+            art_y = panel.h * 0.5 - size / 2
+            _drawImage(gr, g_img, art_x, art_y, size, size, image.crop_top);
         }
 
         // Track information
+        const track_info_x = (ppt.art.enabled && ww > scaler.s800) ? art_y + size + 10 : _scale(12);
         if (ppt.mode.enabled && panel.w > scaler.s600) {
-    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, (ppt.art.enabled && ww > scaler.s800) ? panel.h + 10 : _scale(12), cy + _scale(4), (ppt.art.enabled && ww > scaler.s800) ? panel.w /5 : panel.w /4, 0, LEFT);
-    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  (ppt.art.enabled && ww > scaler.s800) ? panel.h + 10 : _scale(12), cy + _scale(28), (ppt.art.enabled && ww > scaler.s800) ? panel.w /9 : seekbar.x - panel.h - _scale(4), 0, LEFT);
+    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, cy + _scale(4), (ppt.art.enabled && ww > scaler.s800) ? panel.w /5 : panel.w /4, 0, LEFT);
+    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, cy + _scale(28), (ppt.art.enabled && ww > scaler.s800) ? panel.w /9 : seekbar.x - panel.h - _scale(4), 0, LEFT);
         } else if (panel.w > scaler.s600) {
-            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, (ppt.art.enabled && ww > scaler.s800) ? panel.h + 10 : _scale(12), _scale(11), (ppt.art.enabled && ww > scaler.s800) ? panel.w / 4.7 : panel.w /4, _scale(18), LEFT);
-            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  (ppt.art.enabled && ww > scaler.s800) ? panel.h + 10 : _scale(12), Math.round((panel.h - _scale(18)) / 2), (ppt.art.enabled && ww > scaler.s800) ? panel.w * 0.13 : panel.w * 0.23, _scale(18), LEFT);
+            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, _scale(11), (ppt.art.enabled && ww > scaler.s800) ? panel.w / 4.7 : panel.w /4, _scale(18), LEFT);
+            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, Math.round((panel.h - _scale(18)) / 2), (ppt.art.enabled && ww > scaler.s800) ? panel.w * 0.13 : panel.w * 0.23, _scale(18), LEFT);
         }
 
         // Draw the next track information
@@ -805,6 +809,7 @@ function on_mouse_rbtn_up(x, y) {
     case 312:
     case 313:
         ppt.bgMode.toggle();
+        if (ppt.bgMode.enabled && ppt.bgPath.value === "path\\to\\custom\\image") window.ShowProperties();
         update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
         window.Repaint();
         break;

@@ -316,6 +316,7 @@ function on_mouse_rbtn_up(x, y) {
     case 112:
     case 113:
         ppt.bgMode.toggle();
+        if (ppt.bgMode.enabled && ppt.bgPath.value === "path\\to\\custom\\image") window.ShowProperties();
         update_album_art_pt();
         refresh_pt_panel();
         window.Repaint();
