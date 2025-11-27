@@ -27,8 +27,8 @@ Required: [Columns UI](https://www.foobar2000.org/components/view/foo_ui_columns
 Optional: [Waveform minibar (mod)](https://www.foobar2000.org/components/view/foo_wave_minibar_mod) | [Scrobble](https://www.foobar2000.org/components/view/foo_scrobble) | foo_lastfm_playcount_sync
 
 **Packages**  
-Required: [Biography](https://github.com/Wil-B/Biography)  
-Optional: [Library Tree](https://github.com/Wil-B/Library-Tree) | [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP)
+Required: [Biography](https://hydrogenaudio.org/index.php/topic,112914.msg1071222.html#msg1071222)  
+Optional: [Library Tree](https://hydrogenaudio.org/index.php/topic,111060.msg1072806.html#msg1072806) | [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP)
 
 # Installation
 **Instructions**  
@@ -56,8 +56,7 @@ _library & _naws presets contain JSplitters that will throw an error if their re
 
 **Waveform Notes**  
    - Waveform minibar (mod) Transparency: preferences -> tools -> Waveform Minibar (mod) -> Transparent background (requires CUI)
-   - NAWS-SMP can be more taxing than Waveform minibar (mod). Configure it to use the least resources.
-   - NAWS-SMP also seems incapable of analyzing tracks whose titles contain characters (JP,KR,CN) in Audiowaveform mode.
+   - NAWS-SMP seems incapable of analyzing tracks whose titles contain characters (JP,KR,CN) in Audiowaveform mode.
 
 # Useful to know
 **Customizing:**  
