@@ -56,7 +56,6 @@ _library & _naws presets contain JSplitters that will throw an error if their re
 
 **Waveform Notes**  
    - Waveform minibar (mod) Transparency: preferences -> tools -> Waveform Minibar (mod) -> Transparent background (requires CUI)
-   - NAWS-SMP seems incapable of analyzing tracks whose filenames contain characters (JP,KR,CN) in Audiowaveform mode.
 
 # Useful to know
 **Customizing:**  
