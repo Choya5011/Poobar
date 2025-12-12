@@ -1,4 +1,4 @@
-include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_col_helper.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col_helper.js');
 
 var need_repaint = false;
 
@@ -140,7 +140,7 @@ cover = {
 };
 
 images = {
-	path: fb.ComponentPath + "samples\\poobar\\js-smooth\\images\\",
+	path: fb.ProfilePath + "poobar-scripts\\poobar\\js-smooth\\images\\",
 	glass_reflect: null,
 	loading_angle: 0,
 	loading_draw: null,

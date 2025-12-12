@@ -1,4 +1,4 @@
-include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_col_helper.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col_helper.js');
 
 var need_repaint = false;
 
