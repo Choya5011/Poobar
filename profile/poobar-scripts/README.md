@@ -6,14 +6,14 @@
 
 ## Useful to know
 **Customizing:**
-* Right click panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.
+* [Right-click](#basic-jsplitter-guide) panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.
 * Component recomendations for customizing the title bar: [UI-Wizard](https://github.com/The-Wizardium/UI-Wizard/) | [foo_openhacks](https://github.com/ttsping/foo_openhacks) | UI Hacks (32-bit)
 
 **Stats tracking:**
 * Playcount toggle in PL view: foo_playcount or lastfm_playcount. Both components store their own local DB.
-* The foo_lastfm_playcount_sync compnent includes the option of syncing likes to last.fm.
 * When using the like/heart buttons make sure both the control panel (seekbar section) and the PL are set to the same mode.
-* foo_scrobble is a component that syncs playcount/scrobbles to last.fm.
+* personal rec: The foo_lastfm_playcount_sync component includes the option of syncing likes to last.fm.
+* personal rec: [foo_scrobble](https://www.foobar2000.org/components/view/foo_scrobble) is a component that syncs playcount/scrobbles to last.fm.
 
 **Lyric Components:**
 * OpenLyrics: more plug & play, included in fcl presets

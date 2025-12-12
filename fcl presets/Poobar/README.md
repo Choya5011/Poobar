@@ -25,3 +25,9 @@ The OpenLyrics presets generally consume more RAM if OpenLyric album art is enab
 | 3000   | ~220     | yes           |
 | 3600   | ~290     | no            |
 | 3600   | ~340     | yes           |
+
+**Preset naming convention**  
+_lib: genre browsing tab will be set to the library tree JSplitter package  
+_fil: genre browsing tab will be set to the default foobar Filter panel  
+_naws: Fluent Control Panel waveform will be set to Not-A-Waveform-Seekbar-SMP  
+_wmm: Fluent Control Panel waveform will be set to Waveform minibar (mod)

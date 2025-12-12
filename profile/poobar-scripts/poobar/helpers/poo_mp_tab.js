@@ -68,6 +68,8 @@ function on_paint(gr) {
     const tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
     const tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
 
+    gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
+
     if (ppt.bgShow.enabled && g_img) {
         let switchBgW = (ppt.orientation.enabled) ? TAB_W : panel.w; TAB_H;
         let switchBgH = (ppt.orientation.enabled) ? panel.h : TAB_H;
