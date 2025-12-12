@@ -14,7 +14,7 @@ This repo aims to provide a basic customization guide for fb2k, some basic scrip
     * Panels can be swapped out if the same title is kept or if the script is modified
 * Panels within the tab script/panel are not hardcoded, they can be edited.
 
-Refer to the readme inside the 'complete' folder where the scripts are located for further info on the scripts.
+Refer to this [readme](https://github.com/Choya5011/Poobar/tree/main/profile/poobar-scripts/poobar/README.md) inside the poobar directory where the scripts are located for further info.
 
 # Components & Packages
 **Fonts**  
@@ -61,34 +61,8 @@ After setup the theme is also usually set to the Not-A-Waveform-Seekbar-SMP wave
 
 If deleted the Fluent Control Panel will show an error, simply switch the seekbar mode from waveform to normal.
 
-# Useful to know
-**Customizing:**
-* Right click panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.
-* Component recomendations for customizing the title bar: [UI-Wizard](https://github.com/The-Wizardium/UI-Wizard/) | [foo_openhacks](https://github.com/ttsping/foo_openhacks) | UI Hacks (32-bit)
-
-**Stats tracking:**
-* Playcount toggle in PL view: foo_playcount or lastfm_playcount. Both components store their own local DB.
-* The foo_lastfm_playcount_sync compnent includes the option of syncing likes to last.fm.
-* When using the like/heart buttons make sure both the control panel (seekbar section) and the PL are set to the same mode.
-* foo_scrobble is a component that syncs playcount/scrobbles to last.fm.
-
-**Lyric Components:**
-* OpenLyrics: more plug & play, included in fcl presets
-* ESLyric: extremely customizable, not included in fcl presets
-* The font used for Lyrics in this theme is "UD Digi Kyokasho NP-R". To change font:
-    * OpenLyrics: Preferences -> Tools -> OpenLyrics -> Display -> check Custom font -> select font
-    * ESLyric: Richt Click -> Panel Options... -> Font & Color
-
-**Queue button instructions:**
-* left click: add
-* right click: remove
-* middle click: clear
-* select multiple tracks -> double click then right click (reason for combo: bugged/incomplete): adds tracks randomly
-
-**Troubleshooting:**
-1. If there is a pop-up about the rating each time the Fluent Control Panel script is loaded: right click the rating stars & set mode to foo_playcount or another mode of choice. This will eliminate the popup.
-2. If monitor resolution is changed while foobar is open restart to refresh.
-3. If ever locked out of access to preferences button: ctrl + p
+**Useful To Know**  
+Refer to this [readme](https://github.com/Choya5011/Poobar/tree/main/profile/poobar-scripts/poobar/README.md) inside the poobar directory.
 
 # Gallery
 **Fluent Control Panel**
