@@ -3,6 +3,7 @@
  * JSP3 Helpers by marc 2003
  * Slight modification done to GetNowPlayingColours
  */
+
 function getRed(colour) {
 	return ((colour >> 16) & 0xff);
 }
