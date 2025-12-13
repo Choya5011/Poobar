@@ -1,4 +1,6 @@
 ﻿'use strict';
+/* global panel:readable, ppt:readable, $:readable, sbar:readable, pop:readable, img:readable, but:readable, lib:readable, search:readable, setSelection:readable, ui:readable */
+/* exported Library*/
 
 class Library {
 	constructor() {
@@ -8,6 +10,7 @@ class Library {
 		this.expand = [];
 		this.filterQuery = '';
 		this.filterQueryID = 'N/A';
+		this.searchQueryID = 'N/A'; // Regorxxx <- Don't update search if possible ->
 		this.full_list = new FbMetadbHandleList();
 		this.full_list_need_sort = false;
 		this.initialised = false;
@@ -101,23 +104,26 @@ class Library {
 						// Regorxxx <- RegExp library search. Support for custom TF expression
 						const isRegExp = search.isSearchRegExp();
 						const tags = isRegExp
-							? panel.folderView 
+							? panel.folderView
 								? ['%PATH%']
 								: $.getTagsFromTf(panel.view)
 							: null;
 						const searchText = !isRegExp && !this.filterQuery.includes('$searchtext')
-							? this.processCustomTf(panel.search.txt) 
+							? this.processCustomTf(panel.search.txt)
 							: panel.search.txt;
+						this.searchQueryID = !isRegExp && !this.filterQuery.includes('$searchtext')
+							? searchText
+							: 'N/A';
 						newSearchItems = isRegExp
 							? $.applyRegExp(searchText, handleList, tags)
 							: fb.GetQueryItems(
-								handleList, 
-								!this.filterQuery.includes('$searchtext') 
-									? searchText 
+								handleList,
+								!this.filterQuery.includes('$searchtext')
+									? searchText
 									: this.filterQuery.replace(/\$searchtext/g, searchText)
 							);
 						// Regorxxx ->
-					} catch (e) {
+					} catch (e) { // eslint-disable-line no-unused-vars
 						this.validSearch = false;
 					}
 					this.binaryInsert(panel.folderView, newSearchItems, panel.list, this.searchNode);
@@ -128,7 +134,10 @@ class Library {
 						panel.treePaint();
 						this.noListUpd = true;
 					}
-				} else panel.list = this.list;
+				} else {
+					panel.list = this.list;
+					this.searchQueryID = 'N/A'; // Regorxxx <- Don't update search if possible ->
+				}
 				break;
 			}
 			default:
@@ -168,23 +177,26 @@ class Library {
 						// Regorxxx <- RegExp library search. Support for custom TF expression
 						const isRegExp = search.isSearchRegExp();
 						const tags = isRegExp
-							? panel.folderView 
+							? panel.folderView
 								? ['%PATH%']
 								: $.getTagsFromTf(panel.view)
 							: null;
 						const searchText = !isRegExp && !this.filterQuery.includes('$searchtext')
-							? this.processCustomTf(panel.search.txt) 
+							? this.processCustomTf(panel.search.txt)
 							: panel.search.txt;
+						this.searchQueryID = !isRegExp && !this.filterQuery.includes('$searchtext')
+							? searchText
+							: 'N/A';
 						newSearchItems = isRegExp
 							? $.applyRegExp(searchText, handleList, tags)
 							: fb.GetQueryItems(
-								handleList, 
-								!this.filterQuery.includes('$searchtext') 
+								handleList,
+								!this.filterQuery.includes('$searchtext')
 									? searchText
 									: this.filterQuery.replace(/\$searchtext/g, searchText)
 							);
 						// Regorxxx ->
-					} catch (e) {
+					} catch (e) { // eslint-disable-line no-unused-vars
 						this.validSearch = false;
 					}
 					panel.list.InsertRange(panel.list.Count, newSearchItems);
@@ -215,7 +227,10 @@ class Library {
 						panel.treePaint();
 						this.noListUpd = true;
 					}
-				} else panel.list = this.list;
+				} else {
+					panel.list = this.list;
+					this.searchQueryID = 'N/A'; // Regorxxx <- Don't update search if possible ->
+				}
 				break;
 		}
 	}
@@ -338,29 +353,40 @@ class Library {
 		return true;
 	}
 
-	checkFilter() {
+	// Regorxxx <- Improve filter checking based on events. Search text also triggers updates to filtering.
+	checkFilter(type) {
 		pop.cache.filter = {};
 		pop.cache.search = {};
 		this.searchCache = {};
-		// Regorxxx <- Merge now playing and selected as fallback
-		[/\$nowplaying{(.+?)}/, /\$selected{(.+?)}/, /\$nowplayingorselected{(.+?)}/].forEach((re) => {
-			if (panel.filter.mode[ppt.filterBy].type.match(re)) {
-				this.getFilterQuery();
-				if (this.filterQuery != this.filterQueryID) {
+		// Regorxxx <- Merge now playing and selected as fallback.
+		[
+			...(type === 'playback' || !type ? [/\$nowplaying{(.+?)}/] : []),
+			...(type === 'selection' || !type ? [/\$selected{(.+?)}/] : []),
+			/\$nowplayingorselected{(.+?)}/
+		].filter(Boolean).some((re) => {
+			const bSearchMatch = !ppt.searchEnter && ppt.searchRefreshTf && panel.search.txt.match(re);
+			const bFilterMatch = panel.filter.mode[ppt.filterBy].type.match(re);
+			if (bFilterMatch || bSearchMatch) {
+				if (bFilterMatch) { this.getFilterQuery(); }
+				const bFilterChanged = bFilterMatch && this.filterQuery !== this.filterQueryID;
+				const bSearchChanged = bSearchMatch && this.processCustomTf(panel.search.txt) !== this.searchQueryID;
+				if (bFilterChanged || bSearchChanged) {
 					if (!ppt.rememberTree && !ppt.reset) this.logTree();
 					else if (ppt.rememberTree) this.logFilter();
 					if (panel.search.txt) lib.upd_search = true;
 					this.getLibrary();
 					this.rootNodes(!ppt.reset ? 1 : 0, true);
-					if (!pop.notifySelection())  {
+					if (!pop.notifySelection()) {
 						const list = !panel.search.txt.length || !lib.list.Count ? lib.list : panel.list;
 						window.NotifyOthers(window.Name, ppt.filterBy ? list : new FbMetadbHandleList());
 					}
 					if (ppt.searchSend == 2 && panel.search.txt.length) pop.load({ handleList: panel.list, bAddToPls: false, bAutoPlay: false, bUseDefaultPls: true, bInsertToPls: false }); // Regorxxx <- Code cleanup ->
 					pop.checkAutoHeight();
+					return true;
 				}
 			}
-		})
+			return false;
+		});
 		// Regorxxx ->
 	}
 
@@ -368,8 +394,8 @@ class Library {
 		if (ppt.albumArtGrpLevel) return; // user set
 		// Regorxxx <- Improve view patterns. Fixed multiple bugs on automatic group handling for default view patterns and cases where a default group was not found.
 		const view = panel.grp[ppt.viewBy].type.trim();
-		const defaultView = !panel.folderView 
-			? panel.defaultViews.includes(view) 
+		const defaultView = !panel.folderView
+			? panel.defaultViews.includes(view)
 			: panel.defaultViews.length - 1;
 		if (defaultView) {
 			const lines = (panel.defViewPatterns.find((v) => v.type === view) || { lines: 1 }).lines;
@@ -391,9 +417,9 @@ class Library {
 		handleList.Convert().forEach(h => {
 			const i = this.full_list.Find(h);
 			if (i != -1) {
-				['standard', 'search','filter'].forEach(w => {
+				['standard', 'search', 'filter'].forEach(w => {
 					let keys = Object.keys(pop.cache[w]);
-					let j = keys.length
+					let j = keys.length;
 					while (j--) if (pop.cache[w][keys[j]] && pop.cache[w][keys[j]].items.includes(i)) delete pop.cache[w][keys[j]];
 				});
 			}
@@ -421,7 +447,7 @@ class Library {
 	}
 
 	checkView() {
-		const startIX = ppt.rememberView ? panel.grp.length : 0
+		const startIX = ppt.rememberView ? panel.grp.length : 0;
 		for (let i = startIX; i < 100; i++) {
 			ppt.set(`Tree.View ${$.padNumber(i, 2) + (!panel.imgView ? '' : ' Image')}`, null); // clear non-existent
 			ppt.set(`Tree.View ${$.padNumber(i, 2) + (!panel.imgView ? ' Search' : ' Image Search')}`, null); // clear non-existent
@@ -581,29 +607,29 @@ class Library {
 	isMainChanged(handleList) {
 		let i, items;
 		let tree_type = !panel.folderView ? 0 : 1;
-			switch (tree_type) { // check for changes to items; any change updates all
-				case 0: {
-					let tfo = FbTitleFormat(panel.view);
-					items = tfo.EvalWithMetadbs(handleList);
-					let ret = handleList.Convert().some((h, j) => {
-						i = this.list.Find(h);
-						if (i != -1) {
-							let libItem = [];
-							if (!panel.imgView || panel.lines != 2) libItem = this.libNode[i];
-							else {
-								libItem = this.libNode[i].slice();
-								libItem[0] = libItem[0].split('^@^');
-								libItem = libItem.flat();
-							}
-							return !$.equal(libItem, items[j].split(panel.splitter));
+		switch (tree_type) { // check for changes to items; any change updates all
+			case 0: {
+				let tfo = FbTitleFormat(panel.view);
+				items = tfo.EvalWithMetadbs(handleList);
+				let ret = handleList.Convert().some((h, j) => {
+					i = this.list.Find(h);
+					if (i != -1) {
+						let libItem = [];
+						if (!panel.imgView || panel.lines != 2) libItem = this.libNode[i];
+						else {
+							libItem = this.libNode[i].slice();
+							libItem[0] = libItem[0].split('^@^');
+							libItem = libItem.flat();
 						}
-					});
-					if (ret) return true;
-					if (ppt.itemShowStatistics < 2) return false;
-					this.checkStatistics(handleList);
-					break;
-				}
-				
+						return !$.equal(libItem, items[j].split(panel.splitter));
+					}
+				});
+				if (ret) return true;
+				if (ppt.itemShowStatistics < 2) return false;
+				this.checkStatistics(handleList);
+				break;
+			}
+
 			case 1: {
 				items = handleList.GetLibraryRelativePaths();
 				let ret = handleList.Convert().some((h, j) => {
@@ -646,7 +672,7 @@ class Library {
 		if (ppt.recItemImage && ppt.libSource == 2) ui.expandHandle = this.list.Count ? this.list[0] : null;
 		this.full_list = this.list.Clone();
 		if (this.list.Count) this.v2_init = false;
-	
+
 		if (ppt.libSource && (!this.list.Count || !fb.IsLibraryEnabled() && ppt.libSource == 1)) {
 			this.empty = ppt.libSource == 1 ? (!ppt.fixedPlaylist ? (!this.list.Count && this.v2_init ? 'Loading...\n\n' : 'Nothing to show\n\nClick here to configure the media library') : 'Nothing found\n\n') : 'Nothing received';
 			panel.treePaint();
@@ -696,7 +722,7 @@ class Library {
 					a: pop.tree[i].root || pop.tree[i].srt[0],
 					b: level != 0 ? pop.tree[pop.tree[i].par].root || pop.tree[pop.tree[i].par].srt[0] : '',
 					c: level > 1 ? pop.tree[pop.tree[pop.tree[i].par].par].root || pop.tree[pop.tree[pop.tree[i].par].par].srt[0] : ''
-				})
+				});
 			}
 		}
 		this.sortByLevel(this.expand);
@@ -709,7 +735,7 @@ class Library {
 				scr: this.scr,
 				sel: this.sel.length ? this.sel : cur_sel,
 				s_txt: panel.search.txt
-			}
+			};
 			ppt.set(this.rememberViewProp(), JSON.stringify(this.exp));
 		}
 	}
@@ -918,24 +944,27 @@ class Library {
 				// Regorxxx <- RegExp library search. Support for custom TF expression
 				const isRegExp = search.isSearchRegExp();
 				const tags = isRegExp
-					? panel.folderView 
+					? panel.folderView
 						? ['%PATH%']
 						: $.getTagsFromTf(panel.view)
 					: null;
 				const searchText = !isRegExp && !this.filterQuery.includes('$searchtext')
-					? this.processCustomTf(panel.search.txt) 
+					? this.processCustomTf(panel.search.txt)
 					: panel.search.txt;
+				this.searchQueryID = !isRegExp && !this.filterQuery.includes('$searchtext')
+					? searchText
+					: 'N/A';
 				panel.list = isRegExp
 					? $.applyRegExp(searchText, this.list, tags)
 					: fb.GetQueryItems(
-						this.getSearchList(searchText) || this.list, 
-						!this.filterQuery.includes('$searchtext') 
+						this.getSearchList(searchText) || this.list,
+						!this.filterQuery.includes('$searchtext')
 							? searchText
 							: this.filterQuery.replace(/\$searchtext/g, searchText)
 					);
 				this.searchCache[searchText] = panel.list;
 				// Regorxxx ->
-			} catch (e) {
+			} catch (e) { // eslint-disable-line no-unused-vars
 				this.list = this.list.Clone();
 				panel.list.RemoveAll();
 				this.validSearch = false;
@@ -951,6 +980,7 @@ class Library {
 			this.node = this.searchNode;
 			this.upd_search = false;
 		} else if (!panel.search.txt) {
+			this.searchQueryID = 'N/A'; // Regorxxx <- Don't update search if possible ->
 			panel.list = this.list;
 			this.node = this.libNode;
 			this.searchNode = [];
@@ -1086,7 +1116,7 @@ class Library {
 		this.checkView();
 		this.logTree();
 	}
-	
+
 	setNodes() {
 		if (panel.search.txt == '' && ppt.rememberPreSearch) {
 			ppt.set(this.rememberViewProp(), JSON.stringify({}));
@@ -1126,8 +1156,8 @@ class Library {
 			this.rootNodes(true, true);
 		} else if (!handleList) {
 			this.getLibrary();
-			this.rootNodes(true, true );
-		} else this.updateLibrary(handleList, handleType)
+			this.rootNodes(true, true);
+		} else this.updateLibrary(handleList, handleType);
 	}
 
 	updateLibrary(handleList, handleType) {
@@ -1155,7 +1185,7 @@ class Library {
 					else this.lib_update(isMainChanged);
 					break;
 				}
-				if (ppt.filterBy && !this.filterQuery.includes('$searchtext')) { // filter: check if not done 
+				if (ppt.filterBy && !this.filterQuery.includes('$searchtext')) { // filter: check if not done
 					let newFilterItems = $.query(handleList, this.filterQuery);
 					let origFilter = this.list.Clone();
 					// addns
@@ -1187,23 +1217,26 @@ class Library {
 						// Regorxxx <- RegExp library search. Support for custom TF expression
 						const isRegExp = search.isSearchRegExp();
 						const tags = isRegExp
-							? panel.folderView 
+							? panel.folderView
 								? ['%PATH%']
 								: $.getTagsFromTf(panel.view)
 							: null;
 						const searchText = !isRegExp && !this.filterQuery.includes('$searchtext')
-							? this.processCustomTf(panel.search.txt) 
+							? this.processCustomTf(panel.search.txt)
 							: panel.search.txt;
+						this.searchQueryID = !isRegExp && !this.filterQuery.includes('$searchtext')
+							? searchText
+							: 'N/A';
 						newSearchItems = isRegExp
 							? $.applyRegExp(searchText, handleList, tags)
 							: fb.GetQueryItems(
 								handleList,
-								!this.filterQuery.includes('$searchtext') 
+								!this.filterQuery.includes('$searchtext')
 									? searchText
 									: this.filterQuery.replace(/\$searchtext/g, searchText)
 							);
 						// Regorxxx ->
-					} catch (e) {
+					} catch (e) { // eslint-disable-line no-unused-vars
 						this.validSearch = false;
 					}
 					origSearch.Sort();
@@ -1218,29 +1251,32 @@ class Library {
 					// removals
 					let removeSearchItems = handleList.Clone();
 					removeSearchItems.Sort();
-					removeSearchItems.MakeIntersection(origSearch); // handles in origSearch (present in any filter)	
+					removeSearchItems.MakeIntersection(origSearch); // handles in origSearch (present in any filter)
 					this.validSearch = true;
 					try {
 						// Regorxxx <- RegExp library search. Support for custom TF expression
 						const isRegExp = search.isSearchRegExp();
 						const tags = isRegExp
-							? panel.folderView 
+							? panel.folderView
 								? ['%PATH%']
 								: $.getTagsFromTf(panel.view)
 							: null;
 						const searchText = !isRegExp && !this.filterQuery.includes('$searchtext')
-							? this.processCustomTf(panel.search.txt) 
+							? this.processCustomTf(panel.search.txt)
 							: panel.search.txt;
+						this.searchQueryID = !isRegExp && !this.filterQuery.includes('$searchtext')
+							? searchText
+							: 'N/A';
 						handlesInSearch = isRegExp
 							? $.applyRegExp(searchText, removeSearchItems, tags)
 							: fb.GetQueryItems(
-								removeSearchItems, 
-								!this.filterQuery.includes('$searchtext') 
-									? searchText 
+								removeSearchItems,
+								!this.filterQuery.includes('$searchtext')
+									? searchText
 									: this.filterQuery.replace(/\$searchtext/g, searchText)
 							);
 						// Regorxxx ->
-					} catch (e) {
+					} catch (e) { // eslint-disable-line no-unused-vars
 						this.validSearch = false;
 					}
 					handlesInSearch.Sort();
@@ -1257,7 +1293,7 @@ class Library {
 						if (ui.w < 1 || !window.IsVisible) this.upd = 2;
 						else this.lib_update();
 					}
-				}
+				} else { this.searchQueryID = 'N/A'; } // Regorxxx <- Don't update search if possible ->
 				break;
 			}
 			case 2:

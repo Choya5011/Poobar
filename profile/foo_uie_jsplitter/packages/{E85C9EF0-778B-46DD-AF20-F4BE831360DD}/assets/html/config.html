@@ -13,7 +13,7 @@
 	.tablink a:hover {padding:0.31em 2px; background-color:#777;}
 	.tablink a:focus {padding:0.31em 2px; background-color:#777;}
 	.tablink a:focus a:hover {padding:0.31em 2px; background-color:#777;}
-	.tabcontent {display:none; padding:1px;}
+	.tabcontent {display:none; padding:1px; overflow:hidden;} /* Regorxxx <- Fix global overflow problems -> */
 
 	input[type="checkbox"] {vertical-align:middle; position:relative; width:17px; height:15px; border:0; padding:2px 1px; margin:5px 0;}
 	input[type="checkbox"]:focus {border:1px solid #0078D7; padding:1px 0;}
@@ -63,7 +63,7 @@
 	.inp_label1 {display:block; padding-top:0em; margin:0.31em 0;}
 	.inp_label2 {padding-left:0.46em;}
 
-	.btn_cnt {padding:0.7em 1em; position:absolute; bottom:0; right:0; left:0;}
+	.btn_cnt {padding:0.7em 1em; position:absolute; bottom:0; right:0; left:0; z-index: 2;} /* Regorxxx <- Fix global overflow problems -> */
 	#btn_cnt_right {background:#e5e5e5; border-top:1px solid #d0d0d0; text-align:right;}
 	#btn_cnt_left {text-align:left;}
 	#btn_cnt_center {text-align:center;}
@@ -85,14 +85,14 @@
 	.dropbtnLight {white-space:nowrap; width:100%; color:black; text-decoration:none; padding:0.13em 5px; border:none; cursor:pointer;}
 	.dropbtn:after {font-family: FontAwesome; content: "\f107"; padding-left:0.5em; padding-right:0.19em;}
 	.dropbtnLight:after {font-family: FontAwesome; content: "\f107"; padding-left:0.5em; padding-right:0.19em;}
-	.dropdown {margin-top: 10px; position:static; display:inline-block;}
+	.dropdown {margin-top: 10px; position:relative; display:inline-block;}
 	.dropdown-content {display:none; position:absolute; background-color:#f9f9f9; min-width:10em; white-space:nowrap; box-shadow:0 8px 1.01em 0 rgba(0,0,0,0.2); z-index:1;}
 	.dropdown-content a {padding:0.13em 5px; color:black; text-decoration:none; display:block;}
 	.dropdown-content a:hover {background-color:#f1f1f1;}
 	.dropdown .dropdown-content {display:none;}
 	.dropdown:hover .dropbtn {background-color:#4CAF50;}
 	.dropdown:hover .dropbtnLight {background-color:Gainsboro;}
-	
+
 	.dropArrow {display:inline-block; font-family: FontAwesome; padding-left:0.5em; padding-right:0.19em;}
 
 	.pad {height:1.57em;}
@@ -122,8 +122,50 @@
 
 	.row:after {content:""; display:table; clear:both;}
 
+	/* Regorxxx <- Add tooltip to links */
+	.tooltip {
+		position: relative;
+		display: inline-block;
+		border-bottom: 1px dotted rgb(0, 0, 0);
+	}
+
+	.tooltip .tooltiptext {
+		visibility: hidden;
+		width: 150%;
+		background-color: #555;
+		color: #fff;
+		text-align: center;
+		border-radius: 6px;
+		padding: 6px 2px;
+		position: absolute;
+		z-index: 1;
+		bottom: 125%;
+		left: 0%;
+		opacity: 0;
+		line-height: 1.4;
+		transition: opacity 0.3s;
+	}
+
+	.tooltip .tooltiptext::after {
+		content: "";
+		position: absolute;
+		top: 100%;
+		left: 50%;
+		margin-left: -5px;
+		border-width: 5px;
+		border-style: solid;
+		border-color: #555 transparent transparent transparent;
+	}
+
+	.tooltip:hover .tooltiptext {
+		visibility: visible;
+		filter: alpha(opacity=85);
+		opacity: 0.85;
+	}
+	/* Regorxxx -> */
+
 	ul {margin-top:0; margin-bottom:0;}
-						
+
 	</style>
 	</head>
 	<body>
@@ -144,13 +186,13 @@
 		<!-- Regorxxx Code cleanup -->
 		<div id="mainMargin">
 			<div style="clear:both;"></div>
-			<div id='views' class="tabcontent">	
+			<div id='views' class="tabcontent">
 				<span class="alignLeftH">Name</span>
 				<span class="alignRightH">Pattern</span>
 				<div style="clear:both;"></div>
 				<div id="view"></div>
 				<div class="info1">Selected items will be displayed in the menu. A separator may be added by setting name to 'separator' and pattern to any non-empty string.</div>
-				<p "><a href="https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Title_Formatting_Reference" target=\"_blank\">Title format reference</a></p>
+				<p "><a class="tooltip" id="tfReference" href="https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Title_Formatting_Reference" target="_blank" oncontextmenu="copyToClipboardId('tfReference')">Title format reference<span class="tooltiptext">L. Click to open in IE<br>R. Click to copy</span></a></p>
 				<!-- Regorxxx Text cleanup -->
 				<button id="syntax_button" name="syntax_button" style="margin-left:0px;" type="button">Show Multi-Panel Mode (Facets) & Extended Syntax Help</button><div id="syntax_help" style="display: none;">
 				<!-- Regorxxx -->
@@ -172,18 +214,19 @@
 				<div class="info7">Item counts are a special case. They don't form part of the view pattern.<br>Align right: drawn separately; not controlled by $colour codes; already dimmed.<br>End of text: effected by $colour codes. Use $colour{} at the end of the line to reset or set to a different colour if desired ($colour{--} is used in the example above).</div>
 				<div class="info7" style="color:#0066cc;"><b>String limitation</b></div>
 				<div class="info7">$nodisplay & $colour are generally unsafe inside string manipulation functions that remove a part of a string or insert a substring by position. Instead, they should be put before the string function, e.g.<br>Use $colour{255-0-0}$substr(str,from,to). Don't use $substr($colour{255-0-0}str,from,to).<br>Use $colour{0-255-0}$swapbranchprefix{%&ltartist&gt%}. Don't use $swapbranchprefix{$colour{0-255-0}%&ltartist&gt%}.</div>
+				<div><br></div>
 			</div>
 		</div>
 		<!-- Regorxxx -->
 		<div style="clear:both;"></div>
-		<div id='filters' class="tabcontent">		
+		<div id='filters' class="tabcontent">
 			<span class="alignLeftH">Name</span>
 			<span class="alignRightH">Query</span>
 			<div style="clear:both;"></div>
 			<div id="filter"></div>
 			<div class="info1">Selected items will be displayed in the menu. A separator may be added by setting name to 'separator' and query to any non-empty string.	</div>
 			<!-- Regorxxx Add help to filter tab -->
-			<p "><a href="https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Title_Formatting_Reference" target=\"_blank\">Title format reference</a></p>
+			<p "><a class="tooltip" id="tfReference2" href="https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Title_Formatting_Reference" target="_blank" oncontextmenu="copyToClipboardId('tfReference2')">Title format reference<span class="tooltiptext">L. Click to open in IE<br>R. Click to copy</span></a></p>
 			<button id="syntaxFilter_button" name="syntaxFilter_button" style="margin-left:0px;" type="button">Extended Syntax Help</button>
 			<div id="syntaxFilter_help" style="display: none;">
 				<div class="info5"><b>Extended syntax</b></div>
@@ -193,11 +236,12 @@
 					<col span="1" style="width:20%">
 				</colgroup>
 				</table>
+				<div><br></div>
 			</div>
 			<!-- Regorxxx -->
 		</div>
 		<div style="clear:both;"></div>
-		<div id="btn_cnt_right" class="btn_cnt"> 
+		<div id="btn_cnt_right" class="btn_cnt">
 			<button id="btn_ok" >OK</button>
 			<button class="button_apply" id="btn_apply">Apply</button>
 			<button id="btn_cancel">Cancel</button>
@@ -206,7 +250,7 @@
 			<button id="btn_reset" >Reset all</button>
 			<button id="btn_resetPage" >Reset page</button>
 		</div>
-		<div id="btn_cnt_center" class="btn_cnt"> 
+		<div id="btn_cnt_center" class="btn_cnt">
 			<button id="btn_add" >Add new</button>
 			<button id="btn_up" >Up</button>
 			<button id="btn_down" >Down</button>
@@ -230,43 +274,41 @@
 					</div>
 					<span class="info5600">Single-click:</span>
 					<span class="dropdown" style="margin-top:0"><a id="click_dropdown" class="dropbtn" href="#" onclick="toggle('click');"></a>
-					<span id="click" class="dropdown-content"></span>
+						<span id="click" class="dropdown-content"></span>
 					</span>
-					<div style="clear:both;"></div>
 					<span class="info5600">Double-click:</span>
 					<span class="dropdown" style="margin-top:0;"><a id="dblClick_dropdown" class="dropbtn" href="#" onclick="toggle('dblClick');"></a>
-					<span id="dblClick" class="dropdown-content"></span>
+						<span id="dblClick" class="dropdown-content"></span>
 					</span>
 					<span class="info5600">Mbtn-click:</span>
 					<span class="dropdown" style="margin-top:0"><a id="mbtnClick_dropdown" class="dropbtn" href="#" onclick="toggle('mbtnClick');"></a>
-					<span id="mbtnClick" class="dropdown-content"></span>
+						<span id="mbtnClick" class="dropdown-content"></span>
 					</span>
 					<span class="info5600">Alt+click:</span>
 					<span class="dropdown" style="margin-top:0"><a id="altClick_dropdown" class="dropbtn" href="#" onclick="toggle('altClick');"></a>
-					<span id="altClick" class="dropdown-content"></span>
+						<span id="altClick" class="dropdown-content"></span>
 					</span>
-					<div style="clear:both;"></div>
 					<span class="info5600">Keystroke:</span>
 					<span class="dropdown" style="margin-top:0"><a id="keystroke_dropdown" class="dropbtn" href="#" onclick="toggle('keystroke');"></a>
-					<span id="keystroke" class="dropdown-content"></span>
+						<span id="keystroke" class="dropdown-content"></span>
 					</span>
 					<div class="div_text6">Scroll</div>
 					<span class="info3">Bar:</span>
 					<span style="margin:0 0 0.31em;" class="dropdown"><a id="sbarShow_dropdown" class="dropbtn" href="#" onclick="toggle('sbarShow');"></a>
-					<span id="sbarShow" class="dropdown-content"></span>
+						<span id="sbarShow" class="dropdown-content"></span>
 					</span>
 					<span style="margin:0 0 0.31em;" class="dropdown"><a id="sbarType_dropdown" class="dropbtn" href="#" onclick="toggle('sbarType');"></a>
-					<span id="sbarType" class="dropdown-content"></span>
+						<span id="sbarType" class="dropdown-content"></span>
 					</span>
 					<span style="margin:0 0 0.31em;" id="sbar_col_dropdown" class="dropdown"><a id="sbarCol_dropdown" class="dropbtn" href="#" onclick="toggle('sbarCol');"></a>
-					<span id="sbarCol" class="dropdown-content"></span>
+						<span id="sbarCol" class="dropdown-content"></span>
 					</span>
 					<span style="margin:0 0 0.31em;" id="sbar_icon_dropdown" class="dropdown"><a id="sbarIcon_dropdown" class="dropbtn" href="#" onclick="toggle('sbarIcon');"></a>
-					<span id="sbarIcon" class="dropdown-content"></span>
+						<span id="sbarIcon" class="dropdown-content"></span>
 					</span>
 					<div id="scrolling"></div>
 				</div>
-				
+
 				<div class="column29">
 					<!-- Regorxxx Search settings to search tab -->
 					<div class="div_text2">Tree</div>
@@ -278,7 +320,20 @@
 					<div id="selection"></div>
 					<div class="div_text1">Follow selection</div>
 					<div id="followCurrent"></div>
-					<div class="info9"><a id="setSize" style="text-decoration:none;" href="#" onclick="setWindowSize();return false;">Click to reset window size</a></div>				
+					<div class="info9"><a id="setSize" style="text-decoration:none;" href="#" onclick="setWindowSize();return false;">Click to reset window size</a></div>
+					<div class="div_text1">Views sorting</div>
+					<span class="info5600">By folder:</span>
+					 <!-- View by Folder structure sorting. Custom sorting for standard views -->
+					<span class="dropdown" style="margin-top:0"><a id="folderSorting_dropdown" class="dropbtn" href="#" onclick="toggle('folderSorting');"></a>
+						<span id="folderSorting" class="dropdown-content"></span>
+					</span>
+					<div style="margin:0.31em 0 0;" id="folderSortingFb"></div>
+					<div style="margin:0.31em 0 0;" id="folderSortingTrans"></div>
+					<span class="info5600">By TF:</span>
+					<span class="dropdown" style="margin-top:0"><a id="viewSorting_dropdown" class="dropbtn" href="#" onclick="toggle('viewSorting');"></a>
+						<span id="viewSorting" class="dropdown-content"></span>
+					</span>
+					<div style="margin:0.31em 0 0;" id="viewSortingTrans"></div>
 				</div>
 
 				<div class="column32">
@@ -302,8 +357,9 @@
 					<div id="topTracksSorting"></div>
 					<div style="display:inline-block; padding-top:0.7em;"><a id="mode_help" href="#" onclick="showHelp('topTracks_text');return false;">Top tracks help</a></div>
 					<div id="topTracks_text" style="display:none; padding:0.7em; background-color:Gainsboro;">
-						<div class="info4">Uses an additional query filter and sorting for current selection on top of the current view/filter.<br><br>&#x2022; Found at the Context menu<br>&#x2022; Target playlist follows global settings above<br>&#x2022; Supports $nowplaying{}, $selected{}, ...<br>&#x2022; Use '$rand()' as sorting to shuffle<br>&#x2022; Leave sorting empty to follow panel sorting</div>
+						<div class="info4">Uses an additional query filter and sorting for current selection on top of the current view/filter.<br><br>&#x2022; Found at the Context menu or mouse action (at left)<br>&#x2022; Target playlist follows global settings above<br>&#x2022; Supports $nowplaying{}, $selected{}, ...<br>&#x2022; Use '$rand()' as sorting to shuffle<br>&#x2022; Leave sorting empty to follow panel sorting</div>
 					</div>
+					<div><br></div>
 					<!-- Regorxxx -->
 				</div>
 			</div>
@@ -355,7 +411,7 @@
 						<span id="searchDragTrackOpAlt" class="dropdown-content"></span>
 					</span>
 				</div>
-				
+
 				<div class="column33">
 					<div class="div_text1">Drag n' Drop</div>
 					<div class="div_text2">Inter-query operator</div>
@@ -373,6 +429,7 @@
 					<div style="display:inline-block; padding-top:0.7em;"><a id="mode_help" href="#" onclick="showHelp('drag_text');return false;">Drag n' drop help</a></div>
 					<div id="drag_text" style="display:none; padding:0.7em; background-color:Gainsboro;">
 						<div class="info4">Usage:<br><br>&#x2022; Tracks can be drag n' dropped to search box<br>&#x2022; Search expression is adjusted to View mode<br>&#x2022; View by Folder structure: filenames (RegExp)<br>&#x2022; Any other View: tags (Queries)<br>&#x2022; Tags used and how they are joined can be customized<br><br>Keyboard modifiers:<br><br>&#x2022; Default is used without any key pressed<br>&#x2022; Behaviour is affected by Ctrl, Alt and Shift keys<br>&#x2022; Multi-value tag operator is used between different values on same tag:<br>&emsp; 'ARTIST IS A OR ARTIST IS B'<br><br>&#x2022; Inter-tag operator is used between different tags:<br>&emsp; 'ARTIST IS Nina Simone OR GENRE IS Rock'<br><br>&#x2022; Inter-track operator is used between queries for different tracks (on multiple selection)<br><br>&#x2022; Inter-query operator is used if there is already an expression at the search box, to join or replace them</div>
+						<div><br></div>
 					</div>
 				</div>
 
@@ -381,10 +438,11 @@
 					<span class="dropdown"><a id="searchSend_dropdown" class="dropbtn" href="#" onclick="toggle('searchSend');"></a>
 					<span id="searchSend" class="dropdown-content"></span>
 					</span>
-					<div id="searchEnter" style="padding-top:0.5em;"></div>	
+					<div id="searchEnter" style="padding-top:0.5em;"></div>
 					<div style="display:inline-block; padding-top:0.7em;"><a id="searcg_help" href="#" onclick="showHelp('search_text');return false;">Search help</a></div>
 					<div id="search_text" style="display:none; padding:0.7em; background-color:Gainsboro;">
-						<div class="info4">General usage:<br><br>&#x2022; Queries, RegExp and drag n' drop are supported<br>&#x2022; Queries support $nowplaying{}, $selected{}, ...<br>&#x2022; RegExp must be written in /[expression]/[flags] form<br>&#x2022; For drag n' drop see its own section<br><br><br>RegExp usage:<br><br>&#x2022; <a href="https://regexr.com/" target=\"_blank\>RegExp reference</a><br>&#x2022; /[expression]/[flags]<br>&#x2022; Lookup tags retrieved from current View TF expression<br>&#x2022; On folder view, paths are used instead for lookup</div>
+						<div class="info4">General usage:<br><br>&#x2022; Queries, RegExp and drag n' drop are supported<br>&#x2022; Queries support $nowplaying{}, $selected{}, ...<br>&#x2022; RegExp must be written in /[expression]/[flags] form<br>&#x2022; For drag n' drop see its own section<br><br><br>RegExp usage:<br><br>&#x2022; <a class="tooltip" id="regexpReference" href="https://regexr.com/" target="_blank" oncontextmenu="copyToClipboardId('regexpReference')">RegExp reference<span class="tooltiptext">L. Click to open in IE<br>R. Click to copy</span></a><br>&#x2022; /[expression]/[flags]<br>&#x2022; Flags can be any of: 'gimsuyt'<br>&#x2022; Special 't' flag to apply transliteration to Latin script<br>&#x2022; Lookup tags retrieved from current View TF expression<br>&#x2022; On folder view, paths are used instead for lookup<br><br><br>Queries usage:<br><br>&#x2022; Supports $nowplaying{}, $nowplayingorselected{} and $selected{}<br>&#x2022; If auto-refresh is disabled, search results will not be updated when using above syntax on playback/selection changes<br>&#x2022; Auto-refresh may have a performance impact with $selected{} (or similar) on selection changes, use filters instead whenever possible</div>
+						<div><br></div>
 					</div>
 				</div>
 			</div>
@@ -394,7 +452,7 @@
 			<!-- Regorxxx Code cleanup -->
 			<div class="row">
 				<!-- Regorxxx New Statistics. Adjust column width -->
-				<div class="column38">		
+				<div class="column38">
 					<div class="div_text1">Top bar</b></div>
 					<div id="bar"></div>
 					<div style="padding-right:10%;" class="info4"><i>*If hidden, right click over filter or icon. If all hidden, use context menu.</i></div>
@@ -405,7 +463,7 @@
 					<div id="themeStyle" style="padding-top:0.5em;"></div>
 					<div id="coverFormat"></div>
 					<div id="panelStyle"></div>
-				</div>				
+				</div>
 
 				<!-- Regorxxx New Statistics. Adjust column width -->
 				<div class="column29">
@@ -422,7 +480,7 @@
 					<div class="div_text2">Line style</div>
 					<div id="lines"></div>
 				</div>
-						
+
 				<!-- Regorxxx New Statistics. Adjust column width -->
 				<div class="column32">
 					<div class="div_text1">Hover effect (background)</div>
@@ -452,7 +510,7 @@
 		<!-- Regorxxx New statistics tab -->
 		<div id="statistics" class="tabcontent">
 			<div class="row">
-				<div class="column50">		
+				<div class="column50">
 					<div class="div_text2">Title format</div>
 					<div class="info5"><i>Title format for some can be set below</i></div>
 					<div id="statisticsTf"></div>
@@ -462,6 +520,7 @@
 					<div style="display:inline-block; padding-top:0.7em;"><a id="stats_help" href="#" onclick="showHelp('stats_text');return false;">Statistics help</a></div>
 					<div id="stats_text" style="display:none; padding:0.7em; background-color:Gainsboro;">
 						<div class="info4">There are some hardcoded statistics (like duration, ...), partially customizable ones (rating, ...) and fully customizable slots. The latter can use your own TF expressions and names, which will be shown at the menu entries and labels used by the panel.<br><br>&#x2022; Average: for every node, averaged value from all their children<br>&#x2022; Sum: for every node, sum of values from all their children<br>&#x2022; Decimals setting applies to rating, popularity and custom slots</div>
+						<div><br></div>
 					</div>
 				</div>
 
@@ -476,6 +535,7 @@
 					<div style="display:inline-block; padding-top:0.7em;"><a id="counts_help" href="#" onclick="showHelp('counts_text');return false;">Item counts help</a></div>
 					<div id="counts_text" style="display:none; padding:0.7em; background-color:Gainsboro;">
 						<div class="info4">The first available entry at Settings > Statistics will follow the option chosen, showing either no values, total number of track or items at every node.<br><br>Alignment is only available while using this mode, greyed out for any other.</div>
+						<div><br></div>
 					</div>
 				</div>
 			</div>
@@ -523,22 +583,22 @@
 							<div id="sameAsTree"></div>
 						</div>
 					</div>
-					<div class="div_text2">Index</div>
-					<div id="indexLetter"></div>
 				</div>
 
 				<div class="column41">
 					<div class="div_text1">Stub</div>
 					<span style="margin:0 0 0.31em;" class="dropdown"><a id="rootStub_dropdown" class="dropbtnLight" href="#" onclick="toggle('rootStub');"></a>
-					<span id="rootStub" style="font:0.85em Segoe UI;" class="dropdown-content"></span>
+						<span id="rootStub" style="font:0.85em Segoe UI;" class="dropdown-content"></span>
 					</span>
 					<span style="margin:1em 0 0.31em 0;" class="dropdown"><a id="noCoverStub_dropdown" class="dropbtnLight" href="#" onclick="toggle('noCoverStub');"></a>
-					<span id="noCoverStub" style="font:0.85em Segoe UI;" class="dropdown-content"></span>
+						<span id="noCoverStub" style="font:0.85em Segoe UI;" class="dropdown-content"></span>
 					</span>
 					<span style="margin:1em 0 0.31em 0;" class="dropdown"><a id="noArtistStub_dropdown" class="dropbtnLight" href="#" onclick="toggle('noArtistStub');"></a>
-					<span id="noArtistStub" style="font:0.85em Segoe UI;" class="dropdown-content"></span>
+						<span id="noArtistStub" style="font:0.85em Segoe UI;" class="dropdown-content"></span>
 					</span>
 					<div class="info5"><i>Click dropdown items for full preview (provided visible in panel).</i></div>
+					<div class="div_text2">Index</div>
+					<div id="indexLetter"></div>
 				</div>
 			</div>
 			<div id="help_text" style="display: none;">
@@ -554,6 +614,7 @@
 				<div class="info5">If enabled, the &quot;File>Preferences>Display>Selection viewers&quot; setting is used.</div>
 				<div class="info5"><b>Tree only mode</b></div>
 				<div class="info5">Switch off 'Show Album Art Options' on the display tab while in tree view. Album art loading, disk caching plus the album art tab and menu options are disabled. Switch the option back on to allow album art mode.</div>
+				<div><br></div>
 			</div>
 		</div>
 		<!-- Regorxxx -->
@@ -571,10 +632,10 @@
 					<div id="albumArtFonts"></div>
 					<div class="info6"><b>Colours (R,G,B):</b></div>
 					<div id="colours1"></div>
-					<p "><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Colors/Color_picker_tool#ColorPicker_tool" target=\"_blank\">Colour picker</a></p>
+					<p "><a class="tooltip" id="colorPicker" href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Colors/Color_picker_tool#ColorPicker_tool" target="_blank" oncontextmenu="copyToClipboardId('colorPicker')">Colour picker<span class="tooltiptext">L. Click to open in IE<br>R. Click to copy</span></a></p>
 					<div class="info3">Selected colours and fonts will be used.<br>Font style codes: 0 regular, 1 bold, 2 italic,  3 bold italic, 4 underline</div>
 				</div>
-			
+
 				<div class="column50">
 					<div class="info6"><b>Colours (R,G,B or R,G,B,A):</b></div>
 					<div id="colours2"></div>
@@ -583,7 +644,7 @@
 			</div>
 		</div>
 		<!-- Regorxxx -->
-	
+
 		<!-- Regorxxx Code cleanup -->
 		<div id="advanced" class="tabcontent">
 			<div class="row">
@@ -598,11 +659,12 @@
 					<div id="facets"></div>
 					<div style="display:inline-block; padding-top:0.7em;"><a id="facets_help" href="#" onclick="showHelp('facets_text');return false;">Multi-panel mode help</a></div>
 					<div id="facets_text" style="display:none; padding:0.7em; background-color:Gainsboro;">
-						<div class="info4">Chained source notifications:<br><br>&#x2022; Facets mode is enabled when setting source to panel. More info at Views tab</a><br>&#x2022; Every panel will send updates to other panels when being refreshed<br>&#x2022; No need to set multiple sources, only the most immediate parent's name<br>&#x2022; The entire chain will be updated if needed<br>&#x2022; Disable the setting to roll back to legacy behaviour<br>&#x2022; For example: Genre|Artist|Album 3-panel layout<br>  'Album' panel uses 'Artist' as source, and 'Artist' panel uses 'Genre'<br>  Any change on 'Genre' would immediately refresh the other 2 child panels<br>  If disabled (legacy behaviour), then third panel should use 'Genre|Artist' instead<br><br><br>Multiple sources:<br><br>&#x2022; Multiple sources are only needed if they are fully independent<br>&#x2022; Along chained source notifications, sources are merged and deduplicated<br>&#x2022; Can merge selections from total different views/filters (for ex. artist and genres)<br>&#x2022; Destination panel's sorting and display don't follow sources' settings<br>&#x2022; If disabled (legacy behaviour), the last one selected on UI is used instead<br>&#x2022; For example: Artist1|Artist2|Album 3-panel layout<br>  'Album' uses 'Artist1|Artist2' as sources<br>  Selection from both 'Artist' panels are merged and used on 'Album' panel<br>  Legacy behaviour uses either 'Artist1' or 'Artist2', last one selected on UI, not both<br><br><br>Internal cache:<br><br>&#x2022; To use a panel as source, its selection must be stored somewhere<br>&#x2022; This can be done using playlists (legacy behaviour) or internal caching<br>&#x2022; A dummy playlist is required per panel with legacy behaviour<br>&#x2022; Internal caching requires methods available only at latest JSplitter and SMP versions<br>&#x2022; if not supported, it fallbacks to legacy behaviour instead<br>&#x2022; Internal caching is preferable to avoid filling your playlist list with dummy playlists</div>
+						<div class="info4">Chained source notifications:<br><br>&#x2022; Facets mode is enabled when setting source to panel. More info at Views tab</a><br>&#x2022; Every panel will send updates to other panels when being refreshed<br>&#x2022; No need to set multiple sources, only the most immediate parent's name<br>&#x2022; The entire chain will be updated if needed<br>&#x2022; Disable the setting to roll back to legacy behaviour<br>&#x2022; For example: Genre|Artist|Album 3-panel layout<br>&emsp;&#x25E6; 'Album' panel uses 'Artist' as source, and 'Artist' panel uses 'Genre'<br>&emsp;&#x25E6;  Any change on 'Genre' would immediately refresh the other 2 child panels<br>&emsp;&#x25E6; If disabled (legacy behaviour), then third panel should use 'Genre|Artist' instead<br><br><br>Multiple sources:<br><br>&#x2022; Multiple sources are only needed if they are fully independent<br>&#x2022; Along chained source notifications, sources are merged and deduplicated<br>&#x2022; Can merge selections from total different views/filters (for ex. artist and genres)<br>&#x2022; Destination panel's sorting and display don't follow sources' settings<br>&#x2022; If disabled (legacy behaviour), the last one selected on UI is used instead<br>&#x2022; For example: Artist1|Artist2|Album 3-panel layout<br>&emsp;&#x25E6; 'Album' uses 'Artist1|Artist2' as sources<br>&emsp;&#x25E6; Selection from both 'Artist' panels are merged and used on 'Album' panel<br>&emsp;&#x25E6; Legacy behaviour uses either 'Artist1' or 'Artist2', last one selected on UI, not both<br><br><br>Internal cache:<br><br>&#x2022; To use a panel as source, its selection must be stored somewhere<br>&#x2022; This can be done using playlists (legacy behaviour) or internal caching<br>&#x2022; A dummy playlist is required per panel with legacy behaviour<br>&#x2022; Internal caching requires methods available only at latest JSplitter and SMP versions<br>&#x2022; if not supported, it fallbacks to legacy behaviour instead<br>&#x2022; Internal caching is preferable to avoid filling your playlist list with dummy playlists</div>
+						<div><br></div>
 					</div>
 					<!-- Regorxxx -->
 				</div>
-					
+
 				<div class="column50">
 					<div class="div_text1">Node</div>
 					<div id="cusNode"></div>
@@ -622,7 +684,7 @@
 					<!-- Regorxxx -->
 				</div>
 			</div>
-		</div>	
+		</div>
 	</div>
 	<div id="div" style="height:0; width:0;outline:none; border:none; padding:none; margin:none; box-sizing:content-box;"></div>
 		<!-- Regorxxx IE8 Polyfill -->
@@ -685,7 +747,7 @@
 				top = (screen.height - window_h) / 2;
 				window.resizeTo(window_w, window_h);
 				window.moveTo(left, top);
-				height = document.documentElement.clientHeight || document.body.clientHeight;	
+				height = document.documentElement.clientHeight || document.body.clientHeight;
 			}
 
 			function openPage(pageName,elmnt,color) {
@@ -745,7 +807,7 @@
 				if (element.nextSibling && element.nextSibling.id != "view_cnt_folderView" && element.nextSibling.id != "filter_cnt_menuName")
 					element.parentNode.insertBefore(element.nextSibling, element);
 			}
-			
+
 			function set_btn_add_state() {
 				switch (cur.page) {
 					case 'views':
@@ -761,7 +823,7 @@
 
 			function set_btn_apply_state() {
 				getValues();
-				
+
 				var id = document.activeElement.id;
 				if (/scrollbar_container6/.test(id)) {
 					window.scrollbar_container5.style.fontFamily = window.scrollbar_container6.value;
@@ -825,10 +887,14 @@
 				}
 				switch (t) {
 					case 0: cc = [c[0], c[1], c[2]]; break;
-					case 1: switch (c.length) {
-						case 3: cc = [c[0], c[1], c[2]]; break;
-						case 4: cc = RGBAtoRGB([c[0], c[1], c[2], c[3]], [255, 255, 255, 255]); break;
-					} break;}
+					case 1: {
+						switch (c.length) {
+							case 3: cc = [c[0], c[1], c[2]]; break;
+							case 4: cc = RGBAtoRGB([c[0], c[1], c[2], c[3]], [255, 255, 255, 255]); break;
+						}
+						break;
+					}
+				}
 				return cc;
 			}
 
@@ -879,7 +945,7 @@
 				if (cur.w == cur.def_w) window_w = Math.min(window_w, screen.width * 0.67);
 				if (cur.h == cur.def_h) window_h = Math.min(window_h, screen.height * 0.85);
 				left = (screen.width - window_w) / 2;
-				top = (screen.height - window_h) / 2;		
+				top = (screen.height - window_h) / 2;
 				window.resizeTo(window_w, window_h);
 				window.moveTo(left, top);
 				height = document.documentElement.clientHeight || document.body.clientHeight;
@@ -902,6 +968,11 @@
 				var dblClickLabels = ppt['actionMode_internal'].value == 1 ? ['Send to playlist & play'] : ppt['actionMode_internal'].value == 2 ? ['Send to playback queue and play'] : ['Send to playlist', 'Send to playlist & play', 'Expand / collapse (tree)', 'Send to playback queue and play'];
 				var diskCacheLabels = ['Enable', 'Preload cached images']
 				var followCurrentLabels = ['Standard mode', 'Album art flow mode'];
+				 // Regorxxx <- View by Folder structure sorting. Custom sorting for standard views
+				var viewSortingLabels = ['Library Tree (original)', 'Library Tree (updated)','Windows-like (basic)', 'Windows-like (advanced)']
+				var folderSortingFbLabels = ['Prefer native sorting for library sources'];
+				var sortingTransLabels = ['Transliterate values to Latin', 'Transliterate values to Latin'];
+				// Regorxxx  ->
 				var fontLabels = ['Main', 'Album art group line 1', 'Album art group line 2', 'Album art statistics line'];
 				var highLightLabels = ['None', 'Side marker', 'Accent', 'Frame', 'Always pointer (no hand)', 'Highlight nodes', 'Highlight text'];
 				var indexLetterLabels = ['Show on scrollbar drag', 'Number of characters (0 = auto)', 'Auto-detect leading year (overrides above number)'];
@@ -909,13 +980,13 @@
 				var itemCountsLabels = ['Hide', '# Tracks', '# Items', 'Align right (tree / text)'];
 				var metricsLabels = ['Margin', 'Tree indent', 'Line padding tree', 'Line padding album art', 'Margin overide top/bottom (no top bar)', 'Side marker width (0 = auto)'];
 				// Regorxxx <- Top tracks
-				var mbtnClickLabels = ppt['actionMode_internal'].value == 2 
-					? ['Add to playback queue (middle dblclk removes)'] 
+				var mbtnClickLabels = ppt['actionMode_internal'].value == 2
+					? ['Add to playback queue (middle dblclk removes)']
 					: ['Add to default playlist', 'Add to current playlist', 'Add to playback queue (middle dblclk removes)', 'Send Top tracks to default playlist', 'Send Top tracks to current playlist', 'Add Top tracks to default playlist', 'Add Top tracks to current playlist'];
 				// Regorxxx ->
 				var nodeLabels = ['Squares', 'Arrows', 'Arrows Light', 'Triangles', 'Triangles Light', 'Signs', 'Custom'];
 				var playlistLabels = ['Default', 'Activate when changed'];
-				var playlistSortLabels = ['Playlist sort order (empty = default)'];				
+				var playlistSortLabels = ['Playlist sort order (empty = default)'];
 				var topTracksLabels = ['Custom query filter', 'Custom TF expression for sorting']; // Regorxxx <- Top tracks ->
 				var rememberLabels = ['On exit', 'All views', 'Before search'];
 				var rootLabels = ['Hide', 'All Music', 'View name', 'Summary item', 'Display in line (tree)', 'Show source'];
@@ -928,13 +999,13 @@
 				var loggingLabels = ['Library loading profiling']; // Regorxxx <- Library profiling ->
 				var scrollLabels = ['Use windows metrics', 'Smooth scroll', 'Touch control'];
 				var selectionLabels = ['Full line', 'Play on enter or send from menu'];
-				var searchLabels = ['Search only', 'Send results to playlist on enter','Auto-send results to playlist', 'Require enter to search'];
-				var showLabels = ['Row stripes', 'Nowplaying in highlight', 'Nowplaying sidemarker (tree / text)', 'Nowplaying indicator (tree / text)', 'Album art options', 'Facet view', 'Tracks (tree)'];				
+				var searchLabels = ['Search only', 'Send results to playlist on enter','Auto-send results to playlist', 'Require enter to search', 'Auto-refresh when using $selected{}, ...'];
+				var showLabels = ['Row stripes', 'Nowplaying in highlight', 'Nowplaying sidemarker (tree / text)', 'Nowplaying indicator (tree / text)', 'Album art options', 'Facet view', 'Tracks (tree)'];
 				// Regorxxx <- New statistics
 				var statisticsLabels = ['Rating', 'Popularity', 'Date', 'Custom-1 (sum)', 'Custom-2 (sum)', 'Custom-3 (sum)', 'Custom-1 (avg)', 'Custom-2 (avg)', 'Custom-3 (avg)', '', 'Auto show labels', 'Auto show tooltips'];
 				var statisticsDecimalsLabels = ['Number of decimals shown'];
 				// Regorxxx ->
-				// Regorxxx <- Send to playlist & select 
+				// Regorxxx <- Send to playlist & select
 				var selectAddedToPlsLabels = ['Send to playlist and select items'];
 				// Regorxxx ->
 				var targetPlaylistLabels = ['Default', 'Current'];
@@ -943,7 +1014,7 @@
 				var themeBlurLabels = ['Auto-fill', 'Level (%)', 'Opacity (%)', '%'];
 				var thumbNailGapLabels = ['Thumbnail gap'];
 				var thumbnailSizeLabels = ['Mini', 'Small', 'Regular', 'Medium', 'Large', 'XL', 'XXL', 'Max'];
-				var treeLabels = ['Auto-collapse', 'Expand single items', 'Expand if # tracks less than:'];	
+				var treeLabels = ['Auto-collapse', 'Expand single items', 'Expand if # tracks less than:'];
 				var loadLabels = ['Auto-sync with library changes', 'Prefixes to strip or swap (| separator)']
 				var modeLabels = ['Max height', 'Min height', 'Limit menu expand: 10-6000'];
 				// Regorxxx <- Drag n' drop to search box
@@ -960,7 +1031,7 @@
 				var dragQueryOpShiftLabels = dragQueryOpDefaultLabels;
 				var dragTagsLabels = ['Default', 'On Ctrl', 'On Alt'];
 				// Regorxxx ->
-				
+
 				function setNodeLabels() {
 					nodeLabels[0] = !ppt['winNode_internal'].value ? 'Squares' : 'Squares (windows)';
 					if (ppt['nodeStyle_internal'].value == 0 || ppt['nodeStyle_internal'].value == 7) window.node_dropdown.innerHTML = nodeLabels[0];
@@ -987,7 +1058,7 @@
 						name: ['tfRating', 'tfPopularity', 'tfDate', 'tfCustom1Sum', 'tfCustom2Sum', 'tfCustom3Sum', 'tfCustom1Avg', 'tfCustom2Avg', 'tfCustom3Avg', 'tfCustomLabels', 'ratingDecimals'],
 						type: ['text', 'text', 'text', 'text', 'text', 'text', 'text', 'text', 'text', 'text', 'int']
 					},
-					// Regorxxx ->	
+					// Regorxxx ->
 					albumArt: {
 						name: ['thumbNailGapStnd', 'thumbNailGapCompact', 'albumArtLetterNo'],
 						type: ['int', 'int', 'int']
@@ -1010,10 +1081,10 @@
 				// Regorxxx ->
 				// Regorxxx ->
 				var box = {
-					behaviour: ['sbarWinMetrics', 'smooth', 'touchControl', 'autoCollapse', 'treeAutoExpandSingle', 'treeAutoExpand', 'rememberTree', 'rememberView', 'rememberPreSearch', 'fullLineSelection', 'autoPlay', 'stndModeFollowSelection', 'flowModeFollowSelection', 'activateOnChange', 'selectAdded'], // Regorxxx <- Send to playlist & select ->
-					search: ['searchEnter'], // Regorxxx <- New search tab ->
-					display: ['searchShow', 'filterShow', 'settingsShow', 'swapCol', 'autoFill', 'recItemImage', 'inlineRoot', 'showSource', 'nodeLines', 'colLineDark', 'frameImage', 'mousePointerOnly', 'highLightNode', 'highLightText', 'rowStripes', 'highLightNowplaying', 'nowPlayingSidemarker', 'nowPlayingIndicator', 'albumArtOptionsShow', 'facetView'], // Regorxxx <- New statistics tab ->
-					statistics: ['labelStatistics', 'tooltipStatistics', 'showTracks', 'countsRight'], // Regorxxx <- New statistics tab ->
+					behaviour: ['sbarWinMetrics', 'smooth', 'touchControl', 'autoCollapse', 'treeAutoExpandSingle', 'treeAutoExpand', 'rememberTree', 'rememberView', 'rememberPreSearch', 'fullLineSelection', 'autoPlay', 'stndModeFollowSelection', 'flowModeFollowSelection', 'folderSortingFb', 'folderSortingTrans', 'viewSortingTrans', 'activateOnChange', 'selectAdded'], // Regorxxx <- Send to playlist & select ->
+					search: ['searchEnter', 'searchRefreshTf'], // Regorxxx <- New search tab ->
+					display: ['searchShow', 'filterShow', 'settingsShow', 'swapCol', 'autoFill', 'recItemImage', 'inlineRoot', 'showSource', 'nodeLines', 'colLineDark', 'frameImage', 'mousePointerOnly', 'highLightNode', 'highLightText', 'rowStripes', 'highLightNowplaying', 'nowPlayingSidemarker', 'nowPlayingIndicator', 'albumArtOptionsShow', 'facetView', 'showTracks'], // Regorxxx <- New statistics tab ->
+					statistics: ['labelStatistics', 'tooltipStatistics', 'countsRight'], // Regorxxx <- New statistics tab ->
 					albumArt: ['albumArtFlipLabels', 'albumArtDiskCache', 'albumArtPreLoad', 'albumArtFlowMode', 'albumArtDropShadow', 'artTreeSameView', 'albumArtLetter', 'albumArtYearAuto'],
 					custom: ['custFontUse', 'custAlbumArtGrpFontUse', 'custAlbumArtLotFontUse', 'custAlbumArtDurFontUse', 'textUse', 'text_hUse', 'textSelUse', 'nowpUse', 'searchUse', 'txt_boxUse', 'bgUse', 'bg_hUse', 'bgSelUse', 'frameUse', 'bgSelframeUse', 'countsUse', 'icon_cUse', 'icon_eUse', 'icon_hUse', 'lineUse', 's_lineUse', 'sideMarkerUse', 'bgTransUse'],
 					advanced: ['sbarFullHeight', 'panelInternalCache', 'libSourceChained', 'winNode', 'blurAutofill', 'libAutoSync', 'pn_h_auto', 'logLibProfiler'] // Regorxxx <- Library profiling. Don't create cache playlists if possible. Chained facets updates ->
@@ -1021,19 +1092,19 @@
 				// Regorxxx <- New search tab
 				box.all = box.behaviour.concat(box.search, box.display, box.statistics, box.albumArt, box.custom, box.advanced);
 				// Regorxxx ->
-	
+
 				var radio = {
 					views: [],
 					filters: [],
 					behaviour: ['actionMode', 'sendToCur'],
 					search: [], // Regorxxx <- Drag n' drop to search box ->
-					display: ['itemShowStatistics'],
-					search: [], // Regorxxx <- New statistics tab ->
+					display: [],
+					statistics: ['itemShowStatistics'], // Regorxxx <- New statistics tab ->
 					albumArt: ['albumArtLabelType', 'imgStyleFront', 'imgStyleBack', 'imgStyleDisc', 'imgStyleIcon', 'imgStyleArtist'],
 					custom: [],
 					advanced: []
 				}
-				radio.all = radio.behaviour.concat(radio.display, radio.albumArt);
+				radio.all = radio.behaviour.concat(radio.statistics, radio.albumArt);
 				callback = parsed_args[3];
 				props_callback = parsed_args[4];
 
@@ -1062,14 +1133,14 @@
 					ppt['sbarButType_internal'].value = n;
 					window.sbarIcon.style.display = 'none';
 				}
-				
+
 				function setRootImage(n) {
 					window.rootStub_dropdown.innerHTML = '<b>Root:</b> <img src="'+rootStubLabels[n].path+'" width="'+ em +'" height="'+ em +'" class="stub"/> '+rootStubLabels[n].name+'<';
 					ppt.curRootImg_internal.value = n;
 					btn_apply.onclick();
 					window.rootStub.style.display = 'none';
 				}
-				
+
 				function setNoArtistImage(n) {
 					window.noArtistStub_dropdown.innerHTML = '<b>No artist:</b> <img src="'+noArtistStubLabels[n].path+'" width="'+ em +'" height="'+ em +'" class="stub"/> '+noArtistStubLabels[n].name+'<';
 					ppt.curNoArtistImg_internal.value = n;
@@ -1083,7 +1154,7 @@
 					btn_apply.onclick();
 					window.noCoverStub.style.display = 'none';
 				}
-				
+
 				function setRoot(n) {
 					window.root_dropdown.innerHTML = rootLabels[n];
 					ppt['rootNode_internal'].value = n;
@@ -1121,7 +1192,7 @@
 					ppt['searchSend_internal'].value = n;
 					window.searchSend.style.display = 'none';
 				}
-				
+
 				function setDragValOpDefault(n) {
 					window.searchDragValOpDefault_dropdown.innerHTML = dragValOpDefaultLabels[n];
 					ppt['searchDragValOp_internal'].value = ['', 'OR', 'AND'][n];
@@ -1190,19 +1261,19 @@
 					ppt['thumbNailSize_internal'].value = n;
 					window.thumbSize.style.display = 'none';
 				}
-				
+
 				function setClickAction(n) {
 					window.click_dropdown.innerHTML = clickLabels[n];
 					ppt['clickAction_internal'].value = n;
 					window.click.style.display = 'none';
 				}
-				
+
 				function setDblClickAction(n) {
 					window.dblClick_dropdown.innerHTML = dblClickLabels[n];
 					ppt['dblClickAction_internal'].value = n;
 					window.dblClick.style.display = 'none';
 				}
-				
+
 				function setMbtnClickAction(n) {
 					window.mbtnClick_dropdown.innerHTML = mbtnClickLabels[n];
 					ppt['mbtnClickAction_internal'].value = n;
@@ -1221,6 +1292,20 @@
 					window.keystroke.style.display = 'none';
 				}
 
+				// Regorxxx <- View by Folder structure sorting. Custom sorting for standard views
+				function setFolderSorting(n) {
+					window.folderSorting_dropdown.innerHTML = viewSortingLabels[n];
+					ppt['folderSorting_internal'].value = n;
+					window.folderSorting.style.display = 'none';
+				}
+
+				function setViewSorting(n) {
+					window.viewSorting_dropdown.innerHTML = viewSortingLabels[n];
+					ppt['viewSorting_internal'].value = n;
+					window.viewSorting.style.display = 'none';
+				}
+				// Regorxxx ->
+
 				var imgTable = ['imgStyleFront', 'imgStyleBack', 'imgStyleDisc', 'imgStyleIcon', 'imgStyleArtist'];
 				var menuTable = ['buttonCol', 'searchCol', 'searchLnCol', 'nodeLineCol'];
 				function getTableData(id) {
@@ -1236,8 +1321,8 @@
 							for (j = 0; j < 3; j++) {
 								items[j] = [];
 								for (i = 0; i < imgTable.length; i++) {
-									var n = imgTable[i]; 
-									var id = imgTable[i] + j; 
+									var n = imgTable[i];
+									var id = imgTable[i] + j;
 									items[j].push('<input id="'+id+'" name="'+n+'" style="'+cbox+'" type="radio" />');
 									if (i == 4) {
 										items[j].push('<div style="padding-left:0.46em; text-align:left">'+radioLabels[j]+'</div>');
@@ -1246,7 +1331,7 @@
 								}
 							}
 							columnCount = 6;
-						break;
+							break;
 						case 'syntaxFilter': // Regorxxx <- Add help to filter tab ->
 						case 'syntax':
 							// Regorxxx <- Merge now playing and selected as fallback. Code cleanup
@@ -1262,7 +1347,7 @@
 							['$selected{X}', 'Filters', 'Returns value of X for the selected track, e.g. artist IS $selected{$meta(artist,0)} Displays tracks by selected (focused) artist.'],
 							['$nowplayingorselected{X}', 'Filters', 'Returns value of X for the playing track or selected track as fallback, i.e. behaves as $nowplaying while playing and $selected otherwise.'],
 							['$searchtext', 'Filters', 'Returns search text, e.g. enter following as a filter "genre HAS $searchtext", then type "rock" in search box: yields query "genre HAS rock"'],
-							['$colour{normal,hover,selected}', 'Views', 'Set different colours for parts of a line of text, see below for more info.']				
+							['$colour{normal,hover,selected}', 'Views', 'Set different colours for parts of a line of text, see below for more info.']
 							];
 							var items = [];
 							for (j = 0; j < labels.length; j++) {
@@ -1276,7 +1361,8 @@
 							}
 							columnCount = 3;
 							// Regorxxx ->
-						break;
+							break;
+
 						case 'elementColour':
 							headers = ['Buttons', 'Search', 'Separators', 'Lines', ''];
 							cells.push(headers);
@@ -1286,7 +1372,7 @@
 								items[j] = [];
 								for (i = 0; i < menuTable.length; i++) {
 									var n = menuTable[i];
-									var id = n + j; 
+									var id = n + j;
 									items[j].push('<input id="'+id+'" name="'+n+'" style="'+cbox+'" type="radio" />');
 									if (i == 3) {
 										items[j].push('<div style="padding-left:0.46em; text-align:left">'+labels[j]+'</div>');
@@ -1296,7 +1382,7 @@
 							}
 							columnCount = 5;
 							break;
-							}
+						}
 						return [cells, headers.length, columnCount];
 				}
 
@@ -1324,10 +1410,10 @@
 						for (j = 0; j < columnCount; j++) {
 							var cell = row.insertCell(-1);
 							cell.innerHTML = cells[i][j];
-							if (tb != 'syntax' && tb != 'syntaxFilter' && i % 2 == 1) cell.style.background = '#E8E8E8';  // Regorxxx <- Add help to filter tab ->
+							if (tb != 'syntax' && tb != 'syntaxFilter' && i % 2 == 1) cell.style.background = '#E8E8E8'; // Regorxxx <- Add help to filter tab ->
 						}
 					}
-					
+
 					if (tb == 'syntax' || tb === 'syntaxFilter') { // Regorxxx <- Add help to filter tab ->
 						var els = document.getElementById(tb).getElementsByTagName("th");
 						for (i = 0;i <els.length;i++){
@@ -1398,13 +1484,25 @@
 					i = 4; window.expandLimit.insertAdjacentHTML('beforeend', '<div class="input_cnt3"><input id="expand_container'+i+'" name="behaviour_input" class="input3" /></div>');
 					for (i = 0; i < 2; i++) {window.selection.insertAdjacentHTML('beforeend', '<div><input id="selection_checkbox'+i+'" name="behaviour_checkbox" style="'+cbox+'" type="checkbox" /><label for="selection_checkbox'+i+'" class="checkbox_label">'+selectionLabels[i]+'</label></div>');}
 					for (i = 0; i < 3; i++) {window.remember.insertAdjacentHTML('beforeend', '<div><input id="remember_checkbox'+i+'" name="behaviour_checkbox" style="'+cbox+'" type="checkbox" /><label for="remember_checkbox'+i+'" class="checkbox_label">'+rememberLabels[i]+'</label></div>');}
+					// Regorxxx <- Fix follow selection checkboxes
+					for (i = 0; i < 2; i++) {window.followCurrent.insertAdjacentHTML('beforeend', '<div><input id="followCurrent_checkbox'+i+'" name="behaviour_checkbox" style="'+cbox+'" type="checkbox" /><label for="followCurrent_checkbox'+i+'" class="checkbox_label">'+followCurrentLabels[i]+'</label></div>');}
+					// Regorxxx ->
+					// Regorxxx <- View by Folder structure sorting. Custom sorting for standard views
+					window.folderSorting_dropdown.innerHTML = viewSortingLabels[ppt['folderSorting_internal'].value];
+					for (i = 0; i < viewSortingLabels.length; i++) {window.folderSorting.insertAdjacentHTML('beforeend', '<a onclick="setFolderSorting(' + i + ');">' + viewSortingLabels[i] + '</a>');}
+					for (i = 0; i < folderSortingFbLabels.length; i++) {window.folderSortingFb.insertAdjacentHTML('beforeend', '<div><input id="folderSortingFb_checkbox'+i+'" name="behaviour_checkbox" style="'+cbox+'" type="checkbox" /><label for="folderSortingFb_checkbox'+i+'" class="checkbox_label">' + folderSortingFbLabels[i] + '</label></div>');}
+					i = 0; window.folderSortingTrans.insertAdjacentHTML('beforeend', '<div><input id="folderSortingTrans_checkbox'+i+'" name="behaviour_checkbox" style="'+cbox+'" type="checkbox" /><label for="folderSortingTrans_checkbox'+i+'" class="checkbox_label">' + sortingTransLabels[i] + '</label></div>');
+					window.viewSorting_dropdown.innerHTML = viewSortingLabels[ppt['viewSorting_internal'].value];
+					for (i = 0; i < viewSortingLabels.length; i++) {window.viewSorting.insertAdjacentHTML('beforeend', '<a onclick="setViewSorting(' + i + ');">' + viewSortingLabels[i] + '</a>');}
+					i = 1; window.viewSortingTrans.insertAdjacentHTML('beforeend', '<div><input id="viewSortingTrans_checkbox'+i+'" name="behaviour_checkbox" style="'+cbox+'" type="checkbox" /><label for="viewSortingTrans_checkbox'+i+'" class="checkbox_label">' + sortingTransLabels[i] + '</label></div>');
+					// Regorxxx ->
 					i = 0; window.playlist.insertAdjacentHTML('beforeend', '<div class="input_cnt2"><label for="playlist_container'+i+'" class="inp_label1">'+playlistLabels[i]+'</label><input id="playlist_container'+i+'" name="behaviour_input" class="input75" /></div>');
 					i = 1; window.playlist.insertAdjacentHTML('beforeend', '<div><input id="playlist_checkbox'+i+'" name="behaviour_checkbox" style="'+cbox+'" type="checkbox" /><label for="playlist_checkbox'+i+'" class="checkbox_label">'+playlistLabels[i]+'</label></div>');
 					window.playlistSort.insertAdjacentHTML('beforeend', '<div class="input_cnt3"><label for="playlistSort_container1" class="inp_label1">'+playlistSortLabels[0]+'</label><input id="playlistSort_container1" name="behaviour_input" class="input75" /></div>');
 					for (i = 0; i < 2; i++) {
 						window.targetPlaylist.insertAdjacentHTML('beforeend', '<div><input id="sendToCur'+i+'" name="sendToCur" style="'+cbox+'" type="radio" /><label for="sendToCur'+i+'" class="checkbox_label">'+targetPlaylistLabels[i]+'</label></div>');
 					}
-					// Regorxxx <- Send to playlist & select 
+					// Regorxxx <- Send to playlist & select
 					i = 0; window.selectAddedToPls.insertAdjacentHTML('beforeend', '<div><input id="selectAdded_checkbox'+i+'" name="behaviour_checkbox" style="'+cbox+'" type="checkbox" /><label for="selectAdded_checkbox'+i+'" class="checkbox_label">'+selectAddedToPlsLabels[i]+'</label></div>');
 					// Regorxxx ->
 					// Regorxxx <- Top tracks
@@ -1414,11 +1512,12 @@
 				}
 
 				// Regorxxx <- Drag n' drop to search box
-				function setSearch() {	
+				function setSearch() {
 					window.searchSend_dropdown.innerHTML = searchLabels[ppt['searchSend_internal'].value];
 					for (i = 0; i < 3; i++) {window.searchSend.insertAdjacentHTML('beforeend', '<a onclick="setSearchSend(' + i + ');">'+searchLabels[i]+'</a>');}
 					i = 3; window.searchEnter.insertAdjacentHTML('beforeend', '<div><input id="search_checkbox'+i+'" name="search_checkbox" style="'+cbox+'" type="checkbox" /><label for="search_checkbox'+i+'" class="checkbox_label">'+searchLabels[i]+'</label></div>');
-					
+					i = 4; window.searchEnter.insertAdjacentHTML('beforeend', '<div><input id="search_checkbox'+i+'" name="search_checkbox" style="'+cbox+'" type="checkbox" /><label for="search_checkbox'+i+'" class="checkbox_label">'+searchLabels[i]+'</label></div>');
+
 					window.searchDragValOpDefault_dropdown.innerHTML = dragValOpDefaultLabels[['', 'OR', 'AND'].indexOf(ppt['searchDragValOp_internal'].value.toUpperCase())];
 					for (i = 0; i < 3; i++) {window.searchDragValOpDefault.insertAdjacentHTML('beforeend', '<a onclick="setDragValOpDefault(' + i + ');">'+dragValOpDefaultLabels[i]+'</a>');}
 
@@ -1430,7 +1529,7 @@
 
 					window.searchDragTagOpDefault_dropdown.innerHTML = dragTagOpDefaultLabels[['', 'OR', 'AND'].indexOf(ppt['searchDragTagOp_internal'].value.toUpperCase())];
 					for (i = 0; i < 3; i++) {window.searchDragTagOpDefault.insertAdjacentHTML('beforeend', '<a onclick="setDragTagOpDefault(' + i + ');">'+dragTagOpDefaultLabels[i]+'</a>');}
-	
+
 					window.searchDragTagOpCtrl_dropdown.innerHTML = dragTagOpCtrlLabels[['', 'OR', 'AND'].indexOf(ppt['searchDragTagOpCtrl_internal'].value.toUpperCase())];
 					for (i = 0; i < 3; i++) {window.searchDragTagOpCtrl.insertAdjacentHTML('beforeend', '<a onclick="setDragTagOpCtrl(' + i + ');">'+dragTagOpCtrlLabels[i]+'</a>');}
 
@@ -1442,7 +1541,7 @@
 
 					window.searchDragTrackOpCtrl_dropdown.innerHTML = dragTrackOpCtrlLabels[['', 'OR', 'AND'].indexOf(ppt['searchDragTrackOpCtrl_internal'].value.toUpperCase())];
 					for (i = 0; i < 3; i++) {window.searchDragTrackOpCtrl.insertAdjacentHTML('beforeend', '<a onclick="setDragTrackOpCtrl(' + i + ');">'+dragTrackOpCtrlLabels[i]+'</a>');}
-					
+
 					window.searchDragTrackOpAlt_dropdown.innerHTML = dragTrackOpAltLabels[['', 'OR', 'AND'].indexOf(ppt['searchDragTrackOpAlt_internal'].value.toUpperCase())];
 					for (i = 0; i < 3; i++) {window.searchDragTrackOpAlt.insertAdjacentHTML('beforeend', '<a onclick="setDragTrackOpAlt(' + i + ');">'+dragTrackOpAltLabels[i]+'</a>');}
 
@@ -1452,14 +1551,14 @@
 					window.searchDragQueryOpShift_dropdown.innerHTML = dragQueryOpShiftLabels[['', 'OR', 'AND'].indexOf(ppt['searchDragQueryOpShift_internal'].value.toUpperCase())];
 					for (i = 0; i < 3; i++) {window.searchDragQueryOpShift.insertAdjacentHTML('beforeend', '<a onclick="setDragQueryOpShift(' + i + ');">'+dragQueryOpShiftLabels[i]+'</a>');}
 
-					for (i = 0; i < 3; i++) {window.dragTags.insertAdjacentHTML('beforeend', '<div class="input_cnt5"><input id="dragTags_container'+i+'" name="display_input" class="input70" /><label for="dragTags_container'+i+'" class="inp_label2">'+dragTagsLabels[i]+'</label></div>');}
+					for (i = 0; i < 3; i++) {window.dragTags.insertAdjacentHTML('beforeend', '<div class="input_cnt5"><input id="dragTags_container'+i+'" name="search_input" class="input70" /><label for="dragTags_container'+i+'" class="inp_label2">'+dragTagsLabels[i]+'</label></div>');}
 				}
 				// Regorxxx ->
 
 				// Regorxxx <- New statistics
 				function setDisplay() {
 					for (i = 0; i < 3; i++) {window.bar.insertAdjacentHTML('beforeend', '<div><input id="bar_checkbox'+i+'" name="display_checkbox" style="'+cbox+'" type="checkbox" /><label for="bar_checkbox'+i+'" class="checkbox_label">'+barLabels[i]+'</label></div>');}
-					
+
 					window.theme_dropdown.innerHTML = themeLabels[ppt['theme_internal'].value];
 					for (i = 0; i < 6; i++) {window.themeBg.insertAdjacentHTML('beforeend', '<a onclick="setTheme(' + i + ');">'+themeLabels[i]+'</a>');}
 					i = 6; window.themeStyle.insertAdjacentHTML('beforeend', '<div><input id="theme_checkbox'+i+'" name="display_checkbox" style="'+cbox+'" type="checkbox" /><label for="theme_checkbox'+i+'" class="checkbox_label">'+themeLabels[i]+'</label></div>');
@@ -1471,7 +1570,7 @@
 					for (i = 0; i < 2; i++) {window.metrics1.insertAdjacentHTML('beforeend', '<div class="input_cnt3"><input id="metrics_container'+i+'" name="display_input" style="padding:0; margin:0;" class="input3" /><label for="metrics_container'+i+'" class="inp_label2">'+metricsLabels[i]+'</label></div>');}
 					for (i = 2; i < 4; i++) {window.metrics2.insertAdjacentHTML('beforeend', '<div class="input_cnt3"><input id="metrics_container'+i+'" name="display_input" style="padding:0; margin:0;" class="input3" /><label for="metrics_container'+i+'" class="inp_label2">'+metricsLabels[i]+'</label></div>');}
 					for (i = 4; i < 6; i++) {window.metrics3.insertAdjacentHTML('beforeend', '<div class="input_cnt3"><input id="metrics_container'+i+'" name="display_input" style="padding:0; margin:0;" class="input3" /><label for="metrics_container'+i+'" class="inp_label2">'+metricsLabels[i]+'</label></div>')};
-			
+
 					window.root_dropdown.innerHTML = rootLabels[ppt['rootNode_internal'].value];
 					for (i = 0; i < 4; i++) {window.root.insertAdjacentHTML('beforeend', '<a onclick="setRoot(' + i + ');">'+rootLabels[i]+'</a>');}
 					i = 4; window.rootStyle.insertAdjacentHTML('beforeend', '<div><input id="root_checkbox'+i+'" name="display_checkbox" style="'+cbox+'" type="checkbox" /><label for="root_checkbox'+i+'" class="checkbox_label">'+rootLabels[i]+'</label></div>');
@@ -1491,7 +1590,7 @@
 				function setStatistcs() {
 					for (i = 0; i < 9; i++) {window.statisticsTf.insertAdjacentHTML('beforeend', '<div class="input_cnt5"><input id="statisticsTf_container'+i+'" name="statistics_input" class="input70" /><label for="statisticsTf_container'+i+'" class="inp_label2">'+statisticsLabels[i]+'</label></div>');}
 					i = 0; {window.statisticsNames.insertAdjacentHTML('beforeend', '<div class="input_cnt5"><input id="statisticsNames_container'+i+'" name="statistics_input" class="input70" /><label id="statisticsNamesLabel" for="statisticsNames_container'+i+'" class="inp_label2">' + getStatisticsSlots() + '</label></div>');}
-					
+
 					for (i = 10; i < 12; i++) {window.labelStatistics.insertAdjacentHTML('beforeend', '<div><input id="labelStatistics_checkbox'+i+'" name="statistics_checkbox" style="'+cbox+'" type="checkbox" /><label for="labelStatistics_checkbox'+i+'" class="checkbox_label">'+statisticsLabels[i]+'</label></div>')};
 					window.itemCounts_dropdown.innerHTML = itemCountsLabels[ppt['nodeCounts_internal'].value];
 					i = 0; window.labelStatistics.insertAdjacentHTML('beforeend', '<div class="input_cnt3"><label id="statisticsDecimalsLabel" for="statisticsDecimals_container'+i+'" class="inp_label1">'+ statisticsDecimalsLabels[i]+'</label><input id="statisticsDecimals_container'+i+'" name="statistics_input" class="input70" /></div>');
@@ -1513,7 +1612,7 @@
 
 				var rootStubLabels = JSON.parse(ppt['rootImages_internal'].value) || [];
 				var root_ix = ppt['curRootImg_internal'].value;
-				
+
 				var noArtistStubLabels = JSON.parse(ppt['noArtistImages_internal'].value) || [];
 				var noart_ix = ppt['curNoArtistImg_internal'].value;
 
@@ -1523,18 +1622,17 @@
 				function setAlbumArt() {
 					for (i = 0; i < 5; i++) {window.labels.insertAdjacentHTML('beforeend', '<div><input id="albumArtLabelType'+i+'" name="albumArtLabelType" style="'+cbox+'" type="radio" /><label for="albumArtLabelType'+i+'" class="checkbox_label">'+albumArtLabels[i]+'</label></div>');}
 					i = 5; window.flip.insertAdjacentHTML('beforeend', '<div><input id="flip_checkbox'+i+'" name="albumart_checkbox" style="'+cbox+'" type="checkbox" /><label for="flip_checkbox'+i+'" class="checkbox_label">'+albumArtLabels[i]+'</label></div>');
-					
+
 					window.overlay_dropdown.innerHTML = albumArtOverlayLabels[ppt['itemOverlayType_internal'].value];
 					for (i = 0; i < 3; i++) {window.overlay.insertAdjacentHTML('beforeend', '<a onclick="setOverlay(' + i + ');">'+albumArtOverlayLabels[i]+'</a>');}
 
-					for (i = 0; i < 2; i++) {window.followCurrent.insertAdjacentHTML('beforeend', '<div><input id="selection_checkbox'+i+'" name="albumart_checkbox" style="'+cbox+'" type="checkbox" /><label for="selection_checkbox'+i+'" class="checkbox_label">'+followCurrentLabels[i]+'</label></div>');}
 					for (i = 0; i < 2; i++) {window.useCache.insertAdjacentHTML('beforeend', '<div><input id="cache_checkbox" name="albumart_checkbox" style="'+cbox+'" type="checkbox" /><label for="cache_checkbox" class="checkbox_label">'+diskCacheLabels[i]+'</label></div>');}
 					var pth = '...*YOUR PATH*...\\art_img\\$cut(%artist%,1)\\%artist%\\*    [CHANGE ...*YOUR PATH*... as required; pattern assumes biography is saving to default folder]';
 					window.photoPath.insertAdjacentHTML('beforeend', '<div class="input_cnt1" id="view_cnt_photoPath"><input name="photoPath_view" class="input98" readonly value="'+pth+'" /></div>')
 
 					window.rootStub_dropdown.innerHTML = '<b>Root:</b> <img src="'+rootStubLabels[root_ix].path +'" alt="'+rootStubLabels[root_ix].name+'" width="'+ em +'" height="'+ em +'" class="stub"/> '+rootStubLabels[root_ix].name+'<';
 					for (i = 0; i < rootStubLabels.length; i++) {window.rootStub.insertAdjacentHTML('beforeend', '<a onclick="setRootImage(' + i + ');"> <img src="'+rootStubLabels[i].path+'" alt="'+rootStubLabels[i].name+'" width="'+ em +'" height="'+ em +'" style="vertical-align:middle;"/> '+rootStubLabels[i].name+'</a>');}
-					
+
 					window.noArtistStub_dropdown.innerHTML = '<b>No artist:</b> <img src="'+noArtistStubLabels[noart_ix].path +'" alt="'+noArtistStubLabels[noart_ix].name+'" width="'+ em +'" height="'+ em +'" class="stub"/> '+noArtistStubLabels[noart_ix].name+'<';
 					for (i = 0; i < noArtistStubLabels.length; i++) {window.noArtistStub.insertAdjacentHTML('beforeend', '<a onclick="setNoArtistImage(' + i + ');"> <img src="'+noArtistStubLabels[i].path+'" alt="'+noArtistStubLabels[i].name+'" width="'+ em +'" height="'+ em +'" style="vertical-align:middle;"/> '+noArtistStubLabels[i].name+'</a>');}
 
@@ -1545,10 +1643,10 @@
 					window.flowMode.insertAdjacentHTML('beforeend', '<div><input id="flowMode_checkbox" name="albumart_checkbox" style="'+cbox+'" type="checkbox" /><label for="flowMode_checkbox" class="checkbox_label">Enable</label></div>');
 					window.dropShadow.insertAdjacentHTML('beforeend', '<div><input id="dropShadow_checkbox" name="albumart_checkbox" style="'+cbox+'" type="checkbox" /><label for="dropShadow_checkbox" class="checkbox_label">Enable</label></div>');
 					window.sameAsTree.insertAdjacentHTML('beforeend', '<div><input id="sameAsTree_checkbox" name="albumart_checkbox" style="'+cbox+'" type="checkbox" /><label for="sameAsTree_checkbox" class="checkbox_label">Same As Tree</label></div>');
-					
+
 					window.thumbSize_dropdown.innerHTML = thumbnailSizeLabels[ppt['thumbNailSize_internal'].value];
 					for (i = 0; i < 8; i++) {window.thumbSize.insertAdjacentHTML('beforeend', '<a onclick="setthumbSize(' + i + ');">'+thumbnailSizeLabels[i]+'</a>');}
-					
+
 					i = 0; window.indexLetter.insertAdjacentHTML('beforeend', '<div><input id="indexLetter_checkbox'+i+'" name="albumart_checkbox" style="'+cbox+'" type="checkbox" /><label for="indexLetter_checkbox'+i+'" class="checkbox_label">'+indexLetterLabels[i]+'</label></div>');
 					i = 1; window.indexLetter.insertAdjacentHTML('beforeend', '<div class="input_cnt1"><input id="indexLetter_container'+i+'" name="albumart_input" class="input7" /><label for="indexLetter_container'+i+'" class="inp_label2">'+indexLetterLabels[i]+'</label></div>');
 					i = 2; window.indexLetter.insertAdjacentHTML('beforeend', '<div><input id="indexLetter_checkbox'+i+'" name="albumart_checkbox" style="'+cbox+'" type="checkbox" /><label for="indexLetter_checkbox'+i+'" class="checkbox_label">'+indexLetterLabels[i]+'</label></div>');
@@ -1638,26 +1736,35 @@
 				}
 				var nm = page.toString()+'_checkbox', boxes = document.querySelectorAll(page == 'all' ? "[name$='_checkbox']" : "[name="+nm+"]");
 				for (i = 0; i < boxes.length; i++) {
-					boxes[i].checked = ppt[box[page][i] + '_internal'][value];
-				}		
+					try { boxes[i].checked = ppt[box[page][i] + '_internal'][value]; }
+					catch (e) { alert('Error on ' + nm + ' -> ' + boxes[i].id + ' -> ' + box[page][i] + '_internal (' + i + ')' ); }
+				}
 
 				if (ppt['albumArtShow_internal'][value]) {
 					window.show_checkbox4.parentNode.disabled = true;
 				}
-				if (window.remember_checkbox1.checked || window.remember_checkbox2.checked) window.remember_checkbox0.checked = true;
-				window.remember_checkbox0.parentNode.disabled = window.remember_checkbox1.checked || window.remember_checkbox2.checked;				
+				// Regorxxx <- Remember checkboxes more logic behavior
+				if (!window.remember_checkbox0.checked) { window.remember_checkbox1.checked = window.remember_checkbox2.checked = false; }
+				window.remember_checkbox1.parentNode.disabled = window.remember_checkbox2.parentNode.disabled = !window.remember_checkbox0.checked;
+				if (window.search_checkbox3.checked) { window.search_checkbox4.checked = false; }
+				window.search_checkbox4.parentNode.disabled = window.search_checkbox3.checked;
+				// Regorxxx ->
 				window.thumbSize_dropdown.style.visibility = window.flowMode_checkbox.checked ? 'hidden' : 'visible';
 				window.thumbNailSize.style.visibility = window.flowMode_checkbox.checked ? 'hidden' : 'visible';
 				window.checkbox_folderView.disabled = true;
 				window.checkbox_menuName.disabled = true;
 				document.getElementById("albumArtCfg").style.display = window.show_checkbox4.checked ? "block" : "none";
 				window.indexLetter_checkbox2.parentNode.disabled = ppt['albumArtLetterNo_internal'].value == 0;
-				window.metrics_container4.parentNode.style.display = !ppt['filterShow_internal'].value && !ppt['searchShow_internal'].value && !ppt['settingsShow_internal'].value ? "block" : "none";				
+				window.metrics_container4.parentNode.style.display = !ppt['filterShow_internal'].value && !ppt['searchShow_internal'].value && !ppt['settingsShow_internal'].value ? "block" : "none";
 			}
 
 			function textChange(e) {
-				if (window.remember_checkbox1.checked || window.remember_checkbox2.checked) window.remember_checkbox0.checked = true;
-				window.remember_checkbox0.parentNode.disabled = window.remember_checkbox1.checked || window.remember_checkbox2.checked;
+				// Regorxxx <- Remember checkboxes more logic behavior
+				if (!window.remember_checkbox0.checked) { window.remember_checkbox1.checked = window.remember_checkbox2.checked = false; }
+				window.remember_checkbox1.parentNode.disabled = window.remember_checkbox2.parentNode.disabled = !window.remember_checkbox0.checked;
+				if (window.search_checkbox3.checked) { window.search_checkbox4.checked = false; }
+				window.search_checkbox4.parentNode.disabled = window.search_checkbox3.checked;
+				// Regorxxx ->
 				window.theme_checkbox7.parentNode.disabled = ppt['theme_internal'].value == 1 || ppt['theme_internal'].value == 4;
 				window.coverFormat_checkbox0.parentNode.disabled = ppt['theme_internal'].value != 5;
 				window.coverFormat_container1.parentNode.disabled = ppt['theme_internal'].value != 5;
@@ -1673,7 +1780,11 @@
 				window.metrics_container4.parentNode.style.display = !ppt['filterShow_internal'].value && !ppt['searchShow_internal'].value && !ppt['settingsShow_internal'].value ? "block" : "none";
 				clickLabels = ppt['actionMode_internal'].value == 1 ? ['Send to playlist'] : ppt['actionMode_internal'].value == 2 ? ['Select'] : ['Select', 'Send to playlist', 'Send to playlist & play', 'Send to playlist & play [add if playing]'];
 				dblClickLabels = ppt['actionMode_internal'].value == 1 ? ['Send to playlist & play'] : ppt['actionMode_internal'].value == 2 ? ['Send to playback queue and play'] : ['Send to playlist', 'Send to playlist & play', 'Expand / collapse (tree)', 'Send to playback queue and play'];
-				mbtnClickLabels = ppt['actionMode_internal'].value == 2 ? ['Add to playback queue (middle dblclk removes)'] : ['Add to default playlist', 'Add to current playlist', 'Add to playback queue (middle dblclk removes)'];
+				// Regorxxx <- Top tracks
+				mbtnClickLabels = ppt['actionMode_internal'].value == 2
+					? ['Add to playback queue (middle dblclk removes)']
+					: ['Add to default playlist', 'Add to current playlist', 'Add to playback queue (middle dblclk removes)', 'Send Top tracks to default playlist', 'Send Top tracks to current playlist', 'Add Top tracks to default playlist', 'Add Top tracks to current playlist'];
+				// Regorxxx ->
 
 				if (ppt['actionMode_internal'].value) {
 					window.click_dropdown.innerHTML = clickLabels[0];
@@ -1702,9 +1813,11 @@
 				} else {
 					window.mbtnClick_dropdown.innerHTML = mbtnClickLabels[ppt['mbtnClickAction_internal'].value];
 					window.mbtnClick.innerHTML = '';
-					for (i = 0; i < 3; i++) {window.mbtnClick.insertAdjacentHTML('beforeend', '<a onclick="setMbtnClickAction(' + i + ');">'+mbtnClickLabels[i]+'</a>');}
+					// Regorxxx <- Top tracks
+					for (i = 0; i < 7; i++) {window.mbtnClick.insertAdjacentHTML('beforeend', '<a onclick="setMbtnClickAction(' + i + ');">'+mbtnClickLabels[i]+'</a>');}
 					window.mbtnClick_dropdown.style.background = '#3e8e41';
-				}	
+					// Regorxxx ->
+				}
 			}
 
 			setInterval(inputChanged, 500);
@@ -1721,7 +1834,7 @@
 					for (j = 0; j < radioBtns.length; j++) {
 						if (j == new_value) {
 							radioBtns[j].checked = true;
-							radioBtns[j].value = j;	
+							radioBtns[j].value = j;
 						}
 					}
 				}
@@ -1733,7 +1846,7 @@
 				if (ppt['themed_internal'].value) window.panelStyle.style.display = "none";
 				window.node_checkbox7.parentNode.disabled = ppt['nodeStyle_internal'].value != 0 && ppt['nodeStyle_internal'].value != 7;
 				window.showH2_checkbox5.parentNode.disabled = window.cusNode_checkbox3.checked && (ppt['nodeStyle_internal'].value == 0 || ppt['nodeStyle_internal'].value == 7);
-				
+
 				window.albumArtLabelType2.parentNode.disabled = window.flowMode_checkbox.checked;
 			}
 
@@ -1745,7 +1858,7 @@
 					else window.view.insertAdjacentHTML('beforeend', '<div class="input_cnt1" id="view_cnt_folderView"><input id="checkbox_folderView" name="viewCheckbox" style="'+cbox+'" type="checkbox" /><input id="view_container'+i+'" name="view_name" class="input21" /><input name="input_view" class="input71" readonly /></div>')
 				}
 			}
-			
+
 
 			function setFilters(clear) {
 				if (clear) document.getElementById("filter").innerHTML = '';
@@ -1771,7 +1884,7 @@
 				var check = document.getElementsByName('viewCheckbox');
 				for (i = 0; i < check.length; i++) {
 					v[i].menu = check[i].checked;
-				}				
+				}
 
 				v = cfg[1] = [];
 				inputs = document.getElementsByName('filter_name');
@@ -1798,7 +1911,7 @@
 				for (i = 0; i < boxes.length; i++) {
 					(ppt[box.all[i] + '_internal'] || cfg[box.all[i] + '_internal']).value = boxes[i].checked;
 				}
-				
+
 				for (i = 0; i < radio.all.length; i++) {
 					var radioBtns = document.getElementsByName(radio.all[i]);
 					for (j = 0; j < radioBtns.length; j++) {
@@ -1834,9 +1947,11 @@
 				else parsed_args[0] = new_cfg;
 				if (new_ppt == parsed_args[1]) new_ppt = '';
 				else parsed_args[1] = new_ppt;
-				if (new_cfg || new_ppt) {
-					callback && callback(new_cfg, new_ppt);
+				// Regorxxx <- Fix errors on panel reload
+				if ((new_cfg || new_ppt) && callback) {
+					if (!callback(new_cfg, new_ppt)) { close_window(); }
 				}
+				// Regorxxx ->
 			}
 
 			function showProperties() {
@@ -1919,29 +2034,30 @@
 				var inputs = [];
 				if (page == 'all' || page == 'views') {
 					inputs = document.getElementsByName('view_name');
-					for (i = 0; i < inputs.length; i++) {	
+					for (i = 0; i < inputs.length; i++) {
 						inputs[i].value = cfg[0][i].name;
 					}
 					inputs = document.getElementsByName('input_view');
-					for (i = 0; i < inputs.length; i++) {	
+					for (i = 0; i < inputs.length; i++) {
 						inputs[i].value = cfg[0][i].type;
 					}
 				}
-				
+
 				if (page == 'all' || page == 'filters') {
 					inputs = document.getElementsByName('filter_name');
-					for (i = 0; i < inputs.length; i++) {	
+					for (i = 0; i < inputs.length; i++) {
 						inputs[i].value = cfg[1][i].name;
 					}
 					inputs = document.getElementsByName('input_filter');
-					for (i = 0; i < inputs.length; i++) {	
+					for (i = 0; i < inputs.length; i++) {
 						inputs[i].value = cfg[1][i].type;
 					}
 				}
-				
+
 				var nm = page.toString()+'_input', inputs = document.querySelectorAll(page == 'all' ? "[name$='_input']" : "[name="+nm+"]");
 				for (i = 0; i < inputs.length; i++) {
-					inputs[i].value = ppt[input[page].name[i] + '_internal'][value];
+					try { inputs[i].value = ppt[input[page].name[i] + '_internal'][value]; }
+					catch (e) { alert('Error on ' + nm + ' -> ' + inputs[i].id + ' -> ' + input[page].name[i] + '_internal (' + i + ')' ); }
 				}
 
 				window.coverFormat_container1.parentNode.disabled = ppt['theme_internal'].value != 4;
@@ -1964,24 +2080,21 @@
 				setCheckboxes(cur.page, 'default_value');
 				setInputs(cur.page, 'default_value');
 				setRadioBtns(cur.page, 'default_value');
+				// Regorxxx <- Fix reset
 				if (cur.page == 'behaviour') {
 					setClickAction(ppt['clickAction_internal'].default_value);
 					setDblClickAction(ppt['dblClickAction_internal'].default_value);
 					setKeyAction(ppt['keyAction_internal'].default_value);
-					
-					setRoot(ppt['rootNode_internal'].default_value);
-					setNode(ppt['nodeStyle_internal'].default_value);
-					setItemCounts(ppt['nodeCounts_internal'].default_value);
-					setHoverBg(ppt['highLightRow_internal'].default_value);
-
+					setMbtnClickAction(ppt['mbtnClickAction_internal'].default_value)
+					setAltClickAction(ppt['altClickAction_internal'].default_value)
 					setSbarShow(ppt['sbarShow_internal'].default_value);
 					setsbarType(ppt['sbarType_internal'].default_value);
 					setSbarCol(ppt['sbarCol_internal'].default_value);
-					setSbarIcon(ppt['highLightRow_internal'].default_value);
+					setSbarIcon(ppt['sbarButType_internal'].default_value);
 				}
+				// Regorxxx ->
 				// Regorxxx <- New search tab. Drag n' drop to search box
 				if (cur.page == 'search') {
-					setSearchSend(ppt['searchSend_internal'].default_value);
 					setDragValOpDefault(['', 'OR', 'AND'].indexOf(ppt['searchDragValOp_internal'].default_value.toUpperCase()));
 					setDragValOpCtrl(['', 'OR', 'AND'].indexOf(ppt['searchDragValOpCtrl_internal'].default_value.toUpperCase()));
 					setDragValOpAlt(['', 'OR', 'AND'].indexOf(ppt['searchDragValOpAlt_internal'].default_value.toUpperCase()));
@@ -1993,26 +2106,39 @@
 					setDragTrackOpAlt(['', 'OR', 'AND'].indexOf(ppt['searchDragTrackOpAlt_internal'].default_value.toUpperCase()));
 					setDragQueryOpDefault(['', 'OR', 'AND'].indexOf(ppt['searchDragQueryOp_internal'].default_value.toUpperCase()));
 					setDragQueryOpShift(['', 'OR', 'AND'].indexOf(ppt['searchDragQueryOpShift_internal'].default_value.toUpperCase()));
+					setSearchSend(ppt['searchSend_internal'].default_value);
 				}
-				// Regorxxx ->		
+				// Regorxxx ->
+				// Regorxxx <- Fix reset
 				if (cur.page == 'display') {
 					setTheme(ppt['theme_internal'].default_value);
+					setRoot(ppt['rootNode_internal'].default_value);
+					setNode(ppt['nodeStyle_internal'].default_value);
+					setHoverBg(ppt['highLightRow_internal'].default_value);
 				}
+				// Regorxxx ->
+				// Regorxxx <- New statistics tab.
+				if (cur.page == 'statistics') {
+					setItemCounts(ppt['nodeCounts_internal'].default_value);
+				}
+				// Regorxxx ->
 				if (cur.page == 'albumArt') {
-					window.rootStub_dropdown.innerHTML = '<b>Root:</b> ' + ppt.curRootImg_internal.default_value;
+					// Regorxxx <- Fix stub images on reset
+					window.rootStub_dropdown.innerHTML = '<b>Root:</b> <img src="'+rootStubLabels[ppt.curRootImg_internal.default_value].path+'" width="'+ em +'" height="'+ em +'" class="stub"/> '+rootStubLabels[ppt.curRootImg_internal.default_value].name+'<';
 					ppt.curRootImg_internal.value = ppt.curRootImg_internal.default_value;
-					window.noArtistStub_dropdown.innerHTML = '<b>No artist:</b> ' + ppt.curNoArtistImg_internal.default_value;
+					window.noArtistStub_dropdown.innerHTML = '<b>No artist:</b> <img src="'+noArtistStubLabels[ppt.curNoArtistImg_internal.default_value].path+'" width="'+ em +'" height="'+ em +'" class="stub"/> '+noArtistStubLabels[ppt.curNoArtistImg_internal.default_value].name+'<';
 					ppt.curNoArtistImg_internal.value = ppt.curNoArtistImg_internal.default_value;
-					window.noCoverStub_dropdown.innerHTML = '<b>No cover:</b> ' + ppt.curNoCoverImg_internal.default_value;
+					window.noCoverStub_dropdown.innerHTML = '<b>No cover:</b> <img src="'+noCoverStubLabels[ppt.curNoCoverImg_internal.default_value].path+'" width="'+ em +'" height="'+ em +'" class="stub"/> '+noCoverStubLabels[ppt.curNoCoverImg_internal.default_value].name+'<';
 					ppt.curNoCoverImg_internal.value = ppt.curNoCoverImg_internal.default_value;
+					// Regorxxx ->
 					setOverlay(ppt['itemOverlayType_internal'].default_value);
 					setthumbSize(ppt['thumbNailSize_internal'].default_value);
 				}
 				if (cur.page == 'custom') setCustomColours('default_value');
 			}
-			
+
 			window.btn_reset.onclick = function () {
-				var msg = 'This will reset all library tree settings to default; all your settings including \'Views\' and \Filters\' will be lost.\\n\\nSettings are stored in panel properties, which has back-up options, and which can be opened by shift+right click of library tree.\\n\\nContinue with reset?';
+				var msg = 'This will reset all library tree settings to default; all your settings including \'Views\' and \Filters\' will be lost.\n\nSettings are stored in panel properties, which has back-up options, and which can be opened by shift+right click of library tree.\n\nContinue with reset?'; // Regorxxx <- Fix new lines ->
 				var r = window.confirm(msg);
 				if (r == true) {
 					var new_cur = JSON.stringify(cur);
@@ -2027,7 +2153,7 @@
 					window.btn_ok.onclick();
 				}
 			}
-			
+
 			document.onkeyup = function () {
 				set_btn_apply_state();
 			}
@@ -2079,7 +2205,7 @@
 
 			var divToggleVis = document.getElementById('help_text');
 			var help_btn = document.getElementById('help_button');
- 
+
 			help_btn.onclick = function() {
 				if (divToggleVis.style.display === 'none') {
 					divToggleVis.style.display = 'block';
@@ -2114,7 +2240,7 @@
 
 			var divToggleSyn = document.getElementById('syntax_help');
 			var syntax_btn = document.getElementById('syntax_button');
- 
+
 			syntax_btn.onclick = function() {
 				if (divToggleSyn.style.display === 'none') {
 					divToggleSyn.style.display = 'block';
@@ -2127,7 +2253,7 @@
 			// Regorxxx <- Add help to filter tab
 			var divToggleSynFilter = document.getElementById('syntaxFilter_help');
 			var syntaxFilter_btn = document.getElementById('syntaxFilter_button');
- 
+
 			syntaxFilter_btn.onclick = function() {
 				if (divToggleSynFilter.style.display === 'none') {
 					divToggleSynFilter.style.display = 'block';
@@ -2150,17 +2276,21 @@
 				['dblClick_dropdown', 'dblClick'],
 				['itemCounts_dropdown', 'itemCounts'],
 				['mbtnClick_dropdown', 'mbtnClick'],
-				['keystroke_dropdown', 'keystroke'],			
+				['keystroke_dropdown', 'keystroke'],
 				['noArtistStub_dropdown', 'noArtistStub'],
 				['noCoverStub_dropdown', 'noCoverStub'],
 				['node_dropdown', 'node'],
 				['overlay_dropdown', 'overlay'],
 				['root_dropdown', 'root'],
-				['rootStub_dropdown', 'rootStub'],				
+				['rootStub_dropdown', 'rootStub'],
 				['sbarShow_dropdown', 'sbarShow'],
 				['sbarType_dropdown', 'sbarType'],
 				['sbarCol_dropdown', 'sbarCol'],
 				['sbarIcon_dropdown', 'sbarIcon'],
+				// Regorxxx <- View by Folder structure sorting. Custom sorting for standard views
+				['folderSorting_dropdown', 'folderSorting'],
+				['viewSorting_dropdown', 'viewSorting'],
+				// Regorxxx ->
 				// Regorxxx <- Drag n' drop to search box
 				['searchSend_dropdown', 'searchSend'],
 				['searchDragValOpDefault_dropdown', 'searchDragValOpDefault'],
@@ -2179,13 +2309,28 @@
 				['theme_dropdown', 'themeBg'],
 				['thumbSize_dropdown', 'thumbSize']
 			];
-			
+
 			function hide() {
 				var id = document.activeElement.id;
 				for (i = 0; i < h.length; i++) {
 					if (id != h[i][0]) window[h[i][1]].style.display = 'none';
 				}
 			}
+
+			// Regorxxx <- Copy links to clipboard ->
+			function copyToClipboard(s) {
+				if (navigator.clipboard) { //Chrome
+					navigator.clipboard.writeText(s);
+				} else if (window.clipboardData) { // Internet Explorer
+					window.clipboardData.setData("Text", s);
+				}
+			}
+
+			function copyToClipboardId(id) {
+				var element = document.getElementById(id);
+				copyToClipboard(element.href || element.innerHTML);
+			}
+			// Regorxxx ->
 
 			window.onunload = function () {
 				if (!is_closed_manually) {

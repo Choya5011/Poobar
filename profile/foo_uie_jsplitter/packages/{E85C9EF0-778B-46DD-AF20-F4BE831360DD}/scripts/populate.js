@@ -1,4 +1,7 @@
 ﻿'use strict';
+/* global ui:readable, panel:readable, ppt:readable, lib:readable, pop:readable, but:readable, img:readable, search:readable, timer:readable, $:readable, men:readable, vk:readable, tooltip:readable, globFonts:readable, sbar:readable */
+/* global Language:readable*/
+/* exported Populate */
 
 class Populate {
 	constructor() {
@@ -36,9 +39,9 @@ class Populate {
 			'standard': {},
 			'filter': {},
 			'search': {}
-		}
+		};
 
-		this.highlight = {}
+		this.highlight = {};
 
 		this.getMainMenuIndex = {
 			add: parseFloat(this.hotKeys[3]),
@@ -47,36 +50,36 @@ class Populate {
 			new: parseFloat(this.hotKeys[7]),
 			searchClear: parseFloat(this.hotKeys[11]),
 			searchFocus: parseFloat(this.hotKeys[9])
-		}
+		};
 
 		this.last_pressed_coord = {
 			x: undefined,
 			y: undefined
-		}
+		};
 
 		this.m = {
 			br: -1,
 			cur_br: 0,
 			i: -1
-		}
+		};
 
 		this.row = {
 			cur: 0,
 			i: -1,
 			lineMax: [],
 			note_w: 0
-		}
+		};
 
 		this.triangle = {
 			expand: null,
 			highlight: null,
 			select: null
-		}
+		};
 
-		this.collator = new Intl.Collator(undefined, {
-			sensitivity: 'accent',
-			numeric: true
-		});
+		// Regorxxx <- Fixed Library's "View by Folder Structure"
+		this.collator = new Intl.Collator(void (0), { sensitivity: 'accent', numeric: true });
+		this.folderCollator = new Intl.Collator(void (0), { sensitivity: 'base', numeric: true });
+		// Regorxxx ->
 
 		this.setTf(); // Regorxxx <- New statistics ->
 		this.setActions();
@@ -89,8 +92,8 @@ class Populate {
 	setTf() {
 		this.tf = {
 			added: FbTitleFormat(ppt.tfAdded),
-			bitrate: FbTitleFormat('%bitrate%'),
-			bytes: FbTitleFormat('%path%|%filesize%'),
+			bitrate: FbTitleFormat('%BITRATE%'),
+			bytes: FbTitleFormat('%PATH%|%FILESIZE%'),
 			date: FbTitleFormat(ppt.tfDate),
 			firstPlayed: FbTitleFormat(ppt.tfFirstPlayed),
 			lastPlayed: FbTitleFormat(ppt.tfLastPlayed),
@@ -104,7 +107,10 @@ class Populate {
 			custom1Avg: FbTitleFormat(ppt.tfCustom1Avg),
 			custom2Avg: FbTitleFormat(ppt.tfCustom2Avg),
 			custom3Avg: FbTitleFormat(ppt.tfCustom3Avg)
-		}
+		};
+		// Regorxxx <- Fix sorting not being applied after HTML options panel change.
+		this.customSort = FbTitleFormat(ppt.customSort);
+		// Regorxxx ->
 	}
 	// Regorxxx ->
 
@@ -118,8 +124,8 @@ class Populate {
 	// Regorxxx <- Code cleanup
 	add(x, y, pl) {
 		this.selectAndRun(
-			x, y, 
-			() => this.load({ bAddToPls: true, bAutoPlay: false, bUseDefaultPls: pl, bInsertToPls: false }), 
+			x, y,
+			() => this.load({ bAddToPls: true, bAutoPlay: false, bUseDefaultPls: pl, bInsertToPls: false }),
 			false
 		);
 	}
@@ -144,7 +150,7 @@ class Populate {
 
 	addTopTracks(x, y, bAddToPls, bUseDefaultPls = !ppt.sendToCur) {
 		this.selectAndRun(
-			x, y, 
+			x, y,
 			() => this.loadTopTracks(bAddToPls, bUseDefaultPls)
 		);
 	}
@@ -164,15 +170,15 @@ class Populate {
 	}
 
 	arrayToRange(array) {
-		return array.slice().sort((a, b) => {return a - b;}).reduce((ranges, value) => {
+		return array.slice().sort((a, b) => { return a - b; }).reduce((ranges, value) => {
 			const lastIndex = ranges.length - 1;
 			if (lastIndex === -1 || ranges[lastIndex].max !== value - 1) {
-			ranges.push({ min: value, max: value });
+				ranges.push({ min: value, max: value });
 			} else {
 				ranges[lastIndex].max = value;
 			}
 			return ranges;
-		}, []).map(function(range) {return range.min !== range.max ? range.min + '-' + range.max : range.min.toString();});
+		}, []).map(function (range) { return range.min !== range.max ? range.min + '-' + range.max : range.min.toString(); });
 	}
 
 	branch(br, base, node, block) {
@@ -273,7 +279,7 @@ class Populate {
 						nm: n,
 						srt: v.srt
 					};
-					j++
+					j++;
 				}
 			});
 			b.forEach(v => {
@@ -293,7 +299,7 @@ class Populate {
 		this.cache[type][key] = {
 			value: b.length,
 			items: []
-		}
+		};
 		return b.length;
 	}
 
@@ -408,8 +414,8 @@ class Populate {
 		if (ui.style.squareNode && ui.col.line) {
 			this.row.lineMax = [];
 			this.tree.forEach(v => {
-				const depth = !this.inlineRoot ? v.level : Math.max(v.level - 1, 0)
-				this.row.lineMax[depth] = v.ix
+				const depth = !this.inlineRoot ? v.level : Math.max(v.level - 1, 0);
+				this.row.lineMax[depth] = v.ix;
 			});
 		}
 		if (this.rootNode == 3) this.tree[0].name = this.tree[0].child.length > 1 ? panel.rootName.replace('#^^^^#', this.tree[0].child.length) : panel.rootName1;
@@ -421,19 +427,19 @@ class Populate {
 	}
 
 	butTooltipFont() {
-		return ['Segoe UI', 15 * $.scale * ppt.zoomTooltipBut / 100, 0];
+		return ['Segoe UI', 14 * $.scale * ppt.zoomTooltipBut / 100, 0];
 	}
 
 	calcStatistics(v) {
 		const key = 'stat' + this.getKey(v);
 		const type = panel.search.txt ? 'search' : ppt.filterBy ? 'filter' : 'standard';
-		if (this.cache[type][key]) return this.cache[type][key].value;
+		if (this.cache[type][key]) { return this.cache[type][key]; }
 		const handleList = new FbMetadbHandleList();
 		let items = [];
 		this.addItems(items, v.item);
-		items = [...new Set(items)].sort(this.numSort)
+		items = [...new Set(items)].sort(this.numSort);
 		items.some(w => {
-			if (w >= panel.list.Count) return true;
+			if (w >= panel.list.Count) { return true; }
 			handleList.Add(panel.list[w]);
 		});
 		let date ='';
@@ -644,7 +650,7 @@ class Populate {
 			ui.style.symb.SetPartAndStateID(2, 1);
 			ui.style.symb.SetPartAndStateID(2, 2);
 			ui.style.symb.DrawThemeBackground(gr, -ui.sz.node, -ui.sz.node, ui.sz.node, ui.sz.node);
-		} catch (e) {
+		} catch (e) { // eslint-disable-line no-unused-vars
 			ppt.nodeStyle = 0;
 			this.nodeStyle = 0;
 		}
@@ -660,7 +666,7 @@ class Populate {
 		if (x < Math.round(this.treeIndent * level) + ui.icon.w + ui.sz.margin && (!item.track || item.root)) this.m.br = im;
 		return im;
 	}
-	
+
 	check_tooltip(ix, x, y) {
 		if (this.lbtnDn || sbar.draw_timer) return;
 		const item = this.tree[ix];
@@ -671,10 +677,10 @@ class Populate {
 				const trace1 = item.tt && item.tt.needed && x >= item.tt.x && x <= item.tt.x + item.tt.w && y >= item.tt.y && y <= item.tt.y + ui.row.h;
 				const trace2 = item.stats_tt && item.stats_tt.needed && x >= item.stats_tt.x + item.stats_tt.w && x <= ui.w - ui.sz.marginRight && y >= item.stats_tt.y && y <= item.stats_tt.y + ui.row.h * 0.9;
 				if (trace2) {
-					text = this.statisticsShow ? 
-					(item.statistics !== undefined ? this.statistics[this.statisticsShow] + ': ' + item.statistics : '') :
-					(item.count ? ['', 'Tracks', 'Items'][this.nodeCounts] + ':' + item.count : '');
-					
+					text = this.statisticsShow
+						? (item.statistics !== undefined ? this.statistics[this.statisticsShow] + ': ' + item.statistics : '')
+						: (item.count ? ['', 'Tracks', 'Items'][this.nodeCounts] + ':' + item.count : '');
+
 				} else if (trace1) {
 					text = (!panel.colMarker ? item.name : item.name.replace(/@!#.*?@!#/g, '')) + (!this.countsRight || this.statisticsShow ? item.count : '');
 					text = text.replace(/&/g, '&&');
@@ -725,13 +731,13 @@ class Populate {
 			x: x,
 			y: y,
 			w: w
-		}
+		};
 		item.stats_tt = {
 			needed: !this.tooltipStatistics || !this.statisticsShow || item.root ? false : this.statisticsTooltip[this.statisticsShow] && item.statistics !== undefined, // Regorxxx <- New statistics
 			x: x,
 			y: y + ui.row.h * 0.1,
 			w: w
-		}
+		};
 	}
 
 	checkTooltipFont(type) {
@@ -849,7 +855,7 @@ class Populate {
 				this.sy_sz = Math.floor(Math.max(8 * ppt.zoomNode / 100 * h, 5));
 			});
 
-			const sz = Math.max(Math.round(this.sy_sz * 1.666667), 1)
+			const sz = Math.max(Math.round(this.sy_sz * 1.666667), 1);
 			this.triangle.highlight = $.gr(sz, sz, true, g => {
 				g.SetSmoothingMode(4);
 				g.FillPolygon(ui.col.icon_h, 1, [sz, 0, sz, sz, 0, sz]);
@@ -933,7 +939,7 @@ class Populate {
 				col_x: col_x,
 				col_w: col_w,
 				txt_w: w_arr
-			}
+			};
 		}
 		text.forEach((v, i) => {
 			if (i % 2 == 0 && text[i]) {
@@ -1002,10 +1008,10 @@ class Populate {
 			if (this.highlight.nowPlayingShow && !item.root && this.inRange(this.nowp, item.item)) nowp_c.push(i);
 			item.np = nowp_c.includes(i) || panel.textDiffHighlight && this.m.i == i ? '\u266B  ' : '';
 			if (item.np && item.id != this.id) this.row.note_w = gr.CalcTextWidth(item.np, ui.font.main);
-			if (item.id != this.id ||item. np) {
+			if (item.id != this.id || item.np) {
 				let note_w = !item.np || item.track ? 0 : this.row.note_w;
 				item.name_w = gr.CalcTextWidth(!panel.colMarker ? nm[i] : nm[i].replace(/@!#.*?@!#/g, ''), ui.font.main) - note_w;
-				item.count_w = this.nodeCounts && this.countsRight || this.statisticsShow ? 
+				item.count_w = this.nodeCounts && this.countsRight || this.statisticsShow ?
 					gr.CalcTextWidth(counts || '000', ui.font.small) + (counts ? ui.row.h * 0.2 : 0) : 0;
 				if (!this.fullLineSelection) {
 					item.w = item.name_w;
@@ -1138,7 +1144,7 @@ class Populate {
 				const type = item.sel ? (this.highlight.row || !this.fullLineSelection ? 2 : 0) : this.m.i == i && this.highlight.text ? 1 : 0;
 				const txt_c = np && !item.sel ? ui.col.nowp : ui.col.txtArr[type];
 				!panel.colMarker ? gr.GdiDrawText(nm[i], ui.font.main, txt_c, item_x, item_y, w, ui.row.h, panel.lc) : this.cusCol(gr, nm[i], item, item_x, item_y, w, ui.row.h, type, np, ui.font.main, ui.font.mainEllipsisSpace, 'text');
-				if (this.countsRight || this.statisticsShow) gr.GdiDrawText(!this.statisticsShow ? item.count : item.statistics, !item.root || !this.label ?  ui.font.small : ui.font.label, txt_co, item_x, item_y, panel.tree.w - item_x, ui.row.h, panel.rc);
+				if (this.countsRight || this.statisticsShow) gr.GdiDrawText(!this.statisticsShow ? item.count : item.statistics, !item.root || !this.label ? ui.font.small : ui.font.label, txt_co, item_x, item_y, panel.tree.w - item_x, ui.row.h, panel.rc);
 			}
 		}
 	}
@@ -1363,15 +1369,15 @@ class Populate {
 	}
 
 	formatBytes(bytes, decimals = 1) {
-		if (!+bytes) return '0 Bytes'
+		if (!+bytes) return '0 Bytes';
 
-		const k = 1024
-		const dm = decimals < 0 ? 0 : decimals
-		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+		const k = 1024;
+		const dm = decimals < 0 ? 0 : decimals;
+		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
-		const i = Math.floor(Math.log(bytes) / Math.log(k))
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-		return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+		return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 	}
 
 	getAllCombinations(n) {
@@ -1401,7 +1407,7 @@ class Populate {
 				result.push(cur_array[Math.floor(n / divisors[j]) % cur_array.length]);
 			}
 			return result;
-		}
+		};
 		let numPerms = arraysToCombine[0].length;
 		for (i = 1; i < arraysToCombineLength; i++) numPerms *= arraysToCombine[i].length;
 		for (i = 0; i < numPerms; i++) combinations.push(getPermutation(i, arraysToCombine));
@@ -1485,7 +1491,7 @@ class Populate {
 			b: level != 0 ? this.tree[v.par].nm : '',
 			c: level > 1 ? this.tree[this.tree[v.par].par].nm : '',
 			d: level > 2 ? this.tree[this.tree[this.tree[v.par].par].par].nm : ''
-		}
+		};
 		return level + (level > 2 ? o.d : '') + (level > 1 ? o.c : '') + (level > 0 ? o.b : '') + o.a;
 	}
 
@@ -1569,10 +1575,18 @@ class Populate {
 					fb.Play();
 					return;
 				}
+				// Regorxxx <- Fix Double click while using search on playlist sources
 				if (!ppt.libSource) {
-					plman.ExecutePlaylistDefaultAction($.pl_active, this.range(item.item)[0]);
+					const plsIdx = ppt.fixedPlaylist ? plman.FindPlaylist(ppt.fixedPlaylistName) : $.pl_active;
+					if (plsIdx !== -1) {
+						const idx = panel.search.txt.length
+							? plman.GetPlaylistItems(plsIdx).Find(panel.list[this.range(item.item)[0]])
+							: this.range(item.item)[0];
+						if (idx !== -1) { plman.ExecutePlaylistDefaultAction(plsIdx, idx); }
+					}
 					return;
 				}
+				// Regorxxx ->
 				if (!this.dblClickAction && !this.autoFill.mouse && !this.autoPlay.click) return this.send(item, x, y);
 				if (this.dblClickAction == 2 && !item.track && !panel.imgView) {
 					this.expandCollapse(x, y, item, ix);
@@ -1680,7 +1694,7 @@ class Populate {
 		const row = (panel.pos * ui.row.h - sbar.scroll) / ui.row.h;
 		if (sbar.scroll > panel.pos * ui.row.h) sbar.checkScroll(panel.pos * ui.row.h);
 		else if (row - sbar.rows_drawn > 0) {
-		sbar.checkScroll((panel.pos + 3 - sbar.rows_drawn) * ui.row.h);
+			sbar.checkScroll((panel.pos + 3 - sbar.rows_drawn) * ui.row.h);
 		}
 		else sbar.scrollRound();
 		lib.treeState(false, ppt.rememberTree);
@@ -1695,8 +1709,8 @@ class Populate {
 
 		if (!bUseDefaultPls && plman.ActivePlaylist != -1) pl_stnd_idx = plman.ActivePlaylist;
 		else if (ppt.activateOnChange) plman.ActivePlaylist = pl_stnd_idx;
-		
-		
+
+
 		if (bAutoPlay == 4 && plman.PlaylistItemCount(pl_stnd_idx) || bAutoPlay == 3 && fb.IsPlaying) {
 			bAutoPlay = false;
 			bAddToPls = true;
@@ -1761,12 +1775,12 @@ class Populate {
 					if (plman.PlaylistItemCount(pl_stnd_idx) < 5000) plman.UndoBackup(pl_stnd_idx);
 					plman.InsertPlaylistItems(pl_stnd_idx, 0, items);
 					plman.InsertPlaylistItems(pl_stnd_idx, plman.PlaylistItemCount(pl_stnd_idx), it);
-					if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(0, items.Count + it.Count), true) } // Regorxxx <- Send to playlist & select ->
+					if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(0, items.Count + it.Count), true); } // Regorxxx <- Send to playlist & select ->
 				} else {
 					if (plman.PlaylistItemCount(pl_stnd_idx) < 5000) plman.UndoBackup(pl_stnd_idx);
 					plman.ClearPlaylist(pl_stnd_idx);
 					plman.InsertPlaylistItems(pl_stnd_idx, 0, items);
-					if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(0, items.Count - 1), true) } // Regorxxx <- Send to playlist & select ->
+					if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(0, items.Count - 1), true); } // Regorxxx <- Send to playlist & select ->
 				}
 			}
 		} else if (!bAddToPls) {
@@ -1774,14 +1788,14 @@ class Populate {
 			plman.ClearPlaylist(pl_stnd_idx);
 			plman.InsertPlaylistItems(pl_stnd_idx, 0, items);
 			plman.SetPlaylistFocusItem(pl_stnd_idx, 0);
-			if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(0, items.Count - 1), true) } // Regorxxx <- Send to playlist & select ->
+			if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(0, items.Count - 1), true); } // Regorxxx <- Send to playlist & select ->
 		} else {
 			if (plman.PlaylistItemCount(pl_stnd_idx) < 5000) plman.UndoBackup(pl_stnd_idx);
 			plman.InsertPlaylistItems(pl_stnd_idx, !bInsertToPls ? plman.PlaylistItemCount(pl_stnd_idx) : plman.GetPlaylistFocusItemIndex(pl_stnd_idx), items, true);
 			const f_ix = !bInsertToPls || plman.GetPlaylistFocusItemIndex(pl_stnd_idx) == -1 ? plman.PlaylistItemCount(pl_stnd_idx) - items.Count : plman.GetPlaylistFocusItemIndex(pl_stnd_idx) - items.Count;
 			plman.SetPlaylistFocusItem(pl_stnd_idx, f_ix);
 			plman.EnsurePlaylistItemVisible(pl_stnd_idx, f_ix);
-			if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(f_ix, items.Count - 1), true) } // Regorxxx <- Send to playlist & select ->
+			if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(f_ix, items.Count - 1), true); } // Regorxxx <- Send to playlist & select ->
 		}
 		if (bAutoPlay) {
 			const c = (plman.PlaybackOrder == 3 || plman.PlaybackOrder == 4) ? Math.ceil(plman.PlaylistItemCount(pl_stnd_idx) * Math.random() - 1) : 0;
@@ -1790,8 +1804,8 @@ class Populate {
 	}
 	// Regorxxx ->
 
-	mbtn_dn() { 
-		this.mbtn_dbl_clicked = false
+	mbtn_dn() {
+		this.mbtn_dbl_clicked = false;
 	}
 
 	mbtnDblClickOrAltDblClick(x, y, mask, type) {
@@ -1812,7 +1826,7 @@ class Populate {
 						}
 					}
 				}
-				remove = [...new Set(remove)]
+				remove = [...new Set(remove)];
 				plman.RemoveItemsFromPlaybackQueue(remove);
 			}
 		}
@@ -1847,11 +1861,11 @@ class Populate {
 					});
 				}
 			}, 180);
-		// Regorxxx <- Top tracks
+			// Regorxxx <- Top tracks
 		} else if ((type == 'mbtn' || type == 'alt') && [3, 4, 5, 6].includes(ppt[`${type}ClickAction`])) {
 			if (!ppt.libSource) return;
 			this.addTopTracks(x, y, ppt[`${type}ClickAction`] >= 5, ![4, 6].includes(ppt[`${type}ClickAction`]));
-		// Regorxxx ->
+			// Regorxxx ->
 		} else {
 			if (!ppt.libSource) return;
 			this.add(x, y, !ppt[`${type}ClickAction`]);
@@ -2074,7 +2088,7 @@ class Populate {
 					panel.pos++;
 					panel.pos = $.clamp(panel.pos, !this.rootNode ? 0 : 1, this.tree.length - 1);
 					this.upDnKeyCheckScroll(vkey);
-					break
+					break;
 				}
 				if (ppt.autoCollapse) this.branchChange(item, false, true);
 				this.branch(item, !item.root ? false : true, true);
@@ -2220,11 +2234,11 @@ class Populate {
 		this.autoPlay = {
 			click: ppt.clickAction < 2 ? false : ppt.clickAction,
 			send: ppt.autoPlay
-		}
+		};
 		this.autoFill = {
 			mouse: ppt.actionMode == 2 ? false : ppt.clickAction == 1 || ppt.actionMode == 1 ? true : false,
 			key: ppt.keyAction
-		}
+		};
 		this.dblClickAction = ppt.actionMode == 1 ? 1 : ppt.actionMode == 2 ? 3 : ppt.dblClickAction;
 	}
 
@@ -2235,11 +2249,11 @@ class Populate {
 		plman.ClearPlaylistSelection($.pl_active);
 		let items = [];
 		if (panel.search.txt || ppt.filterBy || panel.multiProcess) {
-			const hl = this.getHandleList();	
+			const hl = this.getHandleList();
 			hl.Convert().forEach(h => {
 				const i = lib.full_list.Find(h);
 				if (i != -1) items.push(i);
-		});
+			});
 		} else {
 			items = this.range(item.item);
 		}
@@ -2264,7 +2278,7 @@ class Populate {
 			case 1: {
 				const direction = (idx > this.last_sel) ? 1 : -1;
 				if (!vk.k('ctrl')) this.clearSelected();
-				for (let i = this.last_sel;; i += direction) {
+				for (let i = this.last_sel; ; i += direction) {
 					this.tree[i].sel = true;
 					if (i == idx) break;
 				}
@@ -2317,8 +2331,7 @@ class Populate {
 				});
 		}
 		this.statisticsGetTracks = [true, true, true, true, false, false, true, false, false, false, false, false, true, true, true, true, true, true, true, true];
-		this.statisticsTooltip = [false, true, false, true, true, true, true, true, true, true, true, true, true, true, true,
-		true, true, true, true, true, true];
+		this.statisticsTooltip = [false, true, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true];
 		// Regorxxx ->
 		this.statisticsShow = ppt.itemShowStatistics;
 		this.label = !ppt.labelStatistics ? '' : this.statisticsShow ? this.statistics[this.statisticsShow] : '';
@@ -2342,9 +2355,10 @@ class Populate {
 			switch (type) {
 				case 'np':
 				case 'focus': {
-					const delta = (img.style.vertical ? img.panel.h : img.panel.w) / 2 > sbar.row.h ?
-						Math.floor((img.style.vertical ? img.panel.h : img.panel.w) / 2) : 0,
-						deltaRows = Math.floor(delta / sbar.row.h) * sbar.row.h;
+					const delta = (img.style.vertical ? img.panel.h : img.panel.w) / 2 > sbar.row.h
+						? Math.floor((img.style.vertical ? img.panel.h : img.panel.w) / 2)
+						: 0;
+					const deltaRows = Math.floor(delta / sbar.row.h) * sbar.row.h;
 					sbar.checkScroll((img.style.vertical ? row1 : i) * sbar.row.h - deltaRows, 'full');
 					break;
 				}
@@ -2365,11 +2379,18 @@ class Populate {
 	sort(data) {
 		if (!ppt.libSource && !panel.multiProcess) return;
 		this.specialCharSort(data);
-		// Regorxxx <- By TT: Fixed Library's "View by Folder Structure" to match Windows Explorer. https://github.com/TT-ReBORN/Georgia-ReBORN/commit/819284002e133bb4d9406ad55e233e7bb18d39b8
-		if (ppt.folderView) { // Handle sorting for View By Folder Structure
-			this.sortViewByFolder(data);
+		// Regorxxx <- Fixed Library's "View by Folder Structure" to match Windows Explorer. Custom sorting for standard views
+		//	First it tries to apply foobar2000 sorting for tracked library items
+		//	Otherwise it uses custom sorting algorithms which may mimic windows sorting
+		//	For non-library sources, only the second is available, despite playlist or panel sources pointing to tracked items
+		if (panel.folderView) { // Handle sorting for View By Folder Structure
+			if (ppt.libSource === 1 && !ppt.fixedPlaylist && ppt.folderSortingFb) { // For tracked items
+				data.sort((a, b) => a.item[0].start - b.item[0].start);
+			} else {
+				this.sortView(data, ppt.folderSorting, 'folders');
+			}
 		} else { // Default sorting for other views
-			data.sort((a, b) => this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0));
+			this.sortView(data, ppt.viewSorting, 'standard');
 		}
 		// Regorxxx ->
 
@@ -2380,19 +2401,130 @@ class Populate {
 		else if (ppt.customSort.length) items.OrderByFormat(this.customSort, 1);
 	}
 
-	// Regorxxx <- By TT: Fixed Library's "View by Folder Structure" to match Windows Explorer. https://github.com/TT-ReBORN/Georgia-ReBORN/commit/819284002e133bb4d9406ad55e233e7bb18d39b8
-	sortViewByFolder(data) {
-		// Use Intl.Collator with numeric: true to sort file/folder names (srt[0]) naturally,
-		// matching Windows Explorer's alphanumeric order (e.g., "2.01" < "2.15", "1985a" < "1986 -").
-		// This fixes incorrect track and folder sorting in View by Folder Structure.
-		const naturalCollator = new Intl.Collator(undefined, { numeric: true });
-
-		data.sort((a, b) => {
-			const nameCompare = naturalCollator.compare(a.srt[0], b.srt[0]);
-			if (nameCompare !== 0) return nameCompare;
-			// Fallback to metadata sorting (srt[2], srt[3]) for identical file/folder names.
-			return this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
-		});
+	// Regorxxx <- Fixed Library's "View by Folder Structure" to match Windows Explorer. Custom sorting for standard views
+	sortView(data, method, type) {
+		switch (method) {
+			default:
+			case 0: {
+				if (ppt.viewSortingTrans && type === 'standard' || ppt.folderSortingTrans && type === 'folders') {
+					data.sort((a, b) => this.collator.compare(Language.transliterate(a.srt[2]), Language.transliterate(b.srt[2])) || (a.srt[3] && !b.srt[3] ? 1 : 0));
+				} else {
+					data.sort((a, b) => this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0));
+				}
+				break;
+			}
+			case 1: {
+				// Fallback to metadata sorting (srt[2], srt[3]) for identical file/folder names.
+				switch (type) {
+					case 'standard':
+						if (ppt.viewSortingTrans) {
+							data.sort((a, b) => {
+								return this.folderCollator.compare(Language.transliterate(a.srt[2]), Language.transliterate(b.srt[2])) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+							});
+						} else {
+							data.sort((a, b) => {
+								return this.folderCollator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+							});
+						}
+						break;
+					case 'folders':
+						if (ppt.folderSortingTrans) {
+							data.sort((a, b) => {
+								return this.folderCollator.compare(Language.transliterate(a.srt[0]), Language.transliterate(b.srt[0])) || this.collator.compare(Language.transliterate(a.srt[2]), Language.transliterate(b.srt[2])) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+							});
+						} else {
+							data.sort((a, b) => {
+								return this.folderCollator.compare(a.srt[0], b.srt[0]) || this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+							});
+						}
+						break;
+				}
+				break;
+			}
+			case 2: {
+				const idx = type === 'standard' ? 2 : 0;
+				let srtA, typeA, srtB, idxA, typeB, idxB;
+				data.sort((a, b) => {
+					srtA = a.srt[idx];
+					srtB = b.srt[idx];
+					if (srtA.startsWith(' ') && !srtB.startsWith(' ')) { return -1; }
+					else if (!srtA.startsWith(' ') && srtB.startsWith(' ')) { return 1; }
+					srtA = srtA.trim();
+					srtB = srtB.trim();
+					typeA = $.getTypeWeight(srtA[0]);
+					typeB = $.getTypeWeight(srtB[0]);
+					if (typeA !== typeB) { return typeA - typeB; }
+					else if (typeA === typeB && typeA === 0) {
+						idxA = $.getSymbolIndex(srtA[0]);
+						idxB = $.getSymbolIndex(srtB[0]);
+						if (idxA !== idxB) { return idxA - idxB; }
+					}
+					return ppt.viewSortingTrans && type === 'standard' || ppt.folderSortingTrans && type === 'folders'
+						? this.folderCollator.compare(Language.transliterate(srtA), Language.transliterate(srtB)) || this.collator.compare(Language.transliterate(a.srt[2]), Language.transliterate(b.srt[2])) || (a.srt[3] && !b.srt[3] ? 1 : 0)
+						: this.folderCollator.compare(srtA, srtB) || this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+				});
+				break;
+			}
+			case 3: {
+				const idx = type === 'standard' ? 2 : 0;
+				let srtA, charA, lenA, typeA, idxA, srtB, charB, lenB, typeB, idxB, out, i;
+				data.sort((a, b) => {
+					out = 0;
+					srtA = a.srt[idx];
+					srtB = b.srt[idx];
+					if (srtA === srtB) { return 0; }
+					lenA = srtA.length;
+					lenB = srtB.length;
+					for (i = 0; i < lenA; i++) {
+						if (i >= lenB) { out = 1; break; }
+						charA = srtA[i];
+						charB = srtB[i];
+						if (charA !== ' ' && charB !== ' ') { break; }
+						else if (charA === ' ' && charB !== ' ') { out = -1; break; }
+						else if (charA !== ' ' && charB === ' ') { out = 1; break; }
+						else if (charA === ' ' && charB === ' ') { continue; }
+					}
+					if (out) { return out; }
+					else if (i === lenA) { return -1; }
+					srtA = srtA.trim();
+					srtB = srtB.trim();
+					lenA = srtA.length;
+					lenB = srtB.length;
+					for (i = 0; i < lenA; i++) {
+						if (i >= lenB) { out = 1; break; }
+						charA = srtA[i];
+						charB = srtB[i];
+						if (charA === ' ' || charB === ' ') { break; }
+						if ($.isNumeric(charA) && $.isNumeric(charB)) { break; }
+						idxA = $.getSymbolIndex(charA);
+						idxB = $.getSymbolIndex(charB);
+						if (!idxA || !idxB) {
+							if (!idxA) {
+								if ($.isNumeric(charA)) { out = idxB ? 1 : $.isNumeric(charB) ? 0 : -1; }
+								else if (idxB) { out = 1; }
+							}
+							if (out) { return out; }
+							if (idxA && !idxB && $.isNumeric(charB)) { out =  -1; break; }
+							if (out) { return out; }
+						}
+						typeA = $.getTypeWeight(charA, idxA, 'base');
+						typeB = $.getTypeWeight(charB, idxB, 'base');
+						if (typeA !== typeB) { out = typeA - typeB; break; }
+						else if (typeA === typeB) {
+							if (typeA === 0) {
+								if (idxA !== idxB) { out = idxA - idxB; break; }
+							} else if (typeA === 1 || typeA === 2 || typeA === 3) { break; }
+						}
+					}
+					if (out) { return out; }
+					return ppt.viewSortingTrans && type === 'standard' || ppt.folderSortingTrans && type === 'folders'
+						? this.folderCollator.compare(Language.transliterate(srtA), Language.transliterate(srtB)) || this.collator.compare(Language.transliterate(a.srt[2]), Language.transliterate(b.srt[2])) || (a.srt[3] && !b.srt[3] ? 1 : 0)
+						: this.folderCollator.compare(srtA, srtB) || this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+				});
+				break;
+			}
+		}
+		return data;
 	}
 	// Regorxxx ->
 
@@ -2429,7 +2561,7 @@ class Populate {
 	specialCharStrip(name) {
 		let [str1, ...str2] = name.split(' ');
 		str2 = str2.join(' ');
-		if (this.isDate(str1)) return `${str1} ${str2.replace(RegExp(this.specialChar, 'g'),'')}`;
+		if (this.isDate(str1)) return `${str1} ${str2.replace(RegExp(this.specialChar, 'g'), '')}`;
 		return name.replace(RegExp(this.specialChar, 'g'), '');
 	}
 

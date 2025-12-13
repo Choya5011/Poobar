@@ -1,10 +1,10 @@
 ﻿'use strict';
-//03/11/25
+//11/12/25
 
-/* exported compareObjects, compareKeys, isJSON, roughSizeOfObject, deepAssign, BiMap, isFunction, $args, isPromise, matchCase, capitalizePartial, capitalizeAll, _p, _bt, _qCond, _ascii, _asciify, isArrayStrings, isArrayNumbers, isArrayEqual, zeroOrVal, emptyOrVal, isInt, isFloat, cyclicOffset, range, round, isUUID, isBoolean, regExBool, cartesian, isArray, _ps, isGetter, isSetter */
+/* exported compareObjects, compareKeys, isJSON, roughSizeOfObject, deepAssign, BiMap, isFunction, $args, isPromise, matchCase, capitalizePartial, capitalizeAll, _p, _bt, _qCond, _ascii, _asciify, isArrayStrings, isArrayNumbers, isArrayEqual, zeroOrVal, emptyOrVal, isInt, isFloat, cyclicOffset, range, round, isUUID, isBoolean, regExBool, cartesian, isArray, _ps, isGetter, isSetter, isReal */
 
 include('helpers_xxx_basic_js.js');
-/* global require:readable */
+/* global require:readable, strNumCollator:readable */
 
 /*
 	SMP
@@ -115,8 +115,8 @@ function compareObjects(a, b, enforcePropertiesOrder = false, cyclic = false) {
 }
 
 function compareKeys(a, b) {
-	const aKeys = Object.keys(a).sort((a, b) => a.localeCompare(b));
-	const bKeys = Object.keys(b).sort((a, b) => a.localeCompare(b));
+	const aKeys = Object.keys(a).sort(strNumCollator.compare);
+	const bKeys = Object.keys(b).sort(strNumCollator.compare);
 	return JSON.stringify(aKeys) === JSON.stringify(bKeys);
 }
 
@@ -164,7 +164,7 @@ function roughSizeOfObject(object) {
 		} else if (type === 'object' && value instanceof FbTitleFormat) {
 			bytes += 8;
 			bytes += value.Expression.length * 2;
-		} else if (type === 'object' && toType(value) === 'FbMetadbHandle') {
+		} else if (type === 'object' && isFbMetadbHandle(value)) {
 			bytes += 24;
 			bytes += value.Path.length * 2;
 			bytes += value.RawPath.length * 2;
@@ -259,6 +259,17 @@ function deepAssign(options = { nonEnum: false, symbols: false, descriptors: fal
 function toType(a) {
 	// Get fine type (object, array, function, null, error, date ...)
 	return ({}).toString.call(a).match(/([a-z]+)(:?\])/i)[1];
+}
+
+function isFbMetadbHandle(a) {
+	if (typeof a === 'object') {
+		if (toType(a) === 'FbMetadbHandle') { return true; }
+		else {
+			// Jsplitter doesn't report proper type: https://hydrogenaudio.org/index.php/topic,126743.msg1073615.html#msg1073615
+			return 'FileSize' in a && 'Length' in a && 'Path' in a && 'RawPath' in a && 'SubSong' in a;
+		}
+	}
+	return false;
 }
 
 function isDeepObject(obj) {
@@ -751,7 +762,7 @@ if (!Array.prototype.partialSort) {
 
 if (!Array.prototype.schwartzianSort) {
 	// https://en.wikipedia.org/wiki/Schwartzian_transform
-	// or (a, b) => a[1].localeCompare(b[1], void(0), { sensitivity: 'base' })
+	// or (a, b) => strNumCollator.compare(a[1], b[1]))
 	Array.prototype.schwartzianSort = function (processFunc, sortFunc = (a, b) => a[1] - b[1]) { // NOSONAR
 		return this.map((x) => [x, processFunc(x)]).sort(sortFunc).map((x) => x[0]);
 	};
@@ -885,6 +896,10 @@ function isInt(n) {
 
 function isFloat(n) {
 	return Number(n) === n && Number.isFinite(n) && n % 1 !== 0;
+}
+
+function isReal(n) {
+	return isFloat(n) || isInt(n);
 }
 
 // Adds/subtracts 'offset' to 'reference' considering the values must follow cyclic logic within 'limits' range (both values included)

@@ -1,4 +1,8 @@
 ﻿'use strict';
+/* global ui:readable, panel:readable, ppt:readable, lib:readable, pop:readable, but:readable, timer:readable, $:readable, vk:readable, tooltip:readable, sbar:readable, Tooltip:readable, searchMenu:readable */
+/* global Language:readable */
+
+/* exported Search, Find */
 
 class Search {
 	constructor() {
@@ -29,7 +33,7 @@ class Search {
 			let tooltipText = panel.search.txt;
 			tooltipText += '\n----------------------------------------------';
 			const count = pop.tree[0] && pop.tree[0].root && pop.tree[0].tracksCount ? pop.tree[0].tracksCount : panel.list.Count;
-			tooltipText += '\nFound ' + panel.list.Count + ' tracks';
+			tooltipText += '\nFound ' + count + ' tracks';
 			return tooltipText;
 		};
 
@@ -42,14 +46,17 @@ class Search {
 			const bCtrl = (mask & MK_CONTROL) === MK_CONTROL;
 			const bAlt = (mask & 32) === 32;
 			return $.jsonParse(
-				bAlt 
-					? ppt.searchDragTagsAlt 
-					: bCtrl ? ppt.searchDragTagsCtrl : ppt.searchDragTags
+				bAlt
+					? ppt.searchDragTagsAlt
+					: bCtrl ? ppt.searchDragTagsCtrl : ppt.searchDragTags,
+				bAlt
+					? ['ALBUM ARTIST']
+					: ['ALBUM ARTIST', 'GENRE']
 			);
-		}
+		};
 
 		this.getDragDropOperators = (mask) => {
-			const operators = {value: '', tag: '', track: '', query: ''};
+			const operators = { value: '', tag: '', track: '', query: '' };
 			const bCtrl = (mask & MK_CONTROL) === MK_CONTROL;
 			const bAlt = (mask & 32) === 32;
 			const bShift = (mask & MK_SHIFT) === MK_SHIFT;
@@ -68,7 +75,7 @@ class Search {
 			}
 			operators.query = bShift ? ppt.searchDragQueryOpShift : ppt.searchDragQueryOp;
 			return operators;
-		}
+		};
 
 		this.getDragDropQuery = (selItems, searchTags, operators) => {
 			if (!operators.track) { selItems = new FbMetadbHandleList(selItems[0]); }
@@ -89,7 +96,7 @@ class Search {
 				);
 			}).filter(Boolean);
 			return $.queryJoin([...new Set(trackQueries)], operators.track) || '';
-		}
+		};
 
 		this.getDragDropPathRegexp = (selItems) => {
 			const paths = selItems.GetLibraryRelativePaths()
@@ -97,7 +104,7 @@ class Search {
 				.filter(Boolean)
 				.map((s) => $.escapeRegExp(s));
 			return paths.length ? '/' + paths.join('|') + '/i' : '';
-		}
+		};
 
 		this.getDragDropExpression = (selItems, method, mask) => {
 			let input = '';
@@ -112,7 +119,7 @@ class Search {
 				}
 			}
 			return input;
-		}
+		};
 
 		this.getDragDropTooltipText = (method, mask) => {
 			if (method === 0 && panel.folderView) { // Auto: tags or path
@@ -125,13 +132,13 @@ class Search {
 					: searchTags[0];
 				return (operators.query || !panel.search.txt ? 'Add' : 'Replace') + ' query: ' + tagsDisplay;
 			}
-		}
+		};
 		// Regorxxx ->
 		// Regorxxx <- RegExp library search
 		const isRegExp = /^\/.+\/[gimsuy]?/;
 		this.isSearchRegExp = () => {
 			return isRegExp.test(panel.search.txt);
-		}
+		};
 		// Regorxxx ->
 
 		// Regorxxx <- Fix search history on enter
@@ -146,7 +153,7 @@ class Search {
 				return;
 			}
 			if (!panel.search.txt) return;
-			this.menu.push({search: panel.search.txt, accessed: Date.now()});
+			this.menu.push({ search: panel.search.txt, accessed: Date.now() });
 			if (this.menu.length > 25) {
 				this.menu.sort((a, b) => b.accessed - a.accessed);
 				this.menu.length = 25;
@@ -345,7 +352,7 @@ class Search {
 				if (this.lg.length > 30) this.lg.shift();
 				if (this.log.length > 0) {
 					panel.search.txt = this.log.pop() + '';
-					this.cx++
+					this.cx++;
 				}
 				break;
 			case vk.undo:
@@ -403,9 +410,9 @@ class Search {
 					for (let k = 0; k < leftSide.length; k++) {
 						if (panel.search.txt[k] == ' ' && panel.search.txt[k + 1] != ' ') boundary = k + 1;
 					}
-					panel.search.txt = leftSide.slice(0, boundary) + panel.search.txt.slice(this.cx).trimStart()
+					panel.search.txt = leftSide.slice(0, boundary) + panel.search.txt.slice(this.cx).trimStart();
 					this.cx = boundary;
-					
+
 					if (this.offset > 0) {
 						this.offset -= initial - panel.search.txt.length;
 					}
@@ -488,7 +495,7 @@ class Search {
 	on_key_down(vkey) {
 		if (!panel.search.active) return;
 		switch (vkey) {
-			case vk.ctrl:	
+			case vk.ctrl:
 				this.ctrl = true;
 				break;
 			case vk.left:
@@ -513,7 +520,7 @@ class Search {
 							this.offset -= (this.cx - boundary);
 						}
 						this.cx = boundary;
-						this.offset = this.offset >= this.end - this.start ? this.offset - this.end + this.start : 0;	
+						this.offset = this.offset >= this.end - this.start ? this.offset - this.end + this.start : 0;
 					}
 				}
 				if (vkey == vk.right && this.cx < panel.search.txt.length) {
@@ -646,7 +653,7 @@ class Find {
 		if (panel.pos >= 0 && panel.pos < pop.tree.length) {
 			const char = pop.tree[panel.pos].name.replace(/@!#.*?@!#/g, '').charAt(0).toLowerCase();
 			// Regorxxx <- Fixed quick-search on same letter. Fix quick-searck for non ascii first char, greek and cyrilic
-			const normChar =  $.asciify($.transliterate(char));
+			const normChar = $.asciify(Language.transliterate(char));
 			if (pop.tree[panel.pos].sel && (char === text || normChar === text) && this.prevChar == text) { advance = true; }
 			this.prevChar = text;
 			timer.clear(timer.jsearch3);
@@ -658,120 +665,120 @@ class Find {
 		}
 		switch (true) {
 			case advance:
-			if (utils.IsKeyPressed(0x0A) || utils.IsKeyPressed(0x08) ||  utils.IsKeyPressed(0x09) || utils.IsKeyPressed(0x11) || utils.IsKeyPressed(0x1B) || utils.IsKeyPressed(0x6A) || utils.IsKeyPressed(0x6D)) return;
-			if (!panel.search.active) {
-				let init = '';
-				let cur = 'currentArr';
-				if (!this.initials) { // reset in buildTree
-					this.initials = {}
-					pop.tree.forEach((v, i) => {
-						if (!v.root) {
-							const nm = v.name.replace(/@!#.*?@!#/g, '');
-							init = $.asciify($.transliterate(nm.charAt().toLowerCase())); // Regorxxx <- Fix quick-searck for non ascii first char, greek and cyrilic ->
-							if (cur != init && !this.initials[init]) {
-								this.initials[init] = [i];
-								cur = init;
-							} else {
-								this.initials[init].push(i);
+				if (utils.IsKeyPressed(0x0A) || utils.IsKeyPressed(0x08) || utils.IsKeyPressed(0x09) || utils.IsKeyPressed(0x11) || utils.IsKeyPressed(0x1B) || utils.IsKeyPressed(0x6A) || utils.IsKeyPressed(0x6D)) return;
+				if (!panel.search.active) {
+					let init = '';
+					let cur = 'currentArr';
+					if (!this.initials) { // reset in buildTree
+						this.initials = {};
+						pop.tree.forEach((v, i) => {
+							if (!v.root) {
+								const nm = v.name.replace(/@!#.*?@!#/g, '');
+								init = $.asciify(Language.transliterate(nm.charAt(0).toLowerCase())); // Regorxxx <- Fix quick-searck for non ascii first char, greek and cyrilic ->
+								if (cur != init && !this.initials[init]) {
+									this.initials[init] = [i];
+									cur = init;
+								} else {
+									this.initials[init].push(i);
+								}
 							}
-						}
-					});
-				}
-				
-				this.jump_search = false;
-				if (panel.pos >= 0 && panel.pos < pop.tree.length) {
-					this.matches = this.initials[text];
-					this.ix = this.matches.indexOf(panel.pos);
-					this.ix++;
-					if (this.ix >= this.matches.length) this.ix = 0;
-					panel.pos = this.matches[this.ix];
-					this.jump_search = true;
-				}
-				if (this.jump_search) {
-					pop.clearSelected();
-					pop.sel_items = [];
-					pop.tree[panel.pos].sel = true;
-					pop.setPos(panel.pos);
-					pop.getTreeSel();
-					lib.treeState(false, ppt.rememberTree);
-					panel.treePaint();
-					if (panel.imgView) pop.showItem(panel.pos, 'focus');
-					else {
-						const row = (panel.pos * ui.row.h - sbar.scroll) / ui.row.h;
-						if (sbar.rows_drawn - row < 3 || row < 0) sbar.checkScroll((panel.pos + 3) * ui.row.h - sbar.rows_drawn * ui.row.h);
+						});
 					}
-					if (ppt.libSource) {
-						// if (pop.autoFill.key) pop.load(pop.sel_items, true, false, false, !ppt.sendToCur, false);
-						if (pop.autoFill.key) pop.load({ bAddToPls: false, bAutoPlay: false, bUseDefaultPls: !ppt.sendToCur, bInsertToPls: false });
-						pop.track(pop.autoFill.key); 
-					} else if (panel.pos >= 0 && panel.pos < pop.tree.length) pop.setPlaylistSelection(panel.pos, pop.tree[panel.pos]);
-				} else {
-					this.jSearch = text;
+
+					this.jump_search = false;
+					if (panel.pos >= 0 && panel.pos < pop.tree.length) {
+						this.matches = this.initials[text];
+						this.ix = this.matches.indexOf(panel.pos);
+						this.ix++;
+						if (this.ix >= this.matches.length) this.ix = 0;
+						panel.pos = this.matches[this.ix];
+						this.jump_search = true;
+					}
+					if (this.jump_search) {
+						pop.clearSelected();
+						pop.sel_items = [];
+						pop.tree[panel.pos].sel = true;
+						pop.setPos(panel.pos);
+						pop.getTreeSel();
+						lib.treeState(false, ppt.rememberTree);
+						panel.treePaint();
+						if (panel.imgView) pop.showItem(panel.pos, 'focus');
+						else {
+							const row = (panel.pos * ui.row.h - sbar.scroll) / ui.row.h;
+							if (sbar.rows_drawn - row < 3 || row < 0) sbar.checkScroll((panel.pos + 3) * ui.row.h - sbar.rows_drawn * ui.row.h);
+						}
+						if (ppt.libSource) {
+							// if (pop.autoFill.key) pop.load(pop.sel_items, true, false, false, !ppt.sendToCur, false);
+							if (pop.autoFill.key) pop.load({ bAddToPls: false, bAutoPlay: false, bUseDefaultPls: !ppt.sendToCur, bInsertToPls: false });
+							pop.track(pop.autoFill.key);
+						} else if (panel.pos >= 0 && panel.pos < pop.tree.length) pop.setPlaylistSelection(panel.pos, pop.tree[panel.pos]);
+					} else {
+						this.jSearch = text;
+						panel.treePaint();
+						timer.clear(timer.jsearch2);
+						timer.jsearch2.id = setTimeout(() => {
+							this.jSearch = '';
+							panel.treePaint();
+							timer.jsearch2.id = null;
+						}, 1200);
+					}
+				}
+				break;
+			case !advance:
+				if (utils.IsKeyPressed(0x09) || utils.IsKeyPressed(0x11) || utils.IsKeyPressed(0x1B) || utils.IsKeyPressed(0x6A) || utils.IsKeyPressed(0x6D)) return;
+				if (!panel.search.active) {
+					let found = false;
+					let pos = -1;
+					switch (code) {
+						case vk.back:
+							this.jSearch = this.jSearch.substr(0, this.jSearch.length - 1);
+							break;
+						case vk.enter:
+							this.jSearch = '';
+							return;
+						default:
+							this.jSearch += text;
+							break;
+					}
+					pop.clearSelected();
+					if (!this.jSearch) return;
+					pop.sel_items = [];
+					this.jump_search = true;
 					panel.treePaint();
+					timer.clear(timer.jsearch1);
+					timer.jsearch1.id = setTimeout(() => {
+						pop.tree.some((v, i) => {
+							const name = $.asciify(Language.transliterate(v.name.replace(/@!#.*?@!#/g, ''))); // Regorxxx <- Fix quick-searck for non ascii first char, greek and cyrilic ->
+							if (name != panel.rootName && name.substring(0, this.jSearch.length).toLowerCase() == this.jSearch.toLowerCase()) {
+								found = true;
+								pos = i;
+								v.sel = true;
+								pop.setPos(pos);
+								pop.getTreeSel();
+								lib.treeState(false, ppt.rememberTree);
+								return true;
+							}
+						});
+						if (!found) this.jump_search = false;
+						panel.treePaint();
+						if (found) pop.showItem(pos, 'focus');
+						timer.jsearch1.id = null;
+					}, 500);
+
 					timer.clear(timer.jsearch2);
 					timer.jsearch2.id = setTimeout(() => {
+						if (found) {
+							if (ppt.libSource) {
+								// if (pop.autoFill.key) pop.load(pop.sel_items, true, false, false, !ppt.sendToCur, false);
+								if (pop.autoFill.key) pop.load({ bAddToPls: false, bAutoPlay: false, bUseDefaultPls: !ppt.sendToCur, bInsertToPls: false });
+								pop.track(pop.autoFill.key);
+							} else if (pos >= 0 && pos < pop.tree.length) pop.setPlaylistSelection(pos, pop.tree[pos]);
+						}
 						this.jSearch = '';
 						panel.treePaint();
 						timer.jsearch2.id = null;
 					}, 1200);
 				}
-			}
-		break;
-		case !advance:
-			if (utils.IsKeyPressed(0x09) || utils.IsKeyPressed(0x11) || utils.IsKeyPressed(0x1B) || utils.IsKeyPressed(0x6A) || utils.IsKeyPressed(0x6D)) return;
-			if (!panel.search.active) {
-				let found = false;
-				let pos = -1;
-				switch (code) {
-					case vk.back:
-						this.jSearch = this.jSearch.substr(0, this.jSearch.length - 1);
-						break;
-					case vk.enter:
-						this.jSearch = '';
-						return;
-					default:
-						this.jSearch += text;
-						break;
-				}
-				pop.clearSelected();
-				if (!this.jSearch) return;
-				pop.sel_items = [];
-				this.jump_search = true;
-				panel.treePaint();
-				timer.clear(timer.jsearch1);
-				timer.jsearch1.id = setTimeout(() => {
-					pop.tree.some((v, i) => {
-						const name = $.asciify($.transliterate(v.name.replace(/@!#.*?@!#/g, ''))); // Regorxxx <- Fix quick-searck for non ascii first char, greek and cyrilic ->
-						if (name != panel.rootName && name.substring(0, this.jSearch.length).toLowerCase() == this.jSearch.toLowerCase()) {
-							found = true;
-							pos = i;
-							v.sel = true;
-							pop.setPos(pos);
-							pop.getTreeSel();
-							lib.treeState(false, ppt.rememberTree);
-							return true;
-						}
-					});
-					if (!found) this.jump_search = false;
-					panel.treePaint();
-					if (found) pop.showItem(pos, 'focus');
-					timer.jsearch1.id = null;
-				}, 500);
-
-				timer.clear(timer.jsearch2);
-				timer.jsearch2.id = setTimeout(() => {
-					if (found) {
-						if (ppt.libSource) {
-							// if (pop.autoFill.key) pop.load(pop.sel_items, true, false, false, !ppt.sendToCur, false);
-							if (pop.autoFill.key) pop.load({ bAddToPls: false, bAutoPlay: false, bUseDefaultPls: !ppt.sendToCur, bInsertToPls: false });
-							pop.track(pop.autoFill.key);
-						} else if (pos >= 0 && pos < pop.tree.length) pop.setPlaylistSelection(pos, pop.tree[pos]);
-					}
-					this.jSearch = '';
-					panel.treePaint();
-					timer.jsearch2.id = null;
-				}, 1200);
-			}
 		}
 	}
 

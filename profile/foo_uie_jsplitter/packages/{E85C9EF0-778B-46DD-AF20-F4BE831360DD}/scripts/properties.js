@@ -1,4 +1,7 @@
 ﻿'use strict';
+/* global $:readable */
+
+/* exported PanelProperties */
 
 class PanelProperty {
 	constructor(name, default_value) {
@@ -43,7 +46,7 @@ class PanelProperties {
 
 	validate(item) {
 		if (!$.isArray(item) || item.length !== 3 || typeof item[2] !== 'string') {
-			throw (`invalid property: requires array: [string, any, string]`);
+			throw ('invalid property: requires array: [string, any, string]');
 		}
 
 		if (item[2] === 'add') {
@@ -145,7 +148,7 @@ let properties = [
 	['Custom Font Album Art Line 1 Use', false, 'custAlbumArtGrpFontUse'],
 	['Custom Font Album Art Line 2 Use', false, 'custAlbumArtLotFontUse'],
 	['Custom Font Album Art Line 3 Use', false, 'custAlbumArtDurFontUse'],
-	
+
 	['Custom Font Node Icon', 'Segoe UI Symbol', 'custIconFont'],
 	['Custom Font Scroll Icon', 'Segoe UI Symbol', 'butCustIconFont'],
 
@@ -166,10 +169,10 @@ let properties = [
 	['Image Blur Background Auto-Fill', false, 'blurAutofill'],
 	['Image Blur Background Level (%)', 90, 'blurTemp'],
 	['Image Blur Background Opacity (%)', 30, 'blurAlpha'],
-	 // Regorxxx <-  Background image position
+	// Regorxxx <-  Background image position
 	['Image Background x-offset (%)', 0, 'xOffsetBg'],
 	['Image Background w-offset (%)', 0, 'wOffsetBg'],
-	 // Regorxxx ->
+	// Regorxxx ->
 	['Image Current Root', 17, 'curRootImg'],
 	['Image Current No Artist', 2, 'curNoArtistImg'],
 	['Image Current No Cover', 6, 'curNoCoverImg'],
@@ -209,7 +212,7 @@ let properties = [
 	['Key: Send to Playlist', 0, 'keyAction'],
 	['Library Auto-Sync', true, 'libAutoSync'],
 	['Library Sort Date Before Album', true, 'yearBeforeAlbum'],
-	
+
 	['Library Source', 1, 'libSource'],
 	['Library Source: Active Playlist Follow Focus', true, 'followPlaylistFocus'],
 	['Library Source: Fixed Playlist', false, 'fixedPlaylist'],
@@ -237,7 +240,7 @@ let properties = [
 	['Node [Squares]: Windows', false, 'winNode'],
 	['Node Custom Icon: +|-', '\uE013|\uE015', 'iconCustom'],
 	['Node Custom Icon: Vertical Offset (%)', -2, 'iconVerticalPad'],
-	
+
 	['Nowplaying Highlight', false, 'highLightNowplaying'],
 	['Nowplaying Highlight Last', false, 'highLightNowplayinglast'],
 	['Nowplaying Indicator', false, 'nowPlayingIndicator'],
@@ -257,7 +260,7 @@ let properties = [
 	['Playlist: Top tracks filter', '%RATING% GREATER 3 OR %FEEDBACK% IS 1 OR %2003_LOVED% IS 1', 'topTracksFilter'],
 	['Playlist: Top tracks sorting', '$rand()', 'topTracksSorting'],
 	// Regorxxx ->
-	['Prefixes to Strip or Swap (| Separator)', 'A|The', 'prefix'],
+	['Prefixes to Strip or Swap (| Separator)', 'A|The|Las|Los|Les|La|El|Le', 'prefix'], // Regorxxx <- separators in other languages ->
 	['Preset: Load Current View', false, 'presetLoadCurView'],
 	['Remember.PreSearch', true, 'rememberPreSearch'],
 	['Remember.Proc', false, 'process'],
@@ -289,6 +292,7 @@ let properties = [
 	['Search Enter', false, 'searchEnter'],
 	['Search History', JSON.stringify([]), 'searchHistory'],
 	['Search Send', 1, 'searchSend'],
+	['Search Auto-refresh TF Expressions', true, 'searchRefreshTf'], // Regorxxx <- Search text also triggers updates to filtering ->
 
 	['Show Filter', true, 'filterShow'],
 	['Show Panel Source Message', true, 'panelSourceMsg'],
@@ -334,13 +338,20 @@ let properties = [
 	['View By', 1, 'viewBy'],
 	['View By Album Art', 1, 'albumArtViewBy'],
 	['View By Tree', 1, 'treeViewBy'],
+	// Regorxxx <- Fix "View by Folder Structure" to match Windows Explorer. Custom sorting for standard views
+	['View By Sorting', 0, 'viewSorting'],
+	['View By Sorting transliteration', true, 'viewSortingTrans'],
+	['View By Folder Sorting', 3, 'folderSorting'],
+	['View By Folder Sorting from foobar2000', true, 'folderSortingFb'],
+	['View By Folder Sorting transliteration', true, 'folderSortingTrans'],
+	// Regorxxx ->
 	['Zoom Filter Size (%)', 100, 'zoomFilter'],
 	['Zoom Font Size (%)', 100, 'zoomFont'],
 	['Zoom Node Size (%)', 100, 'zoomNode'],
 	['Zoom Image Size (%)', 100, 'zoomImg'],
 	['Zoom Tooltip [Button] (%)', 100, 'zoomTooltipBut'],
 
-	
+
 	['Logging library profiler', true, 'logLibProfiler'], // Regorxxx <- Library profiling
 	['Statistics Rating/Popularity Decimals', 1, 'ratingDecimals'], // Regorxxx <- Rating decimals
 	['Playlist: Prefer internal cache (if supported)', true, 'panelInternalCache'], // Regorxxx <- Don't create cache playlists if possible
@@ -370,7 +381,7 @@ if (!$.file('C:\\check_local\\1450343922.txt')) ppt.themed = false;
 
 if (ppt.get('Tree List View')) {
 	ppt.facetView = ppt.get('Tree List View');
-	ppt.set('Tree List View', null);	
+	ppt.set('Tree List View', null);
 }
 ppt.set('Image Pre-Load Images In Disk Cache', null);
 ppt.set('Image Root Collage', null);

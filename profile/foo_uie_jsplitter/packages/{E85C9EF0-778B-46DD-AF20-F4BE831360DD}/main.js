@@ -14,6 +14,7 @@ async function readFiles(files) {
 
 const files = [
 	// Regorxxx <- xxx-scripts helpers
+	'xxx\\helpers\\helpers_xxx_language.js',
 	'xxx\\helpers\\helpers_xxx_prototypes_smp.js',
 	'xxx\\helpers\\callbacks_xxx.js',
 	'xxx\\helpers\\helpers_xxx_prototypes_smp_post.js',

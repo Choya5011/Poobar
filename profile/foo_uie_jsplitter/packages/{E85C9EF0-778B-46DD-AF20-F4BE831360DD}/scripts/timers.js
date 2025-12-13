@@ -1,4 +1,7 @@
 ﻿'use strict';
+/* global panel:readable, pop:readable */
+
+/* exported Timers */
 
 class Timers {
 	constructor() {

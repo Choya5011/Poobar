@@ -1,4 +1,9 @@
 ﻿'use strict';
+//24/11/25
+
+/* global ui:readable, panel:readable, ppt:readable, pop:readable, but:readable, $:readable, tooltip:readable, sbar:readable, img:readable, search:readable, fMenu:readable, sMenu:readable, men:readable */
+
+/* exported Buttons, Btn, Tooltip, TooltipTimer, Transition */
 
 class Buttons {
 	constructor() {
@@ -13,18 +18,18 @@ class Buttons {
 		this.transition;
 		this.vertical = true;
 
-		this.b = {}
-		this.btns = {}
-		this.s = {}
+		this.b = {};
+		this.btns = {};
+		this.s = {};
 
 		this.cross = {
 			hover: null,
 			normal: null
-		}
+		};
 
 		this.q = {
 			s_img: null
-		}
+		};
 
 		this.scr = {
 			bg: null,
@@ -34,13 +39,13 @@ class Buttons {
 			img: null,
 			opaque: ui.getOpaque(),
 			pad: $.clamp(ppt.sbarButPad / 100, -0.5, 0.3)
-		}
+		};
 
 		this.tooltip = {
 			delay: true,
 			show: true,
 			start: Date.now() - 2000
-		}
+		};
 
 		this.setSbarIcon();
 		this.createImages();
@@ -79,8 +84,10 @@ class Buttons {
 		this.scr.hover = !ui.sbar.col ? $.RGBA(ui.col.t, ui.col.t, ui.col.t, hovAlpha) : ui.col.text & $.RGBA(255, 255, 255, hovAlpha);
 		this.q.s_img = $.gr(100, 100, true, g => {
 			g.SetSmoothingMode(2);
-			g.DrawLine(59, 59, 90, 90, 10, !ui.id.local ? ui.col.txt_box_h : ui.col.txt_box);
-			g.DrawEllipse(10, 10, 54, 54, 10, !ui.id.local ? ui.col.txt_box_h : ui.col.txt_box);
+			// Regorxxx <- Code cleanup. Remove ui.id.local references
+			g.DrawLine(59, 59, 90, 90, 10, ui.col.txt_box_h);
+			g.DrawEllipse(10, 10, 54, 54, 10, ui.col.txt_box_h);
+			// Regorxxx ->
 			g.FillEllipse(16, 16, 42, 42, 0x0AFAFAFA);
 			g.SetSmoothingMode(0);
 		});
@@ -114,8 +121,10 @@ class Buttons {
 			let nn = 31;
 			let offset1 = 12;
 			let offset2 = 2;
-			g.DrawLine(offset1, nn - offset2, 100 - nn * 2 + offset1, 100 - nn - offset2, 5, !ui.id.local ? ui.col.txt_box_h : ui.col.txt_box);
-			g.DrawLine(offset1, 100 - nn - offset2, 100 - nn * 2 + offset1, nn - offset2, 5, !ui.id.local ? ui.col.txt_box_h : ui.col.txt_box);
+			// Regorxxx <- Code cleanup. Remove ui.id.local references
+			g.DrawLine(offset1, nn - offset2, 100 - nn * 2 + offset1, 100 - nn - offset2, 5, ui.col.txt_box_h);
+			g.DrawLine(offset1, 100 - nn - offset2, 100 - nn * 2 + offset1, nn - offset2, 5, ui.col.txt_box_h);
+			// Regorxxx ->
 			g.SetSmoothingMode(0);
 		});
 		this.cross.hover = $.gr(sz, sz, true, g => {
@@ -124,8 +133,10 @@ class Buttons {
 			let nn = 28;
 			let offset1 = 9;
 			let offset2 = 2;
-			g.DrawLine(offset1, nn - offset2, 100 - nn * 2 + offset1, 100 - nn - offset2, 5, !ui.id.local ? ui.col.txt_box_h : ui.col.txt_box);
-			g.DrawLine(offset1, 100 - nn - offset2, 100 - nn * 2 + offset1, nn - offset2, 5, !ui.id.local ? ui.col.txt_box_h : ui.col.txt_box);
+			// Regorxxx <- Code cleanup. Remove ui.id.local references
+			g.DrawLine(offset1, nn - offset2, 100 - nn * 2 + offset1, 100 - nn - offset2, 5, ui.col.txt_box_h);
+			g.DrawLine(offset1, 100 - nn - offset2, 100 - nn * 2 + offset1, nn - offset2, 5, ui.col.txt_box_h);
+			// Regorxxx ->
 			g.SetSmoothingMode(0);
 		});
 	}
@@ -140,7 +151,7 @@ class Buttons {
 		this.move(x, y);
 		if (!this.cur || this.cur.hide) {
 			this.Dn = false;
-			return false
+			return false;
 		} else this.Dn = this.cur.name;
 		this.cur.down = true;
 		this.cur.cs('down');
@@ -164,7 +175,7 @@ class Buttons {
 		this.move(x, y);
 		if (!this.cur || this.cur.hide) {
 			this.Dn = false;
-			return false
+			return false;
 		} else this.Dn = this.cur.name;
 		this.cur.lbtn_dblclk(x, y);
 		return true;
@@ -371,12 +382,12 @@ class Buttons {
 		}, true, '', () => search.clear(), () => panel.search.txt ? 'Clear search text (escape). Double click to show history' : 'No search text to clear', true, 'cross2');
 		this.btns.filter = new Btn(ppt.searchShow ? panel.filter.x + this.margin / 2 : panel.filter.x - this.margin / 2, 0, ppt.searchShow ? panel.filter.w - this.margin : panel.filter.w + this.margin, panel.search.sp, 6, panel.filter.x, ppt.searchShow ? panel.cc : panel.lc, panel.filter.w, {
 			normal: ui.col.txt_box,
-			hover: !ui.id.local ? (!ui.img.blurDark ? ui.col.txt_box_h : ui.col.text) : ui.col.txt_box
+			hover: !ui.img.blurDark ? ui.col.txt_box_h : ui.col.text // Regorxxx <- Code cleanup. Remove ui.id.local references
 		}, !ppt.filterShow, '', () => fMenu.load(panel.filter.x, panel.search.h), () => 'Filter', true, 'filter');
 
 		this.btns.settings = new Btn(this.s.x, panel.settings.offset, this.s.w1, panel.search.sp, 7, this.s.w2, panel.search.sp, panel.settings.y, {
 			normal: ui.col.txt_box,
-			hover: !ui.id.local ? (!ui.img.blurDark ? ui.col.txt_box_h : ui.col.text) : ui.col.txt_box
+			hover: !ui.img.blurDark ? ui.col.txt_box_h : ui.col.text // Regorxxx <- Code cleanup. Remove ui.id.local references
 		}, !ppt.settingsShow, '', () => men.rbtn_up(this.s.x, panel.search.h, true), () => 'Settings', true, 'settings');
 
 		this.btns.cross1 = new Btn(this.b.x - this.margin / 2, this.hoverArea, this.q.h + this.margin, this.hot_h, 5, this.b.x, this.b.y, this.b.h, {
@@ -456,7 +467,11 @@ class Btn {
 	}
 
 	drawCross(gr) {
-		const a = !ui.id.local ? panel.search.txt ? (this.state !== 'down' ? Math.min(170 + (255 - 170) * this.transition_factor, 255) : 255) : 170 : 255;
+		// Regorxxx <- Code cleanup. Remove ui.id.local references
+		const a = panel.search.txt
+			? (this.state !== 'down' ? Math.min(170 + (255 - 170) * this.transition_factor, 255) : 255)
+			: 170;
+		// Regorxxx ->
 		const crossIm = this.state === 'normal' || !panel.search.txt ? this.item.normal : this.item.hover;
 		const colRect = this.state !== 'down' ? ui.getBlend(ui.col.bg4, ui.col.bg5, this.transition_factor, true) : ui.col.bg4;
 		gr.SetSmoothingMode(2);
@@ -468,7 +483,11 @@ class Btn {
 	}
 
 	drawFilter(gr) {
-		const colText = !ui.id.local ? (this.state !== 'down' ? ui.getBlend(this.item.hover, this.item.normal, this.transition_factor, true) : this.item.hover) : this.item.normal;
+		// Regorxxx <- Code cleanup. Remove ui.id.local references
+		const colText = this.state !== 'down'
+			? ui.getBlend(this.item.hover, this.item.normal, this.transition_factor, true)
+			: this.item.hover;
+		// Regorxxx ->
 		const colRect = this.state !== 'down' ? ui.getBlend(ui.col.bg4, ui.col.bg5, this.transition_factor, true) : ui.col.bg4;
 		gr.SetSmoothingMode(2);
 		gr.FillRoundRect(this.x, but.hoverArea, this.w, but.hot_h, but.arc, but.arc, colRect);
@@ -497,7 +516,11 @@ class Btn {
 	}
 
 	drawSearch(gr) {
-		const a = !ui.id.local ? (this.state !== 'down' ? Math.min(170 + (255 - 170) * this.transition_factor, 255) : 255) : 255;
+		// Regorxxx <- Code cleanup. Remove ui.id.local references
+		const a = this.state !== 'down'
+			? Math.min(170 + (255 - 170) * this.transition_factor, 255)
+			: 255;
+		// Regorxxx ->
 		const colRect = this.state !== 'down' ? ui.getBlend(ui.col.bg4, ui.col.bg5, this.transition_factor, true) : ui.col.bg4;
 		gr.SetSmoothingMode(2);
 		gr.FillRoundRect(this.x, this.y, this.w, this.h, but.arc, but.arc, colRect);
@@ -508,7 +531,11 @@ class Btn {
 	}
 
 	drawSettings(gr) {
-		const colText = !ui.id.local ? (this.state !== 'down' ? ui.getBlend(this.item.hover, this.item.normal, this.transition_factor, true) : this.item.hover) : this.item.normal;
+		// Regorxxx <- Code cleanup. Remove ui.id.local references
+		const colText = this.state !== 'down'
+			? ui.getBlend(this.item.hover, this.item.normal, this.transition_factor, true)
+			: this.item.hover;
+		// Regorxxx ->
 		const colRect = this.state !== 'down' ? ui.getBlend(ui.col.bg4, ui.col.bg5, this.transition_factor, true) : ui.col.bg4;
 		gr.SetSmoothingMode(2);
 		gr.FillRoundRect(this.x, but.hoverArea, this.w, but.hot_h, but.arc, but.arc, colRect);
@@ -516,7 +543,7 @@ class Btn {
 		if (!ui.img.blurDark) gr.GdiDrawText(panel.settings.icon, panel.settings.font, colText, 0, this.y, this.p1, this.p2, panel.rc);
 		else {
 			gr.SetTextRenderingHint(5);
-			gr.DrawString(panel.settings.icon, panel.settings.font, colText, 0, this.y - 1, this.p1, this.p2, $.stringFormat(2, 1));		
+			gr.DrawString(panel.settings.icon, panel.settings.font, colText, 0, this.y - 1, this.p1, this.p2, $.stringFormat(2, 1));
 		}
 	}
 

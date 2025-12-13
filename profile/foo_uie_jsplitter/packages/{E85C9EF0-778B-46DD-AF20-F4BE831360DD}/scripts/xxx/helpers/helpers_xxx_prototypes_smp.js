@@ -1,5 +1,5 @@
 ﻿'use strict';
-//14/11/25
+//01/12/25
 
 /* exported extendGR, checkCompatible */
 
@@ -101,6 +101,7 @@ Object.defineProperty(fb, 'tfCache', {
 		if (!bCache) { fb.tfCache[arguments[0]] = that; }
 		return that;
 	};
+	Object.defineProperty(FbTitleFormat, Symbol.hasInstance, { value(instance) { return instance instanceof old; } });
 }
 
 /*
@@ -370,7 +371,9 @@ plman.AddPlaylistItemsOrLocations = (plsIdx, items /*[handle, handleList, filePa
 	}
 };
 
-if (!plman.GetGUID) { plman.GetGUID = () => null; }
+if (!plman.GetGUID || !compareVersions(fb.Version, '2.0.0')) { plman.GetGUID = () => null; }
+
+if (!plman.FindByGUID || !compareVersions(fb.Version, '2.0.0')) { plman.FindByGUID = () => -1; }
 
 /*
 	Paint
@@ -443,6 +446,7 @@ Object.defineProperty(window, 'drawDebugRectAreas', {
 		}).bind(that);
 		return that;
 	};
+	Object.defineProperty(FbProfiler, Symbol.hasInstance, { value(instance) { return instance instanceof old; } });
 }
 
 if (fb.AddLocationsAsync) {
@@ -478,6 +482,26 @@ if (!window.Parent) {
 	});
 }
 
+if (!window.PanelName) {
+	Object.defineProperty(window, 'PanelName', {
+		enumerable: false,
+		configurable: false,
+		writable: false,
+		value: /{.{8}-.{4}-.{4}-.{4}-.{12}}/.test(window.Name)
+			? window.ScriptInfo.Name
+			: window.Name
+	});
+}
+
+if (!window.FullPanelName) {
+	Object.defineProperty(window, 'FullPanelName', {
+		enumerable: false,
+		configurable: false,
+		writable: false,
+		value: window.Name + ' (' + window.ScriptInfo.Name + ')'
+	});
+}
+
 /* SMP bugs */
 
 if (!window.Bugs) { window.Bugs = {}; }
@@ -492,11 +516,14 @@ window.Bugs.SetPlaylistLockedActions = ![
 function compareVersions(from, to) {
 	if (typeof from === 'string') { from = from.split('.'); }
 	if (typeof to === 'string') { to = to.split('.'); }
+	const collator = typeof strNumCollator !== 'undefined'
+		? strNumCollator // eslint-disable-line no-undef
+		: new Intl.Collator(void (0), { sensitivity: 'base', numeric: true });
 	for (let i = 0; i < to.length; ++i) {
 		if (to[i] !== from[i]) {
 			return typeof from[i] === 'undefined'
 				? false
-				: to[i].localeCompare(from[i], void (0), { numeric: true }) < 0;
+				: collator.compare(to[i], from[i]) < 0;
 		}
 	}
 	return true;

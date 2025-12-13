@@ -19,15 +19,9 @@
 	</head>
 	<body>
 		<div id="usage" class="bold">Panel source</div>
-		<div id="div_text1" class="cnt">This enables a multiple panel mode that supports a New Facets style. Panels can also contain a tree view or album art.
-
-See help on the "Views" tab for setup guidance.</div>
+		<div id="div_text1" class="cnt">This enables a multiple panel mode that supports a New Facets style. Panels can also contain a tree view or album art.<br><br>See help on the "Views" tab for setup guidance.</div>
 		<div id="playlist" class="bold">Playlist source</div>
-		<div id="div_text2" class="cnt"><i>Active playlist</i>
-The sort order of the playlist is used, except for multi-value tag or soft splitter views where sorting is necessary. Items are highlighted in the playlist, not sent.
-
-<i>Other playlists</i>
-These behave the same as the library source.</div>
+		<div id="div_text2" class="cnt"><i>Active playlist</i><br>The sort order of the playlist is used, except for multi-value tag or soft splitter views where sorting is necessary. Items are highlighted in the playlist, not sent.<br><br><i>Other playlists</i><br>These behave the same as the library source.</div>
 		<div id="input_cnt" class="input_cnt"></div>
 		<div id="btn_cnt"><button id="btn_ok">OK</button></div>
 		<div id="div" style="height:0; width:0;outline:none; border:none; padding:none; margin:none; box-sizing:content-box;"></div>
@@ -67,7 +61,7 @@ These behave the same as the library source.</div>
 			var window_w = 600;
 
 			setTimeout(function() {
-				var window_h = 83 + window.usage.offsetHeight + window.div_text1.offsetHeight + window.div_text2.offsetHeight + window.playlist.offsetHeight + window.btn_ok.offsetHeight;
+				var window_h = 83 + window.usage.offsetHeight + window.div_text1.offsetHeight + window.div_text2.offsetHeight + window.playlist.offsetHeight + window.btn_ok.offsetHeight + window.input_cnt.offsetHeight;
 				window_w = window_h * 1.5;
 				var left = (screen.width - window_w) / 2;
 				var top = (screen.height - window_h) / 2;

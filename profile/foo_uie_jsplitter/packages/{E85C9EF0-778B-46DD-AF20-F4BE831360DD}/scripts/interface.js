@@ -1,4 +1,7 @@
 ﻿'use strict';
+/* global panel:readable, ppt:readable, $:readable, vk:readable, sbar:readable, pop:readable, img:readable, but:readable */
+
+/* exported UserInterface, Vkeys, sync */
 
 window.DlgCode = 0x004;
 
@@ -20,14 +23,14 @@ class UserInterface {
 			bg6: 0x04000000,
 			txt: '',
 			txt_h: ''
-		}
+		};
 
 		this.font = {
 			groupEllipsisSpace: 0,
 			lotEllipsisSpace: 0,
 			mainEllipsisSpace: 0,
 			zoomSize: 16
-		}
+		};
 
 		this.icon = {
 			char: ppt.iconCustom,
@@ -41,19 +44,19 @@ class UserInterface {
 			fontName: 'FontAwesome',
 			offset: 0,
 			w: 17
-		}
+		};
 
 		this.id = {
 			dragDrop: -1,
-			local: typeof conf === 'undefined' ? false : true,
+			// Regorxxx <- Code cleanup. Remove ui.id.local references ->
 			touch_dn: -1,
 			tree: ''
-		}
+		};
 
 		this.last_pressed_coord = {
 			x: -1,
 			y: -1
-		}
+		};
 
 		this.img = {
 			blendAlpha: $.clamp($.clamp(ppt.blurAlpha, 0, 100) * 105 / 30, 0, 255),
@@ -64,7 +67,7 @@ class UserInterface {
 			cur_pth: '',
 			isBlur: false,
 			stub: []
-		}
+		};
 
 		this.l = {
 			s1: 4,
@@ -73,7 +76,7 @@ class UserInterface {
 			w: Math.round(1 * $.scale),
 			wc: 0,
 			wf: 0
-		}
+		};
 
 		this.row = {
 			h: 20
@@ -88,7 +91,7 @@ class UserInterface {
 			sp: 12,
 			type: 0,
 			w: 11
-		}
+		};
 
 		if (!ppt.butCustIconFont.length) ppt.butCustIconFont = 'Segoe UI Symbol';
 		if (ppt.narrowSbarWidth != 0) ppt.narrowSbarWidth = $.clamp(ppt.narrowSbarWidth, 2, 10);
@@ -101,7 +104,7 @@ class UserInterface {
 			squareNode: true,
 			symb: window.CreateThemeManager('TREEVIEW'),
 			topBarShow: ppt.filterShow || ppt.searchShow || ppt.settingsShow
-		}
+		};
 
 		this.sz = {
 			margin: ppt.margin,
@@ -116,9 +119,9 @@ class UserInterface {
 			sp1: 6,
 			sp2: 6,
 			y_start: 0
-		}
+		};
 
-		this.themeColour = {}
+		this.themeColour = {};
 
 		this.focus_changed = $.debounce(() => {
 			if (!ppt.recItemImage || ppt.libSource != 2) this.on_playback_new_track();
@@ -171,7 +174,7 @@ class UserInterface {
 					break;
 			}
 			return cc;
-		}
+		};
 		prop.forEach((v, i) => {
 			this.col[v] = set(ppt[v + 'Use'] ? ppt[v] : '', i < 6 ? 0 : 1);
 		});
@@ -190,7 +193,7 @@ class UserInterface {
 
 	calcText(refreshImg) {
 		$.gr(1, 1, false, g => {
-			if (!this.id.local) this.row.h = Math.max(Math.round(g.CalcTextHeight('String', this.font.main)) + ppt.verticalPad, 2);
+			this.row.h = Math.max(Math.round(g.CalcTextHeight('String', this.font.main)) + ppt.verticalPad, 2); // Regorxxx <- Code cleanup. Remove ui.id.local references ->
 			if (this.style.squareNode) {
 				this.sz.node = Math.round($.clamp(this.sz.node, 7, this.row.h - 2));
 				ppt.zoomNode = Math.round(this.sz.node / this.sz.node_base * 100);
@@ -225,7 +228,7 @@ class UserInterface {
 		this.sz.sel = (this.style.squareNode ? this.sz.sp1 : this.sz.sp + Math.round(this.sz.sp / 3)) / 2;
 		this.sz.margin = this.style.topBarShow && pop.inlineRoot ? ppt.margin + Math.floor(Math.max(this.font.main.Size * 10 / 27, 5)) : ppt.margin;
 		this.sz.marginRight = ppt.countsRight || ppt.itemShowStatistics ? ppt.margin + Math.floor(Math.max(this.font.main.Size * 10 / 27, 5)) : ppt.margin;
-		if (ppt.facetView) this.sz.margin = this.sz.marginRight = (ppt.sbarShow ? Math.max(ppt.margin, this.sbar.sp + 7 * $.scale) : ppt.margin)
+		if (ppt.facetView) this.sz.margin = this.sz.marginRight = (ppt.sbarShow ? Math.max(ppt.margin, this.sbar.sp + 7 * $.scale) : ppt.margin);
 		this.sz.marginSearch = this.sz.margin;
 		if (this.style.topBarShow && (ppt.countsRight || ppt.itemShowStatistics || ppt.rowStripes || ppt.fullLineSelection || pop.inlineRoot || ppt.nodeStyle == 3 || ppt.nodeStyle == 4)) this.sz.marginSearch -= 1;
 		if (this.style.topBarShow && !pop.inlineRoot && (ppt.nodeStyle == 3 || ppt.nodeStyle == 4)) this.sz.marginSearch -= 1;
@@ -323,7 +326,7 @@ class UserInterface {
 					g.SetInterpolationMode(0);
 					if (ppt.blurAutofill) image = image.Clone(imgx, imgy, imgw, imgh);
 					if (this.img.blurBlend) {
-							if (ppt.blurTemp) {
+						if (ppt.blurTemp) {
 							const iSmall = image.Resize(this.w * this.img.blurLevel / 100, this.h * this.img.blurLevel / 100, 2);
 							const iFull = iSmall.Resize(this.w, this.h, 2);
 							const offset = 90 - this.img.blurLevel;
@@ -422,7 +425,7 @@ class UserInterface {
 		this.getBlurColours();
 		this.getUIColours();
 		this.getItemColours();
-		
+
 		if (ppt.themed) {
 			if ((ppt.theme == 0 || ppt.theme == 6 || ppt.theme == 7) && this.themeColour && ppt.themeColour) {
 				// nothing to do
@@ -434,7 +437,7 @@ class UserInterface {
 					selection: this.col.bgSel,
 					highlight: this.col.text_h,
 					bar: $.RGBA(0, 0, 0, 63)
-				}
+				};
 			}
 		}
 	}
@@ -473,9 +476,9 @@ class UserInterface {
 			return diskLetters.some(d => {
 				try { // Needed when permission error occurs and current SMP implementation is broken for some devices....
 					return utils.IsDirectory(d) ? paths.some(p => utils.IsFile(d + p)) : false;
-				} catch (e) {return false;}
+				} catch (e) { return false; } // eslint-disable-line no-unused-vars
 			});
-		}
+		};
 
 		if (ppt.custFontUse && ppt.custFont.length) {
 			const custFont = $.split(ppt.custFont, 1);
@@ -483,9 +486,9 @@ class UserInterface {
 		} else if (this.dui) this.font.main = window.GetFontDUI(2);
 		else this.font.main = window.GetFontCUI(0);
 
-		if (this.id.local) this.font.main = c_font;
+		// Regorxxx <- Code cleanup. Remove ui.id.local references ->
 
-		if (!this.font.main || /tahoma/i.test(this.font.main.Name) && DetectWine()) { // Windows: check still needed (test MS Serif or Modern, neither can be used); Wine: tahoma is default system font, but bold and some unicode characters don't work: if Wine + tahoma detected changed to Segoe UI (if that's not installed, tahoma is still used) 
+		if (!this.font.main || /tahoma/i.test(this.font.main.Name) && DetectWine()) { // Windows: check still needed (test MS Serif or Modern, neither can be used); Wine: tahoma is default system font, but bold and some unicode characters don't work: if Wine + tahoma detected changed to Segoe UI (if that's not installed, tahoma is still used)
 			this.font.main = gdi.Font('Segoe UI', 16, 0);
 			$.trace('Spider Monkey Panel is unable to use your default font. Using Segoe UI at default size & style instead', false);
 		}
@@ -500,20 +503,7 @@ class UserInterface {
 		this.font.search = gdi.Font(this.font.main.Name, this.font.main.Size, 0);
 		this.font.find = gdi.Font(this.font.main.Name, this.font.main.Size * 1.5, 1);
 
-		if (this.id.local) {
-			this.font.search = c_s_font;
-			this.font.find = gdi.Font(this.font.main.Name, this.font.main.Size * 1.5, 1);
-			this.sz.margin = c_margin;
-			ppt.treeIndent = c_pad;
-			this.row.h = c_row_h;
-			if (ppt.sbarShow) {
-				this.sbar.type = 0;
-				this.sbar.w = c_scr_w;
-				this.sbar.but_w = this.sbar.w + 1;
-				this.sbar.but_h = this.sbar.w + 1;
-				this.sbar.sp = this.sbar.w + 1;
-			}
-		}
+		// Regorxxx <- Code cleanup. Remove ui.id.local references ->
 
 		this.font.label = gdi.Font(this.font.main.Name, !ppt.treeAutoExpand || ppt.libSource != 2 ? Math.round(this.font.main.Size * 11 / 14) : this.font.main.Size, this.font.main.Style);
 		this.font.small = gdi.Font(this.font.main.Name, !ppt.treeAutoExpand || ppt.libSource != 2 ? Math.round(this.font.main.Size * 12 / 14) : this.font.main.Size, this.font.main.Style);
@@ -524,13 +514,13 @@ class UserInterface {
 		if (ppt.custAlbumArtGrpFontUse && ppt.custAlbumArtGrpFont.length) {
 			const custFont = $.split(ppt.custAlbumArtGrpFont, 1);
 			this.font.group = gdi.Font(custFont[0], this.font.main.Size, Math.round($.value(custFont[1], 1, 0)));
-		} else this.font.group = gdi.Font(this.font.main.Name, this.font.main.Size, 1)
+		} else this.font.group = gdi.Font(this.font.main.Name, this.font.main.Size, 1);
 
 		if (ppt.custAlbumArtLotFontUse && ppt.custAlbumArtLotFont.length) {
 			const custFont = $.split(ppt.custAlbumArtLotFont, 1);
 			this.font.lot = gdi.Font(custFont[0], this.font.main.Size, Math.round($.value(custFont[1], 2, 0)));
 		} else this.font.lot = gdi.Font('Segoe UI Semibold', this.font.main.Size, 0);
-		
+
 		if (ppt.custAlbumArtDurFontUse && ppt.custAlbumArtDurFont.length) {
 			const custFont = $.split(ppt.custAlbumArtDurFont, 1);
 			this.font.statistics = gdi.Font(custFont[0], this.font.main.Size, Math.round($.value(custFont[1], 2, 0)));
@@ -559,7 +549,7 @@ class UserInterface {
 			freqTot += v.freq;
 		});
 		const avgCol = ($.clamp(Math.round(Math.sqrt(rTot / freqTot)), 0, 255) + $.clamp(Math.round(Math.sqrt(gTot / freqTot)), 0, 255) + $.clamp(Math.round(Math.sqrt(bTot / freqTot)), 0, 255)) / 3;
-		return $.clamp(avgCol * -0.32 +  128, 64, 128);
+		return $.clamp(avgCol * -0.32 + 128, 64, 128);
 	}
 
 	getImgFallback() {
@@ -586,7 +576,7 @@ class UserInterface {
 		this.col.bg3 = lightBg ? 0x10000000 : 0x10ffffff;
 		this.col.bg4 = lightBg ? 0x1f000000 : 0x1fffffff;
 		this.col.bg5 = lightBg ? 0x00000000 : 0x00ffffff;
-		this.col.bg6 = this.img.blurDark ? $.RGB(64, 64, 64) : this.img.blurLight ? $.RGB(245, 245, 245) : this.col.bg == 0 ? 0xff000000 : this.col.bg
+		this.col.bg6 = this.img.blurDark ? $.RGB(64, 64, 64) : this.img.blurLight ? $.RGB(245, 245, 245) : this.col.bg == 0 ? 0xff000000 : this.col.bg;
 
 		if (ppt.swapCol && (!ppt.albumArtShow || ppt.albumArtLabelType != 4)) {
 			const colH = this.col.text_h;
@@ -652,7 +642,7 @@ class UserInterface {
 				const lightBg = this.isLightBackground();
 				const nearBlack = ((ppt.theme == 1 || ppt.theme == 2) && !this.col.themeLight || (ppt.theme == 0 || ppt.theme == 6 || ppt.theme == 7) && !lightBg) && this.getColSat(this.col.bg) < 45;
 				const alpha = !lightBg ? nearBlack ? 0x20ffffff : 0x50000000 : 0x30000000;
-				this.col.s_line = this.col.text & alpha;	
+				this.col.s_line = this.col.text & alpha;
 			}
 		}
 		if (window.IsTransparent && this.col.bgTrans) {
@@ -666,28 +656,7 @@ class UserInterface {
 		this.col.t = this.style.bg ? this.getButCol(this.col.bg) : 200;
 		this.col.topBarUnderlay = this.col.bg;
 
-		if (this.id.local) {
-			this.col.topBarUnderlay = this.getAlpha(c_b1) != 255 ? $.RGB(25, 28, 30) : c_b1;
-			this.col.text = this.col.lotBlend = this.img.blurBlend ? this.setBrightness(c_textcol, this.isLightCol(this.col.bg == 0 ? 0xff000000 : this.col.bg) ? -10 : 10) : this.img.blurDark ? $.RGB(255, 255, 255) : this.img.blurLight ? $.RGB(50, 50, 50) : c_textcol;
-			this.col.text_h = this.img.blurBlend ? this.setBrightness(c_textcol_h, this.isLightCol(this.col.bg == 0 ? 0xff000000 : this.col.bg) ? -10 : 10) : this.img.blurDark ? $.RGB(255, 255, 255) : this.img.blurLight ? $.RGB(50, 50, 50) : c_textcol_h;
-			this.col.textSel = this.col.selBlend = c_textselcol;
-			this.col.bgSel = c_backcolsel;
-			ppt.rowStripes = c_alternate;
-			this.style.fill = c_fill;
-			this.style.pen = c_pen;
-			this.style.pen_c = c_pen_c;
-			this.col.search = this.col.txt_box = c_txt_box;
-			this.col.bg_h = ppt.highLightRow > 2 ? (this.img.blurDark ? 0x24000000 : 0x1E30AFED) : this.img.blurDark ? 0x19ffffff : this.img.blurLight || lightBg ? 0x19000000 : 0x19ffffff;
-			this.col.bgSel_h = this.col.bg_h;
-			if (this.getColSat(this.col.bg) < 150 && !this.img.blurDark && !this.img.blurLight && !ppt.highLightRow != 3) {
-				this.col.bg_h = this.getBlend(this.col.bg == 0 ? 0xff000000 : this.col.bg, this.col.bgSel, 0.55);
-				this.col.bgSel_h = this.getBlend(this.col.bg == 0 ? 0xff000000 : this.col.bg, this.col.bgSel, 0.25);
-			}
-			this.col.sideMarker = this.col.text_h;
-			this.col.count = this.setBrightness(this.col.text, this.isLightCol(this.col.text) ? -30 : 30);
-			this.col.bg1 = c_b1;
-			this.col.bg2 = c_b2;
-		}
+		// Regorxxx <- Code cleanup. Remove ui.id.local references ->
 
 		this.icon.col_c = this.col.icon_c;
 		this.icon.col_e = this.col.icon_e;
@@ -833,7 +802,7 @@ class UserInterface {
 	}
 
 	setIconCol() {
-		const colBg = this.img.blurDark ? $.RGB(0, 0, 0) : this.img.blurLight ? $.RGB(255, 255, 255) : this.col.bg == 0 ? 0xff000000 : this.col.bg
+		const colBg = this.img.blurDark ? $.RGB(0, 0, 0) : this.img.blurLight ? $.RGB(255, 255, 255) : this.col.bg == 0 ? 0xff000000 : this.col.bg;
 		if (this.icon.col_c === '') {
 			this.col.icon_c = this.style.squareNode ? [$.RGB(252, 252, 252), $.RGB(223, 223, 223)] : (ppt.nodeStyle == 1 || ppt.nodeStyle == 3 ? (this.img.blurDark || this.img.blurBlend || this.img.blurLight ? $.RGBtoRGBA(this.col.text, 72) : this.getBlend(colBg, this.col.text, 0.5)) : this.col.text);
 		} else if (this.style.squareNode) {
@@ -856,7 +825,13 @@ class UserInterface {
 		if (!ppt.highLightNode) return;
 		if (this.icon.col_h === '') {
 			const nodeDiffHighlight = this.img.blurDark && !ppt.highLightRow && ppt.highLightNode;
-			this.col.icon_h = this.style.squareNode ? !this.img.blurDark && !this.img.blurLight ? !this.id.local ? (this.getColSat(this.col.text_h) < 650 ? this.col.text_h : this.col.text) : (this.getColSat(c_iconcol_h) < 650 ? c_iconcol_h : c_textcol) : $.RGB(50, 50, 50) : (nodeDiffHighlight ? this.col.nowp : this.col.text_h);
+			// Regorxxx <- Code cleanup. Remove ui.id.local references
+			this.col.icon_h = this.style.squareNode
+				? !this.img.blurDark && !this.img.blurLight
+					? this.getColSat(this.col.text_h) < 650 ? this.col.text_h : this.col.text
+					: $.RGB(50, 50, 50)
+				: nodeDiffHighlight ? this.col.nowp : this.col.text_h;
+			// Regorxxx ->
 			this.icon.col_h = this.col.icon_h;
 		}
 		if (this.style.squareNode) {
@@ -916,7 +891,7 @@ class UserInterface {
 					this.style.symb.SetPartAndStateID(2, 1);
 					this.style.symb.SetPartAndStateID(2, 2);
 					this.style.symb.DrawThemeBackground(g, 0, 0, this.sz.node, this.sz.node);
-				} catch (e) {
+				} catch (e) { // eslint-disable-line no-unused-vars
 					ppt.nodeStyle = 0;
 				}
 			});
@@ -961,7 +936,7 @@ class UserInterface {
 						this.theme.SetPartAndStateID(1, i + 1);
 						this.theme.DrawThemeBackground(g, 0, 0, 21, 21);
 					}
-				} catch (e) {
+				} catch (e) { // eslint-disable-line no-unused-vars
 					this.sbar.type = 1;
 					ppt.sbarType = 1;
 				}
@@ -982,7 +957,7 @@ class UserInterface {
 		let themed_w = 21;
 		try {
 			themed_w = utils.GetSystemMetrics(2);
-		} catch (e) {}
+		} catch (e) { /* empty */ } // eslint-disable-line no-unused-vars
 		if (ppt.sbarWinMetrics) {
 			this.sbar.w = themed_w;
 			this.sbar.but_w = this.sbar.w;
@@ -1123,9 +1098,9 @@ class Vkeys {
 	}
 }
 
-let colourSelector = {}
-let sync = {image: () => {}}
+let colourSelector = {};
+let sync = { image: () => { } };
 const syncer = fb.ProfilePath + 'settings\\themed\\libraryTreeSyncTheme.js';
 if (ppt.themed && $.file(syncer)) include(syncer);
 
-(function(root,pluralize){root.pluralize=pluralize()})(this,function(){var pluralRules=[];var singularRules=[];var uncountables={};var irregularPlurals={};var irregularSingles={};function sanitizeRule(rule){if(typeof rule==='string'){return new RegExp('^'+rule+'$','i')}return rule}function restoreCase(word,token){if(word===token)return token;if(word===word.toLowerCase())return token.toLowerCase();if(word===word.toUpperCase())return token.toUpperCase();if(word[0]===word[0].toUpperCase()){return token.charAt(0).toUpperCase()+token.substr(1).toLowerCase()}return token.toLowerCase()}function interpolate(str,args){return str.replace(/\$(\d{1,2})/g,function(match,index){return args[index]||''})}function replace(word,rule){return word.replace(rule[0],function(match,index){var result=interpolate(rule[1],arguments);if(match===''){return restoreCase(word[index-1],result)}return restoreCase(match,result)})}function sanitizeWord(token,word,rules){if(!token.length||$.objHasOwnProperty(uncountables, token)){return word}var len=rules.length;while(len--){var rule=rules[len];if(rule[0].test(word))return replace(word,rule)}return word}function replaceWord(replaceMap,keepMap,rules){return function(word){var token=word.toLowerCase();if($.objHasOwnProperty(keepMap, token)){return restoreCase(word,token)}if($.objHasOwnProperty(replaceMap, token)){return restoreCase(word,replaceMap[token])}return sanitizeWord(token,word,rules)}}function checkWord(replaceMap,keepMap,rules){return function(word){var token=word.toLowerCase();if($.objHasOwnProperty(keepMap, token))return true;if($.objHasOwnProperty(replaceMap, token))return false;return sanitizeWord(token,token,rules)===token}}function pluralize(word,count,inclusive){if (word.length < 2) return word;var pluralized=count===1?pluralize.singular(word):pluralize.plural(word);return(inclusive?count+' ':'')+pluralized}pluralize.plural=replaceWord(irregularSingles,irregularPlurals,pluralRules);pluralize.isPlural=checkWord(irregularSingles,irregularPlurals,pluralRules);pluralize.singular=replaceWord(irregularPlurals,irregularSingles,singularRules);pluralize.isSingular=checkWord(irregularPlurals,irregularSingles,singularRules);pluralize.addPluralRule=function(rule,replacement){pluralRules.push([sanitizeRule(rule),replacement])};pluralize.addSingularRule=function(rule,replacement){singularRules.push([sanitizeRule(rule),replacement])};pluralize.addUncountableRule=function(word){if(typeof word==='string'){uncountables[word.toLowerCase()]=true;return}pluralize.addPluralRule(word,'$0');pluralize.addSingularRule(word,'$0')};pluralize.addIrregularRule=function(single,plural){plural=plural.toLowerCase();single=single.toLowerCase();irregularSingles[single]=plural;irregularPlurals[plural]=single};[['I','we'],['me','us'],['he','they'],['she','they'],['them','them'],['myself','ourselves'],['yourself','yourselves'],['itself','themselves'],['herself','themselves'],['himself','themselves'],['themself','themselves'],['is','are'],['was','were'],['has','have'],['this','these'],['that','those'],['echo','echoes'],['dingo','dingoes'],['volcano','volcanoes'],['tornado','tornadoes'],['torpedo','torpedoes'],['genus','genera'],['viscus','viscera'],['stigma','stigmata'],['stoma','stomata'],['dogma','dogmata'],['lemma','lemmata'],['schema','schemata'],['anathema','anathemata'],['ox','oxen'],['axe','axes'],['die','dice'],['yes','yeses'],['foot','feet'],['eave','eaves'],['goose','geese'],['tooth','teeth'],['quiz','quizzes'],['human','humans'],['proof','proofs'],['carve','carves'],['valve','valves'],['looey','looies'],['thief','thieves'],['groove','grooves'],['pickaxe','pickaxes'],['passerby','passersby']].forEach(function(rule){return pluralize.addIrregularRule(rule[0],rule[1])});[[/s?$/i,'s'],[/[^\u0000-\u007F]$/i,'$0'],[/([^aeiou]ese)$/i,'$1'],[/(ax|test)is$/i,'$1es'],[/(alias|[^aou]us|t[lm]as|gas|ris)$/i,'$1es'],[/(e[mn]u)s?$/i,'$1s'],[/([^l]ias|[aeiou]las|[ejzr]as|[iu]am)$/i,'$1'],[/(alumn|syllab|vir|radi|nucle|fung|cact|stimul|termin|bacill|foc|uter|loc|strat)(?:us|i)$/i,'$1i'],[/(alumn|alg|vertebr)(?:a|ae)$/i,'$1ae'],[/(seraph|cherub)(?:im)?$/i,'$1im'],[/(her|at|gr)o$/i,'$1oes'],[/(agend|addend|millenni|dat|extrem|bacteri|desiderat|strat|candelabr|errat|ov|symposi|curricul|automat|quor)(?:a|um)$/i,'$1a'],[/(apheli|hyperbat|periheli|asyndet|noumen|phenomen|criteri|organ|prolegomen|hedr|automat)(?:a|on)$/i,'$1a'],[/sis$/i,'ses'],[/(?:(kni|wi|li)fe|(ar|l|ea|eo|oa|hoo)f)$/i,'$1$2ves'],[/([^aeiouy]|qu)y$/i,'$1ies'],[/([^ch][ieo][ln])ey$/i,'$1ies'],[/(x|ch|ss|sh|zz)$/i,'$1es'],[/(matr|cod|mur|sil|vert|ind|append)(?:ix|ex)$/i,'$1ices'],[/\b((?:tit)?m|l)(?:ice|ouse)$/i,'$1ice'],[/(pe)(?:rson|ople)$/i,'$1ople'],[/(child)(?:ren)?$/i,'$1ren'],[/eaux$/i,'$0'],[/m[ae]n$/i,'men'],['thou','you']].forEach(function(rule){return pluralize.addPluralRule(rule[0],rule[1])});[[/s$/i,''],[/(ss)$/i,'$1'],[/(wi|kni|(?:after|half|high|low|mid|non|night|[^\w]|^)li)ves$/i,'$1fe'],[/(ar|(?:wo|[ae])l|[eo][ao])ves$/i,'$1f'],[/ies$/i,'y'],[/\b([pl]|zomb|(?:neck|cross)?t|coll|faer|food|gen|goon|group|lass|talk|goal|cut)ies$/i,'$1ie'],[/\b(mon|smil)ies$/i,'$1ey'],[/\b((?:tit)?m|l)ice$/i,'$1ouse'],[/(seraph|cherub)im$/i,'$1'],[/(x|ch|ss|sh|zz|tto|go|cho|alias|[^aou]us|t[lm]as|gas|(?:her|at|gr)o|[aeiou]ris)(?:es)?$/i,'$1'],[/(analy|diagno|parenthe|progno|synop|the|empha|cri|ne)(?:sis|ses)$/i,'$1sis'],[/(movie|twelve|abuse|e[mn]u)s$/i,'$1'],[/(test)(?:is|es)$/i,'$1is'],[/(alumn|syllab|vir|radi|nucle|fung|cact|stimul|termin|bacill|foc|uter|loc|strat)(?:us|i)$/i,'$1us'],[/(agend|addend|millenni|dat|extrem|bacteri|desiderat|strat|candelabr|errat|ov|symposi|curricul|quor)a$/i,'$1um'],[/(apheli|hyperbat|periheli|asyndet|noumen|phenomen|criteri|organ|prolegomen|hedr|automat)a$/i,'$1on'],[/(alumn|alg|vertebr)ae$/i,'$1a'],[/(cod|mur|sil|vert|ind)ices$/i,'$1ex'],[/(matr|append)ices$/i,'$1ix'],[/(pe)(rson|ople)$/i,'$1rson'],[/(child)ren$/i,'$1'],[/(eau)x?$/i,'$1'],[/men$/i,'man']].forEach(function(rule){return pluralize.addSingularRule(rule[0],rule[1])});['a','an','and','as','at','but','by','en','for','if','in','nor','of','on','or','per','the','to','vs','via','adulthood','advice','agenda','aid','aircraft','alcohol','allmusic','ammo','analytics','anime','athletics','audio','bison','blood','bream','buffalo','butter','carp','cash','chassis','chess','clothing','cod','commerce','cooperation','corps','debris','diabetes','digestion','elk','energy','equipment','excretion','expertise','firmware','flounder','folder','fun','gallows','garbage','graffiti','hardware','headquarters','health','herpes','highjinks','homework','housework','information','jeans','justice','kudos','labour','lastfm','last.fm','listener','literature','machinery','mackerel','mail','media','mews','moose','music','mud','manga','news','only','personnel','pike','plankton','playcount','pliers','police','pollution','premises','rain','research','rice','salmon','scissors','series','sewage','shambles','shrimp','similar','software','species','staff','swine','tennis','traffic','transportation','trout','tuna','wealth','welfare','whiting','wildebeest','wildlife','wikipedia','you',/pok[eé]mon$/i,/[^aeiou]ese$/i,/deer$/i,/fish$/i,/measles$/i,/o[iu]s$/i,/pox$/i,/sheep$/i].forEach(pluralize.addUncountableRule);return pluralize});
+(function (root, pluralize) { root.pluralize = pluralize(); })(this, function () { var pluralRules = []; var singularRules = []; var uncountables = {}; var irregularPlurals = {}; var irregularSingles = {}; function sanitizeRule(rule) { if (typeof rule === 'string') { return new RegExp('^' + rule + '$', 'i'); } return rule; } function restoreCase(word, token) { if (word === token) return token; if (word === word.toLowerCase()) return token.toLowerCase(); if (word === word.toUpperCase()) return token.toUpperCase(); if (word[0] === word[0].toUpperCase()) { return token.charAt(0).toUpperCase() + token.substr(1).toLowerCase(); } return token.toLowerCase(); } function interpolate(str, args) { return str.replace(/\$(\d{1,2})/g, function (match, index) { return args[index] || ''; }); } function replace(word, rule) { return word.replace(rule[0], function (match, index) { var result = interpolate(rule[1], arguments); if (match === '') { return restoreCase(word[index - 1], result); } return restoreCase(match, result); }); } function sanitizeWord(token, word, rules) { if (!token.length || $.objHasOwnProperty(uncountables, token)) { return word; } var len = rules.length; while (len--) { var rule = rules[len]; if (rule[0].test(word)) return replace(word, rule); } return word; } function replaceWord(replaceMap, keepMap, rules) { return function (word) { var token = word.toLowerCase(); if ($.objHasOwnProperty(keepMap, token)) { return restoreCase(word, token); } if ($.objHasOwnProperty(replaceMap, token)) { return restoreCase(word, replaceMap[token]); } return sanitizeWord(token, word, rules); }; } function checkWord(replaceMap, keepMap, rules) { return function (word) { var token = word.toLowerCase(); if ($.objHasOwnProperty(keepMap, token)) return true; if ($.objHasOwnProperty(replaceMap, token)) return false; return sanitizeWord(token, token, rules) === token; }; } function pluralize(word, count, inclusive) { if (word.length < 2) return word; var pluralized = count === 1 ? pluralize.singular(word) : pluralize.plural(word); return (inclusive ? count + ' ' : '') + pluralized; } pluralize.plural = replaceWord(irregularSingles, irregularPlurals, pluralRules); pluralize.isPlural = checkWord(irregularSingles, irregularPlurals, pluralRules); pluralize.singular = replaceWord(irregularPlurals, irregularSingles, singularRules); pluralize.isSingular = checkWord(irregularPlurals, irregularSingles, singularRules); pluralize.addPluralRule = function (rule, replacement) { pluralRules.push([sanitizeRule(rule), replacement]); }; pluralize.addSingularRule = function (rule, replacement) { singularRules.push([sanitizeRule(rule), replacement]); }; pluralize.addUncountableRule = function (word) { if (typeof word === 'string') { uncountables[word.toLowerCase()] = true; return; } pluralize.addPluralRule(word, '$0'); pluralize.addSingularRule(word, '$0'); }; pluralize.addIrregularRule = function (single, plural) { plural = plural.toLowerCase(); single = single.toLowerCase(); irregularSingles[single] = plural; irregularPlurals[plural] = single; };[['I', 'we'], ['me', 'us'], ['he', 'they'], ['she', 'they'], ['them', 'them'], ['myself', 'ourselves'], ['yourself', 'yourselves'], ['itself', 'themselves'], ['herself', 'themselves'], ['himself', 'themselves'], ['themself', 'themselves'], ['is', 'are'], ['was', 'were'], ['has', 'have'], ['this', 'these'], ['that', 'those'], ['echo', 'echoes'], ['dingo', 'dingoes'], ['volcano', 'volcanoes'], ['tornado', 'tornadoes'], ['torpedo', 'torpedoes'], ['genus', 'genera'], ['viscus', 'viscera'], ['stigma', 'stigmata'], ['stoma', 'stomata'], ['dogma', 'dogmata'], ['lemma', 'lemmata'], ['schema', 'schemata'], ['anathema', 'anathemata'], ['ox', 'oxen'], ['axe', 'axes'], ['die', 'dice'], ['yes', 'yeses'], ['foot', 'feet'], ['eave', 'eaves'], ['goose', 'geese'], ['tooth', 'teeth'], ['quiz', 'quizzes'], ['human', 'humans'], ['proof', 'proofs'], ['carve', 'carves'], ['valve', 'valves'], ['looey', 'looies'], ['thief', 'thieves'], ['groove', 'grooves'], ['pickaxe', 'pickaxes'], ['passerby', 'passersby']].forEach(function (rule) { return pluralize.addIrregularRule(rule[0], rule[1]); });[[/s?$/i, 's'], [/[^\u0000-\u007F]$/i, '$0'], [/([^aeiou]ese)$/i, '$1'], [/(ax|test)is$/i, '$1es'], [/(alias|[^aou]us|t[lm]as|gas|ris)$/i, '$1es'], [/(e[mn]u)s?$/i, '$1s'], [/([^l]ias|[aeiou]las|[ejzr]as|[iu]am)$/i, '$1'], [/(alumn|syllab|vir|radi|nucle|fung|cact|stimul|termin|bacill|foc|uter|loc|strat)(?:us|i)$/i, '$1i'], [/(alumn|alg|vertebr)(?:a|ae)$/i, '$1ae'], [/(seraph|cherub)(?:im)?$/i, '$1im'], [/(her|at|gr)o$/i, '$1oes'], [/(agend|addend|millenni|dat|extrem|bacteri|desiderat|strat|candelabr|errat|ov|symposi|curricul|automat|quor)(?:a|um)$/i, '$1a'], [/(apheli|hyperbat|periheli|asyndet|noumen|phenomen|criteri|organ|prolegomen|hedr|automat)(?:a|on)$/i, '$1a'], [/sis$/i, 'ses'], [/(?:(kni|wi|li)fe|(ar|l|ea|eo|oa|hoo)f)$/i, '$1$2ves'], [/([^aeiouy]|qu)y$/i, '$1ies'], [/([^ch][ieo][ln])ey$/i, '$1ies'], [/(x|ch|ss|sh|zz)$/i, '$1es'], [/(matr|cod|mur|sil|vert|ind|append)(?:ix|ex)$/i, '$1ices'], [/\b((?:tit)?m|l)(?:ice|ouse)$/i, '$1ice'], [/(pe)(?:rson|ople)$/i, '$1ople'], [/(child)(?:ren)?$/i, '$1ren'], [/eaux$/i, '$0'], [/m[ae]n$/i, 'men'], ['thou', 'you']].forEach(function (rule) { return pluralize.addPluralRule(rule[0], rule[1]); });[[/s$/i, ''], [/(ss)$/i, '$1'], [/(wi|kni|(?:after|half|high|low|mid|non|night|[^\w]|^)li)ves$/i, '$1fe'], [/(ar|(?:wo|[ae])l|[eo][ao])ves$/i, '$1f'], [/ies$/i, 'y'], [/\b([pl]|zomb|(?:neck|cross)?t|coll|faer|food|gen|goon|group|lass|talk|goal|cut)ies$/i, '$1ie'], [/\b(mon|smil)ies$/i, '$1ey'], [/\b((?:tit)?m|l)ice$/i, '$1ouse'], [/(seraph|cherub)im$/i, '$1'], [/(x|ch|ss|sh|zz|tto|go|cho|alias|[^aou]us|t[lm]as|gas|(?:her|at|gr)o|[aeiou]ris)(?:es)?$/i, '$1'], [/(analy|diagno|parenthe|progno|synop|the|empha|cri|ne)(?:sis|ses)$/i, '$1sis'], [/(movie|twelve|abuse|e[mn]u)s$/i, '$1'], [/(test)(?:is|es)$/i, '$1is'], [/(alumn|syllab|vir|radi|nucle|fung|cact|stimul|termin|bacill|foc|uter|loc|strat)(?:us|i)$/i, '$1us'], [/(agend|addend|millenni|dat|extrem|bacteri|desiderat|strat|candelabr|errat|ov|symposi|curricul|quor)a$/i, '$1um'], [/(apheli|hyperbat|periheli|asyndet|noumen|phenomen|criteri|organ|prolegomen|hedr|automat)a$/i, '$1on'], [/(alumn|alg|vertebr)ae$/i, '$1a'], [/(cod|mur|sil|vert|ind)ices$/i, '$1ex'], [/(matr|append)ices$/i, '$1ix'], [/(pe)(rson|ople)$/i, '$1rson'], [/(child)ren$/i, '$1'], [/(eau)x?$/i, '$1'], [/men$/i, 'man']].forEach(function (rule) { return pluralize.addSingularRule(rule[0], rule[1]); });['a', 'an', 'and', 'as', 'at', 'but', 'by', 'en', 'for', 'if', 'in', 'nor', 'of', 'on', 'or', 'per', 'the', 'to', 'vs', 'via', 'adulthood', 'advice', 'agenda', 'aid', 'aircraft', 'alcohol', 'allmusic', 'ammo', 'analytics', 'anime', 'athletics', 'audio', 'bison', 'blood', 'bream', 'buffalo', 'butter', 'carp', 'cash', 'chassis', 'chess', 'clothing', 'cod', 'commerce', 'cooperation', 'corps', 'debris', 'diabetes', 'digestion', 'elk', 'energy', 'equipment', 'excretion', 'expertise', 'firmware', 'flounder', 'folder', 'fun', 'gallows', 'garbage', 'graffiti', 'hardware', 'headquarters', 'health', 'herpes', 'highjinks', 'homework', 'housework', 'information', 'jeans', 'justice', 'kudos', 'labour', 'lastfm', 'last.fm', 'listener', 'literature', 'machinery', 'mackerel', 'mail', 'media', 'mews', 'moose', 'music', 'mud', 'manga', 'news', 'only', 'personnel', 'pike', 'plankton', 'playcount', 'pliers', 'police', 'pollution', 'premises', 'rain', 'research', 'rice', 'salmon', 'scissors', 'series', 'sewage', 'shambles', 'shrimp', 'similar', 'software', 'species', 'staff', 'swine', 'tennis', 'traffic', 'transportation', 'trout', 'tuna', 'wealth', 'welfare', 'whiting', 'wildebeest', 'wildlife', 'wikipedia', 'you', /pok[eé]mon$/i, /[^aeiou]ese$/i, /deer$/i, /fish$/i, /measles$/i, /o[iu]s$/i, /pox$/i, /sheep$/i].forEach(pluralize.addUncountableRule); return pluralize; });

@@ -1,5 +1,5 @@
 ﻿'use strict';
-//13/03/24
+//05/12/25
 
 /* global VK_CONTROL:readable, VK_ALT:readable, VK_SHIFT:readable, MK_LBUTTON:readable, MK_CONTROL:readable, MK_SHIFT:readable */
 /* exported buttonStates, getKeyboardMask, dropEffect, dropMask, VK_LWIN, VK_RWIN, Flag */

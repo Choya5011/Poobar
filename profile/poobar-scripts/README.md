@@ -5,6 +5,10 @@
 4. [Basic JSplitter Guide](#basic-jsplitter-guide)
 
 ## Useful to know
+**Resizing smoothness**  
+Snapping the window to Windows 11 snap layouts is the smoothest method.  
+Manual resizing of the window can be stuttery, efforts are being made to make this smoother by adding delays to certain panels' reactions. 
+
 **Customizing:**
 * [Right-click](#basic-jsplitter-guide) panels to see the context menu options for that panel. If panel has searchbar or scrollbar preferably right click there to get correct menu.
 * Component recomendations for customizing the title bar: [UI-Wizard](https://github.com/The-Wizardium/UI-Wizard/) | [foo_openhacks](https://github.com/ttsping/foo_openhacks) | UI Hacks (32-bit)

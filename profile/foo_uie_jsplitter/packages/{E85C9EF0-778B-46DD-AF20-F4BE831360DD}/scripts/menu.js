@@ -1,4 +1,7 @@
 ﻿'use strict';
+/* global ui:readable, panel:readable, ppt:readable, pop:readable, but:readable, $:readable, sbar:readable, img:readable, search:readable, men:readable, vk:readable, lib:readable, popUpBox:readable */
+
+/* exported MenuItems, Btn, Tooltip, TooltipTimer, Transition */
 
 const MF_GRAYED = 0x00000001;
 const MF_STRING = 0x00000000;
@@ -36,7 +39,7 @@ class MenuManager {
 		}
 	}
 
-	addSeparator({menuName = this.baseMenu, separator = true}) {this.menuItems.push({ menuName: menuName || this.baseMenu, separator: separator});}
+	addSeparator({ menuName = this.baseMenu, separator = true }) { this.menuItems.push({ menuName: menuName || this.baseMenu, separator: separator }); }
 
 	appendMenu(v) {
 		const a = this.clearArr ? v : this;
@@ -44,13 +47,13 @@ class MenuManager {
 		if (a.menuName == this.baseMenu || a.hide) return;
 		if (!this.clearArr) this.executeFunctions(v, ['appendTo', 'flags', 'separator', 'str']);
 		const menu = this.menu[a.appendTo || this.baseMenu];
-		this.menu[a.menuName].AppendTo(menu, a.flags, a.str || a.menuName)
+		this.menu[a.menuName].AppendTo(menu, a.flags, a.str || a.menuName);
 		if (a.separator) menu.AppendMenuSeparator();
 	}
 
 	clear() {
-		this.menu = {}
-		this.func = {}
+		this.menu = {};
+		this.func = {};
 		this.idx = 0;
 		if (this.clearArr) {
 			this.menuItems = [];
@@ -68,13 +71,13 @@ class MenuManager {
 		let ln = items.length;
 		while (i < ln) {
 			const w = items[i];
-			this[w] = this.get(v[w])
+			this[w] = this.get(v[w]);
 			i++;
 		}
 	}
 
 	get(v) {
-		if (v instanceof Function) return v(); 
+		if (v instanceof Function) return v();
 		return v;
 	}
 
@@ -83,7 +86,7 @@ class MenuManager {
 		let i = 0;
 		let ln = this.menuNames.length;
 		while (i < ln) {
-			this.createMenu(this.menuNames[i])
+			this.createMenu(this.menuNames[i]);
 			i++;
 		}
 
@@ -91,7 +94,7 @@ class MenuManager {
 		ln = this.menuItems.length;
 		while (i < ln) {
 			const v = this.menuItems[i];
-			!v.appendMenu ? this.addItem(v) : this.appendMenu(v)
+			!v.appendMenu ? this.addItem(v) : this.appendMenu(v);
 			i++;
 		}
 
@@ -114,16 +117,16 @@ class MenuManager {
 		this.clear();
 	}
 
-	newItem({str = null, func = null, menuName = this.baseMenu, flags = MF_STRING, checkItem = false, checkRadio = false, separator = false, hide = false}) {this.menuItems.push({str: str, func: func, menuName: menuName, flags: flags, checkItem: checkItem, checkRadio: checkRadio, separator: separator, hide: hide});}
+	newItem({ str = null, func = null, menuName = this.baseMenu, flags = MF_STRING, checkItem = false, checkRadio = false, separator = false, hide = false }) { this.menuItems.push({ str: str, func: func, menuName: menuName, flags: flags, checkItem: checkItem, checkRadio: checkRadio, separator: separator, hide: hide }); }
 
-	newMenu({menuName = this.baseMenu, str = '', appendTo = this.baseMenu, flags = MF_STRING, separator = false, hide = false}) {
+	newMenu({ menuName = this.baseMenu, str = '', appendTo = this.baseMenu, flags = MF_STRING, separator = false, hide = false }) {
 		this.menuNames.push(menuName);
-		if (menuName != this.baseMenu) this.menuItems.push({menuName: menuName, appendMenu: true, str: str, appendTo: appendTo, flags: flags, separator: separator, hide: hide});
+		if (menuName != this.baseMenu) this.menuItems.push({ menuName: menuName, appendMenu: true, str: str, appendTo: appendTo, flags: flags, separator: separator, hide: hide });
 	}
 
 	run(idx) {
 		const v = this.func[idx];
-		if (v instanceof Function) v(); 
+		if (v instanceof Function) v();
 	}
 }
 
@@ -151,7 +154,7 @@ class MenuItems {
 	// Methods
 
 	mainMenu() {
-		menu.newMenu({hide: !this.settingsBtnDn && ppt.settingsShow && this.validItem});
+		menu.newMenu({ hide: !this.settingsBtnDn && ppt.settingsShow && this.validItem });
 
 		if (this.validItem) {
 			// Regorxxx <- Code cleanup
@@ -164,7 +167,7 @@ class MenuItems {
 			// Regorxxx ->
 			// Regorxxx <- Top tracks
 			{
-				const target = ' (' + (ppt.sendToCur ? 'current' : 'default') +  ' playlist)';
+				const target = ' (' + (ppt.sendToCur ? 'current' : 'default') + ' playlist)';
 				menu.newItem({
 					str: 'Send top track' + target,
 					func: () => this.setPlaylist(6),
@@ -206,8 +209,8 @@ class MenuItems {
 				});
 			}
 			// Regorxxx ->
+			menu.newItem({ separator: true }); // Regorxxx <- Menu cleanup ->
 		}
-		menu.newItem({ separator: true }); // Regorxxx <- Menu cleanup ->
 
 		if (this.validItem && ppt.albumArtOptionsShow) {
 			menu.newItem({
@@ -221,7 +224,7 @@ class MenuItems {
 		if (this.validItem && panel.imgView) {
 			menu.newItem({
 				str: ppt.artId != 4 ? 'Show artists' : 'Show albums',
-				func: () => {ppt.artId = ppt.artId != 4 ? 4 : 0; this.setPlaylist(5);},
+				func: () => { ppt.artId = ppt.artId != 4 ? 4 : 0; this.setPlaylist(5); },
 				separator: this.show_context && !ui.style.topBarShow
 			});
 		}
@@ -235,11 +238,11 @@ class MenuItems {
 			}));
 		}
 
-		menu.newMenu({menuName: 'Settings', hide: !this.show_context || ui.style.topBarShow && !this.shift});
+		menu.newMenu({ menuName: 'Settings', hide: !this.show_context || ui.style.topBarShow && !this.shift });
 
 		const mainMenu = () => this.show_context ? 'Settings' : 'baseMenu';
 
-		menu.newMenu({menuName: 'Views', appendTo: mainMenu(), separator: true});
+		menu.newMenu({ menuName: 'Views', appendTo: mainMenu(), separator: true });
 		// Regorxxx <- Allow separators on views
 		panel.menu.forEach((v, i) => {
 			const bSeparator = (v || '').toLowerCase() === 'separator';
@@ -255,14 +258,14 @@ class MenuItems {
 					func: () => this.setView(i),
 					checkRadio: i == ppt.viewBy,
 					separator: i > panel.menu.length - 3
-				})
+				});
 			}
 		});
 		// Regorxxx ->
-		
-		const d = {}
+
+		const d = {};
 		this.getSortData(d);
-		menu.newMenu({menuName: d.menuName, appendTo: 'Views', flags: d.sortType ? MF_STRING : MF_GRAYED, separator: true});
+		menu.newMenu({ menuName: d.menuName, appendTo: 'Views', flags: d.sortType ? MF_STRING : MF_GRAYED, separator: true });
 		if (d.sortType) {
 			menu.newItem({
 				menuName: d.menuName,
@@ -286,8 +289,8 @@ class MenuItems {
 			str: 'Configure views...',
 			func: () => panel.open('views')
 		});
-		
-		menu.newMenu({menuName: 'Statistics', appendTo: mainMenu(), separator: true});
+
+		menu.newMenu({ menuName: 'Statistics', appendTo: mainMenu(), separator: true });
 		// Regorxxx <- New statistics
 		[...this.statisticsTypes(), 'Configure statistics...'].forEach((v, i) => menu.newItem({
 			menuName: 'Statistics',
@@ -298,7 +301,7 @@ class MenuItems {
 		}));
 		// Regorxxx ->
 
-		menu.newMenu({menuName: 'Album art', appendTo: mainMenu(), hide: !panel.imgView});
+		menu.newMenu({ menuName: 'Album art', appendTo: mainMenu(), hide: !panel.imgView });
 		[...this.artTypes(), 'Group: auto', 'Group: top level', 'Group: two levels', 'Change group name...', 'Configure album art...'].forEach((v, i) => menu.newItem({ // Regorxxx <- External integration ->
 			menuName: 'Album art',
 			str: v,
@@ -308,7 +311,7 @@ class MenuItems {
 			separator: i == 4 || i == 7 || i == 8
 		}));
 
-		menu.newMenu({menuName: 'Quick setup', appendTo: mainMenu()});
+		menu.newMenu({ menuName: 'Quick setup', appendTo: mainMenu() });
 		['Traditional', 'Modern [default]', 'Ultra-Modern', 'Clean', 'Facet'].forEach((v, i) => menu.newItem({
 			menuName: 'Quick setup',
 			str: v,
@@ -338,14 +341,14 @@ class MenuItems {
 				let panels = 1;
 				try {
 					panels = utils.InputBox(0, 'Set total number of Library Tree panels:\n\nBackground image will be adjusted to extend over all panels, showing only a portion of the image in every panel.\n\nIt only works on horizontal rows.', 'Background grid mode: number of panels', 1, true);
-				} catch (e) { return; }
+				} catch (e) { return; } // eslint-disable-line no-unused-vars
 				if (!panels || panels < 1) { return; }
 				let pos = 1;
 				try {
 					pos = utils.InputBox(0, 'Set panel position within the row:' + '\nFrom 1 to ' + panels, 'Background grid mode: panel position', 1, true);
-				} catch (e) { return; }
+				} catch (e) { return; } // eslint-disable-line no-unused-vars
 				if (!pos || pos < 1) { return; }
-				ppt.xOffsetBg = 100 / panels * (pos - 1)
+				ppt.xOffsetBg = 100 / panels * (pos - 1);
 				ppt.wOffsetBg = 100 / panels * (panels - pos);
 				panel.load();
 			},
@@ -354,7 +357,7 @@ class MenuItems {
 		});
 		// Regorxxx ->
 
-		menu.newMenu({menuName: 'Source', appendTo: mainMenu(), separator: true});
+		menu.newMenu({ menuName: 'Source', appendTo: mainMenu(), separator: true });
 		this.sourceTypes().forEach((v, i) => menu.newItem({ // Regorxxx <- External integration ->
 			menuName: 'Source',
 			str: v,
@@ -371,7 +374,7 @@ class MenuItems {
 			separator: true
 		});
 
-		menu.newMenu({menuName: 'Select playlist', appendTo: 'Source'});
+		menu.newMenu({ menuName: 'Select playlist', appendTo: 'Source' });
 		menu.newItem({
 			menuName: 'Select playlist',
 			str: 'Active playlist',
@@ -384,7 +387,7 @@ class MenuItems {
 		const pl_ix = ppt.fixedPlaylist ? plman.FindPlaylist(ppt.fixedPlaylistName) : -1;
 		for (let j = 0; j < pl_no; j++) {
 			const n = '# ' + (j * 30 + 1 + ' - ' + Math.min(this.pl.length, 30 + j * 30) + (30 + j * 30 > pl_ix && ((j * 30) - 1) < pl_ix ? '  >>>' : ''));
-			menu.newMenu({menuName: n, appendTo: 'Select playlist'});
+			menu.newMenu({ menuName: n, appendTo: 'Select playlist' });
 			for (let i = j * 30; i < Math.min(this.pl.length, 30 + j * 30); i++) {
 				menu.newItem({
 					menuName: n,
@@ -395,7 +398,7 @@ class MenuItems {
 			}
 		}
 
-		menu.newMenu({menuName: 'Refresh', appendTo: mainMenu(), separator: true});
+		menu.newMenu({ menuName: 'Refresh', appendTo: mainMenu(), separator: true });
 		for (let i = 0; i < 5; i++) menu.newItem({
 			menuName: 'Refresh',
 			str: ['Refresh selected images...', 'Refresh all images...', 'Reset zoom...', 'Refresh library...', 'Reload...'][i],
@@ -466,12 +469,12 @@ class MenuItems {
 			menuName: 'Help',
 			str: 'Query syntax',
 			func: () => this.setSearchHistory(0),
-		})
+		});
 		sMenu.newItem({
 			menuName: 'Help',
 			str: 'RegExp reference',
 			func: () => this.setSearchHistory(-1)
-		})
+		});
 		// Regorxxx ->
 	}
 
@@ -490,22 +493,22 @@ class MenuItems {
 		const plnIsValid = pln != -1 && pln < plman.PlaylistCount;
 		const plLockAdd = plnIsValid ? plman.GetPlaylistLockedActions(pln).includes('AddItems') : false;
 		const plLockRemoveOrAdd = plnIsValid ? plman.GetPlaylistLockedActions(pln).includes('RemoveItems') || plman.GetPlaylistLockedActions(pln).includes('ReplaceItems') || plLockAdd : false;
-		return !i && !plLockRemoveOrAdd || i == 1 && !plLockAdd || i == 2 || i == 3 && pop.nowp != -1 ? MF_STRING : MF_GRAYED
+		return !i && !plLockRemoveOrAdd || i == 1 && !plLockAdd || i == 2 || i == 3 && pop.nowp != -1 ? MF_STRING : MF_GRAYED;
 	}
 
 	getSortData(d) {
 		d.name = panel.propNames[ppt.viewBy];
-		d.sortAlbumsByYearAfter = [``, `[$nodisplay{$sub(%date%,0#)}]%album%`, `[$nodisplay{$sub(%date%,0)}]%album%[ '['$sub(%date%,0)']']`, `[$nodisplay{$sub(4001,%date%)}]%album%`, `[$nodisplay{$sub(4002,%date%)}]%album%[ '['$sub(%date%,0)']']`];
-		d.sortAlbumsByYearBefore = [``, `[$nodisplay{$sub(%date%,0)}]%album%`, `['['$sub(%date%,0)']' - ]%album%`, `[$nodisplay{$sub(4003,%date%)}]%album%`, `[$nodisplay{$sub(4004,%date%)}]['['$sub(%date%,0)']' - ]%album%`];
+		d.sortAlbumsByYearAfter = ['', '[$nodisplay{$sub(%date%,0#)}]%album%', '[$nodisplay{$sub(%date%,0)}]%album%[ \'[\'$sub(%date%,0)\']\']', '[$nodisplay{$sub(4001,%date%)}]%album%', '[$nodisplay{$sub(4002,%date%)}]%album%[ \'[\'$sub(%date%,0)\']\']'];
+		d.sortAlbumsByYearBefore = ['', '[$nodisplay{$sub(%date%,0)}]%album%', '[\'[\'$sub(%date%,0)\']\' - ]%album%', '[$nodisplay{$sub(4003,%date%)}]%album%', '[$nodisplay{$sub(4004,%date%)}][\'[\'$sub(%date%,0)\']\' - ]%album%'];
 		d.sortAlbumByYear = ppt.yearBeforeAlbum ? d.sortAlbumsByYearBefore : d.sortAlbumsByYearAfter;
 		d.sortIX = -1;
 		d.sortType = 0;
-		d.sortYear = [``, `$if2($nodisplay{$sub(%date%,0)},$nodisplay{-4000})`, `$nodisplay{$sub(4000,%date%)}`];
+		d.sortYear = ['', '$if2($nodisplay{$sub(%date%,0)},$nodisplay{-4000})', '$nodisplay{$sub(4000,%date%)}'];
 		d.value = ppt.get(d.name) || '';
 		d.valueLength = d.value.length;
 		let l = d.sortYear.length;
-		while(l-- && l) {
-			d.value = d.value.replace(RegExp($.regexEscape(d.sortYear[l]), 'g'), '')
+		while (l-- && l) {
+			d.value = d.value.replace(RegExp($.regexEscape(d.sortYear[l]), 'gi'), ''); // Regorxxx <- Sorting identification should not be case sensitive ->
 			if (d.valueLength != d.value.length) {
 				d.sortIX = l;
 				d.valueLength = d.value.length;
@@ -513,8 +516,8 @@ class MenuItems {
 		}
 		if (d.sortIX == -1) {
 			l = d.sortAlbumsByYearAfter.length;
-			while(l-- && l) {
-				d.value = d.value.replace(RegExp($.regexEscape(d.sortAlbumsByYearAfter[l]), 'g'), '%album%');
+			while (l-- && l) {
+				d.value = d.value.replace(RegExp($.regexEscape(d.sortAlbumsByYearAfter[l]), 'gi'), '%ALBUM%'); // Regorxxx <- Sorting identification should not be case sensitive ->
 				if (d.valueLength != d.value.length) {
 					d.sortIX = l;
 					d.valueLength = d.value.length;
@@ -523,16 +526,18 @@ class MenuItems {
 		}
 		if (d.sortIX == -1) {
 			l = d.sortAlbumsByYearBefore.length;
-			while(l-- && l) {
-				d.value = d.value.replace(RegExp($.regexEscape(d.sortAlbumsByYearBefore[l]), 'g'), '%album%');
+			while (l-- && l) {
+				d.value = d.value.replace(RegExp($.regexEscape(d.sortAlbumsByYearBefore[l]), 'gi'), '%ALBUM%'); // Regorxxx <- Sorting identification should not be case sensitive ->
 				if (d.valueLength != d.value.length) {
 					d.sortIX = l;
 					d.valueLength = d.value.length;
 				}
 			}
 		}
-		if (d.value.includes('//') && /%year%|%date%/.test(d.value)) d.sortType = 1;
-		else if (d.value.includes('%album%')) d.sortType = 2;
+		// Regorxxx <- Sorting identification should not be case sensitive
+		if (d.value.includes('//') && /%YEAR%|%DATE%/i.test(d.value)) { d.sortType = 1; }
+		else if (/%ALBUM%/i.test(d.value)) { d.sortType = 2; }
+		// Regorxxx ->
 
 		d.menuName = d.sortType ? 'Sort selected view' : 'Sort N/A for selected view pattern';
 	}
@@ -655,7 +660,7 @@ class MenuItems {
 						albumArtGrpNames[key] = input;
 						ppt.albumArtGrpNames = JSON.stringify(albumArtGrpNames);
 					}
-				}
+				};
 				const caption = 'Change group name';
 				const def = img.groupField;
 				const prompt = 'Enter SINGULAR name, i.e. not plural\n\nName is pinned to VIEW PATTERN and GROUP LEVEL';
@@ -665,7 +670,7 @@ class MenuItems {
 					let status = 'ok';
 					try {
 						ns = utils.InputBox(0, prompt, caption, def, true);
-					} catch(e) {
+					} catch (e) { // eslint-disable-line no-unused-vars
 						status = 'cancel';
 					}
 					ok_callback(status, ns);
@@ -767,30 +772,30 @@ class MenuItems {
 
 	setSearchHistory(i) {
 		switch (true) {
-		case !i: {
-			let fn = fb.FoobarPath + 'doc\\Query Syntax Help.html';
-			if (!$.file(fn)) fn = fb.FoobarPath + 'Query Syntax Help.html';
-			$.browser('"' + fn);
-			break;
-		}
-		// Regorxxx <- RegExp library search
-		case i === -1: {
-			let fn = 'https://regexr.com/';
-			$.browser(fn);
-			break;
-		}
-		// Regorxxx ->
-		case i < search.menu.length + 1:
-			panel.search.txt = search.menu[i - 1].search;
-			search.menu[i - 1].accessed = Date.now();
-			search.focus();
-			but.setSearchBtnsHide();
-			lib.search();
-			break;
-		case i == search.menu.length + 1:
-			search.menu = [];
-			ppt.searchHistory = JSON.stringify([]);
-			break;
+			case !i: {
+				let fn = fb.FoobarPath + 'doc\\Query Syntax Help.html';
+				if (!$.file(fn)) fn = fb.FoobarPath + 'Query Syntax Help.html';
+				$.browser('"' + fn);
+				break;
+			}
+			// Regorxxx <- RegExp library search
+			case i === -1: {
+				let fn = 'https://regexr.com/';
+				$.browser(fn);
+				break;
+			}
+			// Regorxxx ->
+			case i < search.menu.length + 1:
+				panel.search.txt = search.menu[i - 1].search;
+				search.menu[i - 1].accessed = Date.now();
+				search.focus();
+				but.setSearchBtnsHide();
+				lib.search();
+				break;
+			case i == search.menu.length + 1:
+				search.menu = [];
+				ppt.searchHistory = JSON.stringify([]);
+				break;
 		}
 	}
 
@@ -818,17 +823,17 @@ class MenuItems {
 		if (ppt.showSource) panel.setRootName();
 		lib.treeState(false, 2);
 	}
-	
+
 	setSourcePanel() {
 		const ok_callback = (status, input) => {
 			if (status != 'cancel') {
 				ppt.panelSelectionPlaylist = input;
 			}
-		}
+		};
 		const caption = 'Panel source name';
 		const def = ppt.panelSelectionPlaylist;
 		// Regorxxx <- Better info. Don't create cache playlists if possible. Chained facets updates.
-		const prompt = 'Enter source panel name:\n\n• To get the name, go to the library tree panel to be used as source\n• Press Shift + Windows + R. Click and choose \'configure panel\'\n• Paste the panel name or ID, at the top, into here\n• Edit source panel name if required\n• Name is also used for a cache playlist that remembers last open state\n• The cache will be hidden, unless not supported by JS host component\n• For more than one source panel, use pipe separator, e.g. Genre|Artist\n• For chained panels only the immediate parent\'s name is needed'
+		const prompt = 'Enter source panel name:\n\n• To get the name, go to the library tree panel to be used as source\n• Press Shift + Windows + R. Click and choose \'configure panel\'\n• Paste the panel name or ID, at the top, into here\n• Edit source panel name if required\n• Name is also used for a cache playlist that remembers last open state\n• The cache will be hidden, unless not supported by JS host component\n• For more than one source panel, use pipe separator, e.g. Genre|Artist\n• For chained panels only the immediate parent\'s name is needed';
 		// Regorxxx ->
 		const fallback = popUpBox.isHtmlDialogSupported() ? popUpBox.input(caption, prompt, ok_callback, '', def) : true;
 		if (fallback) {
@@ -836,7 +841,7 @@ class MenuItems {
 			let status = 'ok';
 			try {
 				ns = utils.InputBox(0, prompt, caption, def, true);
-			} catch(e) {
+			} catch (e) { // eslint-disable-line no-unused-vars
 				status = 'cancel';
 			}
 			ok_callback(status, ns);
@@ -858,12 +863,12 @@ class MenuItems {
 				'standard': {},
 				'search': {},
 				'filter': {}
-			}
+			};
 			pop.statisticsShow = ppt.itemShowStatistics;
 			pop.label = !ppt.labelStatistics || !pop.statisticsShow ? '' : pop.statistics[pop.statisticsShow];
 			const statisticsShown = ppt.itemShowStatistics > 0;
 			if (panel.imgView && curStatisticsShown != statisticsShown) {
-				img.labels = {statistics: ppt.itemShowStatistics ? 1 : 0}
+				img.labels = { statistics: ppt.itemShowStatistics ? 1 : 0 };
 				img.clearCache();
 				panel.set('view', ppt.viewBy);
 			}
@@ -912,13 +917,15 @@ class MenuItems {
 			if (i) {
 				let str = d.value.split('//');
 				if (str[1]) {
-					str[1] = str[1].trim().replace(/(\|\s*)(.*?(%year%|%date%))/g,  '$1' + d.sortYear[i] + '$2')
-					if (!/\|.*?(%year%|%date%)/.test(str[1])) str[1] = d.sortYear[i] + str[1];
+					// Regorxxx <- Sorting identification should not be case sensitive ->
+					str[1] = str[1].trim().replace(/(\|\s*)(.*?(%YEAR%|%DATE%))/gi, '$1' + d.sortYear[i] + '$2');
+					if (!/\|.*?(%YEAR%|%DATE%)/i.test(str[1])) { str[1] = d.sortYear[i] + str[1]; }
+					// Regorxxx ->
 					d.value = str[0].trim() + ' // ' + str[1];
 				} else d.value = str[0];
 			}
 		} else if (d.sortType == 2 && i && sortByIX != -1) {
-			d.value = d.value.replace(/%album%/g, d.sortAlbumByYear[sortByIX])
+			d.value = d.value.replace(/%ALBUM%/gi, d.sortAlbumByYear[sortByIX]); // Regorxxx <- Sorting identification should not be case sensitive ->
 		}
 		if (d.sortType == 1 || sortByIX != -1) {
 			const expanded = [];
