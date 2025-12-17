@@ -59,7 +59,7 @@ After setup the theme is also usually set to the Not-A-Waveform-Seekbar-SMP wave
 
 If deleted the Fluent Control Panel will show an error, simply switch the seekbar mode from waveform to normal.
 
-**Useful To Know**
+**Useful To Know**  
 Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further info
 
 # Gallery
