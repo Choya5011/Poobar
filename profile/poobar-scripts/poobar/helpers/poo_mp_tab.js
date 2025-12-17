@@ -32,6 +32,8 @@ let TAB_H = 0;
 const TAB_MIN_W = 45;
 const TAB_MIN_H = 45;
 
+let paintRect = false;
+
 const SF_CENTER = 0x00000001;
 const SF_VCENTER = 0x00000004;
 const SF_CENTER_VCENTER = SF_CENTER | SF_VCENTER;
@@ -68,7 +70,7 @@ function on_paint(gr) {
     const tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
     const tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
 
-    gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
+    if (!paintRect) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
 
     if (ppt.bgShow.enabled && g_img) {
         let switchBgW = (ppt.orientation.enabled) ? TAB_W : panel.w; TAB_H;
@@ -102,6 +104,8 @@ function on_paint(gr) {
             gr.GdiDrawText(text, font, tab_textCol, x + 5, 0, w - 10, TAB_H, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
         }
     }
+
+    if (paintRect) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
 }
 
 function updateTabSize() {

@@ -14,7 +14,7 @@ This repo aims to provide a basic customization guide for fb2k, some basic scrip
     * Panels can be swapped out if the same title is kept or if the script is modified
 * Panels within the tab script/panel are not hardcoded, they can be edited.
 
-Refer to this [readme](https://github.com/Choya5011/Poobar/tree/main/profile/poobar-scripts/README.md) inside the poobar-scripts directory where the scripts are located for further info.
+Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further info
 
 # Components & Packages
 **Fonts**  
@@ -59,8 +59,8 @@ After setup the theme is also usually set to the Not-A-Waveform-Seekbar-SMP wave
 
 If deleted the Fluent Control Panel will show an error, simply switch the seekbar mode from waveform to normal.
 
-**Useful To Know**  
-Refer to this [readme](https://github.com/Choya5011/Poobar/tree/main/profile/poobar-scripts/README.md) inside the poobar-scripts directory.
+**Useful To Know**
+Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further info
 
 # Gallery
 **Fluent Control Panel**
