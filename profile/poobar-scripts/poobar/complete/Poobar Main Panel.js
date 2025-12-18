@@ -10,7 +10,7 @@ let ppt = {
 	vPanelScale : new _p ('_MAIN_DISPLAY: Vertical Monitor Panel Division (0-1)', 0.4),
 	cpH : new _p ('_MAIN_DISPLAY: Control Panel Height (Horizontal mode)', 105),
 	cpV : new _p ('_MAIN_DISPLAY: Control Panel Height (Vertical mode)', 108),
-}; include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_mp_tab.js');
+}; include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_mp_tab.js'); //import after ppt declaration
 
 /**
  * storing in scaler instead of accessing _scale() directly
@@ -38,6 +38,7 @@ let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
 let psH;
 let psV;
 
+// using GetPanel instead of GetPanelByIndex to make layout editing more flexible
 let fluentControlPanel; let playlistView; let tabStack; let smoothBrowser;
 try { fluentControlPanel = window.GetPanel('Fluent Control Panel'); } catch (e) { fluentControlPanel = null; }
 try { playlistView = window.GetPanel(''); } catch (e) { playlistView = null; } // Segoe Fluent Icons MusicNote, unicode: ec4f
@@ -55,9 +56,17 @@ const checkSizeAndRatio = (wh, ww, targetRatio, tolerance = 0.20) => {
   return false;
 };
 
-function on_size(width, height) {
-    //panel.size();
+function getLayoutType(ww, wh) {
+    if ((checkSizeAndRatio(ww, wh, 16 / 9, 0.2) || checkSizeAndRatio(ww, wh, 3, 0.3) || checkSizeAndRatio(ww, wh, 11.11, 0.4) || checkSizeAndRatio(ww, wh, 5.4, 0.2)) && wh > scaler.s380) return 'horizontal';
+    if (checkSizeAndRatio(wh, ww, 8 / 9, 0.4) && ww > scaler.s600 && wh > scaler.s730 || checkSizeAndRatio(ww, wh, 8 / 9, 0.4) && ww > scaler.s600 && wh > scaler.s730 || checkSizeAndRatio(ww, wh, 1, 0.3) && ww > scaler.s600)  return 'halfscreen';
+    if ((ww <= scaler.s600 && wh <= scaler.s730 || ww < scaler.s320) && wh > scaler.s400) return 'miniplayer';
+    if (wh <= scaler.s400) return 'miniplayer_2';
+    if (checkSizeAndRatio(wh, ww, 16 / 9, 0.4) && ww > scaler.s600 && wh > scaler.s730 || checkSizeAndRatio(wh, ww, 1.36, 0.3)) return 'normalvertical'
+    if (checkSizeAndRatio(wh, ww, 1.9, 0.1) && ww >= scaler.s300 || checkSizeAndRatio(wh, ww, 4, 0.2) && ww >= scaler.s300 || checkSizeAndRatio(wh, ww, 2.2, 0.06) && ww >= scaler.s300 || checkSizeAndRatio(wh, ww, 2.7, 0.2) && ww >= scaler.s300) return 'narrowvertical';
+    return null;
+}
 
+function on_size(width, height) {
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
@@ -65,33 +74,31 @@ function on_size(width, height) {
     psH = (wh <= scaler.s730 && ww > scaler.s800) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value; // tabStack/playlistView placement ratio in horizontal orientation (.5 splitscreen)
     psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value; // (tabStack & smoothBrowser)/playlistView placement ratio in vertical orientation
 
+    const layout = getLayoutType(ww, wh);
+
     if (ww >= scaler.s300) {
-        if ((checkSizeAndRatio(ww, wh, 16 / 9, 0.2) || checkSizeAndRatio(ww, wh, 3, 0.3) || checkSizeAndRatio(ww, wh, 11.11, 0.4) || checkSizeAndRatio(ww, wh, 5.4, 0.2)) && wh > scaler.s380)  {
-            // Block 1: Horizontal view
+        if (layout === 'horizontal')  { // Block 1: Horizontal view
             paintRect = true;
             if (tabStack) tabStack.Hidden = true;
             if (smoothBrowser) smoothBrowser.Hidden = true;
             if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpH, ww, cpH); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
             if (playlistView) { playlistView.Move(ww * psH, 0, ww - ww * psH, wh - cpH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
             debouncedHorizontalView();
-        } else if (checkSizeAndRatio(wh, ww, 8 / 9, 0.4) && ww > scaler.s600 && wh > scaler.s730 || checkSizeAndRatio(ww, wh, 8 / 9, 0.4) && ww > scaler.s600 && wh > scaler.s730 || checkSizeAndRatio(ww, wh, 1, 0.3) && ww > scaler.s600) {
-            // Block 2: Half screen view
+        } else if (layout === 'halfscreen') { // Block 2: Half screen view
             paintRect = true;
-            if (tabStack) tabStack.Hidden = true;
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            if (smoothBrowser) { smoothBrowser.Move(ww * 0.5, 0, ww * 0.5, (wh - cpV) * psV); smoothBrowser.ShowCaption = false; smoothBrowser.Locked = true; smoothBrowser.Hidden = false; }
-            if (playlistView) { const remainingH = wh - cpV - ((wh - cpV) * psV); playlistView.Move(0, (wh - cpV) * psV, ww, remainingH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
-            debouncedHalfScreen();
-        } else if ((ww <= scaler.s600 && wh <= scaler.s730 || ww < scaler.s320) && wh > scaler.s400) {
-            // Block 3: Mini player view
-            paintRect = false;
             if (tabStack) tabStack.Hidden = true;
             if (smoothBrowser) smoothBrowser.Hidden = true;
             if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
+            if (playlistView) { const remainingH = wh - cpV - ((wh - cpV) * psV); playlistView.Move(0, (wh - cpV) * psV, ww, remainingH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
+            debouncedHalfScreen();
+        } else if (layout === 'miniplayer') { // Block 3: Mini player view
+            paintRect = false;
+            if (tabStack) tabStack.Hidden = true;
+            if (playlistView) playlistView.Hidden = true;
+            if (smoothBrowser) smoothBrowser.Hidden = true;
+            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
             debouncedMiniPlayer();
-            //window.Repaint();
-        } else if (wh <= scaler.s400) {
-            // Block 4: Mini player 2 (Control Panel Only)
+        } else if (layout === 'miniplayer_2') { // Block 4: Mini player 2 (Control Panel Only)
             paintRect = true;
             initTabs([3]);
             for (let i = 0; i < tabs.length; i++) {
@@ -101,52 +108,33 @@ function on_size(width, height) {
                 }
             }
             if (fluentControlPanel) { fluentControlPanel.Move(0, 0, ww, wh); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-        } else if (checkSizeAndRatio(wh, ww, 16 / 9, 0.4) && ww > scaler.s600 && wh > scaler.s730 || checkSizeAndRatio(wh, ww, 1.36, 0.3)) {
-            // Block 5: Normal vertical view
+        } else if (layout === 'normalvertical') { // Block 5: Normal vertical view
             paintRect = true;
+            if (smoothBrowser) smoothBrowser.Hidden = true;
             if (tabStack) tabStack.Hidden = true;
             if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            if (smoothBrowser) { smoothBrowser.Move(ww * 0.7, 0, ww - ww * 0.7, (wh - cpV) * psV); smoothBrowser.ShowCaption = false; smoothBrowser.Locked = true; smoothBrowser.Hidden = false; }
             if (playlistView) { const remainingH = wh - cpV - ((wh - cpV) * psV); playlistView.Move(0, (wh - cpV) * psV, ww, remainingH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
             debouncedNormalVertical();
-        } else if (checkSizeAndRatio(wh, ww, 1.9, 0.1) && ww >= scaler.s300 || checkSizeAndRatio(wh, ww, 4, 0.2) && ww >= scaler.s300 || checkSizeAndRatio(wh, ww, 2.2, 0.06) && ww >= scaler.s300 || checkSizeAndRatio(wh, ww, 2.7, 0.2) && ww >= scaler.s300) {
-            // Block 6: Narrow vertical view
+        } else if (layout === 'narrowvertical') { // Block 6: Narrow vertical view
             paintRect = true;
-            if (tabStack) tabStack.Hidden = true;
             if (smoothBrowser) smoothBrowser.Hidden = true;
+            if (tabStack) tabStack.Hidden = true;
             debouncedNarrowVertical();
         }
     }
 }
 
-// AI gen func, unverified. Verified when comment is removed.
+// debounce func from https://github.com/regorxxx/Infinity-Tools-SMP/blob/main/helpers/helpers_xxx_basic_js.js
 const debounce = (fn, delay, immediate = false, parent = this) => {
-  let timerId, lastWW = window.Width, lastWH = window.Height, lastTime = Date.now();
-
-  return (...args) => {
-    const now = Date.now();
-    const ww = window.Width, wh = window.Height;
-    const deltaW = Math.abs(ww - lastWW), deltaH = Math.abs(wh - lastWH);
-    /*
-    const velocity = (deltaW + deltaH) / (now - lastTime || 1); // px/ms
-
-    // instant fire if velocity > 3px/ms (tune threshold)
-    if (velocity > 3) {
-      const boundFunc = fn.bind(parent, ...args);
-      boundFunc(); // Execute immediately, ignore debounce
-      lastWW = ww; lastWH = wh; lastTime = now;
-      return;
-    }
-    */
-
-    const boundFunc = fn.bind(parent, ...args);
-    clearTimeout(timerId);
-    if (immediate && !timerId) { boundFunc(); }
-    const calleeFunc = immediate ? () => { timerId = null; } : boundFunc;
-    timerId = setTimeout(calleeFunc, delay);
-    lastWW = ww; lastWH = wh; lastTime = now;
-    return timerId;
-  };
+	let timerId;
+	return (...args) => {
+		const boundFunc = fn.bind(parent, ...args);
+		clearTimeout(timerId);
+		if (immediate && !timerId) { boundFunc(); }
+		const calleeFunc = immediate ? () => { timerId = null; } : boundFunc;
+		timerId = setTimeout(calleeFunc, delay);
+		return timerId;
+	};
 };
 
 /* ==================================================
@@ -161,6 +149,7 @@ const debouncedHorizontalView = debounce(function() {
 const debouncedHalfScreen = debounce(function() {
     // Half screen view
     if (tabStack) { tabStack.Move(0, 0, ww * 0.5, (wh - cpV) * psV); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
+    if (smoothBrowser) { smoothBrowser.Move(ww * 0.5, 0, ww * 0.5, (wh - cpV) * psV); smoothBrowser.ShowCaption = false; smoothBrowser.Locked = true; smoothBrowser.Hidden = false; }
 }, delay);
 
 const debouncedMiniPlayer = debounce(function() {
@@ -188,6 +177,7 @@ const debouncedMiniPlayer = debounce(function() {
 const debouncedNormalVertical = debounce(function() {
     // Normal vertical view
     if (tabStack) { tabStack.Move(0, 0, ww * 0.7, (wh - cpV) * psV); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
+    if (smoothBrowser) { smoothBrowser.Move(ww * 0.7, 0, ww - ww * 0.7, (wh - cpV) * psV); smoothBrowser.ShowCaption = false; smoothBrowser.Locked = true; smoothBrowser.Hidden = false; }
 }, delay);
 
 const debouncedNarrowVertical = debounce(function() {
