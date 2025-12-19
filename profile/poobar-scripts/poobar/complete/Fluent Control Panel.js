@@ -212,7 +212,7 @@ buttons.update = () => {
     const vol_y = (ppt.vol.enabled) ? volume.y - _scale(14) : rY + 1;
 
     buttons.buttons.volume = new _button(vol_x, vol_y, bs, bs, {normal : fb.Volume === -100 ? _chrToImg(chara.vol0, g_textcolour, fluent_font) : fb.Volume > -4 ? _chrToImg(chara.vol3, g_textcolour, fluent_font) : fb.Volume > -15 ? _chrToImg(chara.vol2, g_textcolour, fluent_font) : fb.Volume > -30 ? _chrToImg(chara.vol1, g_textcolour, fluent_font) : _chrToImg(chara.vol0, g_textcolour, fluent_font), hover : _chrToImg(chara.volume, g_textcolour_hl, fluent_font_hover)}, () => { fb.VolumeMute(); }, '');
-    buttons.buttons.upd = new _button (xx - (bs * (3 + rOff_2)), rY + 2, bs, bs, {normal: _chrToImg(chara.eject, g_textcolour, fluent_font),  hover : _chrToImg(chara.eject, g_textcolour_hl, fluent_font_hover)}, () => { switchOutputDevice(xx - (bs * (3 + rOff_2)), rY) }, '');
+    buttons.buttons.upd = new _button (xx - (bs * (3 + rOff_2)), rY + 2, bs, bs, {normal: _chrToImg(chara.eject, g_textcolour, fluent_font),  hover : _chrToImg(chara.eject, g_textcolour_hl, fluent_font_hover)}, () => { switchOutputDevice(xx - (bs * (5.9 + rOff_2)), rY) }, '');
     buttons.buttons.search = new _button(xx - (bs * (2 + rOff_1)), rY, bs, bs, {normal : _chrToImg(chara.search, g_textcolour, fluent_font), hover : _chrToImg(chara.search, g_textcolour_hl, fluent_font_hover)}, () => { fb.RunMainMenuCommand('Library/Search'); }, '');
     buttons.buttons.consol = new _button(xx -  (bs * (1 + rOff_3)), rY, bs, bs, {normal : _chrToImg(chara.consol, g_textcolour, fluent_font), hover : _chrToImg(chara.consol, g_textcolour_hl, fluent_font_hover)}, () => { fb.ShowConsole(); }, '');
     buttons.buttons.settings = new _button(xx, rY, bs, bs, {normal : _chrToImg(chara.settings, g_textcolour, fluent_font), hover : _chrToImg(chara.settings, g_textcolour_hl, fluent_font_hover)}, () => { fb.ShowPreferences(); }, '');
@@ -613,7 +613,7 @@ function on_mouse_lbtn_up(x, y) {
     fb.RunMainMenuCommand('View/Show now playing in playlist');
     // search artist in library
     if (x < _scale(200) && x > _scale(12) && y < _scale(72) && y > _scale(12) && ppt.art.enabled && ww > scaler.s800) {
-        fb.ShowLibrarySearchUI(tfo.artist.Eval())
+        fb.ShowLibrarySearchUI(tfo.artist.Eval());
     } return;
 }
 
