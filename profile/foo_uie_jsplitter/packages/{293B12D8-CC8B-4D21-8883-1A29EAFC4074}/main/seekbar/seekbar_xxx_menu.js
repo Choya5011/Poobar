@@ -1,5 +1,5 @@
 ﻿'use strict';
-//25/11/25
+//19/12/25
 
 /* exported settingsMenu, importSettingsMenu */
 
@@ -42,7 +42,7 @@ function settingsMenu(bClear = true) {
 	if (this.isOnDemandTrack()) {
 		menu.newEntry({
 			entryText: 'Render current track', func: () => {
-				this.newTrackQueue(fb.GetFocusItem(1), void(0), true);
+				this.newTrackQueue(fb.GetFocusItem(1), void (0), true);
 			}
 		});
 		menu.newSeparator();
@@ -58,8 +58,9 @@ function settingsMenu(bClear = true) {
 		if (options.length) {
 			options.forEach((o) => {
 				const bFound = !this.binaries[o.key] || _isFile(this.binaries[o.key]);
+				const bBundled = !this.binaries[o.key] || bFound && this.binaries[o.key].startsWith(folders.xxxRootName + 'helpers-external\\');
 				menu.newEntry({
-					menuName: subMenu, entryText: o.name + (!bFound ? '\t(not found)' : ''), func: () => {
+					menuName: subMenu, entryText: o.name + (!bFound ? '\t(not found)' : (bBundled ? '\t(built-in)' : '\t(external)')), func: () => {
 						this.updateConfig({ analysis: { binaryMode: o.key } });
 						this.saveProperties();
 					}, flags: bFound ? MF_STRING : MF_GRAYED
@@ -78,6 +79,16 @@ function settingsMenu(bClear = true) {
 			if (handle && !this.isCompatibleFileExtension(handle)) {
 				menu.addTipLast('(incompatible file)');
 			}
+		}
+		menu.newSeparator(subMenu);
+		menu.newEntry({
+			menuName: subMenu, entryText: 'Open binaries folder...', func: () => {
+				_explorer(folders.binaries);
+			}
+		});
+		const handle = fb.GetNowPlaying() || fb.GetFocusItem();
+		if (handle && !this.isCompatibleFileExtension(handle)) {
+			menu.addTipLast('(incompatible file)');
 		}
 	}
 	{
@@ -214,9 +225,14 @@ function settingsMenu(bClear = true) {
 		const subMenu = menu.newMenu('Style');
 		const options = [
 			{ name: 'Waveform', key: 'waveform' },
+			{ name: 'Waveform (fill)', key: 'waveformfilled' },
+			{ name: 'Bars (filled)', key: 'barsfilled' },
 			{ name: 'Bars', key: 'bars' },
 			{ name: 'Points', key: 'points' },
 			{ name: 'Half-Bars', key: 'halfbars' },
+			{ name: 'Tree', key: 'tree' },
+			{ name: 'SoundCloud', key: 'soundcloud' },
+			{ name: 'SoundCloud (gradient)', key: 'soundcloudgradient' },
 			{ name: 'VU Meter', key: 'vumeter' },
 		];
 		options.forEach((o) => {
@@ -477,6 +493,7 @@ function settingsMenu(bClear = true) {
 			menu.newSeparator(subMenuTwo);
 			[
 				{ name: 'Green', colors: { main: 0xFF90EE90, alt: 0xFF7CFC00, mainFuture: 0xFFB7FFA2, altFuture: 0xFFF9FF99, currPos: 0xFFFFFFFF } },
+				{ name: 'SoundCloud', colors: { main: 0XFFFF5400, alt: 0XFFFF2900, mainFuture: 0xFFFFFAFE, altFuture: 0xFFFCFCFC, currPos: 0xFFFFFFFF } },
 				{ name: 'Lavender', colors: { main: 0xFFCDB4DB, alt: 0xFFFFC8DD, mainFuture: 0xFFBDE0FE, altFuture: 0xFFA2D2FF, currPos: 0xFFFFAFCC } },
 				{ name: 'Forest', colors: { main: 0xFF606C38, alt: 0xFFDDA15E, mainFuture: 0xFF283618, altFuture: 0xFFBC6C25, currPos: 0xFF606C38 } },
 				{ name: 'Sienna', colors: { main: 0xFFBF0603, alt: 0xFFEE6055, mainFuture: 0xFF8D0801, altFuture: 0xFFC52233, currPos: 0xFF450920 } },
@@ -594,7 +611,7 @@ function settingsMenu(bClear = true) {
 						menuName: subMenuTwo, entryText: o.name + '\t' + _b(this.ui.transparency[o.key]), func: () => {
 							const input = utils.IsKeyPressed(VK_CONTROL)
 								? 100
-								: Input.number('int', this.ui.transparency[o.key], 'Enter value:\n0 is transparent, 100 is opaque.\n(0 to 100)', 'Seekbar: ' + o.name + ' transparency', 200, [(n) => n >= 0 && n <= 100]);
+								: Input.number('int', this.ui.transparency[o.key], 'Enter value:\n0 is transparent, 100 is opaque.\n(0 to 100)', 'Seekbar: ' + o.name + ' transparency', 50, [(n) => n >= 0 && n <= 100]);
 							if (input === null) { return; }
 							this.updateConfig({ ui: { transparency: { [o.key]: input } } });
 							this.saveProperties();
@@ -606,8 +623,9 @@ function settingsMenu(bClear = true) {
 		{
 			const subMenuTwo = menu.newMenu('Dynamic colors', subMenu);
 			menu.newEntry({
-				menuName: subMenuTwo, entryText: 'Dynamic (background cover mode)', func: () => {
+				menuName: subMenuTwo, entryText: 'Dynamic (background art mode)', func: () => {
 					seekbarProperties.bDynamicColors[1] = !seekbarProperties.bDynamicColors[1];
+					if (seekbarProperties.bDynamicColors[1] && seekbarProperties.bOnNotifyColors[1]) { fb.ShowPopupMessage('Warning: Dynamic colors (background art mode) and Color-server listening are enabled at the same time.\n\nThis setting may probably produce glitches since 2 color sources are being used, while one tries to override the other.\n\nIt\'s recommended to only use one of these features, unless you know what you are DOMStringList.', window.ScriptInfo.Name + ': Dynamic colors'); }
 					this.saveProperties();
 					if (seekbarProperties.bDynamicColors[1]) {
 						// Ensure it's applied with compatible settings
@@ -629,6 +647,7 @@ function settingsMenu(bClear = true) {
 			menu.newEntry({
 				menuName: subMenuTwo, entryText: 'Listen to color-servers', func: () => {
 					seekbarProperties.bOnNotifyColors[1] = !seekbarProperties.bOnNotifyColors[1];
+					if (seekbarProperties.bDynamicColors[1] && seekbarProperties.bOnNotifyColors[1]) { fb.ShowPopupMessage('Warning: Dynamic colors (background art mode) and Color-server listening are enabled at the same time.\n\nThis setting may probably produce glitches since 2 color sources are being used, while one tries to override the other.\n\nIt\'s recommended to only use one of these features, unless you know what you are DOMStringList.', window.ScriptInfo.Name + ': Dynamic colors'); }
 					this.saveProperties();
 					if (seekbarProperties.bOnNotifyColors[1]) {
 						window.NotifyOthers('Colors: ask color scheme', window.ScriptInfo.Name + ': set color scheme');
@@ -728,10 +747,27 @@ function settingsMenu(bClear = true) {
 		menu.newEntry({
 			menuName: subMenu, entryText: 'Show tooltip', func: () => {
 				seekbarProperties.bShowTooltip[1] = !seekbarProperties.bShowTooltip[1];
+				if (!seekbarProperties.bShowTooltip[1]) { this.tooltip.Deactivate(); }
 				this.saveProperties();
 			}
 		});
 		menu.newCheckMenuLast(() => seekbarProperties.bShowTooltip[1]);
+		menu.newEntry({
+			menuName: subMenu, entryText: 'Extended info at tooltip', func: () => {
+				seekbarProperties.bShowExtendedTooltip[1] = !seekbarProperties.bShowExtendedTooltip[1];
+				this.saveProperties();
+			}, flags: seekbarProperties.bShowTooltip[1] ? MF_STRING : MF_GRAYED
+		});
+		menu.newCheckMenuLast(() => seekbarProperties.bShowTooltip[1] && seekbarProperties.bShowExtendedTooltip[1]);
+		menu.newEntry({
+			menuName: subMenu, entryText: 'Show tooltip only click', func: () => {
+				seekbarProperties.bShowTooltipOnClick[1] = !seekbarProperties.bShowTooltipOnClick[1];
+				this.tooltip.SetDelayTime(3, seekbarProperties.bShowTooltipOnClick[1] ? 500 : 1500);
+				this.tooltip.SetDelayTime(2, seekbarProperties.bShowTooltipOnClick[1] ? Infinity : 3000);
+				this.saveProperties();
+			}, flags: seekbarProperties.bShowTooltip[1] ? MF_STRING : MF_GRAYED
+		});
+		menu.newCheckMenuLast(() => seekbarProperties.bShowTooltip[1] && seekbarProperties.bShowTooltipOnClick[1]);
 		menu.newSeparator(subMenu);
 		menu.newEntry({
 			menuName: subMenu, entryText: 'Refresh rate...' + '\t' + _b(this.ui.refreshRateOpt), func: () => {

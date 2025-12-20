@@ -1,18 +1,18 @@
 'use strict';
-//25/11/25
+//18/12/25
 
 if (!window.ScriptInfo.PackageId) { window.DefineScript('Not-A-Waveform-Seekbar-SMP', { author: 'regorxxx', version: '3.2.1' }); }
 
 include('helpers\\helpers_xxx.js');
 /* global folders:readable, globSettings:readable, globTags:readable, soFeat:readable, globFonts:readable, globProfiler:readable, VK_CONTROL:readable, popup:readable, VK_ALT:readable */
 include('helpers\\helpers_xxx_flags.js');
-/* global VK_LWIN:readable */
+/* global VK_LWIN:readable, MK_LBUTTON:readable */
 include('helpers\\helpers_xxx_UI.js');
 /* global _scale:readable, RGB:readable, _gdiFont:readable, _tt:readable, blendColors */
 include('helpers\\helpers_xxx_file.js');
-/* global _open:readable, utf8:readable, WshShell:readable, _save:readable, _foldPath:readable */
+/* global _open:readable, utf8:readable, WshShell:readable, _save:readable, _foldPath:readable, _isFile:readable, _isFolder:readable, _copyDependencies:readable */
 include('helpers\\helpers_xxx_prototypes.js');
-/* global isJSON:readable, isBoolean:readable, deepAssign:readable, isString:readable, clone:readable */
+/* global isJSON:readable, isBoolean:readable, isString:readable, clone:readable */
 include('helpers\\helpers_xxx_prototypes_smp.js');
 /* global extendGR:readable */
 include('helpers\\helpers_xxx_properties.js');
@@ -29,17 +29,22 @@ include('main\\window\\window_xxx_background.js');
 include('main\\window\\window_xxx_dynamic_colors.js');
 /* global dynamicColors:readable, mostContrastColor */
 
+globProfiler.Print('dependencies');
+
+_copyDependencies(['', 'ffprobe'], void (0), true);
+if (_isFolder(folders.binaries + 'audiowaveform\\')) { _copyDependencies(['', 'audiowaveform'], void (0), false); }
+
 globProfiler.Print('helpers');
 
 let seekbarProperties = {
 	binaries: ['Binaries paths',
 		JSON.stringify({
 			ffprobe: _foldPath(folders.binaries) + 'ffprobe\\ffprobe' + (soFeat.x64 ? '' : '_32') + '.exe',
-			audiowaveform: (folders.JsPackageDirs
+			audiowaveform: (_isFile(folders.binaries + 'audiowaveform\\audiowaveform' + (soFeat.x64 ? '' : '_32') + '.exe')
 				? _foldPath(folders.binaries)
 				: folders.xxxRootName + 'helpers-external\\'
 			) + 'audiowaveform\\audiowaveform' + (soFeat.x64 ? '' : '_32') + '.exe'
-		}), { func: isJSON }],
+		}), { func: isJSON, forceDefaults: true }],
 	analysis: ['Analysis config',
 		JSON.stringify({
 			binaryMode: 'audiowaveform',
@@ -52,7 +57,7 @@ let seekbarProperties = {
 			bVisualizerFallback: true,
 			bVisualizerFallbackAnalysis: true,
 			bMultiChannel: false
-		}), { func: isJSON }],
+		}), { func: isJSON, forceDefaults: true }],
 	preset: ['Preset config',
 		JSON.stringify({
 			analysisMode: 'peak_level',
@@ -65,7 +70,7 @@ let seekbarProperties = {
 			futureSecs: Infinity,
 			bHalfBarsShowNeg: true,
 			displayChannels: []
-		}), { func: isJSON }],
+		}), { func: isJSON, forceDefaults: true }],
 	ui: ['UI config',
 		JSON.stringify({
 			colors: {
@@ -91,7 +96,7 @@ let seekbarProperties = {
 			bNormalizeWidth: false,
 			normalizeWidth: _scale(4),
 			bLogScale: true
-		}), { func: isJSON }],
+		}), { func: isJSON, forceDefaults: true }],
 	logging: ['Logging config',
 		JSON.stringify({
 			bDebug: false,
@@ -99,19 +104,18 @@ let seekbarProperties = {
 			bLoad: false,
 			bSave: true,
 			bError: true
-		}), { func: isJSON }],
+		}), { func: isJSON, forceDefaults: true }],
 	bEnabled: ['Enable panel', true, { func: isBoolean }],
 	matchPattern: ['File name TF format', globTags.artistAlbumTrackIdPath, { func: isString }],
-	background: ['Background options', JSON.stringify(deepAssign()(
-		(new _background).defaults(),
-		{ colorMode: 'bigradient', colorModeOptions: { color: [RGB(270, 270, 270), RGB(300, 300, 300)] }, coverMode: 'none' }
-	)), { func: isJSON }],
+	background: ['Background options', JSON.stringify(_background.defaults()), { func: isJSON, forceDefaults: true }],
 	bDynamicColors: ['Adjust colors to artwork', true, { func: isBoolean }],
 	bAutoUpdateCheck: ['Automatically check updates', globSettings.bAutoUpdateCheck, { func: isBoolean }],
 	firstPopup: ['Seekbar: Fired once', false, { func: isBoolean }, false],
 	bOnNotifyColors: ['Adjust colors on panel notify', true, { func: isBoolean }],
 	bNotifyColors: ['Notify colors to other panels', false, { func: isBoolean }],
 	bShowTooltip: ['Show tooltip', true, { func: isBoolean }],
+	bShowExtendedTooltip: ['Show extended info at tooltip', true, { func: isBoolean }],
+	bShowTooltipOnClick: ['Show tooltip only on click', false, { func: isBoolean }]
 };
 Object.keys(seekbarProperties).forEach(p => seekbarProperties[p].push(seekbarProperties[p][1]));
 setProperties(seekbarProperties, '', 0); //This sets all the panel properties at once
@@ -257,8 +261,8 @@ seekbar.applyUiSettings = function (settings, bForce) {
 };
 
 seekbar.tooltip = new _tt(null);
-seekbar.tooltip.SetDelayTime(3, 1500);
-seekbar.tooltip.SetDelayTime(2, 3000);
+seekbar.tooltip.SetDelayTime(3, seekbarProperties.bShowTooltipOnClick[1] ? 500 : 1500);
+seekbar.tooltip.SetDelayTime(2, seekbarProperties.bShowTooltipOnClick[1] ? Infinity : 3000);
 
 globProfiler.Print('seekbar');
 
@@ -369,20 +373,32 @@ addEventListener('on_mouse_lbtn_up', (x, y, mask) => {
 	seekbar.lbtnUp(x, y, mask);
 });
 
-addEventListener('on_mouse_move', (x, y, mask) => {
-	if (seekbarProperties.bShowTooltip[1] && (seekbar.mx !== x || seekbar.my !== y)) {
-		seekbar.tooltip.tooltip.TrackPosition(x, y);
-		seekbar.tooltip.SetValueDebounced(
-			'Click to seek to: ' + utils.FormatDuration(seekbar.getPlaybackTimeAt(x)) + '/' + utils.FormatDuration(seekbar.getHandleLength()) +
-			'\n' + '-'.repeat(60) +
-			'\n(R. Click to open settings menu)' +
-			'\n(Shift + Win + R. Click for SMP panel menu)' +
-			'\n(Ctrl + Win + R. Click for script panel menu)'
-		);
+addEventListener('on_playback_seek', (time) => { // Seeking outside panel
+	if (seekbar.mx === -1 || seekbar.my === -1) {
+		seekbar.updateTime(Math.round(time));
 	}
-	seekbar.move(x, y, mask);
 });
 
+addEventListener('on_mouse_move', (x, y, mask) => {
+	if (seekbarProperties.bShowTooltip[1]) {
+		if (seekbar.mx !== x || seekbar.my !== y) {
+			if (!seekbarProperties.bShowTooltipOnClick[1] || utils.IsKeyPressed(MK_LBUTTON)) {
+				seekbar.tooltip.tooltip.TrackPosition(x, y);
+				seekbar.tooltip.SetValueDebounced(
+					'Click to seek to: ' + utils.FormatDuration(seekbar.getPlaybackTimeAt(x)) + '/' + utils.FormatDuration(seekbar.getHandleLength()) + (
+						seekbarProperties.bShowExtendedTooltip[1]
+							? '\n' + '-'.repeat(60) +
+							'\n(R. Click to open settings menu)' +
+							'\n(Shift + Win + R. Click for SMP panel menu)' +
+							'\n(Ctrl + Win + R. Click for script panel menu)'
+							: ''
+					)
+				);
+			} else { seekbar.tooltip.Deactivate(); }
+		}
+	} else { seekbar.tooltip.Deactivate(); }
+	seekbar.move(x, y, mask);
+});
 
 addEventListener('on_mouse_leave', () => {
 	seekbar.leave();
