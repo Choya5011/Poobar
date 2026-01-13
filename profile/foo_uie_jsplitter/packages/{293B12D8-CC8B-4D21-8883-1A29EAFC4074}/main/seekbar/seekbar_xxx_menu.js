@@ -1,5 +1,5 @@
 ﻿'use strict';
-//19/12/25
+//08/01/26
 
 /* exported settingsMenu, importSettingsMenu */
 
@@ -17,9 +17,18 @@ include('..\\..\\helpers-external\\namethatcolor\\ntc.js');
 /* global ntc:readable */
 const Chroma = require('..\\helpers-external\\chroma.js\\chroma.min'); // Relative to helpers folder
 
-// Generic menu for config
+/**
+ * Waveform settings menu
+ *
+ * @function
+ * @name settingsMenu
+ * @this {_seekbar}
+ * @param {boolean} bClear?
+ * @returns {_menu}
+ */
 function settingsMenu(bClear = true) {
 	if (!this.menu) { this.menu = new _menu(); }
+	/** @type {_menu} */
 	const menu = this.menu;
 	if (bClear) { menu.clear(true); } // Reset on every call
 	// helper
@@ -54,11 +63,12 @@ function settingsMenu(bClear = true) {
 			{ name: 'FFprobe', key: 'ffprobe' },
 			{ name: 'Audiowaveform', key: 'audiowaveform' },
 			{ name: 'Visualizer', key: 'visualizer' }
-		].filter((o) => this.binaries[o.key] || o.key === 'visualizer');
+		].filter((o) => typeof this.binaries[o.key] !== 'string' || this.binaries[o.key].length);
 		if (options.length) {
 			options.forEach((o) => {
-				const bFound = !this.binaries[o.key] || _isFile(this.binaries[o.key]);
-				const bBundled = !this.binaries[o.key] || bFound && this.binaries[o.key].startsWith(folders.xxxRootName + 'helpers-external\\');
+				const source = this.binaries[o.key];
+				const bFound = source === true || typeof source === 'string' && _isFile(source);
+				const bBundled = bFound && (typeof source !== 'string' || source.startsWith(folders.xxxRootName + 'helpers-external\\'));
 				menu.newEntry({
 					menuName: subMenu, entryText: o.name + (!bFound ? '\t(not found)' : (bBundled ? '\t(built-in)' : '\t(external)')), func: () => {
 						this.updateConfig({ analysis: { binaryMode: o.key } });
@@ -226,13 +236,20 @@ function settingsMenu(bClear = true) {
 		const options = [
 			{ name: 'Waveform', key: 'waveform' },
 			{ name: 'Waveform (fill)', key: 'waveformfilled' },
-			{ name: 'Bars (filled)', key: 'barsfilled' },
 			{ name: 'Bars', key: 'bars' },
+			{ name: 'Bars (filled)', key: 'barsfilled' },
+			{ name: 'Bars (gradient)', key: 'barsgradient' },
 			{ name: 'Points', key: 'points' },
 			{ name: 'Half-Bars', key: 'halfbars' },
+			{ name: 'Half-Bars (filled)', key: 'halfbarsfilled' },
+			{ name: 'Half-Bars (gradient)', key: 'halfbarsgradient' },
 			{ name: 'Tree', key: 'tree' },
 			{ name: 'SoundCloud', key: 'soundcloud' },
 			{ name: 'SoundCloud (gradient)', key: 'soundcloudgradient' },
+			{ name: 'Processbar', key: 'processbar' },
+			{ name: 'Processbar (filled)', key: 'processbarfilled' },
+			{ name: 'Processbar (gradient)', key: 'processbargradient' },
+			{ name: 'Processbar (gradient-scaled)', key: 'processbargradientscaled' },
 			{ name: 'VU Meter', key: 'vumeter' },
 		];
 		options.forEach((o) => {
@@ -244,7 +261,7 @@ function settingsMenu(bClear = true) {
 			});
 		});
 		menu.newCheckMenuLast(() => options.findIndex(o => o.key === this.preset.waveMode), options);
-		if (this.preset.waveMode === 'halfbars') {
+		if (['halfbarsfilled', 'halfbars', 'halfbarsgradient'].includes(this.preset.waveMode)) {
 			menu.newSeparator(subMenu);
 			menu.newEntry({
 				menuName: subMenu, entryText: 'Show negative values (inverted)', func: () => {
@@ -439,6 +456,8 @@ function settingsMenu(bClear = true) {
 			menu.newSeparator(subMenuTwo);
 			[
 				{ name: 'White', bPrepaint: false, colors: { bg: 0xFFFFFFFF, bgFuture: 0xFFF8F7FF } },
+				{ name: 'Grey (light)', bPrepaint: false, colors: { bg: 0XFFE6E6E6, bgFuture: 0XFF363636 } },
+				{ name: 'Grey (dark)', bPrepaint: false, colors: { bg: 0XFF1F1F1F, bgFuture: 0XFF292929 } },
 				{ name: 'Black', bPrepaint: false, colors: { bg: 0xFF000000, bgFuture: 0xFF1B1B1B } },
 				{ name: 'Sienna', bPrepaint: false, colors: { bg: 0xFF450920, bgFuture: 0xFF74121D } },
 				{ name: 'Blue', bPrepaint: false, colors: { bg: 0xFFB9D6F2, bgFuture: 0xFFBBDEFB } },
@@ -493,11 +512,15 @@ function settingsMenu(bClear = true) {
 			menu.newSeparator(subMenuTwo);
 			[
 				{ name: 'Green', colors: { main: 0xFF90EE90, alt: 0xFF7CFC00, mainFuture: 0xFFB7FFA2, altFuture: 0xFFF9FF99, currPos: 0xFFFFFFFF } },
-				{ name: 'SoundCloud', colors: { main: 0XFFFF5400, alt: 0XFFFF2900, mainFuture: 0xFFFFFAFE, altFuture: 0xFFFCFCFC, currPos: 0xFFFFFFFF } },
+				{ name: 'SoundCloud', colors: { main: 0XFFFF5400, alt: 0XFFBD1C00, mainFuture: 0xFFFFFAFE, altFuture: 0xFFFCFCFC, currPos: 0xFFFFFFFF } },
 				{ name: 'Lavender', colors: { main: 0xFFCDB4DB, alt: 0xFFFFC8DD, mainFuture: 0xFFBDE0FE, altFuture: 0xFFA2D2FF, currPos: 0xFFFFAFCC } },
 				{ name: 'Forest', colors: { main: 0xFF606C38, alt: 0xFFDDA15E, mainFuture: 0xFF283618, altFuture: 0xFFBC6C25, currPos: 0xFF606C38 } },
 				{ name: 'Sienna', colors: { main: 0xFFBF0603, alt: 0xFFEE6055, mainFuture: 0xFF8D0801, altFuture: 0xFFC52233, currPos: 0xFF450920 } },
-				{ name: 'Blue', colors: { main: 0xFF003559, alt: 0xFF006DAA, mainFuture: 0xFF0353A4, altFuture: 0xFF061A40, currPos: 0xFFB9D6F2 } },
+				{ name: 'Blue', colors: { main: 0xFF003559, alt: 0xFF006DAA, mainFuture: 0XFF0353A4, altFuture: 0xFF061A40, currPos: 0xFFB9D6F2 } },
+				{ name: 'Ocean', colors: { main: 0xFF003559, alt: 0xFF006DAA, mainFuture: 0xFF0d0740, altFuture: 0XFF201E34, currPos: 0xFFB9D6F2 } },
+				{ name: 'Grey', colors: { main: 0XFF4D4D4D, alt: 0XFF8F8F8F, mainFuture: 0XFF2B2B2B, altFuture: 0xFF333333, currPos: 0XFFED6E96 } },
+				{ name: 'Browney', colors: { main: 0XFFC75B3D, alt: 0XFF2F1D1F, mainFuture: 0XFF291E20, altFuture: 0xFF413032, currPos: 0xFF450920 } },
+				{ name: 'Hello Kitty', colors: { main: 0XFFB01455, alt: 0XFFAE1366, mainFuture: 0XFF810E4B, altFuture: 0XFF7C0E3C, currPos: 0xFFFFAFCC } },
 				{ name: 'sep' },
 				{ name: 'None', colors: { main: -1, alt: -1, mainFuture: -1, altFuture: -1 } },
 			].forEach((o) => {
@@ -591,7 +614,7 @@ function settingsMenu(bClear = true) {
 		}
 		menu.newSeparator(subMenu);
 		{
-			const subMenuTwo = menu.newMenu('Transparency', subMenu);
+			const subMenuTwo = menu.newMenu('Opacity', subMenu);
 			menu.newEntry({ menuName: subMenuTwo, entryText: 'Ctrl + Click to reset:', flags: MF_GRAYED });
 			menu.newSeparator(subMenuTwo);
 			[
@@ -608,12 +631,12 @@ function settingsMenu(bClear = true) {
 				} else {
 					const bEnabled = (!o.bPrepaint || this.preset.paintMode === 'partial' && this.preset.bPrePaint) && (!o.bPartial || this.preset.paintMode === 'partial');
 					menu.newEntry({
-						menuName: subMenuTwo, entryText: o.name + '\t' + _b(this.ui.transparency[o.key]), func: () => {
+						menuName: subMenuTwo, entryText: o.name + '\t' + _b(this.ui.opacity[o.key]), func: () => {
 							const input = utils.IsKeyPressed(VK_CONTROL)
 								? 100
-								: Input.number('int', this.ui.transparency[o.key], 'Enter value:\n0 is transparent, 100 is opaque.\n(0 to 100)', 'Seekbar: ' + o.name + ' transparency', 50, [(n) => n >= 0 && n <= 100]);
+								: Input.number('int', this.ui.opacity[o.key], 'Enter value:\n0 is transparent, 100 is opaque.\n(integer number ≥0 and ≤100)', 'Seekbar: ' + o.name + ' opacity', 50, [(n) => n >= 0 && n <= 100]);
 							if (input === null) { return; }
-							this.updateConfig({ ui: { transparency: { [o.key]: input } } });
+							this.updateConfig({ ui: { opacity: { [o.key]: input } } });
 							this.saveProperties();
 						}, flags: bEnabled ? MF_STRING : MF_GRAYED
 					});
@@ -621,51 +644,74 @@ function settingsMenu(bClear = true) {
 			});
 		}
 		{
+			menu.newEntry({
+				menuName: subMenu, entryText: 'Gradient color focus' + '\t' + _b(this.ui.gradientFocus), func: () => {
+					const input = utils.IsKeyPressed(VK_CONTROL)
+						? 1
+						: Input.number('real positive', this.ui.gradientFocus, 'Enter value:\n(real number ≥0 and ≤1)\n\n0 is reversed, 1 is standard', 'Seekbar: gradient color focus', 1, [(n) => n >= 0 && n <= 1]);
+					if (input === null) { return; }
+					this.updateConfig({ ui: { gradientFocus: input } });
+					this.saveProperties();
+				}, flags: this.isGradientWaveMode() ? MF_STRING : MF_GRAYED
+			});
+		}
+		menu.newSeparator(subMenu);
+		{
 			const subMenuTwo = menu.newMenu('Dynamic colors', subMenu);
 			menu.newEntry({
 				menuName: subMenuTwo, entryText: 'Dynamic (background art mode)', func: () => {
-					seekbarProperties.bDynamicColors[1] = !seekbarProperties.bDynamicColors[1];
-					if (seekbarProperties.bDynamicColors[1] && seekbarProperties.bOnNotifyColors[1]) { fb.ShowPopupMessage('Warning: Dynamic colors (background art mode) and Color-server listening are enabled at the same time.\n\nThis setting may probably produce glitches since 2 color sources are being used, while one tries to override the other.\n\nIt\'s recommended to only use one of these features, unless you know what you are DOMStringList.', window.ScriptInfo.Name + ': Dynamic colors'); }
+					seekbarProperties.bDynamicColors[1] =  !(seekbarProperties.bDynamicColors[1] && background.useCoverColors);
+					if (seekbarProperties.bDynamicColors[1] && seekbarProperties.bOnNotifyColors[1]) { fb.ShowPopupMessage('Warning: Dynamic colors (background art mode) and Color-server listening are enabled at the same time.\n\nThis setting may probably produce glitches since 2 color sources are being used, while one tries to override the other.\n\nIt\'s recommended to only use one of these features, unless you know what you are doing.', window.ScriptInfo.Name + ': Dynamic colors'); }
 					this.saveProperties();
 					if (seekbarProperties.bDynamicColors[1]) {
 						// Ensure it's applied with compatible settings
-						background.changeConfig({ config: { coverModeOptions: { bProcessColors: true } }, callbackArgs: { bSaveProperties: true } });
-						if (background.coverMode === 'none') {
-							background.changeConfig({ config: { coverMode: 'front', coverModeOptions: { alpha: 0 } }, callbackArgs: { bSaveProperties: true } });
-						}
+						background.changeConfig({
+							bRepaint: false, callbackArgs: { bSaveProperties: true },
+							config: !background.useCover
+								? { coverMode: background.getDefaultCoverMode(), coverModeOptions: { alpha: 0, bProcessColors: true } }
+								: { coverModeOptions: { bProcessColors: true } },
+						});
 						background.updateImageBg(true);
 					} else {
-						const defColors = JSON.parse(seekbarProperties.ui[1]).colors;
-						this.updateConfig({ ui: { colors: defColors } });
-						background.changeConfig({ config: { colorModeOptions: { color: JSON.parse(seekbarProperties.background[1]).colorModeOptions.color } }, callbackArgs: { bSaveProperties: false } });
-						this.saveProperties();
+						background.callbacks.artColors(void (0), true);
 					}
-				}
+				},
+				checkFunc: () => seekbarProperties.bDynamicColors[1] && background.useCoverColors,
 			});
 			menu.newCheckMenuLast(() => seekbarProperties.bDynamicColors[1]);
 			menu.newSeparator(subMenuTwo);
 			menu.newEntry({
 				menuName: subMenuTwo, entryText: 'Listen to color-servers', func: () => {
 					seekbarProperties.bOnNotifyColors[1] = !seekbarProperties.bOnNotifyColors[1];
-					if (seekbarProperties.bDynamicColors[1] && seekbarProperties.bOnNotifyColors[1]) { fb.ShowPopupMessage('Warning: Dynamic colors (background art mode) and Color-server listening are enabled at the same time.\n\nThis setting may probably produce glitches since 2 color sources are being used, while one tries to override the other.\n\nIt\'s recommended to only use one of these features, unless you know what you are DOMStringList.', window.ScriptInfo.Name + ': Dynamic colors'); }
+					if (seekbarProperties.bDynamicColors[1] && seekbarProperties.bOnNotifyColors[1]) { fb.ShowPopupMessage('Warning: Dynamic colors (background art mode) and Color-server listening are enabled at the same time.\n\nThis setting may probably produce glitches since 2 color sources are being used, while one tries to override the other.\n\nIt\'s recommended to only use one of these features, unless you know what you are doing.', window.ScriptInfo.Name + ': Dynamic colors'); }
 					this.saveProperties();
 					if (seekbarProperties.bOnNotifyColors[1]) {
 						window.NotifyOthers('Colors: ask color scheme', window.ScriptInfo.Name + ': set color scheme');
 						window.NotifyOthers('Colors: ask color', window.ScriptInfo.Name + ': set colors');
+					} else if (!seekbarProperties.bDynamicColors[1]) {
+						background.callbacks.artColors(void (0), true);
 					}
 				}
 			});
 			menu.newCheckMenuLast(() => seekbarProperties.bOnNotifyColors[1]);
 			menu.newEntry({
 				menuName: subMenuTwo, entryText: 'Act as color-server', func: () => {
-					seekbarProperties.bNotifyColors[1] = !seekbarProperties.bNotifyColors[1];
+					seekbarProperties.bNotifyColors[1] = !(seekbarProperties.bNotifyColors[1] && background.useCoverColors);
 					this.saveProperties();
-					if (seekbarProperties.bNotifyColors[1] && background.scheme) {
-						window.NotifyOthers('Colors: set color scheme', background.scheme);
+					if (seekbarProperties.bNotifyColors[1]) {
+						if (background.scheme) { window.NotifyOthers('Colors: set color scheme', background.scheme); }
+						else if (!background.useCoverColors) {
+							background.changeConfig({
+								bRepaint: false, callbackArgs: { bSaveProperties: true },
+								config: !background.useCover
+									? { coverMode: background.getDefaultCoverMode(), coverModeOptions: { alpha: 0, bProcessColors: true } }
+									: { coverModeOptions: { bProcessColors: true } },
+							});
+						}
 					}
-				}
+				},
+				checkFunc: () => seekbarProperties.bNotifyColors[1] && background.useCoverColors
 			});
-			menu.newCheckMenuLast(() => seekbarProperties.bNotifyColors[1]);
 		}
 		menu.newSeparator(subMenu);
 		menu.newEntry({
@@ -771,7 +817,7 @@ function settingsMenu(bClear = true) {
 		menu.newSeparator(subMenu);
 		menu.newEntry({
 			menuName: subMenu, entryText: 'Refresh rate...' + '\t' + _b(this.ui.refreshRateOpt), func: () => {
-				const input = Input.number('int', this.ui.refreshRate, 'Enter value:\n(ms)', 'Seekbar: Refresh rate', 200, [(n) => n >= 50]);
+				const input = Input.number('int', this.ui.refreshRate, 'Enter value:\n(integer number ≥50 ms)', 'Seekbar: Refresh rate', 200, [(n) => n >= 50]);
 				if (input === null) { return; }
 				this.updateConfig({ ui: { refreshRate: input } });
 				this.saveProperties();

@@ -1,10 +1,10 @@
 'use strict';
-//18/12/25
+//12/01/26
 
-if (!window.ScriptInfo.PackageId) { window.DefineScript('Not-A-Waveform-Seekbar-SMP', { author: 'regorxxx', version: '3.2.1' }); }
+if (!window.ScriptInfo.PackageId) { window.DefineScript('Not-A-Waveform-Seekbar-SMP', { author: 'regorxxx', version: '3.4.0' }); }
 
 include('helpers\\helpers_xxx.js');
-/* global folders:readable, globSettings:readable, globTags:readable, soFeat:readable, globFonts:readable, globProfiler:readable, VK_CONTROL:readable, popup:readable, VK_ALT:readable */
+/* global folders:readable, globSettings:readable, globTags:readable, soFeat:readable, globFonts:readable, globProfiler:readable, VK_CONTROL:readable, popup:readable, VK_ALT:readable, VK_SHIFT:readable */
 include('helpers\\helpers_xxx_flags.js');
 /* global VK_LWIN:readable, MK_LBUTTON:readable */
 include('helpers\\helpers_xxx_UI.js');
@@ -82,7 +82,7 @@ let seekbarProperties = {
 				altFuture: 0xFF061A40,
 				currPos: 0xFFB9D6F2 // White
 			},
-			transparency: {
+			opacity: {
 				bg: 30,
 				main: 75,
 				alt: 75,
@@ -150,14 +150,14 @@ const background = new _background({
 			else if (colArray) {
 				const { main, sec, note, mainAlt, secAlt } = dynamicColors(
 					colArray,
-					seekbar.ui.colors.bg !== -1 ? seekbar.ui.colors.bg : background.getColors()[0],
+					seekbar.ui.colors.bg !== -1 ? seekbar.ui.colors.bg : background.getAvgPanelColor(),
 					seekbar.preset.waveMode !== 'vumeter'
 				);
 				if (seekbar.ui.colors.main !== -1) { seekbar.ui.colors.main = main; }
 				if (seekbar.ui.colors.alt !== -1) { seekbar.ui.colors.alt = sec; }
 				if (seekbar.ui.colors.currPos !== -1) {
 					seekbar.ui.colors.currPos = mostContrastColor(
-						seekbar.ui.colors.bg !== -1 ? seekbar.ui.colors.bg : background.getColors()[0],
+						seekbar.ui.colors.bg !== -1 ? seekbar.ui.colors.bg : background.getAvgPanelColor(),
 						[note, blendColors(note, RGB(0, 0, 0), 0.4), blendColors(note, RGB(255, 255, 255), 0.4)]
 					).color;
 				}
@@ -165,9 +165,8 @@ const background = new _background({
 				if (seekbar.ui.colors.altFuture !== -1) { seekbar.ui.colors.altFuture = secAlt; }
 			} else {
 				const defColors = JSON.parse(seekbarProperties.ui[1]).colors;
-				for (const key in seekbar.ui.colors.colors) {
-					seekbar.ui.colors[key] = defColors[key];
-				}
+				this.updateConfig({ ui: { colors: defColors } });
+				background.changeConfig({ config: { colorModeOptions: { color: JSON.parse(seekbarProperties.background[1]).colorModeOptions.color } }, callbackArgs: { bSaveProperties: false } });
 			}
 			if (bRepaint) { window.Repaint(); }
 		},
@@ -192,7 +191,7 @@ const seekbar = new _seekbar({
 	analysis: JSON.parse(seekbarProperties.analysis[1], (key, value) => value === null ? Infinity : value),
 	preset: JSON.parse(seekbarProperties.preset[1], (key, value) => value === null ? Infinity : value),
 	ui: { ...JSON.parse(seekbarProperties.ui[1]), gFont: _gdiFont(globFonts.standardBig.name, _scale(globFonts.standardBig.size)), pos: { scaleH: 0.9, scaleW: 1 / 30 } },
-	callbacks: { backgroundColor: () => background.getColors()[0] },
+	callbacks: { backgroundColor: () => background.getAvgPanelColor() },
 	logging: JSON.parse(seekbarProperties.logging[1]),
 });
 if (!seekbarProperties.bEnabled[1]) { seekbar.switch(); }
@@ -238,7 +237,7 @@ seekbar.shareUiSettings = function (mode = 'popup') {
 
 seekbar.applyUiSettings = function (settings, bForce) {
 	window.highlight = true;
-	window.Repaint();
+	if (window.IsVisible) { window.Repaint(); }
 	const answer = bForce
 		? popup.yes
 		: WshShell.Popup('Apply current settings to highlighted panel?\nCheck UI.', 0, window.FullPanelName, popup.question + popup.yes_no);
@@ -257,7 +256,7 @@ seekbar.applyUiSettings = function (settings, bForce) {
 		this.saveProperties();
 	}
 	window.highlight = false;
-	window.Repaint();
+	if (window.IsVisible) { window.Repaint(); }
 };
 
 seekbar.tooltip = new _tt(null);
@@ -294,38 +293,31 @@ const queueSelection = () => {
 	}
 };
 
+{
+	const callback = () => {
+		if (background.useCover && (!background.coverModeOptions.bNowPlaying || !fb.IsPlaying)) {
+			background.updateImageBg(void (0), void (0), seekbar.isOnDemandTrack());
+		}
+	};
+	['on_item_focus_change', 'on_selection_changed', 'on_playlists_changed', 'on_playlist_items_added', 'on_playlist_items_removed', 'on_playlist_switch'].forEach((e) => addEventListener(e, callback));
+
+	addEventListener('on_playback_stop', (reason) => {
+		if (reason !== 2) { // Invoked by user or Starting another track
+			if (background.useCover && background.coverModeOptions.bNowPlaying) { background.updateImageBg(); }
+		}
+	});
+
+	addEventListener('on_colours_changed', () => {
+		background.colorsChanged();
+	});
+}
+
 addEventListener('on_size', (width, height) => {
 	background.resize({ w: width, h: height, bPaint: false });
 	seekbar.resize(width, height);
 });
 
-addEventListener('on_selection_changed', () => {
-	if (background.useCover && (!background.coverModeOptions.bNowPlaying || !fb.IsPlaying)) {
-		background.updateImageBg(void (0), void (0), seekbar.isOnDemandTrack());
-	}
-	queueSelection();
-});
-
-addEventListener('on_item_focus_change', () => {
-	if (background.useCover && (!background.coverModeOptions.bNowPlaying || !fb.IsPlaying)) {
-		background.updateImageBg(void (0), void (0), seekbar.isOnDemandTrack());
-	}
-	queueSelection();
-});
-
-addEventListener('on_playlist_switch', () => {
-	if (background.useCover && (!background.coverModeOptions.bNowPlaying || !fb.IsPlaying)) {
-		background.updateImageBg(void (0), void (0), seekbar.isOnDemandTrack());
-	}
-	queueSelection();
-});
-
-addEventListener('on_playlists_changed', () => { // To show/hide loaded playlist indicators...
-	if (background.useCover && (!background.coverModeOptions.bNowPlaying || !fb.IsPlaying)) {
-		background.updateImageBg(void (0), void (0), seekbar.isOnDemandTrack());
-	}
-	queueSelection();
-});
+['on_item_focus_change', 'on_selection_changed', 'on_playlists_changed', 'on_playlist_items_added', 'on_playlist_items_removed', 'on_playlist_switch'].forEach((e) => addEventListener(e, queueSelection));
 
 addEventListener('on_playback_new_track', (handle) => {
 	const bChangeTrack = seekbar.getPreferredTrackMode() === 'playing' && !seekbar.compareTrack(handle);
@@ -346,9 +338,6 @@ addEventListener('on_playback_seek', (time) => {
 });
 
 addEventListener('on_playback_stop', (reason) => {
-	if (reason !== 2) { // Invoked by user or Starting another track
-		if (background.useCover && background.coverModeOptions.bNowPlaying) { background.updateImageBg(); }
-	}
 	if (!seekbar.isOnDemandTrack()) { seekbar.stop(reason); }
 	else if (seekbar.analysis.binaryMode === 'visualizer') { seekbar.resetAnimation(); }
 	queueSelection() || seekbar.updateTime(0);
@@ -359,9 +348,11 @@ addEventListener('on_playback_pause', (state) => {
 });
 
 addEventListener('on_paint', (gr) => {
+	if (!window.ID) { return; }
+	if (!window.Width || !window.Height) { return; }
 	if (globSettings.bDebugPaint) { extendGR(gr, { Repaint: true }); }
 	// Skip background if it will not be seen
-	if (Math.round(seekbar.ui.transparency.bg) !== 100 || seekbar.preset.paintMode === 'partial' && Math.round(seekbar.ui.transparency.bgFuture) !== 100) {
+	if (Math.round(seekbar.ui.opacity.bg) !== 100 || seekbar.preset.paintMode === 'partial' && Math.round(seekbar.ui.opacity.bgFuture) !== 100) {
 		background.paint(gr);
 	}
 	seekbar.paint(gr);
@@ -374,14 +365,14 @@ addEventListener('on_mouse_lbtn_up', (x, y, mask) => {
 });
 
 addEventListener('on_playback_seek', (time) => { // Seeking outside panel
-	if (seekbar.mx === -1 || seekbar.my === -1) {
+	if (seekbar.mX === -1 || seekbar.mY === -1) {
 		seekbar.updateTime(Math.round(time));
 	}
 });
 
 addEventListener('on_mouse_move', (x, y, mask) => {
 	if (seekbarProperties.bShowTooltip[1]) {
-		if (seekbar.mx !== x || seekbar.my !== y) {
+		if (seekbar.mX !== x || seekbar.mY !== y) {
 			if (!seekbarProperties.bShowTooltipOnClick[1] || utils.IsKeyPressed(MK_LBUTTON)) {
 				seekbar.tooltip.tooltip.TrackPosition(x, y);
 				seekbar.tooltip.SetValueDebounced(
@@ -398,10 +389,12 @@ addEventListener('on_mouse_move', (x, y, mask) => {
 		}
 	} else { seekbar.tooltip.Deactivate(); }
 	seekbar.move(x, y, mask);
+	background.move(x, y, mask);
 });
 
 addEventListener('on_mouse_leave', () => {
 	seekbar.leave();
+	background.leave();
 });
 
 addEventListener('on_script_unload', () => {
@@ -417,11 +410,11 @@ addEventListener('on_mouse_rbtn_up', (x, y) => {
 });
 
 addEventListener('on_mouse_wheel', (step) => {
-	if (utils.IsKeyPressed(VK_CONTROL) && utils.IsKeyPressed(VK_ALT) && seekbar.wheelResize(step)) {
-		seekbar.saveProperties();
-	} else {
-		seekbar.wheel(step);
-	}
+	if (utils.IsKeyPressed(VK_CONTROL) && utils.IsKeyPressed(VK_ALT)) {
+		if (utils.IsKeyPressed(VK_SHIFT)) { background.wheelResize(step, void (0), { bSaveProperties: true }); }
+		else if (seekbar.wheelResize(step)) { seekbar.saveProperties(); }
+	} else if (utils.IsKeyPressed(VK_SHIFT)) { background.cycleArtAsync(step); }
+	else { seekbar.wheel(step); }
 });
 
 addEventListener('on_mouse_wheel_h', (step) => {
@@ -440,7 +433,7 @@ addEventListener('on_notify_data', (name, info) => {
 				const colors = clone(info);
 				const getColor = (key) => Object.hasOwn(colors, key) ? colors.background : colors[['background', 'main', 'alt', 'currPos', 'mainFuture', 'altFuture'].indexOf(key)];
 				const hasColor = (key) => typeof getColor(key) !== 'undefined';
-				if (background.colorMode !== 'none' && hasColor('background')) {
+				if (background.useColors && hasColor('background')) {
 					background.changeConfig({ config: { colorModeOptions: { color: getColor('background') } }, callbackArgs: { bSaveProperties: false } });
 				}
 				if (seekbar.ui.colors.main !== -1 && hasColor('main')) { seekbar.ui.colors.main = getColor('main'); }
@@ -448,7 +441,7 @@ addEventListener('on_notify_data', (name, info) => {
 				if (seekbar.ui.colors.currPos !== -1 && hasColor('currPos')) { seekbar.ui.colors.currPos = getColor('currPos'); }
 				if (seekbar.ui.colors.mainFuture !== -1 && hasColor('mainFuture')) { seekbar.ui.colors.mainFuture = getColor('mainFuture'); }
 				if (seekbar.ui.colors.altFuture !== -1 && hasColor('altFuture')) { seekbar.ui.colors.altFuture = getColor('altFuture'); }
-				window.Repaint();
+				if (window.IsVisible) { window.Repaint(); }
 			}
 			break;
 		}
@@ -469,7 +462,7 @@ addEventListener('on_notify_data', (name, info) => {
 {
 	const initHandle = seekbar.getHandle();
 	if (initHandle) {
-		window.Repaint();
+		if (window.IsVisible) { window.Repaint(); }
 		if (seekbar.getPreferredTrackMode() === 'selected') {
 			setTimeout(() => { on_item_focus_change(); }, 0);
 		} else {

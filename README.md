@@ -1,4 +1,4 @@
-A crappy responsive [Spider Monkey Panel](https://github.com/TheQwertiest/foo_spider_monkey_panel) based 64-bit CUI foobar2000 theme.
+A crappy responsive JSplitter based 64-bit CUI foobar2000 theme.
 
 # Preview
 ![Preview](gallery/preview.png)  

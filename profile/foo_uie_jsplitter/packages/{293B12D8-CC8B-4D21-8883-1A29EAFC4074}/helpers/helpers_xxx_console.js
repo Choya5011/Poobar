@@ -1,5 +1,5 @@
 ﻿'use strict';
-//11/12/25
+//07/01/26
 
 include(fb.ComponentPath + 'docs\\Codepages.js');
 /* global convertCharsetToCodepage:readable */
@@ -94,23 +94,17 @@ console.formatArg = (arg) => {
 						if (typeof v !== 'undefined' && v !== null) {
 							if (v.RawPath && v.Path) {
 								return 'FbMetadbHandle ' + JSON.stringify({ FileSize: v.FileSize, Length: v.Length, Path: v.Path, RawPath: v.RawPath, SubSong: v.SubSong }, null, ' ').replace(/{\n /, '{').replace(/["\n]/g, '').replace(/\\\\/g, '\\');
-							}
-							else if (v instanceof FbMetadbHandleList) {
+							} else if (v instanceof FbMetadbHandleList) {
 								return 'FbMetadbHandleList ' + JSON.stringify({ Count: v.Count }, null, ' ').replace(/{\n /, '{').replace(/["\n]/g, '');
-							}
-							else if (v instanceof Set) {
+							} else if (v instanceof Set) {
 								return 'Set ' + JSON.stringify([...v]).replace(/["\n]/g, '');
-							}
-							else if (v instanceof Map) {
+							} else if (v instanceof Map) {
 								return 'Map ' + JSON.stringify([...v]).replace(/["\n]/g, '');
-							}
-							else if (v instanceof WeakMap) {
+							} else if (v instanceof WeakMap) {
 								return 'WeakMap ' + JSON.stringify([...v]).replace(/["\n]/g, '');
-							}
-							else if (v instanceof WeakSet) {
+							} else if (v instanceof WeakSet) {
 								return 'WeakMap ' + JSON.stringify([...v]).replace(/["\n]/g, '');
-							}
-							else if (v instanceof Error) {
+							} else if (v instanceof Error) {
 								return 'Error ' + arg.toString().replace(/["\n]/g, '');
 							} else if (typeof v === 'function') {
 								return 'Function ' + v.name || 'anonymous';
@@ -118,6 +112,8 @@ console.formatArg = (arg) => {
 								return 'INFINITY';
 							} else if (v === -Infinity) {
 								return '-INFINITY';
+							} else if (v instanceof GdiFont) {
+								return 'GdiFont ' + JSON.stringify({ name: v.Name, height: v.Height, size: v.Size, style: v.Style }).replace(/["\n]/g, '');
 							}
 						}
 						return v;
@@ -197,15 +193,20 @@ console.enableFile = () => { console.EnabledFile = true; };
 console.disableFile = () => { console.EnabledFile = false; };
 
 // Rewrap FbProfiler to expose Name variable
-if (FbProfiler.prototype) {
+if (FbProfiler) {
 	const oldProto = FbProfiler.prototype;
-	const oldFunc = FbProfiler;
+	const old = FbProfiler;
 	FbProfiler = function (name) { // NOSONAR
-		const obj = oldFunc(name);
-		obj.Name = name;
-		return obj;
+		const that = old(name);
+		that.Name = name;
+		return that;
 	};
+	Object.defineProperty(FbProfiler, Symbol.hasInstance, { value(instance) { return instance instanceof old; } });
 	FbProfiler.prototype = oldProto;
+
+	fb.CreateProfiler = function CreateProfiler(name) {
+		return new FbProfiler(name);
+	};
 }
 
 // Rewrap FbProfiler to also log to file
@@ -214,11 +215,11 @@ if (FbProfiler.prototype.Print) {
 	FbProfiler.prototype.Print = function (additionalMsgOpt = '', printComponentInfoOpt = true) {
 		// Recreate the message format
 		let message = '';
-		if (printComponentInfoOpt) { message += 'Spider Monkey Panel v' + utils.Version + ': '; }
+		if (printComponentInfoOpt) { message += (fb.ComponentPath.includes('foo_uie_jsplitter') ? 'JSplitter' : 'Spider Monkey Panel') + ' v' + utils.Version + ': '; }
 		message += 'profiler (' + this.Name + '): ';
 		if (additionalMsgOpt && additionalMsgOpt.length) { message += additionalMsgOpt + ' '; }
 		message += this.Time + 'ms';
-		console.log(message); // Instead of using the original method, just use the basic log routine with debounce
+		console.log(message); // Instead of using the original method, just use the basic log routine with
 	};
 	console.checkSize();
 }

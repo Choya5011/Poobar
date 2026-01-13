@@ -1,5 +1,5 @@
 ﻿'use strict';
-//25/11/25
+//04/01/25
 
 /* exported _getNameSpacePath, _deleteFolder, _copyFile, _recycleFile, _restoreFile, _saveFSO, _saveSplitJson, _jsonParseFileSplit, _jsonParseFileCheck, _parseAttrFile, _explorer, getFiles, _run, _runHidden, _exec, editTextFile, findRecursiveFile, findRelPathInAbsPath, sanitizePath, sanitize, UUID, created, getFileMeta, popup, getPathMeta, testPath, youTubeRegExp, _isNetwork, findRecursiveDirs, _copyFolder, _renameFolder, _copyDependencies, _moveFile, _foldPath */
 
@@ -8,7 +8,7 @@ include(fb.ComponentPath + 'docs\\Codepages.js');
 include('helpers_xxx_basic_js.js');
 /* global tryMethod:readable */
 include('helpers_xxx_prototypes.js');
-/* global _q:readable, isString:readable, round:readable, roughSizeOfObject:readable, isArray:readable, isArrayStrings:readable, isCompatible:readable */ /* window.FullPanelName:readable */
+/* global _q:readable, isString:readable, round:readable, roughSizeOfObject:readable, isArray:readable, isArrayStrings:readable */ /* window.FullPanelName:readable */
 
 /*
 	Global Variables
@@ -248,7 +248,7 @@ function _resolvePath(path) {
 	if (path.startsWith('.\\profile\\')) { path = path.replace('.\\profile\\', fb.ProfilePath); }
 	else if (path.startsWith(folders.xxxRootName)) { path = path.replace(folders.xxxRootName, folders.xxx); }
 	else if (path.startsWith('.\\')) { path = path.replace('.\\', fb.FoobarPath); }
-	else { path = path.replace(/%fb2k_component_path%/gi, fb.ComponentPath).replace(/%fb2k_profile_path%/gi, fb.ProfilePath).replace(/%fb2k_path%/gi, fb.FoobarPath); }
+	else { path = path.replace(/%fb2k_component_path%\\?/gi, fb.ComponentPath).replace(/%(fb2k_profile_path|profile)%\\?/gi, fb.ProfilePath).replace(/%fb2k_path%\\?/gi, fb.FoobarPath); }
 	return path;
 }
 
@@ -261,19 +261,20 @@ function _comparePaths(source, destination) {
 }
 
 function _isFile(file) {
+	if (!isString(file)) { return false; }
 	file = _resolvePath(file);
 	if (file.endsWith('\\')) { file = file.slice(0, -1); }
-	if (isCompatible('1.4.0', 'smp') || isCompatible('3.6.1', 'jsplitter')) { try { return utils.IsFile(file); } catch (e) { return false; } } // eslint-disable-line no-unused-vars
-	else { return isString(file) ? fso.FileExists(file) : false; }
+	try { return utils.IsFile(file); } catch (e) { return fso.FileExists(file); }  // eslint-disable-line no-unused-vars
 }
 
 function _isFolder(folder) {
+	if (!isString(folder)) { return false; }
 	folder = _resolvePath(folder);
-	if (isCompatible('1.4.0', 'smp') || isCompatible('3.6.1', 'jsplitter')) { try { return utils.IsDirectory(folder); } catch (e) { return false; } } // eslint-disable-line no-unused-vars
-	else { return isString(folder) ? fso.FolderExists(folder) : false; }
+	try { return utils.IsDirectory(folder); } catch (e) { return fso.FolderExists(folder); } // eslint-disable-line no-unused-vars
 }
 
 function _isLink(path) {
+	if (!isString(path)) { return false; }
 	path = path.toLowerCase().replace(/\\\\/g, '//');
 	return ['http://', 'https://', 'fy+', '3dydfy:', 'youtube.', 'www.'].some((prefix) => path.startsWith(prefix)); /* cspell:disable-line */
 }
@@ -753,7 +754,7 @@ function checkCodePage(originalText, extension, bAdvancedCheck = false) {
 	} else if (bAdvancedCheck) {
 		if (plsText.length && plsText.some((line) => {
 			line = line.toLowerCase();
-			return (line.includes('ã©') || line.includes('ã¨') || line.includes('ã¼') || line.includes('ãº'));
+			return (line.includes('ã©') || line.includes('ã¨') || line.includes('ã¼') || line.includes('ãº') || line.includes('â€™') || line.includes('§×'));
 		})) {
 			codepage = utf8;
 		} else if (plsText.length && plsText.some((line) => { line = line.toLowerCase(); return (line.includes('�')); })) {

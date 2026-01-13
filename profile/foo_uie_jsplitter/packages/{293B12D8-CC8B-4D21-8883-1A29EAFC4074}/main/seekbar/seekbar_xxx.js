@@ -1,5 +1,5 @@
 'use strict';
-//19/12/25
+//12/01/26
 
 /* exported _seekbar */
 /* global _gdiFont:readable, _scale:readable, _isFile:readable, _isLink:readable, convertCharsetToCodepage:readable, throttle:readable, _isFolder:readable, _createFolder:readable, deepAssign:readable, clone:readable, _jsonParseFile:readable, _open:readable, _deleteFile:readable, DT_VCENTER:readable, DT_CENTER:readable, DT_END_ELLIPSIS:readable, DT_CALCRECT:readable, DT_NOPREFIX:readable, invert:readable, _p:readable, MK_LBUTTON:readable, _deleteFolder:readable, _q:readable, sanitizePath:readable, _runCmd:readable, round:readable, _saveFSO:readable, _save:readable, _resolvePath:readable, _foldPath:readable, addNested:readable, getNested:readable */
@@ -28,7 +28,7 @@ function _seekbar({
 	binaries = {
 		ffprobe: '.\\profile\\binaries\\ffprobe\\ffprobe.exe',
 		audiowaveform: '.\\profile\\binaries\\audiowaveform\\audiowaveform.exe',
-		visualizer: null,
+		visualizer: true,
 	},
 	preset = {
 		waveMode: 'waveform',
@@ -54,7 +54,7 @@ function _seekbar({
 			altFuture: 0xFFF9FF99, // Lemon RGB(249,255,153)
 			currPos: 0xFFFFFFFF // White RGB(255,255,255)
 		},
-		transparency: {
+		opacity: {
 			bg: 30,
 			main: 75,
 			alt: 75,
@@ -69,6 +69,7 @@ function _seekbar({
 			step: 5,
 			bReversed: false
 		},
+		gradientFocus: 1,
 		refreshRate: 200,
 		bVariableRefreshRate: false,
 		bNormalizeWidth: false,
@@ -111,7 +112,7 @@ function _seekbar({
 		const defBinaries = {
 			ffprobe: '.\\profile\\binaries\\ffprobe\\ffprobe.exe',
 			audiowaveform: '.\\profile\\binaries\\audiowaveform\\audiowaveform.exe',
-			visualizer: null,
+			visualizer: true,
 		};
 		const defPreset = {
 			waveMode: 'waveform',
@@ -137,7 +138,7 @@ function _seekbar({
 				altFuture: 0xFFF9FF99, // Lemon RGB(249,255,153)
 				currPos: 0xFFFFFFFF // White RGB(255,255,255)
 			},
-			transparency: {
+			opacity: {
 				bg: 100,
 				main: 100,
 				alt: 100,
@@ -146,6 +147,7 @@ function _seekbar({
 				altFuture: 100,
 				currPos: 100
 			},
+			gradientFocus: 1,
 			pos: { x: 0, y: 0, w: window.Width, h: window.Height, scaleH: 0.9, scaleW: 1 / 30, marginW: null },
 			wheel: { unit: 's', step: 5, bReversed: false },
 			refreshRate: 200,
@@ -202,11 +204,11 @@ function _seekbar({
 		if (!Object.hasOwn(this.binaries, this.analysis.binaryMode)) {
 			throw new Error('Binary mode not recognized or path not set: ' + this.analysis.binaryMode);
 		}
-		if (this.binaries[this.analysis.binaryMode] && !_isFile(this.binaries[this.analysis.binaryMode])) {
+		if (typeof this.binaries[this.analysis.binaryMode] === 'string' && !_isFile(this.binaries[this.analysis.binaryMode])) {
 			fb.ShowPopupMessage('Required dependency not found: ' + this.analysis.binaryMode + '\n\n' + JSON.stringify(this.binaries[this.analysis.binaryMode]), window.Name + ' (' + window.ScriptInfo.Name + ')');
 			this.bBinaryFound = false;
-		} else if (!this.binaries[this.analysis.binaryMode]) {
-			this.bBinaryFound = this.analysis.binaryMode === 'visualizer';
+		} else if (typeof this.binaries[this.analysis.binaryMode] === 'boolean') {
+			this.bBinaryFound = this.binaries[this.analysis.binaryMode];
 		} else { this.bBinaryFound = true; }
 		if (!this.isValidWaveMode(this.preset.waveMode)) { this.preset.waveMode = waveModes[0]; }
 		if (this.preset.waveMode === 'vumeter') {
@@ -217,6 +219,10 @@ function _seekbar({
 		if (this.ui.wheel.step < 0) { this.ui.wheel.step = 1; }
 		else if (this.ui.wheel.step > 100 && this.ui.wheel.unit === '%') { this.ui.wheel.step = 100; }
 		this.preset.displayChannels.sort((a, b) => a - b);
+		if (this.ui.gradientFocus < 0 || this.ui.gradientFocus > 100) { this.ui.gradientFocus = Math.max(0, Math.min(1, this.ui.gradientFocus)); }
+		for (let key in this.ui.opacity) {
+			if (this.ui.opacity[key] < 0 || this.ui.opacity[key] > 100) { this.ui.opacity[key] = Math.max(0, Math.min(100, this.ui.opacity[key])); }
+		}
 	};
 	/**
 	 * Updates all panel repaint functions to use refresh rate settings.
@@ -258,13 +264,13 @@ function _seekbar({
 	 * @typedef {object} Binaries - Binaries paths
 	 * @property {string?} ffprobe - ffprobe path
 	 * @property {string?} audiowaveform - audiowaveform path
-	 * @property {null} visualizer - Dummy placeholder
+	 * @property {boolean} visualizer - Internal visualizer (set to false to disable it)
 	 */
 	/** @type {Binaries} - Binaries paths */
 	this.binaries = binaries;
 	/**
 	 * @typedef {object} UI - Panel UI related settings
-	 * @property {GdiFont} gFont - ffprobe path
+	 * @property {GdiFont} gFont - GdiFont object
 	 * @property {object} colors - Color settings
 	 * @property {number} colors.bg - Background color
 	 * @property {number} colors.main - Waveform main color
@@ -273,14 +279,15 @@ function _seekbar({
 	 * @property {number} colors.mainFuture - After current time main color
 	 * @property {number} colors.altFuture - After current time alt color
 	 * @property {number} colors.currPos - Current time indicator color
-	 * @property {object} transparency - Current time indicator color
-	 * @property {number} transparency.bg - Background transparency
-	 * @property {number} transparency.main - Waveform main transparency
-	 * @property {number} transparency.alt - Waveform alt transparency
-	 * @property {number} transparency.bgFuture - After current time background transparency
-	 * @property {number} transparency.mainFuture - After current time main transparency
-	 * @property {number} transparency.altFuture - After current time alt transparency
-	 * @property {number} transparency.currPos - Current time indicator transparency
+	 * @property {object} opacity - Opacity settings [0-100]
+	 * @property {number} opacity.bg - Background opacity [0-100]
+	 * @property {number} opacity.main - Waveform main opacity [0-100]
+	 * @property {number} opacity.alt - Waveform alt opacity [0-100]
+	 * @property {number} opacity.bgFuture - After current time background opacity [0-100]
+	 * @property {number} opacity.mainFuture - After current time main opacity [0-100]
+	 * @property {number} opacity.altFuture - After current time alt opacity [0-100]
+	 * @property {number} opacity.currPos - Current time indicator opacity [0-100]
+	 * @property {number} gradientFocus - Focus for gradient related methods [0-1]
 	 * @property {object} pos - Panel coordinates
 	 * @property {number} pos.x - X-Axis position
 	 * @property {number} pos.y - Y-Axis position
@@ -304,7 +311,7 @@ function _seekbar({
 	this.ui = ui;
 	/**
 	 * @typedef {object} Preset - Waveform display related settings.
-	 * @property {'waveform'|'waveformfilled'|'bars'|'barsfilled'|'points'|'halfbars'|'tree'|'vumeter'} waveMode - Waveform design.
+	 * @property {'waveform'|'waveformfilled'|'bars'|'barsfilled'|'barsgradient'|'points'|'halfbars'|'halfbarsfilled'|'halfbarsgradient'|'soundcloud'|'soundcloudgradient'|'tree'|'processbar'|'processbarfilled'|'processbargradient'|'processbargradientscaled'|'vumeter'} waveMode - Waveform design.
 	 * @property {'rms_level'|'rms_peak'|'peak_level'} analysisMode - Data analysis mode (only available using ffprobe).
 	 * @property {'full'|'partial'} paintMode - Display mode. Entire track (full) or splits it into 2 regions (before/after current time). How the region after current time is displayed is set by {@link Preset.bPrePaint}
 	 * @property {boolean} bPrePaint - Flag to display the region after current time. How many seconds are  shown is set by {@link Preset.futureSecs}
@@ -316,7 +323,7 @@ function _seekbar({
 	 * @property {Number[]?} displayChannels - Channels which will be displayed, 0-based. An empty array will display all.
 	 * @property {boolean} bDownMixToMono - Flag to downmix selected display channels into a single channel-
 	 */
-	/** @type {Preset} - Waveform display related settings.*/
+	/** @type {Preset} - Waveform display related settings */
 	this.preset = preset;
 	/**
 	 * @typedef {object} Analysis - Analysis related settings.
@@ -331,13 +338,13 @@ function _seekbar({
 	 * @property {boolean} bVisualizerFallbackAnalysis - Flag to use visualizer mode while analyzing files.
 	 * @property {boolean} bMultiChannel - Flag to output analysis data files compatible with multichannel or downmixed to mono. Data files from both modes are not compatible, so changing it requires tracks to be analyzed again. Both data files may be present at match path though. Note using the multichannel mode still allows downmixing to mono via {@link Preset.bDownMixToMono} without requiring to analyze files again, so multichannel mode covers all use cases (but uses more disk space proportional to  track channels).
 	 */
-	/** @type {Analysis} - Waveform display related settings.*/
+	/** @type {Analysis} - Waveform display related settings */
 	this.analysis = analysis;
 	/**
 	 * @typedef {object} Callbacks - Panel callbacks related settings.
 	 * @property {() => number} backgroundColor - Sets the fallback color for text when there is no background color set for the waveform, otherwise will be white.
 	 */
-	/** @type {Callbacks} - Panel callbacks related settings. */
+	/** @type {Callbacks} - Panel callbacks related settings */
 	this.callbacks = callbacks;
 	/**
 	 * @typedef {object} Logging - Panel logging related settings.
@@ -347,7 +354,7 @@ function _seekbar({
 	 * @property {boolean} [bSave] - On seekbar file save logging flag.
 	 * @property {boolean} [bError] - On seekbar errors logging flag.
 	 */
-	/** @type {Logging} - Panel logging related settings. */
+	/** @type {Logging} - Panel logging related settings */
 	this.logging = logging;
 	// Easy access
 	/** @type {number} - X-Axis position */
@@ -401,8 +408,10 @@ function _seekbar({
 	this.codePageV2 = convertCharsetToCodepage('UTF-16LE');
 	/** @type {number[][]} - Current track data per channel */
 	this.current = [];
-	/** @type {number} - Number of data points (frames) per channel */
+	/** @type {number} - Number of data points (frames) per channel after normalization */
 	this.frames = 0;
+	/** @type {number} - Number of data points (frames) per channel before normalization */
+	this.framesSource = 0;
 	/** @type {number} - Track length / Num of frames */
 	this.timeConstant = 0;
 	/** @type {number} - Current track channels */
@@ -440,9 +449,9 @@ function _seekbar({
 	/** @type {FbMetadbHandle} - Current handle being displayed */
 	this.currentHandle = null;
 	/** @type {number} - Last x mouse position within panel */
-	this.mx = -1;
+	this.mX = -1;
 	/** @type {number} - Last y mouse position within panel */
-	this.my = -1;
+	this.mY = -1;
 	// Private
 	/** @type {{paint: boolean, analysis: boolean}} - Used when this.analysis.bVisualizerFallbackAnalysis is true, to track current step on processing */
 	const bFallbackMode = { paint: false, analysis: false };
@@ -460,10 +469,12 @@ function _seekbar({
 	['ffprobe', 'audiowaveform'].forEach((key) => {
 		compatibleFiles[key] = new RegExp('\\.(' + compatibleFiles[key + 'List'].join('|') + ')$', 'i');
 	});
-	/** @type {string[]} - Supported wavemodes */
-	const waveModes = ['waveform', 'waveformfilled', 'bars', 'barsfilled', 'points', 'halfbars', 'tree', 'soundcloud', 'soundcloudgradient', 'vumeter'];
-	/** @type {string[]} - Wavemodes which require wider repainting */
-	const waveModesWide = ['soundcloud', 'soundcloudgradient', 'bars', 'halbars', 'barsfilled', 'waveformfilled', 'tree'];
+	/** @type {Preset['waveMode'][]} - Supported wavemodes */
+	const waveModes = ['waveform', 'waveformfilled', 'bars', 'barsfilled', 'barsgradient', 'points', 'halfbars', 'halfbarsfilled', 'halfbarsgradient', 'tree', 'soundcloud', 'soundcloudgradient', 'processbar', 'processbarfilled', 'processbargradient', 'processbargradientscaled', 'vumeter'];
+	/** @type {Preset['waveMode'][]} - Wavemodes which require wider repainting */
+	const waveModesWide = ['soundcloud', 'soundcloudgradient', 'bars', 'halfbars', 'barsfilled', 'barsgradient', 'halfbarsfilled', 'waveformfilled', 'halfbarsgradient', 'tree'];
+	/** @type {Preset['waveMode'][]} - Wavemodes which use gradient painting */
+	const waveModesGrad = ['soundcloudgradient', 'barsgradient', 'halfbarsgradient', 'processbargradient', 'processbargradientscaled'];
 	/** @type {Number} - Last time update */
 	this.lastUpdate = Date.now();
 	/** @type {Number[]} - Frames around current time to draw VU animation */
@@ -550,20 +561,22 @@ function _seekbar({
 	*/
 	this.exportConfig = (bSkipPanelDependent = true) => {
 		const config = {};
-		let notAllowed;
+		const notAllowed = new Set();
 		config.binaries = {};
-		notAllowed = new Set(['visualizer']);
+		if (bSkipPanelDependent) { notAllowed.add('visualizer'); }
 		for (const key in this.binaries) {
 			if (!notAllowed.has(key)) { config.binaries[key] = clone(this.binaries[key]); }
 		}
+		notAllowed.clear();
 		config.ui = {};
-		notAllowed = new Set(['gFont']);
+		notAllowed.add('gFont');
 		for (const key in this.ui) {
 			if (key === 'pos') {
 				if (bSkipPanelDependent) { continue; }
 				config.ui.pos = { scaleH: this.ui.pos.scaleH, scaleW: this.ui.posScaleW, marginW: this.ui.marginW };
 			} else if (!notAllowed.has(key)) { config.ui[key] = clone(this.ui[key]); }
 		}
+		notAllowed.clear();
 		config.preset = clone(this.preset);
 		config.analysis = clone(this.analysis);
 		config.logging = clone(this.logging);
@@ -614,7 +627,7 @@ function _seekbar({
 		const wasActive = this.active;
 		this.active = bEnable;
 		if (!wasActive && this.active) {
-			window.Repaint();
+			if (window.IsVisible) { window.Repaint(); }
 			setTimeout(() => {
 				const handle = this.getHandle();
 				this.newTrack(handle, void (0), true);
@@ -922,7 +935,7 @@ function _seekbar({
 	 * @returns {void}
 	*/
 	this.normalizePoints = (bNormalizeWidth = false) => {
-		this.frames = this.current[0].length;
+		this.framesSource = this.frames = this.current[0].length;
 		if (this.frames) {
 			const bDiscardedSamples = this.clampResolution(Math.max(this.w / _scale(1), 40000));
 			const limits = this.normalizeAmplitude();
@@ -1153,7 +1166,7 @@ function _seekbar({
 	*/
 	this.downMixToMono = () => {
 		if (this.channels <= 1) { return; }
-		this.frames = this.current[0].length;
+		this.framesSource = this.frames = this.current[0].length;
 		const monoData = [];
 		const channelsNum = this.getDisplayChannels(false).length;
 		if (this.analysis.binaryMode === 'ffprobe') {
@@ -1238,14 +1251,14 @@ function _seekbar({
 				this.isFallback = this.analysis.bVisualizerFallback;
 				this.isError = true;
 				this.current = [];
-				this.frames = 0;
+				this.framesSource = this.frames = 0;
 				this.timeConstant = 0;
 			} else if (this.analysis.binaryMode === 'visualizer') {
 				this.isAllowedFile = true;
 				this.isFallback = false;
 				this.isError = true;
 				this.current = [];
-				this.frames = 0;
+				this.framesSource = this.frames = 0;
 				this.timeConstant = 0;
 			} else {
 				if (this.logging.bError) { console.log('Seekbar: Analysis file not valid.' + (file ? ' Creating new one -> ' + file : '')); }
@@ -1351,6 +1364,33 @@ function _seekbar({
 		return [...waveModes];
 	};
 	/**
+	 * Checks if given wave mode requires wide repainting
+	 *
+	 * @property
+	 * @name isWideWaveMode
+	 * @kind method
+	 * @memberof _seekbar
+	 * @param {Preset['waveMode']} mode - [=this.preset.waveMode] Wavemode
+	 * @returns {string[]}
+	*/
+	this.isWideWaveMode = (mode = this.preset.waveMode) => {
+		return waveModesWide.includes(mode);
+	};
+	/**
+	 * Checks if given wave mode uses gradient painting
+	 *
+	 * @property
+	 * @name isGradientWaveMode
+	 * @kind method
+	 * @memberof _seekbar
+	 * @param {Preset['waveMode']} mode - [=this.preset.waveMode] Wavemode
+	 * @returns {string[]}
+	*/
+	this.isGradientWaveMode = (mode = this.preset.waveMode) => {
+
+		return waveModesGrad.includes(mode);
+	};
+	/**
 	 * Sets the steps required to draw the animation for the track's BPM. By default BPM is considered 100 if not available.
 	 *
 	 * @property
@@ -1413,18 +1453,19 @@ function _seekbar({
 		if (this.analysis.binaryMode === 'visualizer' || bFullAnimated || this.preset.waveMode === 'vumeter' || !frames || bFull) {
 			throttlePaint(bFull);
 		} else if (bPrePaint || this.preset.bPaintCurrent || bPartial) {
-			const widerModesScale = waveModesWide.includes(this.preset.waveMode) ? 2 : 1;
+			const widerModesScale = this.isWideWaveMode(this.preset.waveMode) ? 2 : 1;
 			const currX = this.x + this.marginW + (this.w - this.marginW * 2) * time / this.getHandleLength();
 			const barW = Math.ceil(Math.max((this.w - this.marginW * 2) / frames, _scale(2))) * widerModesScale;
+			const extraNormOffset = (this.framesSource < this.frames ? Math.ceil(this.frames / this.framesSource) * 1.25 : 1) * widerModesScale;
 			const prePaintW = Math.min(
 				bPrePaint && this.preset.futureSecs !== Infinity || this.preset.bAnimate
 					? this.preset.futureSecs === Infinity && this.preset.bAnimate
 						? Infinity
 						: this.preset.futureSecs / this.timeConstant * barW + barW
-					: 2.5 * barW * 2,
+					: barW * 2,
 				this.w - currX + barW
-			);
-			throttlePaintRect(currX - barW, this.y, prePaintW, this.h);
+			) + barW * extraNormOffset;
+			throttlePaintRect(currX - barW * extraNormOffset, this.y, prePaintW, this.h);
 		}
 	};
 	/**
@@ -1440,7 +1481,7 @@ function _seekbar({
 		this.current = [];
 		this.currentHandle = null;
 		this.channels = 0;
-		this.frames = 0;
+		this.framesSource = this.frames = 0;
 		this.timeConstant = 0;
 		this.cache = null;
 		this.time = 0;
@@ -1520,7 +1561,7 @@ function _seekbar({
 		if (!state) { [60, 250, 500, 750, 1000].forEach((time) => setTimeout(throttlePaint, time)); }
 	};
 	/**
-	 * Retrieves current panel colors with transparency applied
+	 * Retrieves current panel colors with opacity applied
 	 *
 	 * @property
 	 * @name getColors
@@ -1530,13 +1571,13 @@ function _seekbar({
 	*/
 	this.getColors = () => {
 		return Object.fromEntries(
-			Object.keys(this.ui.transparency).map((key) => {
+			Object.keys(this.ui.opacity).map((key) => {
 				return [
 					key,
-					this.ui.colors[key] !== -1 && this.ui.transparency[key] !== 0
-						? Math.round(this.ui.transparency[key]) === 100
+					this.ui.colors[key] !== -1 && this.ui.opacity[key] !== 0
+						? Math.round(this.ui.opacity[key]) === 100
 							? this.ui.colors[key]
-							: this.applyAlpha(this.ui.colors[key], this.ui.transparency[key])
+							: this.applyAlpha(this.ui.colors[key], this.ui.opacity[key])
 						: -1
 				];
 			})
@@ -1569,6 +1610,7 @@ function _seekbar({
 	 * @returns {void}
 	*/
 	this.paint = (gr) => {
+		if (!window.IsVisible) { return; }
 		profilerPaint.Reset();
 		const colors = this.getColors();
 		// Panel background
@@ -1596,10 +1638,17 @@ function _seekbar({
 			const bWaveForm = this.preset.waveMode === 'waveform';
 			const bPoints = this.preset.waveMode === 'points';
 			const bBarsFilled = this.preset.waveMode === 'barsfilled';
+			const bBarsGrad = this.preset.waveMode === 'barsgradient';
+			const bHalfBarsFilled = this.preset.waveMode === 'halfbarsfilled';
+			const bHalfBarsGrad = this.preset.waveMode === 'halfbarsgradient';
 			const bWaveFormFilled = this.preset.waveMode === 'waveformfilled';
 			const bTree = this.preset.waveMode === 'tree';
 			const bSoundCloud = this.preset.waveMode === 'soundcloud';
 			const bSoundCloudGrad = this.preset.waveMode === 'soundcloudgradient';
+			const bProcessbar = this.preset.waveMode === 'processbar';
+			const bProcessbarFilled = this.preset.waveMode === 'processbarfilled';
+			const bProcessbarGrad = this.preset.waveMode === 'processbargradient';
+			const bProcessbarGradScaled = this.preset.waveMode === 'processbargradientscaled';
 			const bVuMeter = this.preset.waveMode === 'vumeter';
 			let bPaintedVu = false;
 			let bFilledVu = framesVu.length >= this.maxStepVu;
@@ -1610,6 +1659,7 @@ function _seekbar({
 			const margin = channelsNum > 1 ? _scale(5) : 0;
 			const size = (this.h - this.y - margin) * this.scaleH / channelsNum;
 			const barW = (this.w - this.marginW * 2) / this.frames;
+			const bPaintCurrent = barW > _scale(2);
 			const minPointDiff = 1; // in px
 			const timeConstant = this.timeConstant;
 			for (let c = 0; c < channelsNum; c++) {
@@ -1669,21 +1719,35 @@ function _seekbar({
 						if (bWaveForm) {
 							this.paintWave(gr, n, x, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, colors);
 						} else if (bHalfBars) {
-							this.paintHalfBars(gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bFfProbe, colors);
+							this.paintHalfBars(gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors);
 						} else if (bBars) {
-							this.paintBars(gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bFfProbe, colors);
+							this.paintBars(gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors);
 						} else if (bPoints) {
 							this.paintPoints(gr, n, x, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, colors);
 						} else if (bBarsFilled) {
-							this.paintBarsFilled(gr, n, x, barW, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, colors);
+							this.paintBarsFilled(gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors);
+						} else if (bBarsGrad) {
+							this.paintBarsGradient(gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors);
+						} else if (bHalfBarsFilled) {
+							this.paintHalfBarsFilled(gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors);
+						} else if (bHalfBarsGrad) {
+							this.paintHalfBarsGrad(gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors);
 						} else if (bWaveFormFilled) {
 							this.paintWaveFill(gr, n, x, barW, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, colors);
 						} else if (bTree) {
 							this.paintTree(gr, n, x, barW, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, colors);
 						} else if (bSoundCloud) {
-							this.paintSoundCloud(gr, n, x, barW, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, colors);
+							this.paintSoundCloud(gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors);
 						} else if (bSoundCloudGrad) {
-							this.paintSoundCloudGrad(gr, n, x, barW, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, colors);
+							this.paintSoundCloudGrad(gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors);
+						} else if (bProcessbar) {
+							this.paintProcessBar(gr, x, barW, currX, offsetY, size, bPrePaint, bIsFuture, bPaintCurrent, colors);
+						} else if (bProcessbarFilled) {
+							this.paintProcessBarFilled(gr, x, barW, currX, offsetY, size, bPrePaint, bIsFuture, bPaintCurrent, colors);
+						} else if (bProcessbarGrad) {
+							this.paintProcessBarGrad(gr, x, barW, currX, offsetY, size, bPrePaint, bIsFuture, bPaintCurrent, colors);
+						} else if (bProcessbarGradScaled) {
+							this.processBarGradScale(gr, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bPaintCurrent, colors);
 						}
 						past.shift();
 						past.push({ x, y: Math.sign(scale) });
@@ -1692,7 +1756,7 @@ function _seekbar({
 				}
 				gr.SetSmoothingMode(0);
 				// Current position
-				if ((bFfProbe || bWaveForm || bPoints || bBarsFilled || bWaveFormFilled || bSoundCloud || bVuMeter) && bIsTrackPlaying) {
+				if ((!bPaintCurrent || bWaveForm || bPoints || bWaveFormFilled || bVuMeter) && bIsTrackPlaying) {
 					this.paintCurrentPos(gr, currX, barW, colors);
 				}
 			}
@@ -1783,10 +1847,11 @@ function _seekbar({
 	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
 	 * @param {boolean} bIsFuture - Flag used when point is after current time
 	 * @param {boolean} bVisualizer - Flag used when mode is visualizer
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
 	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number, currPos: number}} colors - Colors used
 	 * @returns {void}
 	*/
-	this.paintHalfBars = (gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bFfProbe, colors) => { // NOSONAR
+	this.paintHalfBars = (gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors) => { // NOSONAR
 		const scaledSize = size / 2 * scale;
 		this.offset[n] += ((bPrePaint && bIsFuture || this.preset.paintMode === 'full') && this.preset.bAnimate || bVisualizer ? - Math.sign(scale) * Math.random() * scaledSize / 10 * this.step / this.maxStep : 0); // Add movement when painting future
 		const rand = Math.sign(scale) * this.offset[n];
@@ -1798,7 +1863,7 @@ function _seekbar({
 		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
 		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
 		// Current position
-		if ((this.preset.bPaintCurrent || this.mouseDown) && !bFfProbe && colors.currPos !== -1) {
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
 			if (x <= currX && x >= currX - 2 * barW) { color = altColor = colors.currPos; }
 		}
 		if (y > 0) {
@@ -1826,10 +1891,11 @@ function _seekbar({
 	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
 	 * @param {boolean} bIsFuture - Flag used when point is after current time
 	 * @param {boolean} bVisualizer - Flag used when mode is visualizer
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
 	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number, currPos: number}} colors - Colors used
 	 * @returns {void}
 	*/
-	this.paintBars = (gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bFfProbe, colors) => { // NOSONAR
+	this.paintBars = (gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors) => { // NOSONAR
 		const scaledSize = size / 2 * scale;
 		this.offset[n] += ((bPrePaint && bIsFuture || this.preset.paintMode === 'full') && this.preset.bAnimate || bVisualizer ? - Math.sign(scale) * Math.random() * scaledSize / 10 * this.step / this.maxStep : 0); // Add movement when painting future
 		const rand = Math.sign(scale) * this.offset[n];
@@ -1840,7 +1906,7 @@ function _seekbar({
 		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
 		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
 		// Current position
-		if ((this.preset.bPaintCurrent || this.mouseDown) && !bFfProbe && colors.currPos !== -1) {
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
 			if (x <= currX && x >= currX - 2 * barW) { color = altColor = colors.currPos; }
 		}
 		let z = bVisualizer ? Math.abs(y) : y;
@@ -1930,16 +1996,18 @@ function _seekbar({
 	 * @param {number} n - Point idx
 	 * @param {number} x - X-point coord
 	 * @param {number} barW - Bar size
+	 * @param {number} currX - Current time position to handle indicator within bars
 	 * @param {number} offsetY - Offset in Y-Axis due to multichannel handling
 	 * @param {number} size - Panel point size
 	 * @param {number} scale - Point scaling
 	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
 	 * @param {boolean} bIsFuture - Flag used when point is after current time
 	 * @param {boolean} bVisualizer - Flag used when mode is visualizer
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
 	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number}} colors - Colors used
 	 * @returns {void}
 	*/
-	this.paintBarsFilled = (gr, n, x, barW, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, colors) => { // NOSONAR
+	this.paintBarsFilled = (gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors) => { // NOSONAR
 		const scaledSize = size / 2 * scale;
 		this.offset[n] += ((bPrePaint && bIsFuture || this.preset.paintMode === 'full') && this.preset.bAnimate || bVisualizer ? - Math.sign(scale) * Math.random() * scaledSize / 10 * this.step / this.maxStep : 0); // Add movement when painting future
 		const rand = Math.sign(scale) * this.offset[n];
@@ -1947,8 +2015,12 @@ function _seekbar({
 			? Math.min(Math.max(scaledSize + rand, 1), size / 2)
 			: Math.max(Math.min(scaledSize + rand, -1), - size / 2);
 		const axisY = this.h / 2 - offsetY;
-		const color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
-		const altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
+		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		// Current position
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
+			if (x <= currX && x >= currX - 2 * barW) { color = altColor = colors.currPos; }
+		}
 		let z = bVisualizer ? Math.abs(y) : y;
 		if (z > 0) {
 			if (altColor !== color) {
@@ -1962,6 +2034,154 @@ function _seekbar({
 				if (color !== -1) { gr.FillSolidRect(x, axisY - z / 2, barW, - z / 2, color); }
 				if (altColor !== -1) { gr.FillSolidRect(x, axisY, barW, - z / 2, altColor); }
 			} else if (color !== -1) { gr.FillSolidRect(x, axisY, barW, - z, color); }
+		}
+	};
+	/**
+	 * Draws bars (gradient) wave mode.
+	 *
+	 * @property
+	 * @name paintBarsGradient
+	 * @kind method
+	 * @memberof _seekbar
+	 * @param {GdiGraphics} gr - GDI graphics object from on_paint callback.
+	 * @param {number} n - Point idx
+	 * @param {number} x - X-point coord
+	 * @param {number} barW - Bar size
+	 * @param {number} currX - Current time position to handle indicator within bars
+	 * @param {number} offsetY - Offset in Y-Axis due to multichannel handling
+	 * @param {number} size - Panel point size
+	 * @param {number} scale - Point scaling
+	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
+	 * @param {boolean} bIsFuture - Flag used when point is after current time
+	 * @param {boolean} bVisualizer - Flag used when mode is visualizer
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
+	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number}} colors - Colors used
+	 * @returns {void}
+	*/
+	this.paintBarsGradient = (gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors) => { // NOSONAR
+		const scaledSize = size / 2 * scale;
+		this.offset[n] += ((bPrePaint && bIsFuture || this.preset.paintMode === 'full') && this.preset.bAnimate || bVisualizer ? - Math.sign(scale) * Math.random() * scaledSize / 10 * this.step / this.maxStep : 0); // Add movement when painting future
+		const rand = Math.sign(scale) * this.offset[n];
+		const y = scaledSize > 0
+			? Math.min(Math.max(scaledSize + rand, 1), size / 2)
+			: Math.max(Math.min(scaledSize + rand, -1), - size / 2);
+		const axisY = this.h / 2 - offsetY;
+		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
+		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		// Current position
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
+			if (x <= currX && x >= currX - 2 * barW) { color = altColor = colors.currPos; }
+		}
+		let z = bVisualizer ? Math.abs(y) : y;
+		if (z > 0) {
+			if (altColor !== color) {
+				if (color !== -1 && altColor !== -1) {
+					const topColor = this.blendColors(altColor, color, scale);
+					gr.FillGradRect(x, axisY - z, barW, z, 92, topColor, altColor, this.ui.gradientFocus);
+				} else if (color !== -1) { gr.FillSolidRect(x, axisY - z, barW, z / 2, color); }
+				else if (altColor !== -1) { gr.FillSolidRect(x, axisY - z / 2, barW, z / 2, altColor); }
+			} else if (color !== -1) { gr.FillSolidRect(x, axisY - z, barW, z, color); }
+		}
+		z = bVisualizer ? - Math.abs(y) : y;
+		if (z < 0) {
+			if (altColor !== color) {
+				if (color !== -1 && altColor !== -1) {
+					const topColor = this.blendColors(altColor, color, scale);
+					gr.FillGradRect(x, axisY, barW, - z, 92, topColor, altColor, this.ui.gradientFocus);
+				} else if (color !== -1) { gr.FillSolidRect(x, axisY - z / 2, barW, - z / 2, color); }
+				else if (altColor !== -1) { gr.FillSolidRect(x, axisY, barW, - z / 2, altColor); }
+			} else if (color !== -1) { gr.FillSolidRect(x, axisY, barW, - z, color); }
+		}
+	};
+	/**
+	 * Draws half-bars (filled) wave mode.
+	 *
+	 * @property
+	 * @name paintHalfBarsFilled
+	 * @kind method
+	 * @memberof _seekbar
+	 * @param {GdiGraphics} gr - GDI graphics object from on_paint callback.
+	 * @param {number} n - Point idx
+	 * @param {number} x - X-point coord
+	 * @param {number} barW - Bar size
+	 * @param {number} currX - Current time position to handle indicator within bars
+	 * @param {number} offsetY - Offset in Y-Axis due to multichannel handling
+	 * @param {number} size - Panel point size
+	 * @param {number} scale - Point scaling
+	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
+	 * @param {boolean} bIsFuture - Flag used when point is after current time
+	 * @param {boolean} bVisualizer - Flag used when mode is visualizer
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
+	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number}} colors - Colors used
+	 * @returns {void}
+	*/
+	this.paintHalfBarsFilled = (gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors) => { // NOSONAR
+		const scaledSize = size / 2 * scale;
+		this.offset[n] += ((bPrePaint && bIsFuture || this.preset.paintMode === 'full') && this.preset.bAnimate || bVisualizer ? - Math.sign(scale) * Math.random() * scaledSize / 10 * this.step / this.maxStep : 0); // Add movement when painting future
+		const rand = Math.sign(scale) * this.offset[n];
+		let y = scaledSize > 0
+			? Math.min(Math.max(scaledSize + rand, 1), size / 2)
+			: Math.max(Math.min(scaledSize + rand, -1), - size / 2);
+		const axisY = this.h / 2 - offsetY;
+		if (this.preset.bHalfBarsShowNeg) { y = Math.abs(y); }
+		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
+		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		// Current position
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
+			if (x <= currX && x >= currX - 2 * barW) { color = altColor = colors.currPos; }
+		}
+		if (y > 0) {
+			if (altColor !== color) {
+				if (color !== -1) { gr.FillSolidRect(x, axisY + size / 2 - 2 * y, barW, y, color); }
+				if (altColor !== -1) { gr.FillSolidRect(x, axisY + size / 2 - y, barW, y, altColor); }
+			} else if (color !== -1) { gr.FillSolidRect(x, axisY + size / 2 - 2 * y, barW, 2 * y, color); }
+		}
+	};
+	/**
+	 * Draws half-bars (gradient) wave mode.
+	 *
+	 * @property
+	 * @name paintHalfBarsGrad
+	 * @kind method
+	 * @memberof _seekbar
+	 * @param {GdiGraphics} gr - GDI graphics object from on_paint callback.
+	 * @param {number} n - Point idx
+	 * @param {number} x - X-point coord
+	 * @param {number} barW - Bar size
+	 * @param {number} currX - Current time position to handle indicator within bars
+	 * @param {number} offsetY - Offset in Y-Axis due to multichannel handling
+	 * @param {number} size - Panel point size
+	 * @param {number} scale - Point scaling
+	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
+	 * @param {boolean} bIsFuture - Flag used when point is after current time
+	 * @param {boolean} bVisualizer - Flag used when mode is visualizer
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
+	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number}} colors - Colors used
+	 * @returns {void}
+	*/
+	this.paintHalfBarsGrad = (gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors) => { // NOSONAR
+		const scaledSize = size / 2 * scale;
+		this.offset[n] += ((bPrePaint && bIsFuture || this.preset.paintMode === 'full') && this.preset.bAnimate || bVisualizer ? - Math.sign(scale) * Math.random() * scaledSize / 10 * this.step / this.maxStep : 0); // Add movement when painting future
+		const rand = Math.sign(scale) * this.offset[n];
+		let y = scaledSize > 0
+			? Math.min(Math.max(scaledSize + rand, 1), size / 2)
+			: Math.max(Math.min(scaledSize + rand, -1), - size / 2);
+		const axisY = this.h / 2 - offsetY;
+		if (this.preset.bHalfBarsShowNeg) { y = Math.abs(y); }
+		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
+		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		// Current position
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
+			if (x <= currX && x >= currX - 2 * barW) { color = altColor = colors.currPos; }
+		}
+		if (y > 0) {
+			if (altColor !== color) {
+				if (color !== -1 && altColor !== -1) {
+					const topColor = this.blendColors(altColor, color, scale);
+					gr.FillGradRect(x, axisY + size / 2 - 2 * y, barW, 2 * y, 92, topColor, altColor, this.ui.gradientFocus);
+				} else if (color !== -1) { gr.FillSolidRect(x, axisY + size / 2 - 2 * y, barW, y, color); }
+				else { gr.FillSolidRect(x, axisY + size / 2 - y, barW, y, altColor); }
+			} else if (color !== -1) { gr.FillSolidRect(x, axisY + size / 2 - 2 * y, barW, 2 * y, color); }
 		}
 	};
 	const waveFillCache = [void (0), void (0)];
@@ -2077,6 +2297,7 @@ function _seekbar({
 	 * @param {number} n - Point idx
 	 * @param {number} x - X-point coord
 	 * @param {number} barW - Bar size
+	 * @param {number} currX - Current time position to handle indicator within bars
 	 * @param {number} offsetY - Offset in Y-Axis due to multichannel handling
 	 * @param {number} size - Panel point size
 	 * @param {number} scale - Point scaling
@@ -2084,10 +2305,11 @@ function _seekbar({
 	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
 	 * @param {boolean} bIsFuture - Flag used when point is after current time
 	 * @param {boolean} bVisualizer - Flag used when mode is visualizer
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
 	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number}} colors - Colors used
 	 * @returns {void}
 	*/
-	this.paintSoundCloud = (gr, n, x, barW, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, colors) => { // NOSONAR
+	this.paintSoundCloud = (gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors) => { // NOSONAR
 		barW = barW * 1.80;
 		const scaledSize = size / 2 * scale;
 		this.offset[n] += ((bPrePaint && bIsFuture || this.preset.paintMode === 'full') && this.preset.bAnimate || bVisualizer ? - Math.sign(scale) * Math.random() * scaledSize / 10 * this.step / this.maxStep : 0); // Add movement when painting future
@@ -2096,8 +2318,12 @@ function _seekbar({
 			? Math.min(Math.max(scaledSize + rand, 1), size / 2)
 			: Math.max(Math.min(scaledSize + rand, -1), - size / 2);
 		const axisY = this.h / 2 - offsetY + size / 4 / 2; // Move it down a bit to account for half wave not being painted
-		const color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
-		const altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
+		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		// Current position
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
+			if (x <= currX && x >= currX - barW) { color = altColor = colors.currPos; }
+		}
 		let z = bVisualizer ? Math.abs(y) : y;
 		if (z > 0) {
 			if (altColor !== color) {
@@ -2133,6 +2359,7 @@ function _seekbar({
 	 * @param {number} n - Point idx
 	 * @param {number} x - X-point coord
 	 * @param {number} barW - Bar size
+	 * @param {number} currX - Current time position to handle indicator within bars
 	 * @param {number} offsetY - Offset in Y-Axis due to multichannel handling
 	 * @param {number} size - Panel point size
 	 * @param {number} scale - Point scaling
@@ -2140,10 +2367,11 @@ function _seekbar({
 	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
 	 * @param {boolean} bIsFuture - Flag used when point is after current time
 	 * @param {boolean} bVisualizer - Flag used when mode is visualizer
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
 	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number}} colors - Colors used
 	 * @returns {void}
 	*/
-	this.paintSoundCloudGrad = (gr, n, x, barW, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, colors) => { // NOSONAR
+	this.paintSoundCloudGrad = (gr, n, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bVisualizer, bPaintCurrent, colors) => { // NOSONAR
 		barW = barW * 1.80;
 		const scaledSize = size / 2 * scale;
 		this.offset[n] += ((bPrePaint && bIsFuture || this.preset.paintMode === 'full') && this.preset.bAnimate || bVisualizer ? - Math.sign(scale) * Math.random() * scaledSize / 10 * this.step / this.maxStep : 0); // Add movement when painting future
@@ -2152,14 +2380,18 @@ function _seekbar({
 			? Math.min(Math.max(scaledSize + rand, 1), size / 2)
 			: Math.max(Math.min(scaledSize + rand, -1), - size / 2);
 		const axisY = this.h / 2 - offsetY + size / 4 / 2; // Move it down a bit to account for half wave not being painted
-		const color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
-		const altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
+		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		// Current position
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
+			if (x <= currX && x >= currX - barW) { color = altColor = colors.currPos; }
+		}
 		let z = bVisualizer ? Math.abs(y) : y;
 		if (z > 0) {
 			if (altColor !== color) {
 				if (color !== -1 && altColor !== -1) {
 					const topColor = this.blendColors(altColor, color, scale);
-					gr.FillGradRect(x, axisY - z, barW, z, 92, topColor, altColor);
+					gr.FillGradRect(x, axisY - z, barW, z, 92, topColor, altColor, this.ui.gradientFocus);
 				} else if (color !== -1) { gr.FillSolidRect(x, axisY - z, barW, z / 2, color); }
 				else if (altColor !== -1) { gr.FillSolidRect(x, axisY - z / 2, barW, z / 2, altColor); }
 			} else if (color !== -1) { gr.FillSolidRect(x, axisY - z, barW, z, color); }
@@ -2170,7 +2402,7 @@ function _seekbar({
 				if (color !== -1 && altColor !== -1) {
 					const reflectionColorMain = this.applyAlpha(color, this.getAlpha(color) / 2.5 / 255 * 100);
 					const reflectionColorAlt = this.applyAlpha(altColor, this.getAlpha(altColor) / 2.5 / 255 * 100);
-					gr.FillGradRect(x, axisY, barW, - z / 2, 92, reflectionColorAlt, reflectionColorMain);
+					gr.FillGradRect(x, axisY, barW, - z / 2, 92, reflectionColorAlt, reflectionColorMain, this.ui.gradientFocus);
 				} else if (color !== -1) {
 					const reflectionColor = this.applyAlpha(color, this.getAlpha(color) / 2.5 / 255 * 100);
 					gr.FillSolidRect(x, axisY - z / 4, barW, - z / 4, reflectionColor);
@@ -2182,6 +2414,162 @@ function _seekbar({
 				const reflectionColor = this.applyAlpha(color, this.getAlpha(color) / 2.5 / 255 * 100);
 				gr.FillSolidRect(x, axisY, barW, - z / 2, reflectionColor);
 			}
+		}
+	};
+	/**
+	 * Draws process bar  wave mode.
+	 *
+	 * @property
+	 * @name paintProcessBar
+	 * @kind method
+	 * @memberof _seekbar
+	 * @param {GdiGraphics} gr - GDI graphics object from on_paint callback.
+	 * @param {number} x - X-point coord
+	 * @param {number} barW - Bar size
+	 * @param {number} currX - Current time position to handle indicator within bars
+	 * @param {number} offsetY - Offset in Y-Axis due to multichannel handling
+	 * @param {number} size - Panel point size
+	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
+	 * @param {boolean} bIsFuture - Flag used when point is after current time
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
+	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number}} colors - Colors used
+	 * @returns {void}
+	*/
+	this.paintProcessBar = (gr, x, barW, currX, offsetY, size, bPrePaint, bIsFuture, bPaintCurrent, colors) => { // NOSONAR
+		const y = size / 2;
+		const axisY = this.h / 2 - offsetY;
+		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
+		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		// Current position
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
+			if (x <= currX && x >= currX - barW) { color = altColor = colors.currPos; }
+		}
+		if (y > 0) {
+			x += Math.max(barW * 0.025, 1);
+			barW -= Math.max(barW * 0.05, 2);
+			if (altColor !== color) {
+				if (color !== -1) { gr.DrawRect(x, axisY + size / 2 - 2 * y, barW, y, 1, color); }
+				if (altColor !== -1) { gr.DrawRect(x, axisY + size / 2 - y, barW, y, 1, altColor); }
+			} else if (color !== -1) { gr.DrawRect(x, axisY + size / 2 - 2 * y, barW, 2 * y, 1, color); }
+		}
+	};
+	/**
+	 * Draws process bar (filled) wave mode.
+	 *
+	 * @property
+	 * @name paintProcessBarFilled
+	 * @kind method
+	 * @memberof _seekbar
+	 * @param {GdiGraphics} gr - GDI graphics object from on_paint callback.
+	 * @param {number} x - X-point coord
+	 * @param {number} barW - Bar size
+	 * @param {number} currX - Current time position to handle indicator within bars
+	 * @param {number} offsetY - Offset in Y-Axis due to multichannel handling
+	 * @param {number} size - Panel point size
+	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
+	 * @param {boolean} bIsFuture - Flag used when point is after current time
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
+	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number}} colors - Colors used
+	 * @returns {void}
+	*/
+	this.paintProcessBarFilled = (gr, x, barW, currX, offsetY, size, bPrePaint, bIsFuture, bPaintCurrent, colors) => { // NOSONAR
+		const y = size / 2;
+		const axisY = this.h / 2 - offsetY;
+		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
+		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		// Current position
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
+			if (x <= currX && x >= currX - barW) { color = altColor = colors.currPos; }
+		}
+		if (y > 0) {
+			x += Math.max(barW * 0.025, 1);
+			barW -= Math.max(barW * 0.05, 2);
+			if (altColor !== color) {
+				if (color !== -1) { gr.FillSolidRect(x, axisY + size / 2 - 2 * y, barW, y, color); }
+				if (altColor !== -1) { gr.FillSolidRect(x, axisY + size / 2 - y, barW, y, altColor); }
+			} else if (color !== -1) { gr.FillSolidRect(x, axisY + size / 2 - 2 * y, barW, 2 * y, color); }
+		}
+	};
+	/**
+	 * Draws process bar (gradient) wave mode.
+	 *
+	 * @property
+	 * @name paintProcessBarGrad
+	 * @kind method
+	 * @memberof _seekbar
+	 * @param {GdiGraphics} gr - GDI graphics object from on_paint callback.
+	 * @param {number} x - X-point coord
+	 * @param {number} barW - Bar size
+	 * @param {number} currX - Current time position to handle indicator within bars
+	 * @param {number} offsetY - Offset in Y-Axis due to multichannel handling
+	 * @param {number} size - Panel point size
+	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
+	 * @param {boolean} bIsFuture - Flag used when point is after current time
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
+	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number}} colors - Colors used
+	 * @returns {void}
+	*/
+	this.paintProcessBarGrad = (gr, x, barW, currX, offsetY, size, bPrePaint, bIsFuture, bPaintCurrent, colors) => { // NOSONAR
+		const y = size / 2;
+		const axisY = this.h / 2 - offsetY;
+		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
+		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		// Current position
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
+			if (x <= currX && x >= currX - barW) { color = altColor = colors.currPos; }
+		}
+		if (y > 0) {
+			x += Math.max(barW * 0.025, 1);
+			barW -= Math.max(barW * 0.05, 2);
+			if (altColor !== color) {
+				if (color !== -1 && altColor !== -1) {
+					const topColor = this.blendColors(altColor, color, 0.5);
+					gr.FillGradRect(x, axisY + size / 2 - 2 * y, barW, 2 * y, 92, topColor, altColor, this.ui.gradientFocus);
+				} else if (color !== -1) { gr.FillSolidRect(x, axisY + size / 2 - 2 * y, barW, y, color); }
+				else { gr.FillSolidRect(x, axisY + size / 2 - y, barW, y, altColor); }
+			} else if (color !== -1) { gr.FillSolidRect(x, axisY + size / 2 - 2 * y, barW, 2 * y, color); }
+		}
+	};
+	/**
+	 * Draws process bar (gradient-scaled), with colors shifting according to amplitude scale.
+	 *
+	 * @property
+	 * @name processBarGradScale
+	 * @kind method
+	 * @memberof _seekbar
+	 * @param {GdiGraphics} gr - GDI graphics object from on_paint callback.
+	 * @param {number} x - X-point coord
+	 * @param {number} barW - Bar size
+	 * @param {number} currX - Current time position to handle indicator within bars
+	 * @param {number} offsetY - Offset in Y-Axis due to multichannel handling
+	 * @param {number} size - Panel point size
+	 * @param {number} scale - Point scaling
+	 * @param {boolean} bPrePaint - Flag used when points after current time must be paint
+	 * @param {boolean} bIsFuture - Flag used when point is after current time
+	 * @param {boolean} bPaintCurrent - Flag used to paint current position using built-in effect
+	 * @param {{bg:number, main:number, alt:number, bgFuture:number, mainFuture:number, altFuture:number}} colors - Colors used
+	 * @returns {void}
+	*/
+	this.processBarGradScale = (gr, x, barW, currX, offsetY, size, scale, bPrePaint, bIsFuture, bPaintCurrent, colors) => { // NOSONAR
+		const y = size / 2;
+		const axisY = this.h / 2 - offsetY;
+		let color = bPrePaint && bIsFuture ? colors.mainFuture : colors.main;
+		let altColor = bPrePaint && bIsFuture ? colors.altFuture : colors.alt;
+		// Current position
+		if ((this.preset.bPaintCurrent || this.mouseDown) && bPaintCurrent && colors.currPos !== -1) {
+			if (x <= currX && x >= currX - barW) { color = altColor = colors.currPos; }
+		}
+		if (y > 0) {
+			x += Math.max(barW * 0.025, 1);
+			barW -= Math.max(barW * 0.05, 2);
+			if (altColor !== color) {
+				if (color !== -1 && altColor !== -1) {
+					scale = Math.abs(scale);
+					const topColor = this.blendColors(altColor, color, 1 - scale);
+					gr.FillGradRect(x, axisY + size / 2 - 2 * y, barW, 2 * y, 92, topColor, altColor, this.ui.gradientFocus);
+				} else if (color !== -1) { gr.FillSolidRect(x, axisY + size / 2 - 2 * y, barW, y, color); }
+				else { gr.FillSolidRect(x, axisY + size / 2 - y, barW, y, altColor); }
+			} else if (color !== -1) { gr.FillSolidRect(x, axisY + size / 2 - 2 * y, barW, 2 * y, color); }
 		}
 	};
 	/**
@@ -2203,7 +2591,7 @@ function _seekbar({
 		if (!scale) { return false; }
 		const color = bFade ? this.applyAlpha(colors.main, 70) : colors.main;
 		const altColor = bFade ? this.applyAlpha(colors.alt, 70) : colors.alt;
-		gr.FillGradRect(this.x + this.marginW, this.h / 2 - offsetY - size / 2, (this.w - this.marginW * 2) * scale, size, 1, color, altColor);
+		gr.FillGradRect(this.x + this.marginW, this.h / 2 - offsetY - size / 2, (this.w - this.marginW * 2) * scale, size, 1, color, altColor, this.ui.gradientFocus);
 		return true;
 	};
 	/**
@@ -2257,6 +2645,7 @@ function _seekbar({
 	 * @returns {void}
 	*/
 	this.paintAnimation = (gr, frames, currX, bPrePaint, bVisualizer, bPartial, bVuMeter) => {
+		if (!window.IsVisible) { return; }
 		const bFullAnimated = !bPartial && this.preset.bAnimate;
 		// Incrementally draw animation on small steps
 		if ((bPrePaint && this.preset.bAnimate) || bFullAnimated || bVisualizer) {
@@ -2268,17 +2657,18 @@ function _seekbar({
 		}
 		if (bVisualizer || bFullAnimated || (bVuMeter && frames)) { throttlePaint(); }
 		else if ((bPrePaint || this.preset.bPaintCurrent || bPartial) && frames) {
-			const widerModesScale = waveModesWide.includes(this.preset.waveMode) ? 2 : 1;
+			const widerModesScale = this.isWideWaveMode(this.preset.waveMode) ? 2 : 1;
 			const barW = Math.ceil(Math.max((this.w - this.marginW * 2) / frames, _scale(2))) * widerModesScale;
+			const extraNormOffset = (this.framesSource < this.frames ? Math.ceil(this.frames / this.framesSource) * 1.25 : 1) * widerModesScale;
 			const prePaintW = Math.min(
 				bPrePaint && this.preset.futureSecs !== Infinity || this.preset.bAnimate
 					? this.preset.futureSecs === Infinity && this.preset.bAnimate
 						? Infinity
 						: this.preset.futureSecs / this.timeConstant * barW + barW
-					: 2.5 * barW * 2,
+					: barW * 2,
 				this.w - currX + barW
-			);
-			throttlePaintRect(currX - barW, this.y, prePaintW, this.h);
+			) + barW * extraNormOffset;
+			throttlePaintRect(currX - barW * extraNormOffset, this.y, prePaintW, this.h);
 		}
 		if (this.ui.bVariableRefreshRate) {
 			if (profilerPaint.Time > this.ui.refreshRate) { this.updateConfig({ ui: { refreshRate: this.ui.refreshRate + 50 } }); }
@@ -2368,7 +2758,7 @@ function _seekbar({
 	 * @returns {boolean}
 	*/
 	this.wheelResize = (step, bForce) => {
-		if ((this.trace(this.mx, this.my) || bForce) && step !== 0) {
+		if ((this.trace(this.mX, this.mY) || bForce) && step !== 0) {
 			let key, min, max;
 			switch (true) {
 				case true:
@@ -2391,7 +2781,7 @@ function _seekbar({
 				}
 				this.updateConfig(newConfig);
 			}
-			throttlePaint();
+			if (window.IsVisible) { throttlePaint(); }
 			return true;
 		}
 		return false;
@@ -2409,8 +2799,8 @@ function _seekbar({
 	 * @returns {void}
 	*/
 	this.move = (x, y, mask) => {
-		this.mx = x;
-		this.my = y;
+		this.mX = x;
+		this.mY = y;
 		if (mask === MK_LBUTTON && this.lbtnUp(x, y, mask)) {
 			this.mouseDown = true;
 		}
@@ -2425,8 +2815,8 @@ function _seekbar({
 	 * @returns {void}
 	*/
 	this.leave = () => {
-		this.mx = -1;
-		this.my = -1;
+		this.mX = -1;
+		this.mY = -1;
 	};
 	/**
 	 * Called on on_size. Resizes panel.
@@ -2588,7 +2978,7 @@ function _seekbar({
 				) +
 				' -print_format json > ' + _q(seekbarFolder + 'data.json');
 		} else if (this.isFallback || bVisualizer || bFallbackMode.analysis) {
-			profiler = new FbProfiler('visualizer');
+			if (this.logging.bProfile) { profiler = new FbProfiler('visualizer'); }
 		}
 		if (cmd) {
 			if (this.logging.bSave) { console.log('Seekbar: Scanning -> ' + sourceFile); }
