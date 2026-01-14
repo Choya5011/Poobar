@@ -35,13 +35,6 @@ Optional (Lyrics): UD Digi Kyokasho (NP-B)
 **Packages**  
 [Biography](https://hydrogenaudio.org/index.php/topic,112914.msg1071222.html#msg1071222) | [Library Tree](https://github.com/regorxxx/Library-Tree-SMP) | [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP)
 
-**Note**  
-The Not-A-Waveform-Seekbar-SMP package checks for updates automatically and will prompt the user when one is available.
-
-User-note:  
-* Components and packages are included in the profile and updated periodically (not continuously). Minor delays between updates may occur.  
-* If any included components/packages already exist in Foobar2000, their version may be replaced for this reason (be it an update or rollback).
-
 # Installation
 **Fonts**  
 Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 by default. 
