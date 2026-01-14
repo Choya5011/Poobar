@@ -1,4 +1,11 @@
-A crappy responsive JSplitter based 64-bit CUI foobar2000 theme.
+A crappy responsive [JSplitter](https://hydrogenaudio.org/index.php/topic,126743.0.html) based 64-bit CUI foobar2000 theme.
+
+# Contents
+1. [Preview](#preview)
+2. [Modularity](#modularity)
+3. [Components & Packages](#components--packages)
+4. [Installation](#installation)
+5. [Gallery](#gallery)
 
 # Preview
 ![Preview](gallery/preview.png)  
@@ -6,7 +13,7 @@ Responds to window size & seamlessly snaps to Windows 11 snap layouts.
 [Gallery](#gallery)
 
 # Modularity
-This repo aims to provide a basic customization guide for fb2k, some basic scripts & component suggestions for achieving this.
+This repo aims to provide a basic JSplitter/SMP customization guide for fb2k. With some basic scripts & component suggestions for achieving this.
 
 * All panel scripts can easily be used individually for other themes
 * The main panel is the blueprint for the layout & controls panel placement within the main JSplitter
@@ -14,12 +21,13 @@ This repo aims to provide a basic customization guide for fb2k, some basic scrip
     * Panels can be swapped out if the same title is kept or if the script is modified
 * Panels within the tab script/panel are not hardcoded, they can be edited.
 
-Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further info
+Refer to the wiki's [script descriptions](https://github.com/Choya5011/Poobar/wiki/Poobar#script-descriptions) for further info
 
 # Components & Packages
 **Fonts**  
 Standard already on Windows 11: [Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts)  
-Optional (For Biography): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)
+Optional (For Biography): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)  
+Optional (Lyrics): UD Digi Kyokasho (NP-B)
 
 **Components**  
 [Columns UI](https://www.foobar2000.org/components/view/foo_ui_columns) | [JSplitter](https://hydrogenaudio.org/index.php/topic,126743.msg1063721.html#msg1063721) (4.0.4) | [Playback Statistics](https://www.foobar2000.org/components/view/foo_playcount) | [Waveform minibar (mod)](https://www.foobar2000.org/components/view/foo_wave_minibar_mod) | [OpenLyrics](https://www.foobar2000.org/components/view/foo_openlyrics) alternatively [ESLyric](https://github.com/ESLyric/release)   
@@ -27,11 +35,18 @@ Optional (For Biography): [Fontawesome](https://github.com/FortAwesome/Font-Awes
 **Packages**  
 [Biography](https://hydrogenaudio.org/index.php/topic,112914.msg1071222.html#msg1071222) | [Library Tree](https://github.com/regorxxx/Library-Tree-SMP) | [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP)
 
+**Note**  
+The Not-A-Waveform-Seekbar-SMP package checks for updates automatically and will prompt the user when one is available.
+
+User-note:  
+* Components and packages are included in the profile and updated periodically (not continuously). Minor delays between updates may occur.  
+* If any included components/packages already exist in Foobar2000, their version may be replaced for this reason (be it an update or rollback).
+
 # Installation
 **Fonts**  
 Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 by default. 
 
-**NOTE**  
+**Note**  
 Trying a portable install first is recommended, setup hasn't been extensively tested yet after updating it.  
 This note will be removed as soon as that's been done.
 
@@ -48,10 +63,10 @@ This note will be removed as soon as that's been done.
    - C:\Users\\[Username]\AppData\Roaming\foobar2000-v2
 4. Start Foobar & pick 'Columns UI' if prompted.
 
-**NOTES**  
+**Notes**  
 After setup the theme is typically set to the ESLyric ```poobar_lib_naws.fcl``` preset. ```_lib``` presets typically consume more RAM, if 'as light as possible' is desired swap to a ```_fil``` preset. This can be done by importing another fcl layout:
 Preferences -> Columns UI -> Main -> Import configuration -> poobar_fil_naws.  
-There is a readme file inside the presets folder that gives info on RAM usage for the presets if this is of interest.
+There is a readme file inside the [presets folder](https://github.com/Choya5011/Poobar/tree/main/fcl%20presets/Poobar) that gives info on RAM usage for the presets if this is of interest.
 
 After setup the theme is also usually set to the Not-A-Waveform-Seekbar-SMP waveform seekbar (```_naws``` presets). If this is not desired:  
 - To delete: Preferences -> Columns UI -> Layout -> Bottommost JSplitter -> Right-Click -> Remove Panel  
@@ -60,12 +75,15 @@ After setup the theme is also usually set to the Not-A-Waveform-Seekbar-SMP wave
 If deleted the Fluent Control Panel will show an error, simply switch the seekbar mode from waveform to normal.
 
 **Useful To Know**  
-Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further info
+Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further info. Such as customization or for troubleshooting.
 
 # Gallery
-**Fluent Control Panel**
+**Fluent Control Panel**  
+
 ![Control Panel: Seekbar](gallery/control_panel_sb.png)
 ![Control Panel: Waveform](gallery/control_panel_wf.png)
+Custom waveform height & y position are accessible by right clicking the control panel area & selecting ```Panel Properties```. See wiki [JSplitter guide](https://github.com/Choya5011/Poobar/wiki/Poobar#basic-jsplitter-guide) for images.  
+Refer to [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) repo for available waveform presets. These are accessible by right-clicking the waveform area.
 
 **Tabs**
 
