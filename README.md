@@ -75,11 +75,12 @@ Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further
 
 ![Control Panel: Seekbar](gallery/control_panel_sb.png)
 ![Control Panel: Waveform](gallery/control_panel_wf.png)
-See [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#fluent-control-panel) Fluent Control Panel for info  
+[wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#fluent-control-panel)
 
 **Tabs**
 
 ![Tabs: Vertical/Horizontal](gallery/tabs.png)
+[wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#poobar-tabs)
 
 **Mini Player**  
 If window gets small enough. Smallest state is Fluent Control Panel only.
