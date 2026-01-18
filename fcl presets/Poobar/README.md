@@ -1,12 +1,12 @@
-### Contents
-1. [Difference between OL & ESL presets](#difference-between-ol--esl-presets)
-2. [Preset naming convention](#preset-naming-convention-)
-3. [Strip](#strip)
-
 After setup the theme is typically set to the ESLyric ```poobar_lib_naws.fcl``` preset.  
 ```_lib``` presets typically consume more RAM, if 'as light as possible' is desired swap to a ```_fil``` preset.  
 This can be done by importing another fcl layout:
 Preferences -> Columns UI -> Main -> Import configuration -> poobar_fil_naws.
+
+### Contents
+1. [Difference between OL & ESL presets](#difference-between-ol--esl-presets)
+2. [Preset naming convention](#preset-naming-convention-)
+3. [Strip](#strip)
 
 ### Difference between OL & ESL presets
 The OpenLyric presets are legacy or if OpenLyrics is preferred.
