@@ -57,9 +57,7 @@ This note will be removed as soon as that's been done.
 4. Start Foobar & pick 'Columns UI' if prompted.
 
 **Notes**  
-After setup the theme is typically set to the ESLyric ```poobar_lib_naws.fcl``` preset. ```_lib``` presets typically consume more RAM, if 'as light as possible' is desired swap to a ```_fil``` preset. This can be done by importing another fcl layout:
-Preferences -> Columns UI -> Main -> Import configuration -> poobar_fil_naws.  
-There is a readme file inside the [presets folder](https://github.com/Choya5011/Poobar/tree/main/fcl%20presets/Poobar) that gives info on RAM usage for the presets if this is of interest.
+See this [README](https://github.com/Choya5011/Poobar/tree/main/fcl%20presets/Poobar) in the presets folder for performance & optimization info as well as different presets.
 
 After setup the theme is also usually set to the Not-A-Waveform-Seekbar-SMP waveform seekbar (```_naws``` presets). If this is not desired:  
 - To delete: Preferences -> Columns UI -> Layout -> Bottommost JSplitter -> Right-Click -> Remove Panel  
