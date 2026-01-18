@@ -75,8 +75,7 @@ Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further
 
 ![Control Panel: Seekbar](gallery/control_panel_sb.png)
 ![Control Panel: Waveform](gallery/control_panel_wf.png)
-Custom waveform height & y position are accessible by right clicking the control panel area & selecting ```Panel Properties```. See wiki [JSplitter guide](https://github.com/Choya5011/Poobar/wiki/Poobar#basic-jsplitter-guide) for images.  
-Refer to [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) repo for available waveform presets. These are accessible by right-clicking the waveform area.
+See [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#fluent-control-panel) Fluent Control Panel for info  
 
 **Tabs**
 
