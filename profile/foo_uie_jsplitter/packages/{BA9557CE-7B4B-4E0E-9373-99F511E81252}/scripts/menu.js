@@ -1,4 +1,4 @@
-﻿	'use strict';
+﻿'use strict';
 
 const MF_GRAYED = 0x00000001;
 const MF_STRING = 0x00000000;
@@ -526,56 +526,58 @@ class MenuItems {
 		menu.addSeparator({});
 
 		// Regorxxx <- Use WinHttp.WinHttpRequest.5.1 / XMLHTTP ActiveX objects or utils.HTTPRequestAsync
-		menu.newMenu({
-			menuName: lg['Network']
-		});
+		if (!popUpBox.isHtmlDialogSupported()) {
+			menu.newMenu({
+				menuName: lg['Network']
+			});
 
-		menu.newItem({
-			menuName: lg['Network'],
-			str: lg['Web requests method priority:'],
-			flags: MF_GRAYED,
-			separator: true
-		});
-		if (utils.HTTPRequestAsync) {
 			menu.newItem({
 				menuName: lg['Network'],
-				str: 'AllMusic     ' + (ppt.useUtilsAllmusic ? '(Built-in > ActiveX)' : '(ActiveX)'),
-				func: () => {
-					ppt.toggle('useUtilsAllmusic');
-					window.NotifyOthers('bio_property', [['useUtilsAllmusic', ppt.useUtilsAllmusic]]);
-				},
-				checkItem: ppt.useUtilsAllmusic,
-			});
-			menu.newItem({
-				menuName: lg['Network'],
-				str: 'last.fm        ' + (ppt.useUtilsLastfm ? '(Built-in > ActiveX)' : '(ActiveX)'),
-				func: () => {
-					ppt.toggle('useUtilsLastfm');
-					window.NotifyOthers('bio_property', [['useUtilsLastfm', ppt.useUtilsLastfm]]);
-				},
-				checkItem: ppt.useUtilsLastfm,
-			});
-			menu.newItem({
-				menuName: lg['Network'],
-				str: 'Wikipedia   ' + (ppt.useUtilsWiki ? '(Built-in > ActiveX)' : '(ActiveX)'),
-				func: () => {
-					ppt.toggle('useUtilsWiki');
-					window.NotifyOthers('bio_property', [['useUtilsWiki', ppt.useUtilsWiki]]);
-				},
-				checkItem: ppt.useUtilsWiki,
-			});
-		} else {
-			const parent = fb.ComponentPath.includes('foo_uie_jsplitter')
-				? 'foo_uie_jsplitter'
-				: 'foo_spider_monkey_panel';
-			menu.newItem({
-				menuName: lg['Network'],
-				str: lg['- Unsupported ' + parent + ' version -'],
+				str: lg['Web requests method priority:'],
 				flags: MF_GRAYED,
+				separator: true
 			});
-		}
+			if (utils.HTTPRequestAsync) {
+				menu.newItem({
+					menuName: lg['Network'],
+					str: 'AllMusic     ' + (cfg.useUtilsAllmusic ? '(Built-in > ActiveX)' : '(ActiveX)'),
+					func: () => {
+						cfg.toggle('useUtilsAllmusic');
+						window.NotifyOthers('bio_property', [['useUtilsAllmusic', cfg.useUtilsAllmusic]]);
+					},
+					checkItem: cfg.useUtilsAllmusic,
+				});
+				menu.newItem({
+					menuName: lg['Network'],
+					str: 'last.fm        ' + (cfg.useUtilsLastfm ? '(Built-in > ActiveX)' : '(ActiveX)'),
+					func: () => {
+						cfg.toggle('useUtilsLastfm');
+						window.NotifyOthers('bio_property', [['useUtilsLastfm', cfg.useUtilsLastfm]]);
+					},
+					checkItem: cfg.useUtilsLastfm,
+				});
+				menu.newItem({
+					menuName: lg['Network'],
+					str: 'Wikipedia   ' + (cfg.useUtilsWiki ? '(Built-in > ActiveX)' : '(ActiveX)'),
+					func: () => {
+						cfg.toggle('useUtilsWiki');
+						window.NotifyOthers('bio_property', [['useUtilsWiki', cfg.useUtilsWiki]]);
+					},
+					checkItem: cfg.useUtilsWiki,
+				});
+			} else {
+				const parent = fb.ComponentPath.includes('foo_uie_jsplitter')
+					? 'foo_uie_jsplitter'
+					: 'foo_spider_monkey_panel';
+				menu.newItem({
+					menuName: lg['Network'],
+					str: lg['- Unsupported ' + parent + ' version -'],
+					flags: MF_GRAYED,
+				});
+			}
 
-		menu.addSeparator({});
+			menu.addSeparator({});
+		}
 		// Regorxxx ->
 
 		if (ppt.menuShowPlaylists == 2 || ppt.menuShowPlaylists && this.shift) {
@@ -695,7 +697,12 @@ class MenuItems {
 		this.img.artist = imgInfo.artist;
 		this.path.img = imgInfo.imgPth;
 		this.img.isLfm = imgInfo.blk && this.path.img;
-		this.img.name = this.img.isLfm ? this.path.img.slice(this.path.img.lastIndexOf('_') + 1) : this.path.img.slice(this.path.img.lastIndexOf('\\') + 1); // needed for init
+		// Regorxxx <- Cut default download paths to avoid +256 chars
+		this.img.name = this.img.isLfm && this.path.img.lastIndexOf('\\') < this.path.img.lastIndexOf('_')
+			? this.path.img.slice(this.path.img.lastIndexOf('_') + 1) 
+			: this.path.img.slice(this.path.img.lastIndexOf('\\') + 1); // needed for init
+		console.log(this.img.name)
+		// Regorxxx ->
 		this.img.blacklist = [];
 		this.path.blackList = `${cfg.storageFolder}blacklist_image.json`;
 
@@ -709,7 +716,17 @@ class MenuItems {
 			this.img.blacklist = this.img.list.blacklist[this.img.artistClean] || [];
 		}
 	
-		this.img.blacklistStr = [this.img.isLfm ? lg['+ Add'] + (!panel.style.showFilmStrip ? '' : lg[' main image']) + lg[' to black list: '] + this.img.artist + '_' + this.img.name : lg['+ Add to black list: '] + (this.img.name ? lg['N/A - requires last.fm photo. Selected image: '] + this.img.name : lg['N/A - no'] + (!panel.style.showFilmStrip ? '' : '') + lg[' image file']), this.img.blacklist.length ? lg[' - Remove from black list (click name): '] : lg['No black listed images for current artist'], lg['Undo']];
+		// Regorxxx <- Code cleanup
+		this.img.blacklistStr = [
+			this.img.isLfm 
+				? lg['+ Add'] + (!panel.style.showFilmStrip ? '' : lg[' main image']) + lg[' to black list: '] + this.img.artist + '_' + this.img.name 
+				: lg['+ Add to black list: '] + (this.img.name ? lg['N/A - requires last.fm photo. Selected image: '] + this.img.name : lg['N/A - no'] + (!panel.style.showFilmStrip ? '' : '') + lg[' image file']), 
+			this.img.blacklist.length 
+				? lg[' - Remove from black list (click name): '] 
+				: lg['No black listed images for current artist'], 
+			lg['Undo']
+		];
+		// Regorxxx ->
 	}
 
 	getDisplayStr() {

@@ -435,17 +435,7 @@ let properties = [
 	['Zoom Button LookUp Size (%)', 100, 'zoomLookUpBtn'],
 	['Zoom Tooltip (%)', 100, 'zoomTooltip'],
 	
-	// Regorxxx <- Use WinHttp.WinHttpRequest.5.1 / XMLHTTP ActiveX objects or utils.HTTPRequestAsync
-	['Server download AllMusic built-in (true)/ActiveX (false)', true, 'useUtilsAllmusic'],
-	['Server download last.fm built-in (true)/ActiveX (false)', true, 'useUtilsLastfm'],
-	['Server download Wikipedia built-in (true)/ActiveX (false)', true, 'useUtilsWiki'],
-	// Regorxxx ->
-	// Regorxxx <- Save similar artist data
-	['Server create last.fm similar artist database file', true, 'exportSimArtists'],
-	// Regorxxx ->
-	// Regorxxx <- Fix text reading for files without BOM
-	['Text Reader Default codepage (auto = 0)', 65001, 'fileCodePage']
-	// Regorxxx ->
+	['Text Reader Default codepage (auto = 0)', 65001, 'fileCodePage'] // Regorxxx <- Fix text reading for files without BOM ->
 ];
 
 const ppt = new PanelProperties;

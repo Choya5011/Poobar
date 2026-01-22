@@ -456,7 +456,7 @@ class Settings {
 		this.menuSimilarNum = $.clamp(this.menuSimilarNum, 0, 10);
 		this.lfmSim = this.dlLfmSim;
 		// Regorxxx <- Save similar artist data
-		if (!ppt.exportSimArtists) {
+		if (!cfg.exportSimArtists) {
 			if (this.lfmSim && this.menuSimilarNum < 7 && (!this.tagEnabled10 || this.tagEnabled13 < 7)) this.lfmSim = false;
 		}
 		// Regorxxx ->
@@ -706,8 +706,10 @@ let settings = [
 	['Biography [Lastfm] Folder', '%profile%\\yttm\\biography\\lastfm\\$lower($cut(%BIO_ARTIST%,1))', 'text', 'foLfmBio'],
 	['Album Review [Wikipedia] Folder', '%profile%\\yttm\\review\\wikipedia\\$lower($cut(%BIO_ALBUMARTIST%,1))', 'text', 'foWikiRev'],
 	['Biography [Wikipedia] Folder', '%profile%\\yttm\\biography\\wikipedia\\$lower($cut(%BIO_ARTIST%,1))', 'text', 'foWikiBio'],
-	['Image [Artist] Folder', '%profile%\\yttm\\art_img\\$lower($cut(%BIO_ARTIST%,1))\\%BIO_ARTIST%', 'text', 'foImgArt'],
-	['Image [Review] Folder', '%profile%\\yttm\\rev_img\\$lower($cut(%BIO_ALBUMARTIST%,1))\\%BIO_ALBUMARTIST%', 'text', 'foImgRev'],
+	// Regorxxx <- Cut default download paths to avoid +256 chars ->
+	['Image [Artist] Folder', '%profile%\\yttm\\art_img\\$lower($cut(%BIO_ARTIST%,1))\\$cut(%BIO_ARTIST%,40)', 'text', 'foImgArt'],
+	['Image [Review] Folder', '%profile%\\yttm\\rev_img\\$lower($cut(%BIO_ALBUMARTIST%,1))\\$cut(%BIO_ALBUMARTIST%,40)', 'text', 'foImgRev'],
+	// Regorxxx ->
 
 	['Auto Cache', 1, 'num', 'autoCache'],
 	['Auto Cache Time', 0, 'num', 'autoCacheTime'],
@@ -721,8 +723,10 @@ let settings = [
 	['Auto-Save Folder', '$directory_path(%path%)', 'text', 'foImgCov'],
 	['Auto-Save File Name', 'cover', 'text', 'fnImgCov'],
 
-	['Folder', '%storage_folder%\\biography-cache\\art_img\\$lower($cut(%BIO_ARTIST%,1))\\%BIO_ARTIST%', 'text', 'foCycCov'],
-	['Folder', '%storage_folder%\\biography-cache\\art_img\\$lower($cut(%BIO_ARTIST%,1))\\%BIO_ARTIST%', 'text', 'foCycPhoto'],
+	// Regorxxx <- Cut default download paths to avoid +256 chars
+	['Folder', '%storage_folder%\\biography-cache\\art_img\\$lower($cut(%BIO_ARTIST%,1))\\$cut(%BIO_ARTIST%,40)', 'text', 'foCycCov'],
+	['Folder', '%storage_folder%\\biography-cache\\art_img\\$lower($cut(%BIO_ARTIST%,1))\\$cut(%BIO_ARTIST%,40)', 'text', 'foCycPhoto'],
+	// Regorxxx  ->
 	['Album Name Auto-Clean', false, 'boolean', 'albStrip'],
 	['Cache Expiry (days: minimum 28)', 28, 'num', 'exp'],
 
@@ -786,7 +790,17 @@ let settings = [
 
 	['Configuration Width', 67, 'num', 'configWidth'],
 	['Configuration Height', 85, 'num', 'configHeight'],
-	['Show console messages', true, 'boolean', 'showConsoleMessages']
+	['Show console messages', true, 'boolean', 'showConsoleMessages'],
+	// Regorxxx <- Tweak logging
+	['Show console messages: web errors', true, 'boolean', 'showConsoleMessagesError'],
+	['Show console messages: not found',  true, 'boolean', 'showConsoleMessagesNotFound'],
+	// Regorxxx ->
+	// Regorxxx <- Use WinHttp.WinHttpRequest.5.1 / XMLHTTP ActiveX objects or utils.HTTPRequestAsync
+	['Download AllMusic built-in (true)/ActiveX (false)', true, 'boolean', 'useUtilsAllmusic'],
+	['Download last.fm built-in (true)/ActiveX (false)', true, 'boolean', 'useUtilsLastfm'],
+	['Download Wikipedia built-in (true)/ActiveX (false)', true, 'boolean', 'useUtilsWiki'],
+	// Regorxxx ->
+	['Create last.fm similar artist database file', true, 'boolean', 'exportSimArtists'] // Regorxxx <- Save similar artist data ->
 ];
 
 let item_properties =

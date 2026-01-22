@@ -1,18 +1,18 @@
 A crappy responsive [JSplitter](https://hydrogenaudio.org/index.php/topic,126743.0.html) based 64-bit CUI foobar2000 theme.
 
-# Contents
+## Contents
 1. [Preview](#preview)
 2. [Modularity](#modularity)
 3. [Components & Packages](#components--packages)
 4. [Installation](#installation)
 5. [Gallery](#gallery)
 
-# Preview
+## Preview
 ![Preview](gallery/preview.png)  
 Responds to window size & seamlessly snaps to Windows 11 snap layouts.  
 [Gallery](#gallery)
 
-# Modularity
+## Modularity
 This repo aims to provide a basic JSplitter/SMP customization guide for fb2k. With some basic scripts & component suggestions for achieving this.
 
 * All panel scripts can easily be used individually for other themes
@@ -23,7 +23,7 @@ This repo aims to provide a basic JSplitter/SMP customization guide for fb2k. Wi
 
 Refer to the wiki's [script descriptions](https://github.com/Choya5011/Poobar/wiki/Poobar#script-descriptions) for further info
 
-# Components & Packages
+## Components & Packages
 **Fonts**  
 Standard already on Windows 11: [Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts)  
 Optional (For Biography): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)  
@@ -35,7 +35,7 @@ Optional (Lyrics): UD Digi Kyokasho (NP-B)
 **Packages**  
 [Biography](https://hydrogenaudio.org/index.php/topic,112914.msg1071222.html#msg1071222) | [Library Tree](https://github.com/regorxxx/Library-Tree-SMP) | [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP)
 
-# Installation
+## Installation
 **Fonts**  
 Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 by default. 
 
@@ -68,7 +68,7 @@ If deleted the Fluent Control Panel will show an error, simply switch the seekba
 **Useful To Know**  
 Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further info. Such as customization or for troubleshooting.
 
-# Gallery
+## Gallery
 **Fluent Control Panel**  
 
 ![Control Panel: Seekbar](gallery/control_panel_sb.png)
@@ -84,5 +84,9 @@ Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further
 If window gets small enough. Smallest state is Fluent Control Panel only.
 ![Mini player](gallery/mini_player.png)
 
----
-Credits to the original authors of any modified scripts as well as packages. Names can be found in their respective scripts.
+## Credits
+Credits to the original authors of any modified scripts. Names can be found in their respective scripts.
+
+Themes in this repo are inspired by:
+* Classic Poobar: [Eureka Theme](https://www.reddit.com/r/foobar2000/comments/1mhdyy5/comment/n6ve749/)  | [Georgia Reborn](https://github.com/TT-ReBORN/Georgia-ReBORN) 
+* Amethyst-like (WIP): [Amethyst](https://github.com/Geoxor/amethyst)

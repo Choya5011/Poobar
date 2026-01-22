@@ -3,7 +3,7 @@
 class Names {
 	constructor() {
 		this.cur_artist = '';
-		this.lfmUID = '_[a-f0-9]{32}\\.jpg$';
+		this.lfmUID = '_?[a-f0-9]{32}\\.jpg$'; // Regorxxx <- Cut default download paths to avoid +256 chars ->
 	}
 
 	// Methods
@@ -64,7 +64,7 @@ class Names {
 				artist = $.regexEscape($.clean(artist));
 				this.cur_artist = artist;
 			}
-			return RegExp(`^${artist + this.lfmUID}`, 'i').test(fn);
+			return RegExp(`^${artist + this.lfmUID}`, 'i').test(fn) || RegExp(this.lfmUID, 'i').test(fn); // Regorxxx <- Cut default download paths to avoid +256 chars ->
 		} else return RegExp(this.lfmUID, 'i').test(fn);
 	}
 

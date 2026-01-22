@@ -75,9 +75,9 @@ class RequestAllmusic {
 				reject({ status, responseText: e.message });
 			}
 		};
-		if (utils.HTTPRequestAsync && ppt.useUtilsAllmusic) {
+		if (utils.HTTPRequestAsync && cfg.useUtilsAllmusic) {
 			return new Promise((resolve, reject) => {
-				this.request = XMLHttpRequest(ppt.useUtilsAllmusic);
+				this.request = XMLHttpRequest(cfg.useUtilsAllmusic);
 				setRequest(() => this.onStateChange(resolve, reject, func));
 				this.timer = setTimeout(() => timeoutRequest(resolve, reject), timeout);
 			});
@@ -161,11 +161,11 @@ class DldAllmusicBio {
 						doc.close();
 					},
 					(error) => {
-						$.trace('allmusic review / biography: ' + server.album + ' / ' + server.albumArtist + ': not found' + ' Status error: ' + this.xmlhttp.status, true);
+						if (cfg.showConsoleMessagesError) { $.trace('allmusic review / biography: ' + server.album + ' / ' + server.albumArtist + ': not found' + ' Status error: ' + this.xmlhttp.status, true); } // Regorxxx <- Tweak logging ->
 					}
 				).catch((error) => {
 					server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.artist + ' - ' + this.title);
-					if (!$.file(this.pth_bio)) $.trace('allmusic biography: ' + this.artist + ': not found', true);
+					if (!$.file(this.pth_bio) && cfg.showConsoleMessagesNotFound) $.trace('allmusic biography: ' + this.artist + ': not found', true); // Regorxxx <- Tweak logging ->
 				});
 				break;
 
@@ -201,16 +201,16 @@ class DldAllmusicBio {
 							}
 						}
 						server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.artist + ' - ' + this.title);
-						if (!$.file(this.pth_bio)) {
+						if (!$.file(this.pth_bio) && cfg.showConsoleMessagesNotFound) { // Regorxxx <- Tweak logging ->
 							$.trace('allmusic biography: ' + this.artist + (artists.length > 1 ? ': unable to disambiguate multiple artists of same name: discriminators, album name or track title, either not matched or absent (e.g. menu look ups)' : ': not found'), true);
 						}
 					},
 					(error) => {
-						$.trace('allmusic review / biography: ' + server.album + ' / ' + server.albumArtist + ': not found' + ' Status error: ' + this.xmlhttp.status, true);
+						if (cfg.showConsoleMessagesError) { $.trace('allmusic review / biography: ' + server.album + ' / ' + server.albumArtist + ': not found' + ' Status error: ' + this.xmlhttp.status, true); } // Regorxxx <- Tweak logging ->
 					}
 				).catch((error) => {
 					server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.artist + ' - ' + this.title);
-					if (!$.file(this.pth_bio)) $.trace('allmusic biography: ' + this.artist + ': not found', true);
+					if (!$.file(this.pth_bio) && cfg.showConsoleMessagesNotFound) $.trace('allmusic biography: ' + this.artist + ': not found', true); // Regorxxx <- Tweak logging ->
 				});
 				break;
 
@@ -248,11 +248,11 @@ class DldAllmusicBio {
 						parse.amArtist(this, response, this.artist, '', this.title, this.fo_bio, this.pth_bio, '');
 			},
 			(error) => {
-				$.trace('allmusic review / biography: ' + this.album + ' / ' + this.albumArtist + ': not found' + ' Status error: ' + JSON.stringify(error), true)
+				if (cfg.showConsoleMessagesError) { $.trace('allmusic review / biography: ' + this.album + ' / ' + this.albumArtist + ': not found' + ' Status error: ' + JSON.stringify(error), true); } // Regorxxx <- Tweak logging ->
 			}
 			).catch((error) => {
 				this.album ? server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.pth_rev) : server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.artist + ' - ' + this.title);
-				if (!$.file(this.pth_bio)) $.trace('allmusic biography: ' + this.artist + ': not found', true);
+				if (!$.file(this.pth_bio) && cfg.showConsoleMessagesNotFound) $.trace('allmusic biography: ' + this.artist + ': not found', true); // Regorxxx <- Tweak logging ->
 			});
 			break;
 			}
@@ -337,17 +337,17 @@ class DldAllmusicRev {
 						server.getBio(this.force, this.art, 1);
 						if (this.dn_type.includes('biography')) server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.pth_rev);
 						server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev + (this.dn_type != 'track' ? '' : ' ' + this.album + ' ' + this.albumArtist));
-						$.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true);
+						if (cfg.showConsoleMessagesError) { $.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true); } // Regorxxx <- Tweak logging ->
 						doc.close();
 					},
 					(error) => {
-						$.trace('allmusic review / biography: ' + this.album + ' / ' + this.albumArtist + ': not found' + ' Status error: ' + JSON.stringify(error), true)
+						if (cfg.showConsoleMessagesError) { $.trace('allmusic review / biography: ' + this.album + ' / ' + this.albumArtist + ': not found' + ' Status error: ' + JSON.stringify(error), true); } // Regorxxx <- Tweak logging ->
 					}
 				).catch((error) => {
 					server.getBio(this.force, this.art, 1);
 					server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.pth_rev);
 					server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev + (this.dn_type != 'track' ? '' : ' ' + this.album + ' ' + this.albumArtist));
-					$.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true);
+					if (cfg.showConsoleMessagesNotFound) { $.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true); } // Regorxxx <- Tweak logging ->
 				})
 				// Regorxxx <- Force last.fm img downloading for newest SMP methods or server errors. Retry only once per ID
 				.finally(() => {
@@ -509,7 +509,7 @@ class DldAllmusicRev {
 								return this.search('biography', this.artistLink + '/biographyAjax', this.artistLink);
 							}
 						}
-						$.trace('allmusic review / biography: ' + this.album + ' / ' + this.albumArtist + ': not found' + ' Status error: ' + JSON.stringify(error), true)
+						if (cfg.showConsoleMessagesError) { $.trace('allmusic review / biography: ' + this.album + ' / ' + this.albumArtist + ': not found' + ' Status error: ' + JSON.stringify(error), true); } // Regorxxx <- Tweak logging ->
 					}
 				).catch((error) => {
 					if (this.dn_type.includes('+biography')) {
@@ -519,7 +519,7 @@ class DldAllmusicRev {
 					}
 					server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.pth_rev);
 					server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev + (this.dn_type != 'track' ? '' : ' ' + this.album + ' ' + this.albumArtist));
-					$.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true);
+					if (cfg.showConsoleMessagesNotFound) { $.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true); } // Regorxxx <- Tweak logging ->
 				});
 				break;
 
@@ -555,11 +555,11 @@ class DldAllmusicRev {
 						parse.amArtist(this, response, this.artist, this.album, '', this.fo_bio, this.pth_bio, this.pth_rev);
 				},
 					(error) => {
-						$.trace('allmusic review / biography: ' + this.album + ' / ' + this.albumArtist + ': not found' + ' Status error: ' + JSON.stringify(error), true)
+						if (cfg.showConsoleMessagesError) { $.trace('allmusic review / biography: ' + this.album + ' / ' + this.albumArtist + ': not found' + ' Status error: ' + JSON.stringify(error), true); } // Regorxxx <- Tweak logging ->
 					}
 				).catch((error) => {
 					this.album ? server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.pth_rev) : server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.artist + ' - ' + this.title);
-					if (!$.file(this.pth_bio)) $.trace('allmusic biography: ' + this.artist + ': not found', true);
+					if (!$.file(this.pth_bio) && cfg.showConsoleMessagesNotFound) $.trace('allmusic biography: ' + this.artist + ': not found', true); // Regorxxx <- Tweak logging ->
 				});
 				break;
 		}
@@ -577,7 +577,7 @@ class DldAllmusicRev {
 			}
 		} else {
 			server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev);
-			$.trace('allmusic this.review: ' + this.album + ' / ' + this.albumArtist + ': not found', true);
+			if (cfg.showConsoleMessagesNotFound) { $.trace('allmusic this.review: ' + this.album + ' / ' + this.albumArtist + ': not found', true); } // Regorxxx <- Tweak logging ->
 		}
 	}
 	saveTrackReview() {
@@ -601,7 +601,7 @@ class DldAllmusicRev {
 			server.res();
 		} else {
 			server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev + ' ' + this.album + ' ' + this.albumArtist);
-			$.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true);
+			if (cfg.showConsoleMessagesNotFound) { $.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true); } // Regorxxx <- Tweak logging ->
 		}
 	}
 }
@@ -686,7 +686,7 @@ class Parse {
 			}
 		} else {
 			album ? server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + pth_rev) : server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + artist + ' - ' + title);
-			if (!$.file(pth_bio)) $.trace('allmusic biography: ' + artist + ': not found', true);
+			if (!$.file(pth_bio) && cfg.showConsoleMessagesNotFound) $.trace('allmusic biography: ' + artist + ': not found', true); // Regorxxx <- Tweak logging ->
 		}
 	}
 }

@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 // This script is a modified version of Fluent Control Panel version 0.9 by eurekagliese
 window.DefineScript('Fluent Control Panel', {author:'eurekagliese', options:{grab_focus:false}});
@@ -8,8 +8,8 @@ include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\seekbar.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\rating.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\volume.js');
-include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_helpers.js');
-include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_col_helper.js');
+include(fb.ComponentPath + 'Amethyst-like\\helpers\\poo_helpers.js');
+include(fb.ComponentPath + 'Amethyst-like\\helpers\\poo_col_helper.js');
 
 const scaler = {
     s600: _scale(450),
@@ -141,7 +141,7 @@ updateNextTrackInfo();
 
 buttons.update = () => {
     const x = ((panel.w - (bs * 7)) / 2);
-    const y = ppt.mode.enabled ? seekbar.y - _scale(36) : _scale(4);
+    const y = panel.h / 3;
     let pbo = plman.PlaybackOrder;
 
     let fluent_font = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 38) : gdi.Font('Segoe Fluent Icons', 48);
@@ -230,16 +230,10 @@ function on_size() {
     cx = (panel.w - (bs * 2));
     cy = Math.round((panel.h - bs) / 2);
 
-    if (panel.w >= scaler.s1200) {
-        seekbar.x = Math.round(panel.w * 0.22);
-    } else if (panel.w <= scaler.s520) {
-        seekbar.x = Math.round(panel.w * 0.18);
-    } else if (panel.w > scaler.s520 && panel.w < scaler.s1200) {
-        seekbar.x = Math.round(panel.w * 0.3);
-    }
-    seekbar.w = panel.w - seekbar.x * 2;
-    seekbar.h = _scale(14);
-    seekbar.y = panel.h * 0.6;
+    seekbar.x = 0;
+    seekbar.w = panel.w;
+    seekbar.h = _scale(20);
+    seekbar.y = panel.h * 0.001 - 1;
 
     if (ppt.mode.enabled) {
         rating.x = bx - (bs * 3);
@@ -286,14 +280,14 @@ function on_paint(gr) {
     buttons.paint(gr);
 
     gr.SetSmoothingMode(2);
-    let bar_h = _scale(4);
+    let bar_h = _scale(5);
     let radius = bar_h / 2;
     //seekbar_bg
     if (ppt.mode.enabled) {
         if (ppt.roundBars.enabled) {
-            gr.FillRoundRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, radius, radius, colours.seekbar_background);
+            gr.FillRoundRect(seekbar.x, seekbar.y, seekbar.w + _scale(6), bar_h, radius, radius, colours.seekbar_background);
         } else {
-            gr.FillSolidRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, colours.seekbar_background);
+            gr.FillSolidRect(seekbar.x, seekbar.y, seekbar.w + _scale(6), bar_h, colours.seekbar_background);
         }
     } else if (!waveformPanel) {
         gr.FillRoundRect(seekbar.x, waveformY, seekbar.w, waveformH, 10, 10, colours.red);
@@ -359,14 +353,14 @@ function on_paint(gr) {
                     }
                 } else {
                     if (ppt.bar_mode.enabled) {
-                        gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), coreColor); //bar core
-                        gr.DrawRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), _scale(2), g_textcolour); //bar outline
+                        gr.FillSolidRect(seekbar.x, seekbar.y, pos, bar_h, coreColor); //bar core
+                        gr.DrawRect(seekbar.x, seekbar.y, pos, bar_h, _scale(2), g_textcolour); //bar outline
                     } else {
-                        gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), barColor); //normal bar
+                        gr.FillSolidRect(seekbar.x, seekbar.y, pos, bar_h, barColor); //normal bar
                     }
                 }
 
-                gr.FillEllipse(seekbar.x + pos - 4, seekbar.y, _scale(12), _scale(12), g_textcolour); //knob
+                //gr.FillEllipse(seekbar.x + pos - 4, seekbar.y, _scale(12), _scale(12), g_textcolour); //knob
                 if (ppt.bar_mode.enabled) gr.FillEllipse(seekbar.x + pos - 1.5, seekbar.y + 2.5, _scale(8), _scale(8), coreColor); //knob core
     			gr.GdiDrawText(tfo.playback_time.Eval(), panel.fonts.normal, g_textcolour, seekbar.x - _scale(45), seekbar.y + _scale(5), _scale(45), 0, RIGHT);
     			gr.GdiDrawText(tfo.length.Eval(), panel.fonts.normal, g_textcolour, seekbar.x + seekbar.w + _scale(6), seekbar.y + _scale(5), _scale(45), 0, LEFT);
@@ -688,17 +682,17 @@ function on_mouse_rbtn_up(x, y) {
     _submenu1.AppendMenuItem(MF_STRING, 111, 'Waveform');
     _submenu1.CheckMenuRadioItem(110, 111, ppt.mode.enabled ? 110 : 111);
     _submenu1.AppendTo(_menu1, MF_STRING, 'Seekbar');
-
+    
     _submenu11.AppendMenuItem(MF_STRING, 112, 'List');
     _submenu11.AppendMenuItem(MF_STRING, 113, 'Cycle');
     _submenu11.CheckMenuRadioItem(112, 113, ppt.pboMode.enabled ? 112 : 113);
     _submenu11.AppendTo(_menu1, MF_STRING, 'PBO Button');
-
+    
     _submenu12.AppendMenuItem(MF_STRING, 114, 'last.fm sync');
     _submenu12.AppendMenuItem(MF_STRING, 115, 'LOVED tag');
     _submenu12.CheckMenuRadioItem(114, 115, ppt.loveMode.enabled ? 115 : 114);
     _submenu12.AppendTo(_menu1, MF_STRING, 'Love Mode');
-
+    
     _menu1.AppendTo(m, MF_STRING, 'Modes');
 
     _menu2.AppendMenuItem(MF_STRING, 210, 'Album art');

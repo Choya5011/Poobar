@@ -341,7 +341,7 @@ class Helpers {
 			// Regorxxx <- No file saved on long paths > 255 chars
 			const success = utils.WriteTextFile(fn, text, bom);
 			if (!success && fn.length >= 256) {
-				fb.ShowPopupMessage('Script is trying to save a file in a path containing more than 256 chars which leads to problems on Windows systems.\n\nPath:\n' + fn + '\n\nTo avoid this problem, install your foobar portable installation at another path (with less nesting) or change the the cache folders at \'biography.cfg\'.')
+				fb.ShowPopupMessage('Script is trying to save a file in a path containing more than 256 chars which leads to problems on Windows systems.\n\nPath:\n' + fn + '\n\nTo avoid this problem, install your foobar portable installation at another path (with less nesting) or change the cache folders/TF paths at \'server settings\Downloads\' (HTML options panel) or \'biography.cfg\'.')
 			}
 			// Regorxxx ->
 		} catch (e) {

@@ -4,8 +4,8 @@ window.DefineScript('Poobar Main Panel', {author:'Choya', options:{grab_focus:fa
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
-include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_helpers.js');
-include(fb.ComponentPath + 'samples\\poobar\\helpers\\poo_col_helper.js');
+include(fb.ComponentPath + 'Amethyst-like\\helpers\\poo_helpers.js');
+include(fb.ComponentPath + 'Amethyst-like\\helpers\\poo_col_helper.js');
 
 let ppt = {
     // Main Panel properties
@@ -65,14 +65,21 @@ update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt
 get_colours(ppt.col_mode.value, true);
 /* ============================================================= */
 
-let cpH = _scale(ppt.cpH.value); // Control Panel Height in Horizontal orientation
+let cpH = _scale(_scale(60)); // Control Panel Height in Horizontal orientation
 let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
 
-let fluentControlPanel; let playlistView; let tabStack; let smoothBrowser;
-try { fluentControlPanel = window.GetPanel('Fluent Control Panel'); } catch (e) { fluentControlPanel = null; }
+let fluentControlPanel; let playlistView;  let smoothBrowser;
+try { fluentControlPanel = window.GetPanel('Control Panel'); } catch (e) { fluentControlPanel = null; }
 try { playlistView = window.GetPanel(''); } catch (e) { playlistView = null; } // Segoe Fluent Icons MusicNote, unicode: ec4f
-try { tabStack = window.GetPanel(''); } catch (e) { tabStack = null; } // Segoe Fluent Icons MapLayers, unicode: e81e
+ // Segoe Fluent Icons MapLayers, unicode: e81e
 try { smoothBrowser = window.GetPanel('Smooth Browser') } catch (e) { smoothBrowser = null; }
+
+let controlPanel; let plView; let LUFs; let oscilloscope; let tabStack; let curve;
+try { controlPanel = window.GetPanel('Control Panel'); } catch (e) { nestedCP = null; }
+try { tabStack = window.GetPanel('tabstack'); } catch (e) { tabStack = null; }
+try { oscilloscope = window.GetPanel('Oscilloscope'); } catch (e) { oscilloscope = null; }
+try { curve = window.GetPanel('Spectrum Analyzer'); } catch (e) { curve = null; }
+try { LUFs = window.GetPanel('LUFS'); } catch (e) { LUFs = null; }
 
 const approximatelyEqual = (a, b, tolerance = 0.20) => {
   const diff = Math.abs(a - b);
@@ -103,25 +110,34 @@ function on_size(width, height) {
     const psH = (wh <= scaler.s730 && ww > scaler.s800) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value; // tabStack/playlistView placement ratio in horizontal orientation (.5 splitscreen)
     let psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value; // (tabStack & smoothBrowser)/playlistView placement ratio in vertical orientation
 
-	    if (fluentControlPanel) {
-            fluentControlPanel.Move(0, wh - cpH, ww, cpH);
-            fluentControlPanel.ShowCaption = true;
-            fluentControlPanel.Locked = false;
-            fluentControlPanel.Hidden = false;
-            fluentControlPanel.SupportPseudoTransparency = true;
-	    }
+
         if (tabStack) {
             tabStack.Move(0, 0, ww, wh);
             tabStack.ShowCaption = false;
             tabStack.Locked = true;
             tabStack.Hidden = false;
+            tabStack.TopMost = false;
         }
-        if (smoothBrowser) smoothBrowser.Hidden = true;
-        if (playlistView) {
-            playlistView.Move(ww * psH, 0, ww - ww * psH, wh);
-            playlistView.ShowCaption = false;
-            playlistView.Locked = true;
-            playlistView.Hidden = false;
+	    if (controlPanel) {
+            controlPanel.Move(ww / 3.4, wh - cpH * 1.13, ww / 2.4, cpH);
+            controlPanel.ShowCaption = false;
+            controlPanel.Locked = true;
+            controlPanel.Hidden = false;
+            controlPanel.SupportPseudoTransparency = true;
+	    }
+        if (oscilloscope) {
+            oscilloscope.Move(ww / 5.32, wh - cpH * 1.13, ww / 18, cpH);
+            oscilloscope.ShowCaption = false;
+            oscilloscope.Locked = true;
+            oscilloscope.Hidden = false;
+            oscilloscope. SupportPseudoTransparency = true;
+        }
+        if (curve) {
+            curve.Move(ww / 1.32, wh - cpH * 1.13, ww / 6, cpH);
+            curve.ShowCaption = false;
+            curve.Locked = true;
+            curve.Hidden = false;
+            curve. SupportPseudoTransparency = true;
         }
 //	if (checkSizeAndRatio(ww, wh, 16 / 9, 0.2) || checkSizeAndRatio(ww, wh, 3, 0.3) || checkSizeAndRatio(ww, wh, 11.11, 0.4) || checkSizeAndRatio(ww, wh, 5.4, 0.2))  {
 //	    // Horizontal view
@@ -283,6 +299,17 @@ function on_paint(gr) {
     const { default_font, default_font_hover, fluent_font, fluent_font_hover } = get_font();
     const tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
     const tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
+
+    if (controlPanel) {
+        //controlPanel.Move(ww / 4, wh - cpH * 1.2, ww / 2, cpH);
+        gr.FillRoundRect(ww / 4, wh - cpH * 1.2, ww / 2 + 10, cpH + 10, 10, 10, _RGB(255, 255, 255));
+    }
+    if (oscilloscope) {
+        //oscilloscope.Move(ww / 5.32, wh - cpH * 1.2, ww / 18, cpH);
+    }
+    if (curve) {
+       // curve.Move(ww / 1.32, wh - cpH * 1.2, ww / 6, cpH);
+    }
 
     if (ppt.bgShow.enabled && g_img) {
         let switchBgW = (ppt.orientation.enabled) ? TAB_W : panel.w; TAB_H;

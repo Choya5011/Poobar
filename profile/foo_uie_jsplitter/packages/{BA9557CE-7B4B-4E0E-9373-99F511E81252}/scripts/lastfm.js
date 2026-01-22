@@ -44,7 +44,7 @@ class DldLastfmBio {
 		this.fo_bio = p_fo_bio;
 		this.pth_bio = p_pth_bio;
 		this.func = null;
-		this.xmlhttp = XMLHttpRequest(ppt.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
+		this.xmlhttp = XMLHttpRequest(cfg.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
 		const URL = this.searchBio == 3 ? 'https://' + server.lfm.server + '/music/' + encodeURIComponent(this.artist) + '/' + encodeURIComponent(this.itemValue[0]) : this.searchBio == 2 ? 'https://www.last.fm/music/' + encodeURIComponent(this.artist) + '/+albums' : 'https://' + (!this.retry ? server.lfm.server : 'www.last.fm') + '/music/' + encodeURIComponent(this.artist) + (this.searchBio ? '/+wiki' : '');
 		this.func = this.analyse;
 		if (ppt.multiServer && !force && server.urlDone(md5.hashStr(this.artist + this.pth_bio + URL))) return;
@@ -196,7 +196,7 @@ class DldLastfmBio {
 		if (this.scrobbles[1].length && this.counts[1].length || this.scrobbles[0].length && this.counts[0].length) this.con += ('\r\n\r\nLast.fm: ' + (this.counts[1].length ? this.scrobbles[1] + ' ' + this.counts[1] + '; ' : '') + (this.counts[0].length ? this.scrobbles[0] + ' ' + this.counts[0] : ''));
 		this.con = this.con.trim();
 		if (!this.con.length) {
-			$.trace('last.fm biography: ' + this.artist + ': not found', true);
+			if (cfg.showConsoleMessagesNotFound) { $.trace('last.fm biography: ' + this.artist + ': not found', true); } // Regorxxx <- Tweak logging ->
 			return;
 		}
 		if (!this.fo_bio) return;
@@ -290,7 +290,7 @@ class LfmArtImg {
 		this.allFiles = p_allFiles;
 		this.imgExisting = p_imgExisting;
 		this.func = null;
-		this.xmlhttp = XMLHttpRequest(ppt.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
+		this.xmlhttp = XMLHttpRequest(cfg.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
 		const URL = 'https://' + (!this.retry ? server.lfm.server : 'www.last.fm') + '/music/' + encodeURIComponent(this.dl_ar) + '/+images';
 		this.func = this.analyse;
 		if (ppt.multiServer && !force && server.urlDone(md5.hashStr(this.dl_ar + this.getNo + this.autoAdd + this.img_folder + URL))) return;
@@ -309,6 +309,10 @@ class LfmArtImg {
 
 	analyse() {
 		const a = $.clean(this.dl_ar);
+		// Regorxxx <- Cut default download paths to avoid +256 chars ->
+		// Original: this.img_folder + a + '_'; 
+		const basePath = this.img_folder;
+		// Regorxxx ->
 		doc.open();
 		const div = doc.createElement('div');
 		div.innerHTML = this.xmlhttp.responseText;
@@ -337,8 +341,10 @@ class LfmArtImg {
 					let k = 0;
 					let noNewLinks = 0;
 					for (k = 0; k < Math.min(links.length, 5); k++) {
-						const iPth = this.img_folder + a + '_' + links[k].substring(links[k].lastIndexOf('/') + 1) + '.jpg';
-						if (this.imgExisting.every(v => v.p !== iPth)) noNewLinks++;
+						// Regorxxx <- Cut default download paths to avoid +256 chars
+						const iPth = basePath + links[k].substring(links[k].lastIndexOf('/') + 1) + '.jpg';
+						if (this.imgExisting.every(v => v.p.replace(a + '_', '') !== iPth)) { noNewLinks++; } // Also checks for old filenames
+						// Regorxxx ->
 						if (noNewLinks == 5) break;
 					}
 					let remove = this.imgExisting.length + noNewLinks - cfg.photoLimit;
@@ -356,19 +362,23 @@ class LfmArtImg {
 				if (this.autoAdd) {
 					$.take(links, this.getNo).forEach(v => {
 						// Regorxxx <- Use utils.DownloadFileAsync if available
-						const imPth = `${this.img_folder + a}_${v.substring(v.lastIndexOf('/') + 1)}.jpg`;
-						if (utils.DownloadFileAsync) { utils.DownloadFileAsync(v, imPth); }
-						else { $.run(`cscript //nologo "${cfg.storageFolder}foo_lastfm_img.vbs" "${v}" "${imPth}"`, 0); }
+						const imPth = `${basePath}${v.substring(v.lastIndexOf('/') + 1)}.jpg`; // Regorxxx <- Cut default download paths to avoid +256 chars ->
+						if (!$.file(imPth)) { // Regorxxx <- Avoid downloads if it already exist ->
+							if (utils.DownloadFileAsync) { utils.DownloadFileAsync(v, imPth); }
+							else { $.run(`cscript //nologo "${cfg.storageFolder}foo_lastfm_img.vbs" "${v}" "${imPth}"`, 0); }
+						}
 						// Regorxxx ->
 					});
 				} else {
 					let c = 0;
 					$.take(links, cfg.photoNum).some(v => {
-						const imPth = `${this.img_folder + a}_${v.substring(v.lastIndexOf('/') + 1)}.jpg`;
+						const imPth = `${basePath}${v.substring(v.lastIndexOf('/') + 1)}.jpg`; // Regorxxx <- Cut default download paths to avoid +256 chars ->
 						if (!this.allFiles.includes(imPth)) {
 							// Regorxxx <- Use utils.DownloadFileAsync if available
-							if (utils.DownloadFileAsync) { utils.DownloadFileAsync(v, imPth); }
-							else { $.run(`cscript //nologo "${cfg.storageFolder}foo_lastfm_img.vbs" "${v}" "${imPth}"`, 0); }
+							if (!$.file(imPth)) { // Regorxxx <- Avoid downloads if it already exist ->
+								if (utils.DownloadFileAsync) { utils.DownloadFileAsync(v, imPth); }
+								else { $.run(`cscript //nologo "${cfg.storageFolder}foo_lastfm_img.vbs" "${v}" "${imPth}"`, 0); }
+							}
 							// Regorxxx ->
 							c++;
 							return c == this.getNo;
@@ -410,7 +420,7 @@ class LfmAlbum {
 						this.getStats = false;
 						return this.search(this.albumArtist, this.album, this.rev, this.fo, this.pth);
 					}
-					$.trace('last.fm album ' + (this.rev ? 'review: ' : 'cover: ') + this.album + ' / ' + this.albumArtist + ': not found' + ' Status error: ' + this.xmlhttp.status, true);
+					if (cfg.showConsoleMessagesError) { $.trace('last.fm album ' + (this.rev ? 'review: ' : 'cover: ') + this.album + ' / ' + this.albumArtist + ': not found' + ' Status error: ' + this.xmlhttp.status, true); } // Regorxxx <- Tweak logging ->
 				}
 			}
 	}
@@ -430,7 +440,7 @@ class LfmAlbum {
 			URL += '&method=album.getInfo&artist=' + encodeURIComponent(this.albumArtist) + '&album=' + encodeURIComponent(this.rev || this.retry ? this.album : this.albm) + '&autocorrect=' + server.auto_corr;
 		} else URL = 'https://' + server.lfm.server + '/music/' + encodeURIComponent(this.albumArtist) + '/' + encodeURIComponent(this.album.replace(/\+/g, '%2B'));
 		this.func = null;
-		this.xmlhttp = XMLHttpRequest(ppt.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
+		this.xmlhttp = XMLHttpRequest(cfg.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
 		this.func = this.analyse;
 		if (ppt.multiServer && !force && server.urlDone(md5.hashStr(this.albumArtist + this.album + this.albm + this.rev + this.rev_img + (cfg.imgRevHQ || !this.rev_img) + this.pth + URL))) return;
 		this.xmlhttp.open('GET', URL);
@@ -455,7 +465,7 @@ class LfmAlbum {
 					this.retry = true;
 					return this.search(this.albumArtist, this.album, this.rev, this.fo, this.pth);
 				}
-				if (!this.stats.length) return $.trace('last.fm album review: ' + this.album + ' / ' + this.albumArtist + ': not found', true);
+				if (!this.stats.length) { return cfg.showConsoleMessagesNotFound ? $.trace('last.fm album review: ' + this.album + ' / ' + this.albumArtist + ': not found', true) : void(0); } // Regorxxx <- Tweak logging ->
 			} else {
 				wiki = wiki.replace(/<[^>]+>/ig, '');
 				const f = wiki.indexOf(' Read more on Last.fm');
@@ -534,7 +544,7 @@ class LfmAlbum {
 					this.retry = true;
 					return this.search(this.albumArtist, this.album, this.rev, this.fo, this.pth, this.albm);
 				}
-				return $.trace('last.fm album cover: ' + this.album + ' / ' + this.albumArtist + ': not found', true);
+				return cfg.showConsoleMessagesNotFound ? $.trace('last.fm album cover: ' + this.album + ' / ' + this.albumArtist + ': not found', true) : void(0); // Regorxxx <- Tweak logging ->
 			}
 			let link = data[cfg.imgRevHQ || !this.rev_img ? 4 : 3]['#text'];
 			if (link && (cfg.imgRevHQ || !this.rev_img)) {
@@ -548,7 +558,7 @@ class LfmAlbum {
 					this.retry = true;
 					return this.search(this.albumArtist, this.album, this.rev, this.fo, this.pth, this.albm);
 				}
-				return $.trace('last.fm album cover: ' + this.album + ' / ' + this.albumArtist + ': not found', true);
+				return cfg.showConsoleMessagesNotFound ? $.trace('last.fm album cover: ' + this.album + ' / ' + this.albumArtist + ': not found', true) : void(0); // Regorxxx <- Tweak logging ->
 			}
 			timer.decelerating(true);
 			$.buildPth(this.fo);
@@ -636,7 +646,7 @@ class LfmTrack {
 			} else return this.revSave();
 		}
 		this.func = null;
-		this.xmlhttp = XMLHttpRequest(ppt.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
+		this.xmlhttp = XMLHttpRequest(cfg.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
 		this.func = this.analyse;
 		if (ppt.multiServer && !this.force && server.urlDone(md5.hashStr(this.artist + this.track + this.pth + URL))) return;
 		this.xmlhttp.open('GET', URL);
@@ -806,7 +816,7 @@ class LfmTrack {
 			$.buildPth(this.fo);
 			$.save(this.pth, JSON.stringify($.sortKeys(this.text), null, 3), true);
 		}
-		if (ret) return $.trace('last.fm track review: ' + $.titlecase(this.track) + ' / ' + this.artist + ': not found', true);
+		if (ret && cfg.showConsoleMessagesNotFound) { return $.trace('last.fm track review: ' + $.titlecase(this.track) + ' / ' + this.artist + ': not found', true); } // Regorxxx <- Tweak logging ->
 		server.res();
 	}
 }
@@ -843,7 +853,7 @@ class LfmSimilarArtists {
 		this.fn_sim = p_fn_sim;
 		if (this.retry) this.lmt = this.lmt == 249 ? 235 + Math.floor(Math.random() * 14) : this.lmt + 10;
 		this.func = null;
-		this.xmlhttp = XMLHttpRequest(ppt.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
+		this.xmlhttp = XMLHttpRequest(cfg.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
 		const URL = 'http://ws.audioscrobbler.com/2.0/?format=json' + panel.lfm + '&method=artist.getSimilar&artist=' + encodeURIComponent(this.artist) + '&limit=' + this.lmt + '&autocorrect=1';
 		this.func = this.analyse;
 		this.xmlhttp.open('GET', URL);
@@ -880,7 +890,7 @@ class LfmSimilarArtists {
 					$.buildPth(this.pth_sim);
 					$.save(this.fn_sim, JSON.stringify(list), true);
 					// Regorxxx <- Save similar artist data
-					if (ppt.exportSimArtists) {
+					if (cfg.exportSimArtists) {
 						const mbid = server.artistMbid[this.artist]
 							? server.artistMbid[this.artist]
 							: this.handles
@@ -927,7 +937,7 @@ class LfmTopAlbums {
 	search(p_artist) {
 		this.artist = p_artist;
 		this.func = null;
-		this.xmlhttp = XMLHttpRequest(ppt.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
+		this.xmlhttp = XMLHttpRequest(cfg.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
 		const URL = 'https://www.last.fm/music/' + encodeURIComponent(this.artist) + '/+albums';
 		this.func = this.analyse;
 		this.xmlhttp.open('GET', URL);
@@ -980,7 +990,7 @@ class DldLastfmGenresWhitelist {
 
 	search() {
 		this.func = null;
-		this.xmlhttp = XMLHttpRequest(ppt.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
+		this.xmlhttp = XMLHttpRequest(cfg.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
 		const URL = 'https://musicbrainz.org/genres';
 		this.func = this.analyse;
 		this.xmlhttp.open('GET', URL);

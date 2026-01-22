@@ -2,6 +2,7 @@
 
 function on_colours_changed() {
 	ui.getColours();
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
 	alb_scrollbar.setCol();
 	art_scrollbar.setCol();
 	img.createImages();
@@ -28,6 +29,7 @@ function on_colours_changed() {
 
 function on_font_changed() {
 	ui.getFont();
+	if (!ppt.panelActive) { window.Repaint(); return; } // Regorxxx <- Disable unnecesary callbacks ->
 	alb_scrollbar.reset();
 	art_scrollbar.reset();
 	alb_scrollbar.resetAuto();
@@ -38,6 +40,7 @@ function on_font_changed() {
 }
 
 function on_focus(is_focused) {
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
 	resize.focus = is_focused;
 }
 
@@ -74,6 +77,7 @@ function on_item_focus_change() {
 }
 
 function on_key_down(vkey) {
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
 	switch (vkey) {
 		case 0x10:
 		case 0x11:
@@ -114,6 +118,7 @@ function on_key_down(vkey) {
 }
 
 function on_key_up(vkey) {
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
 	if (vkey == 0x10 || vkey == 0x11 || vkey == 0x12) window.Repaint();
 }
 
@@ -140,9 +145,22 @@ function on_load_image_done(task_id, image, image_path) {
 	filmStrip.on_load_image_done(image, image_path);
 }
 
-function on_metadb_changed() {
+function on_metadb_changed(handleList) {
 	if (!ppt.panelActive) return;
 	if (panel.isRadio(panel.id.focus) || panel.block() && !$.server || !panel.updateNeeded() || txt.lyricsDisplayed()) return;
+	// Regorxxx <- Tag changes affect panel focus
+	if (fb.IsPlaying && !panel.id.focus) {
+		const np = fb.GetNowPlaying();
+		if (np && handleList.BSearch(np) === -1) { return; }
+		else if (np && plman.PlayingPlaylist !== -1) { plman.SetPlaylistFocusItemByHandle(plman.PlayingPlaylist, np); }
+	} else {
+		const sel = fb.GetFocusItem(true);
+		if (sel) {
+			if (handleList.BSearch(sel) === -1) { return; }
+			if (plman.ActivePlaylist !== -1) { plman.SetPlaylistFocusItemByHandle(plman.ActivePlaylist, sel); }
+		}
+	}
+	// Regorxxx ->
 	panel.getList(true, true);
 	panel.focusLoad();
 	panel.focusServer();
@@ -315,6 +333,7 @@ function on_mouse_wheel(step) {
 }
 
 function on_notify_data(name, info) {
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
 	let clone;
 	if (ui.id.local && name.startsWith('opt_')) {
 		clone = typeof info === 'string' ? String(info) : info;
@@ -515,10 +534,12 @@ function on_playback_new_track() {
 }
 
 function on_playback_pause(state) {
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
 	if (panel.id.lyricsSource) lyrics.on_playback_pause(state);
 }
 
 function on_playback_seek() {
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
 	if (panel.id.lyricsSource) lyrics.seek();
 	if (panel.block()) return;
 	const n = ppt.artistView ? 'bio' : 'rev';
@@ -530,6 +551,7 @@ function on_playback_seek() {
 }
 
 function on_playback_time() {
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
 	if (panel.block()) return;
 	const n = ppt.artistView ? 'bio' : 'rev';
 	if ((txt[n].loaded.txt && txt.reader[n].nowplaying || ppt.sourceAll) && txt.reader[n].perSec) {

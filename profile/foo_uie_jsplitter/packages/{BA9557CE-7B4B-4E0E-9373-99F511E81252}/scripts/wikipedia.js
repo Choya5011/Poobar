@@ -106,7 +106,7 @@ class DldWikipedia {
 		}
 
 		this.func = null;
-		this.xmlhttp = XMLHttpRequest(ppt.useUtilsWiki); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
+		this.xmlhttp = XMLHttpRequest(cfg.useUtilsWiki); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
 		
 		switch (this.searchItem) {
 			case 0:
@@ -493,7 +493,7 @@ class DldWikipedia {
 						return this.search(6);
 					} else {
 						if (this.doFallbackSearch()) return;
-						return $.trace('wikipedia: ' + this.name + ': not found', true);
+						return cfg.showConsoleMessagesNotFound ? $.trace('wikipedia: ' + this.name + ': not found', true) : void(0);  // Regorxxx <- Tweak logging ->
 					}
 				}
 				this.rg_mbid = list[i].rg_mbid;
@@ -680,7 +680,7 @@ class DldWikipedia {
 
 		if (this.type < 3) {
 			if (!this.wiki) {
-				if (this.type || !$.file(this.pth)) $.trace('wikipedia: ' + (this.title || this.artist) + ': not found', true);
+				if ((this.type || !$.file(this.pth)) && cfg.showConsoleMessagesNotFound) { $.trace('wikipedia: ' + (this.title || this.artist) + ': not found', true); } // Regorxxx <- Tweak logging ->
 				return;
 			}
 			if (this.fo) {
@@ -715,7 +715,7 @@ class DldWikipedia {
 				$.save(this.pth, JSON.stringify($.sortKeys(text), null, 3), true);
 			}
 			if (genres.length || this.info.composer.length || this.info.released || this.info.length || this.wiki) server.res();
-			else $.trace('wikipedia: ' + this.name + ': not found', true);
+			else if (cfg.showConsoleMessagesNotFound) { $.trace('wikipedia: ' + this.name + ': not found', true); } // Regorxxx <- Tweak logging ->
 		}
 	}
 	// Regorxxx <- Cache country codes
