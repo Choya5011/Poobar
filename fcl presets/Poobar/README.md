@@ -16,7 +16,8 @@ Following stats are at 1440p monitor res & numbers are higher than *completely* 
 
 **ESLyric**  
 The ESLyric presets use a slightly modified tab script.  
-Lyric background is handled by the tab script & not by the component through pesudo transparency.
+Lyric background is handled by the tab script & not by the component through pesudo transparency which reduces mem usage.  
+If background options other than pseudo-transparency are chosen in ESLyric the mem usage should rise to be similar to the OpenLyrics presets.
 
 | AA Res | Mem (MB) |
 |--------|----------|
