@@ -60,8 +60,7 @@ function initTabs(ignoreArr) {
     if (!tabs.length) tabs.push({ index: 0, name: 'Panel 1' });
 
     for (let i = 0; i < tabs.length; i++) {
-        const p = window.GetPanelByIndex(tabs[i].index);
-        if (p) p.Show(i === activeTab);
+        try { const p = window.GetPanelByIndex(tabs[i].index); if (p) p.Show(i === activeTab); } catch (e) { console.log(window.ScriptInfo.Name + ': Missing Panels \nNo panels found inside main panel: re-import theme'); fb.ShowPopupMessage('Error: No Panels present\nPlease re-install the theme or insert panels according to main panel theme structure\n\nNote: use "ctrl + p" to access properties in case of errors', window.ScriptInfo.Name); }
     }
 }
 

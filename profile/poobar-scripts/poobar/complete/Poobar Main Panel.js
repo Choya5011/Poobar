@@ -76,12 +76,14 @@ function updateLayout(layout, ww, wh, scaler) {
         } else if (layout === 'miniplayer_2') { // Block 4: Mini player 2 (Control Panel Only)
             paintRect = true;
             initTabs([3]);
-            for (let i = 0; i < tabs.length; i++) {
-                const p = window.GetPanelByIndex(tabs[i].index);
-                if (p) {
-                    p.Hidden = true;
+            try {
+                for (let i = 0; i < tabs.length; i++) {
+                    const p = window.GetPanelByIndex(tabs[i].index);
+                    if (p) {
+                        p.Hidden = true;
+                    }
                 }
-            }
+            } catch (e) { /* Ignore expected errors, logged by previous GetPanelByIndex within poo_mp_tabs.js */ }
             if (fluentControlPanel) { fluentControlPanel.Move(0, 0, ww, wh); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
         } else if (layout === 'normalvertical') { // Block 5: Normal vertical view
             paintRect = true;
@@ -124,15 +126,17 @@ const debouncedMiniPlayer = debounce(function() {
     let switchH = ppt.orientation.enabled ? 0 : TAB_H;
     let switchW = ppt.orientation.enabled ? TAB_W : 0;
 
-    for (let i = 0; i < tabs.length; i++) {
-        const p = window.GetPanelByIndex(tabs[i].index);
-        if (p) {
-            p.Move(switchW, switchH, panelW, panelH, true);
-            p.ShowCaption = false;
-            p.Locked = true;
-            p.Hidden = false;
+    try {
+        for (let i = 0; i < tabs.length; i++) {
+            const p = window.GetPanelByIndex(tabs[i].index);
+            if (p) {
+                p.Move(switchW, switchH, panelW, panelH, true);
+                p.ShowCaption = false;
+                p.Locked = true;
+                p.Hidden = false;
+            }
         }
-    }
+    } catch (e) { /* Ignore expected errors, logged by previous GetPanelByIndex within poo_mp_tabs.js */ }
 }, delay);
 
 
