@@ -8,6 +8,7 @@
  * s300 = 300px in 1440p
  */
 const scaler = {
+    s100: _scale(75),
     s140: _scale(105),
     s300: _scale(225),
     s320: _scale(240),
@@ -15,7 +16,7 @@ const scaler = {
     s400: _scale(300),
     s600: _scale(450),
     s730: _scale(547.5),
-    s800: _scale(600),
+    s800: _scale(600)
 };
 
 let ww = 0;

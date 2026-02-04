@@ -228,8 +228,11 @@ function on_size() {
     bx = ((panel.w - (bs * 7)) / 2);
     by = seekbar.y - _scale(36);
 
-    cx = (panel.w - (bs * 2));
-    cy = Math.round((panel.h - bs) / 2);
+    if (!ppt.art.enabled || ww < scaler.s600) {
+        cx = (panel.w - (bs * 2));
+        cy = Math.round((panel.h - bs) / 2);
+
+    }
 
     if (panel.w >= scaler.s1200) {
         seekbar.x = Math.round(panel.w * 0.22);
@@ -250,7 +253,7 @@ function on_size() {
             waveformPanel.Hidden = true;
         }
     } else {
-        rating.x = ppt.art.enabled && ww > scaler.s800 ? panel.h + 10 : _scale(12);
+        // rating.x is set in on_paint
         rating.y = panel.h - _scale(25);
 
         waveformH = panel.w >= scaler.s1080 && ppt.wf_coords.enabled ? _scale(ppt.wfH.value) : _scale(32);
@@ -321,11 +324,12 @@ function on_paint(gr) {
         }
 
         // Track information
-        const track_info_x = (ppt.art.enabled && ww > scaler.s800) ? art_y + size + 10 : _scale(12);
+        const track_info_x = (ppt.art.enabled && ww > scaler.s800 && g_img) ? art_y + size + 10 : _scale(12);
         if (ppt.mode.enabled && panel.w > scaler.s600) {
     		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, cy + _scale(4), (ppt.art.enabled && ww > scaler.s800) ? panel.w /5 : panel.w /4, 0, LEFT);
     		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, cy + _scale(28), (ppt.art.enabled && ww > scaler.s800) ? panel.w /9 : seekbar.x - panel.h - _scale(4), 0, LEFT);
         } else if (panel.w > scaler.s600) {
+            rating.x = track_info_x - _scale(2);
             gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, _scale(11), (ppt.art.enabled && ww > scaler.s800) ? panel.w / 4.7 : panel.w /4, _scale(18), LEFT);
             gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, Math.round((panel.h - _scale(18)) / 2), (ppt.art.enabled && ww > scaler.s800) ? panel.w * 0.13 : panel.w * 0.23, _scale(18), LEFT);
         }

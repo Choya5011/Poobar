@@ -51,7 +51,7 @@ try { smoothBrowser = window.GetPanel('Smooth Browser') } catch (e) { smoothBrow
  * Debounce is only of relevance for manual resizing smoothness, using win 11 snap layouts is always smooth.
 */
 function updateLayout(layout, ww, wh, scaler) {
-    if (ww >= scaler.s300) {
+    if (ww >= scaler.s300 && wh >= scaler.s100) { // stop updating at 300 ww or 100 wh to prevent control panel clipping, ideally constrain window size with a component like UIWizard
         if (layout === 'horizontal')  { // Block 1: Horizontal view
             paintRect = true;
             if (tabStack) tabStack.Hidden = true;
