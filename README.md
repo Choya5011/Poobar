@@ -37,11 +37,7 @@ Optional (Lyrics): UD Digi Kyokasho (NP-B)
 
 ## Installation
 **Fonts**  
-Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 by default. 
-
-**Note**  
-Trying a portable install first is recommended, setup hasn't been extensively tested yet after updating it.  
-This note will be removed as soon as that's been done.
+Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 by default.
 
 **Portable Instructions**  
 1. Install Foobar as portable (clean install)
