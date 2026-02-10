@@ -96,6 +96,8 @@ function updateLayout(layout, ww, wh, scaler) {
             paintRect = true;
             if (smoothBrowser) smoothBrowser.Hidden = true;
             if (tabStack) tabStack.Hidden = true;
+            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
+            if (playlistView) { const remainingH = wh - cpV - ((wh - cpV) * psV); playlistView.Move(0, (wh - cpV) * psV, ww, remainingH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
             debouncedNarrowVertical();
         }
     }
@@ -148,9 +150,7 @@ const debouncedNormalVertical = debounce(function() {
 
 const debouncedNarrowVertical = debounce(function() {
     // Narrow vertical view
-    if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
     if (tabStack) { tabStack.Move(0, 0, ww, (wh - cpV) * psV); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-    if (playlistView) { const remainingH = wh - cpV - ((wh - cpV) * psV); playlistView.Move(0, (wh - cpV) * psV, ww, remainingH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
 }, delay);
 
 /* ================================================== */
