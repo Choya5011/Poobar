@@ -1,7 +1,7 @@
 ﻿'use strict';
 
 // This script is a modified version of Fluent Control Panel version 0.9 by eurekagliese
-window.DefineScript('Fluent Control Panel', {author:'eurekagliese', options:{grab_focus:false}});
+window.DefineScript('Fluent Control Panel', {author:'eurekagliese & Choya', options:{grab_focus:false}});
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
@@ -23,6 +23,8 @@ let g_hot = false;
 let seekbar_hover = false;
 let volume_hover = false;
 let runOnce = true;
+let dbShow = false;
+let dbHideDelay = 300;
 
 let ww = 0;
 let wh = 0;
@@ -199,7 +201,7 @@ buttons.update = () => {
     }, '');
 
     const xx = (panel.w > scaler.s800) ? (panel.w - (bs * 2)) : (panel.w - bs);
-    const yy = Math.round((panel.h - bs) / 2);
+    const yy = (panel.w > scaler.s520) ? Math.round((panel.h - bs) / 2) : panel.h - _scale(38);
     // right section button offsets
     const rOff_1 = (panel.w > scaler.s800) ? 0 : -0.9;
     const rOff_2 = (panel.w > scaler.s800) ? 0 : -1.4;
@@ -207,15 +209,23 @@ buttons.update = () => {
     const rOff_4 = (panel.w > scaler.s800) ? 0 : -0.6;
     const rOff_5 = (panel.w > scaler.s800) ? 0 : -1.9;
     //const btnOffsets = (panel.w > scaler.s800) ? [0, 0, 0, 0, 0] : [0.9, 1.4, 0.4, 0.6, 1.9];
-    const rY = (panel.w > scaler.s520) ? yy : yy + _scale(36);
-    const vol_x = (ppt.vol.enabled) ? xx - (bs * (2.9 + rOff_4)) : xx - (bs * (3.9 + rOff_5));
-    const vol_y = (ppt.vol.enabled) ? volume.y - _scale(14) : rY + 1;
+    let vol_x; let vol_y;
+    if (panel.w >= scaler.s520 && ppt.vol.enabled) {
+        vol_x = xx - (bs * (2.9 + rOff_4));
+        vol_y = volume.y - _scale(14);
+    } else if (panel.w <= scaler.s520 && ppt.vol.enabled) {
+        vol_x = xx - (bs * (2.9 + rOff_4));
+        vol_y = panel.h - _scale(24);
+    } else if (!ppt.vol.enabled) {
+        vol_x = xx - (bs * (3.9 + rOff_5));
+        vol_y = yy + 1;
+    }
 
     buttons.buttons.volume = new _button(vol_x, vol_y, bs, bs, {normal : fb.Volume === -100 ? _chrToImg(chara.vol0, g_textcolour, fluent_font) : fb.Volume > -4 ? _chrToImg(chara.vol3, g_textcolour, fluent_font) : fb.Volume > -15 ? _chrToImg(chara.vol2, g_textcolour, fluent_font) : fb.Volume > -30 ? _chrToImg(chara.vol1, g_textcolour, fluent_font) : _chrToImg(chara.vol0, g_textcolour, fluent_font), hover : _chrToImg(chara.volume, g_textcolour_hl, fluent_font_hover)}, () => { fb.VolumeMute(); }, '');
-    buttons.buttons.upd = new _button (xx - (bs * (3 + rOff_2)), rY + 2, bs, bs, {normal: _chrToImg(chara.eject, g_textcolour, fluent_font),  hover : _chrToImg(chara.eject, g_textcolour_hl, fluent_font_hover)}, () => { switchOutputDevice(xx - (bs * (5.9 + rOff_2)), rY) }, '');
-    buttons.buttons.search = new _button(xx - (bs * (2 + rOff_1)), rY, bs, bs, {normal : _chrToImg(chara.search, g_textcolour, fluent_font), hover : _chrToImg(chara.search, g_textcolour_hl, fluent_font_hover)}, () => { fb.RunMainMenuCommand('Library/Search'); }, '');
-    buttons.buttons.consol = new _button(xx -  (bs * (1 + rOff_3)), rY, bs, bs, {normal : _chrToImg(chara.consol, g_textcolour, fluent_font), hover : _chrToImg(chara.consol, g_textcolour_hl, fluent_font_hover)}, () => { fb.ShowConsole(); }, '');
-    buttons.buttons.settings = new _button(xx, rY, bs, bs, {normal : _chrToImg(chara.settings, g_textcolour, fluent_font), hover : _chrToImg(chara.settings, g_textcolour_hl, fluent_font_hover)}, () => { fb.ShowPreferences(); }, '');
+    buttons.buttons.upd = new _button (xx - (bs * (3 + rOff_2)), yy + 2, bs, bs, {normal: _chrToImg(chara.eject, g_textcolour, fluent_font),  hover : _chrToImg(chara.eject, g_textcolour_hl, fluent_font_hover)}, () => { switchOutputDevice(xx - (bs * (5.9 + rOff_2)), yy) }, '');
+    buttons.buttons.search = new _button(xx - (bs * (2 + rOff_1)), yy, bs, bs, {normal : _chrToImg(chara.search, g_textcolour, fluent_font), hover : _chrToImg(chara.search, g_textcolour_hl, fluent_font_hover)}, () => { fb.RunMainMenuCommand('Library/Search'); }, '');
+    buttons.buttons.consol = new _button(xx -  (bs * (1 + rOff_3)), yy, bs, bs, {normal : _chrToImg(chara.consol, g_textcolour, fluent_font), hover : _chrToImg(chara.consol, g_textcolour_hl, fluent_font_hover)}, () => { fb.ShowConsole(); }, '');
+    buttons.buttons.settings = new _button(xx, yy, bs, bs, {normal : _chrToImg(chara.settings, g_textcolour, fluent_font), hover : _chrToImg(chara.settings, g_textcolour_hl, fluent_font_hover)}, () => { fb.ShowPreferences(); }, '');
 }
 
 function on_size() {
@@ -271,7 +281,7 @@ function on_size() {
     }
 
     volume.x = (panel.w > scaler.s800) ? panel.w - (bs * 4) : panel.w - (bs * 2.5);
-    volume.y = (panel.w > scaler.s520) ? seekbar.y + _scale(12) :  seekbar.y + _scale(36);
+    volume.y = (panel.w > scaler.s520) ? seekbar.y + _scale(12) : panel.h - _scale(10);
     volume.h =  _scale(4);
     volume.w = _scale(74);
 
@@ -326,12 +336,12 @@ function on_paint(gr) {
         // Track information
         const track_info_x = (ppt.art.enabled && ww > scaler.s800 && g_img) ? art_y + size + 10 : _scale(12);
         if (ppt.mode.enabled && panel.w > scaler.s600) {
-    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, cy + _scale(4), (ppt.art.enabled && ww > scaler.s800) ? panel.w /5 : panel.w /4, 0, LEFT);
-    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, cy + _scale(28), (ppt.art.enabled && ww > scaler.s800) ? panel.w /9 : seekbar.x - panel.h - _scale(4), 0, LEFT);
+    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, cy + _scale(4), (ppt.art.enabled && ww > scaler.s800) ? panel.w /5 : panel.w /4, 0, LEFT | DT_END_ELLIPSIS);
+    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, cy + _scale(28), (ppt.art.enabled && ww > scaler.s800) ? panel.w /9 : seekbar.x - panel.h - _scale(4), 0, LEFT | DT_END_ELLIPSIS);
         } else if (panel.w > scaler.s600) {
             rating.x = track_info_x - _scale(2);
-            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, _scale(11), (ppt.art.enabled && ww > scaler.s800) ? panel.w / 4.7 : panel.w /4, _scale(18), LEFT);
-            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, Math.round((panel.h - _scale(18)) / 2), (ppt.art.enabled && ww > scaler.s800) ? panel.w * 0.13 : panel.w * 0.23, _scale(18), LEFT);
+            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, _scale(11), (ppt.art.enabled && ww > scaler.s800) ? panel.w / 6.4 : panel.w / 3.4, _scale(18), LEFT | DT_END_ELLIPSIS); // # w needs calibration
+            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, Math.round((panel.h - _scale(18)) / 2), (ppt.art.enabled && ww > scaler.s800) ? panel.w * 0.13 : panel.w * 0.23, _scale(18), LEFT | DT_END_ELLIPSIS);
         }
 
         // Draw the next track information
@@ -416,7 +426,7 @@ function on_paint(gr) {
                 }
             }
             var dbFont = gdi.Font(panel.fonts.normal.Name, 12);
-            if (panel.w > scaler.s800 && (ppt.db.enabled || volume_hover)) gr.GdiDrawText(fb.Volume.toFixed(2) + ' dB', dbFont, g_textcolour, _scale(8), volume.y + _scale(2), volume.x + _scale(106), 0, RIGHT);
+            if (panel.w > scaler.s800 && (ppt.db.enabled || volume_hover || dbShow)) gr.GdiDrawText(fb.Volume.toFixed(2) + ' dB', dbFont, g_textcolour, _scale(8), volume.y + _scale(2), volume.x + _scale(106), 0, RIGHT);
         }
     }
 }
@@ -560,20 +570,56 @@ function switchOutputDevice(x, y) {
     }
 }
 
+// keyboard events
+function on_key_down(vkey) {
+    switch (vkey) {
+        case 0x20: // VK_SPACEBAR
+            fb.Pause();
+            break;
+        case VK_LEFT:
+            fb.Prev();
+            break;
+        case VK_RIGHT:
+            fb.Next();
+            break;
+        case VK_UP:
+            fb.VolumeUp();
+            dbShow = true;
+            window.SetTimeout(function() { dbShow = false; window.Repaint(); }, dbHideDelay);
+            break;
+        case VK_DOWN:
+            fb.VolumeDown();
+            dbShow = true;
+            window.SetTimeout(function() { dbShow = false; window.Repaint(); }, dbHideDelay);
+            break;
+    }
+}
+
 // mouse events
 function on_mouse_wheel(s) {
-    volume.wheel(s);
-    let easy_vol = vol2pos(fb.Volume);
-        easy_vol += s / 20;
-        fb.Volume = pos2vol(easy_vol);
+    if (!seekbar_hover) {
+        volume.wheel(s);
+        let easy_vol = vol2pos(fb.Volume);
+            easy_vol += s / 20;
+            fb.Volume = pos2vol(easy_vol);
+        dbShow = true;
+        window.SetTimeout(function() { dbShow = false; window.Repaint(); }, dbHideDelay);
+    }
 }
 
 function on_mouse_move(x, y) {
-    let isHoveringSeekbar = (x >= seekbar.x && x <= seekbar.x + seekbar.w && y >= seekbar.y && y <= seekbar.y + seekbar.h);
+    let isHoveringSeekbar;
+    if (ppt.mode.enabled) {
+        isHoveringSeekbar = (x >= seekbar.x && x <= seekbar.x + seekbar.w && y >= seekbar.y && y <= seekbar.y + seekbar.h);
+    } else {
+        const buffer = 1;
+        isHoveringSeekbar = (x >= seekbar.x - buffer && x <= seekbar.x + seekbar.w + buffer && y >= waveformY - buffer && y <= waveformY + waveformH + buffer);
+    }
     if (isHoveringSeekbar !== seekbar_hover) {
         seekbar_hover = isHoveringSeekbar;
         window.Repaint();
     }
+
     let isHoveringVolume = (x >= volume.x && x <= volume.x + volume.w && y >= volume.y && y <= volume.y + volume.h);
     if (isHoveringVolume !== volume_hover) {
         volume_hover = isHoveringVolume;
