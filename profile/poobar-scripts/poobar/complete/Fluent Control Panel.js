@@ -12,10 +12,13 @@ include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_helpers.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col_helper.js');
 
 const scaler = {
+    s80: _scale(60),
+    s100: _scale(75),
+    s130: _scale(97.5),
+    s520: _scale(390),
     s600: _scale(450),
+    s800: _scale(600),
     s1080: _scale(810),
-    s800:  _scale(600),
-    s520:  _scale(390),
     s1200: _scale(900)
 };
 
@@ -64,10 +67,6 @@ let ppt = {
     pboMode : new _p('_PROPERTY: Playback Order Button Mode', true),
     bar_mode : new _p('_DISPLAY: Show Bar Core', false),
     roundBars : new _p('_DISPLAY: Show Rounded Bars', true),
-    // custom waveform values
-    wf_coords : new _p('_PROPERTY: Custom Waveform Values Apply', false),
-    wfY : new _p('_PROPERTY: Custom Waveform Position', 52),
-    wfH : new _p('_PROPERTY: Custom Waveform Height', 32),
     // background
     bgShow : new _p('_DISPLAY: Show Wallpaper', true),
     bgBlur : new _p('_DISPLAY: Wallpaper Blurred', false),
@@ -200,31 +199,45 @@ buttons.update = () => {
         }
     }, '');
 
-    const xx = (panel.w > scaler.s800) ? (panel.w - (bs * 2)) : (panel.w - bs);
-    const yy = (panel.w > scaler.s520) ? Math.round((panel.h - bs) / 2) : panel.h - _scale(38);
+    /* === right button section === */
+
+    let xx, yy, vol_x, vol_y;
+    if (panel.w <= scaler.s520 && panel.h <= scaler.s130) { // out of bounds to hide, temp fix
+        xx = panel.w;
+        yy = panel.h;
+    } else {
+        xx = (panel.w > scaler.s800) ? (panel.w - (bs * 2)) : (panel.w - bs);
+        yy = (panel.w > scaler.s520) ? Math.round((panel.h - bs) / 2) : panel.h - _scale(38);
+    }
+
     // right section button offsets
-    const rOff_1 = (panel.w > scaler.s800) ? 0 : -0.9;
-    const rOff_2 = (panel.w > scaler.s800) ? 0 : -1.4;
-    const rOff_3 = (panel.w > scaler.s800) ? 0 : -0.4;
-    const rOff_4 = (panel.w > scaler.s800) ? 0 : -0.6;
-    const rOff_5 = (panel.w > scaler.s800) ? 0 : -1.9;
-    //const btnOffsets = (panel.w > scaler.s800) ? [0, 0, 0, 0, 0] : [0.9, 1.4, 0.4, 0.6, 1.9];
-    let vol_x; let vol_y;
+    const is800 = panel.w > scaler.s800;
+    const offsets = {
+        s1: is800 ? 0 : -0.9,
+        s2: is800 ? 0 : -1.4,
+        s3: is800 ? 0 : -0.4,
+        s4: is800 ? 0 : -0.6,
+        s5: is800 ? 0 : -1.9
+    };
+
     if (panel.w >= scaler.s520 && ppt.vol.enabled) {
-        vol_x = xx - (bs * (2.9 + rOff_4));
+        vol_x = xx - (bs * (2.9 + offsets.s4));
         vol_y = volume.y - _scale(14);
-    } else if (panel.w <= scaler.s520 && ppt.vol.enabled) {
-        vol_x = xx - (bs * (2.9 + rOff_4));
+    } else if (panel.w <= scaler.s520 && ppt.vol.enabled && panel.h > scaler.s130) {
+        vol_x = xx - (bs * (2.9 + offsets.s4));
         vol_y = panel.h - _scale(24);
     } else if (!ppt.vol.enabled) {
-        vol_x = xx - (bs * (3.9 + rOff_5));
+        vol_x = xx - (bs * (3.9 + offsets.s5));
         vol_y = yy + 1;
+    } else {
+        vol_x = xx;
+        vol_y = yy;
     }
 
     buttons.buttons.volume = new _button(vol_x, vol_y, bs, bs, {normal : fb.Volume === -100 ? _chrToImg(chara.vol0, g_textcolour, fluent_font) : fb.Volume > -4 ? _chrToImg(chara.vol3, g_textcolour, fluent_font) : fb.Volume > -15 ? _chrToImg(chara.vol2, g_textcolour, fluent_font) : fb.Volume > -30 ? _chrToImg(chara.vol1, g_textcolour, fluent_font) : _chrToImg(chara.vol0, g_textcolour, fluent_font), hover : _chrToImg(chara.volume, g_textcolour_hl, fluent_font_hover)}, () => { fb.VolumeMute(); }, '');
-    buttons.buttons.upd = new _button (xx - (bs * (3 + rOff_2)), yy + 2, bs, bs, {normal: _chrToImg(chara.eject, g_textcolour, fluent_font),  hover : _chrToImg(chara.eject, g_textcolour_hl, fluent_font_hover)}, () => { switchOutputDevice(xx - (bs * (5.9 + rOff_2)), yy) }, '');
-    buttons.buttons.search = new _button(xx - (bs * (2 + rOff_1)), yy, bs, bs, {normal : _chrToImg(chara.search, g_textcolour, fluent_font), hover : _chrToImg(chara.search, g_textcolour_hl, fluent_font_hover)}, () => { fb.RunMainMenuCommand('Library/Search'); }, '');
-    buttons.buttons.consol = new _button(xx -  (bs * (1 + rOff_3)), yy, bs, bs, {normal : _chrToImg(chara.consol, g_textcolour, fluent_font), hover : _chrToImg(chara.consol, g_textcolour_hl, fluent_font_hover)}, () => { fb.ShowConsole(); }, '');
+    buttons.buttons.upd = new _button (xx - (bs * (3 + offsets.s2)), yy + 2, bs, bs, {normal: _chrToImg(chara.eject, g_textcolour, fluent_font),  hover : _chrToImg(chara.eject, g_textcolour_hl, fluent_font_hover)}, () => { switchOutputDevice(xx - (bs * (5.9 + offsets.s2)), yy) }, '');
+    buttons.buttons.search = new _button(xx - (bs * (2 + offsets.s1)), yy, bs, bs, {normal : _chrToImg(chara.search, g_textcolour, fluent_font), hover : _chrToImg(chara.search, g_textcolour_hl, fluent_font_hover)}, () => { fb.RunMainMenuCommand('Library/Search'); }, '');
+    buttons.buttons.consol = new _button(xx -  (bs * (1 + offsets.s3)), yy, bs, bs, {normal : _chrToImg(chara.consol, g_textcolour, fluent_font), hover : _chrToImg(chara.consol, g_textcolour_hl, fluent_font_hover)}, () => { fb.ShowConsole(); }, '');
     buttons.buttons.settings = new _button(xx, yy, bs, bs, {normal : _chrToImg(chara.settings, g_textcolour, fluent_font), hover : _chrToImg(chara.settings, g_textcolour_hl, fluent_font_hover)}, () => { fb.ShowPreferences(); }, '');
 }
 
@@ -238,15 +251,14 @@ function on_size() {
     bx = ((panel.w - (bs * 7)) / 2);
     by = seekbar.y - _scale(36);
 
-    if (!ppt.art.enabled || ww < scaler.s600) {
-        cx = (panel.w - (bs * 2));
-        cy = Math.round((panel.h - bs) / 2);
-
-    }
+//    if (!ppt.art.enabled || ww < scaler.s600) {
+//        cx = (panel.w - (bs * 2));
+//        cy = Math.round((panel.h - bs) / 2);
+//    }
 
     if (panel.w >= scaler.s1200) {
         seekbar.x = Math.round(panel.w * 0.22);
-    } else if (panel.w <= scaler.s520) {
+    } else if (panel.w <= scaler.s520 && panel.h) {
         seekbar.x = Math.round(panel.w * 0.18);
     } else if (panel.w > scaler.s520 && panel.w < scaler.s1200) {
         seekbar.x = Math.round(panel.w * 0.3);
@@ -266,15 +278,19 @@ function on_size() {
         // rating.x is set in on_paint
         rating.y = panel.h - _scale(25);
 
-        waveformH = panel.w >= scaler.s1080 && ppt.wf_coords.enabled ? _scale(ppt.wfH.value) : _scale(32);
-        waveformY = panel.w >= scaler.s1080 && ppt.wf_coords.enabled ? _scale(ppt.wfY.value) : _scale((panel.h / 2) - (waveformH / 2));
+        waveformH = _scale(32);
+        waveformY = _scale((panel.h / 2) - (waveformH / 2));
 
         if (waveformPanel) {
-            waveformPanel.Move(seekbar.x - _scale(40), waveformY, seekbar.w + _scale(80), waveformH, true);
-            waveformPanel.SupportPseudoTransparency = true;
-            waveformPanel.ShowCaption = false;
-            waveformPanel.Hidden = false;
-            waveformPanel.Locked = true;
+            if (wh > scaler.s100) {
+                waveformPanel.Move(seekbar.x - _scale(40), waveformY, seekbar.w + _scale(80), waveformH, true);
+                waveformPanel.SupportPseudoTransparency = true;
+                waveformPanel.ShowCaption = false;
+                waveformPanel.Hidden = false;
+                waveformPanel.Locked = true;
+            } else {
+                waveformPanel.Hidden = true;
+            }
         } else {
             console.log(window.ScriptInfo.Name + ': Missing Panel \nNo Waveform panel found: make sure the waveform panel is the topmost panel inside the control panel');
         }
@@ -318,7 +334,7 @@ function on_paint(gr) {
     // gr.FillSolidRect(bx - (bs * 4), _scale(12), _scale(72), _scale(18), colours.red);
 
     if (fb.IsPlaying) {
-        if ((!ppt.mode.enabled && ppt.rating.enabled && ww > scaler.s600) || (ppt.mode.enabled && ppt.rating.enabled && ww > scaler.s1200)) {
+        if (ppt.rating.enabled && panel.h >= scaler.s80 && ((!ppt.mode.enabled && ww > scaler.s600) || (ppt.mode.enabled && ww > scaler.s1200))) {
             ratingHover = true;
             rating.paint(gr);
         } else {
@@ -335,13 +351,13 @@ function on_paint(gr) {
 
         // Track information
         const track_info_x = (ppt.art.enabled && ww > scaler.s800 && g_img) ? art_y + size + 10 : _scale(12);
-        if (ppt.mode.enabled && panel.w > scaler.s600) {
-    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, cy + _scale(4), (ppt.art.enabled && ww > scaler.s800) ? panel.w /5 : panel.w /4, 0, LEFT | DT_END_ELLIPSIS);
-    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, cy + _scale(28), (ppt.art.enabled && ww > scaler.s800) ? panel.w /9 : seekbar.x - panel.h - _scale(4), 0, LEFT | DT_END_ELLIPSIS);
-        } else if (panel.w > scaler.s600) {
+        if (ppt.mode.enabled && panel.w > scaler.s600 && panel.h >= scaler.s80) {
+    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, panel.h * 0.4, (ppt.art.enabled && ww > scaler.s800) ? panel.w /5 : panel.w /4, 0, LEFT | DT_END_ELLIPSIS);
+    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, panel.h * 0.6, (ppt.art.enabled && ww > scaler.s800) ? panel.w /9 : seekbar.x - panel.h - _scale(4), 0, LEFT | DT_END_ELLIPSIS);
+        } else if (panel.w > scaler.s600 && panel.h >= scaler.s80) {
             rating.x = track_info_x - _scale(2);
-            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, _scale(11), (ppt.art.enabled && ww > scaler.s800) ? panel.w / 6.4 : panel.w / 3.4, _scale(18), LEFT | DT_END_ELLIPSIS); // # w needs calibration
-            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, Math.round((panel.h - _scale(18)) / 2), (ppt.art.enabled && ww > scaler.s800) ? panel.w * 0.13 : panel.w * 0.23, _scale(18), LEFT | DT_END_ELLIPSIS);
+            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, panel.h * 0.2, (ppt.art.enabled && ww > scaler.s800) ? panel.w / 6.4 : panel.w / 3.4, _scale(18), LEFT | DT_END_ELLIPSIS); // # w needs calibration
+            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, panel.h * 0.5, (ppt.art.enabled && ww > scaler.s800) ? panel.w * 0.13 : panel.w * 0.23, _scale(18), LEFT | DT_END_ELLIPSIS);
         }
 
         // Draw the next track information
@@ -352,7 +368,7 @@ function on_paint(gr) {
             if (ppt.mode.enabled && panel.w >= scaler.s600) {
                 gr.GdiDrawText(nextTrackInfo, panel.fonts.normal, g_textcolour, text_x, seekbar.y + _scale(16), text_w, _scale(18), SF_CENTER_VCENTER | DT_END_ELLIPSIS);
                 //gr.DrawRect(text_x, seekbar.y + 18, text_w, _scale(18), 1, colours.red); //debugging border
-            } else if (panel.w >= scaler.s600) {
+            } else if (panel.w >= scaler.s600 && panel.h > scaler.s100) {
                 if (panel.w < scaler.s1080) {
                     gr.GdiDrawText(nextTrackInfo, panel.fonts.normal, g_textcolour, text_x, seekbar.y + _scale(18), text_w, _scale(18), SF_CENTER_VCENTER | DT_END_ELLIPSIS);
                 } else {
@@ -394,14 +410,14 @@ function on_paint(gr) {
                 if (panel.w >= scaler.s1080) {
                     gr.GdiDrawText(tfo.playback_time.Eval(), panel.fonts.title, g_textcolour, bx - (bs * 4), _scale(20), _scale(72), 0, RIGHT);
                     gr.GdiDrawText("/" + tfo.length.Eval(), panel.fonts.normal, g_textcolour, bx - (bs * 1.7), _scale(20), _scale(72), 0, LEFT);
-                } else {
+                } else if (panel.h > scaler.s130) {
                     gr.GdiDrawText(tfo.playback_time.Eval(), panel.fonts.title, g_textcolour, (panel.w / 4) - _scale(17), seekbar.y - _scale(33), panel.w / 2, _scale(18), SF_CENTER_VCENTER);
                     gr.GdiDrawText("/" + tfo.length.Eval(), panel.fonts.title, g_textcolour, (panel.w / 4) + _scale(15), seekbar.y - _scale(33), panel.w / 2, _scale(18), SF_CENTER_VCENTER);
                 }
             }
         }
 
-        if (ppt.vol.enabled) {
+        if (ppt.vol.enabled && (panel.w > scaler.s520 || panel.h > scaler.s130)) {
             let vol_pos = volume.pos();
             let barColor = getBarColor(volume_hover);
             let coreColor = getCoreColor(volume_hover);
