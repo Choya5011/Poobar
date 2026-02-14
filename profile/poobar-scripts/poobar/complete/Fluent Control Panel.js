@@ -202,7 +202,7 @@ buttons.update = () => {
     /* === right button section === */
 
     let xx, yy, vol_x, vol_y;
-    if (panel.w <= scaler.s520 && panel.h <= scaler.s130) { // out of bounds to hide, temp fix
+    if ((panel.w <= scaler.s520 && panel.h <= scaler.s130) || (panel.w > scaler.s520 && panel.h < scaler.s80)) { // out of bounds to hide, temp fix
         xx = panel.w;
         yy = panel.h;
     } else {
@@ -220,18 +220,18 @@ buttons.update = () => {
         s5: is800 ? 0 : -1.9
     };
 
-    if (panel.w >= scaler.s520 && ppt.vol.enabled) {
+    if (ppt.vol.enabled && panel.w >= scaler.s520 && panel.h >= scaler.s80) {
         vol_x = xx - (bs * (2.9 + offsets.s4));
         vol_y = volume.y - _scale(14);
-    } else if (panel.w <= scaler.s520 && ppt.vol.enabled && panel.h > scaler.s130) {
+    } else if (ppt.vol.enabled && panel.w <= scaler.s520 && panel.h > scaler.s130) {
         vol_x = xx - (bs * (2.9 + offsets.s4));
         vol_y = panel.h - _scale(24);
     } else if (!ppt.vol.enabled) {
         vol_x = xx - (bs * (3.9 + offsets.s5));
         vol_y = yy + 1;
     } else {
-        vol_x = xx;
-        vol_y = yy;
+        vol_x = panel.w;
+        vol_y = panel.h;
     }
 
     buttons.buttons.volume = new _button(vol_x, vol_y, bs, bs, {normal : fb.Volume === -100 ? _chrToImg(chara.vol0, g_textcolour, fluent_font) : fb.Volume > -4 ? _chrToImg(chara.vol3, g_textcolour, fluent_font) : fb.Volume > -15 ? _chrToImg(chara.vol2, g_textcolour, fluent_font) : fb.Volume > -30 ? _chrToImg(chara.vol1, g_textcolour, fluent_font) : _chrToImg(chara.vol0, g_textcolour, fluent_font), hover : _chrToImg(chara.volume, g_textcolour_hl, fluent_font_hover)}, () => { fb.VolumeMute(); }, '');
@@ -342,7 +342,7 @@ function on_paint(gr) {
         }
 
         let size; let art_x; let art_y;
-        if (ppt.art.enabled && g_img && ww > scaler.s800) {
+        if (ppt.art.enabled && g_img && ww > scaler.s800 && panel.h > scaler.s80) {
             size = Math.min(seekbar.x - _scale(46), panel.h * 0.86);
             art_x = panel.h * 0.06
             art_y = panel.h * 0.5 - size / 2
@@ -417,7 +417,7 @@ function on_paint(gr) {
             }
         }
 
-        if (ppt.vol.enabled && (panel.w > scaler.s520 || panel.h > scaler.s130)) {
+        if (ppt.vol.enabled && ((panel.w > scaler.s520 && panel.h > scaler.s80) || (panel.w < scaler.s520 && panel.h > scaler.s130))) {
             let vol_pos = volume.pos();
             let barColor = getBarColor(volume_hover);
             let coreColor = getCoreColor(volume_hover);
