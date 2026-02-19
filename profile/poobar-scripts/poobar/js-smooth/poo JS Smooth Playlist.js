@@ -1,6 +1,7 @@
 ﻿window.DefinePanel("JS Smooth Playlist", { author : "Br3tt aka Falstaff", features : { drag_n_drop : true }});
 include(fb.ComponentPath + "samples\\js-smooth\\js\\JScommon.js");
 include(fb.ComponentPath + "samples\\js-smooth\\js\\JSinputbox.js");
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
 include(fb.ProfilePath + "poobar-scripts\\poobar\\js-smooth\\js\\poo_jssp.js");
 
 /*

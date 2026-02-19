@@ -1,37 +1,6 @@
-/* ==================================================
- * Variables
-================================================== */
-
 /**
- * storing in scaler instead of accessing _scale() directly
- * reason: easier to find back in script
- * s300 = 300px in 1440p
+ * Main Panel functions
  */
-const scaler = {
-    s100: _scale(75),
-    s140: _scale(105),
-    s300: _scale(225),
-    s320: _scale(240),
-    s380: _scale(285),
-    s400: _scale(300),
-    s600: _scale(450),
-    s730: _scale(547.5),
-    s800: _scale(600)
-};
-
-let ww = 0;
-let wh = 0;
-
-let delay = 150;
-
-let cpH = _scale(ppt.cpH.value); // Control Panel Height in Horizontal orientation
-let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
-let psH;
-let psV;
-
-/* ==================================================
- * Functions
-================================================== */
 
 const approximatelyEqual = (a, b, tolerance = 0.20) => {
   const diff = Math.abs(a - b);
@@ -44,7 +13,7 @@ const checkSizeAndRatio = (wh, ww, targetRatio, tolerance = 0.20) => {
   return false;
 };
 
-function getLayoutType(ww, wh) {
+function getLayoutType(ww, wh, scaler) {
     if ((checkSizeAndRatio(ww, wh, 16 / 9, 0.2) || checkSizeAndRatio(ww, wh, 3, 0.3) || checkSizeAndRatio(ww, wh, 11.11, 0.4) || checkSizeAndRatio(ww, wh, 5.4, 0.2)) && wh > scaler.s380) return 'horizontal';
     if (checkSizeAndRatio(wh, ww, 8 / 9, 0.4) && ww > scaler.s600 && wh > scaler.s730 || checkSizeAndRatio(ww, wh, 8 / 9, 0.4) && ww > scaler.s600 && wh > scaler.s730 || checkSizeAndRatio(ww, wh, 1, 0.3) && ww > scaler.s600)  return 'halfscreen';
     if ((ww <= scaler.s600 && wh <= scaler.s730 || ww < scaler.s320) && wh > scaler.s400) return 'miniplayer';

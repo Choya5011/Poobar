@@ -4,8 +4,8 @@ window.DefineScript('Horizontal/Vertical Poobar Tabs', {author:'Choya', options:
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_helpers.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col_helper.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
 
 let ww = 0;
 let wh = 0;
@@ -81,7 +81,6 @@ function on_size() {
             p.Locked = true;
         }
     }
-    window.Repaint();
 }
 
 function on_paint(gr) {

@@ -8,19 +8,9 @@ include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\seekbar.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\rating.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\volume.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_helpers.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col_helper.js');
-
-const scaler = {
-    s80: _scale(60),
-    s100: _scale(75),
-    s130: _scale(97.5),
-    s520: _scale(390),
-    s600: _scale(450),
-    s800: _scale(600),
-    s1080: _scale(810),
-    s1200: _scale(900)
-};
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
 
 let g_hot = false;
 let seekbar_hover = false;
@@ -48,7 +38,7 @@ let colours = {
     red : _RGB(255, 0, 0),
     love : _RGB(255, 0, 0),
     seekbar_background : _RGBA(128, 128, 128, 128),
-    rating_bg : _RGBA(128, 128, 128, 224)
+    //rating_bg : _RGBA(128, 128, 128, 224)
 };
 
 let ppt = {
@@ -59,7 +49,6 @@ let ppt = {
     db : new _p('_DISPLAY: Show dB permanently', false),
     rating : new _p('_DISPLAY: Show Rating', true),
     // colors
-    rate : new _p('_PROPERTY: Rating Color', _RGB(255, 200, 0)),
     col_mode : new _p('_PROPERTY: Color Mode (1,2,3)', 1),
     // modes
     mode: new _p('_DISPLAY: Seekbar Mode', true),
@@ -101,9 +90,12 @@ let chara = {
     vol1 : '\uE993',
     vol2 : '\uE994',
     vol3 : '\uE995',
+    eject : '\uf847',
+    // rating
+    circleMask : '\ue91f',
+    circleRing : '\uea3a',
     rating_on : '\ue735',
     rating_off : '\ue734',
-    eject : '\uf847',
     //
 	repeat_all : '\ue8ee',
 	repeat_one : '\ue8ed',
@@ -157,7 +149,7 @@ buttons.update = () => {
             let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
             if (selected_items && selected_items.Count !== 0) {
                 let tags = {};
-                tags['LOVED'] = isLoved ? '' : '1';
+                tags['MOOD'] = isLoved ? '' : '1';
                 selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags));
                 isLoved = !isLoved;
             }
@@ -275,8 +267,7 @@ function on_size() {
             waveformPanel.Hidden = true;
         }
     } else {
-        // rating.x is set in on_paint
-        rating.y = panel.h - _scale(25);
+        // rating.x & y are in on_paint
 
         waveformH = _scale(32);
         waveformY = _scale((panel.h / 2) - (waveformH / 2));
@@ -334,13 +325,6 @@ function on_paint(gr) {
     // gr.FillSolidRect(bx - (bs * 4), _scale(12), _scale(72), _scale(18), colours.red);
 
     if (fb.IsPlaying) {
-        if (ppt.rating.enabled && panel.h >= scaler.s80 && ((!ppt.mode.enabled && ww > scaler.s600) || (ppt.mode.enabled && ww > scaler.s1200))) {
-            ratingHover = true;
-            rating.paint(gr);
-        } else {
-            ratingHover = false;
-        }
-
         let size; let art_x; let art_y;
         if (ppt.art.enabled && g_img && ww > scaler.s800 && panel.h > scaler.s80) {
             size = Math.min(seekbar.x - _scale(46), panel.h * 0.86);
@@ -350,14 +334,36 @@ function on_paint(gr) {
         }
 
         // Track information
-        const track_info_x = (ppt.art.enabled && ww > scaler.s800 && g_img) ? art_y + size + 10 : _scale(12);
+        let title_w, artist_w;
+        const track_info_x = (ppt.art.enabled && g_img && ww > scaler.s800 && panel.h > scaler.s80) ? art_y + size + 10 : _scale(12);
         if (ppt.mode.enabled && panel.w > scaler.s600 && panel.h >= scaler.s80) {
-    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, panel.h * 0.4, (ppt.art.enabled && ww > scaler.s800) ? panel.w /5 : panel.w /4, 0, LEFT | DT_END_ELLIPSIS);
-    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, panel.h * 0.6, (ppt.art.enabled && ww > scaler.s800) ? panel.w /9 : seekbar.x - panel.h - _scale(4), 0, LEFT | DT_END_ELLIPSIS);
-        } else if (panel.w > scaler.s600 && panel.h >= scaler.s80) {
-            rating.x = track_info_x - _scale(2);
-            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, panel.h * 0.2, (ppt.art.enabled && ww > scaler.s800) ? panel.w / 6.4 : panel.w / 3.4, _scale(18), LEFT | DT_END_ELLIPSIS); // # w needs calibration
-            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, panel.h * 0.5, (ppt.art.enabled && ww > scaler.s800) ? panel.w * 0.13 : panel.w * 0.23, _scale(18), LEFT | DT_END_ELLIPSIS);
+            if (ppt.art.enabled && ww > scaler.s800) {
+                title_w = panel.w / 5;
+                artist_w = panel.w / 9;
+            } else {
+                title_w = panel.w / 4;
+                artist_w = seekbar.x - panel.h - _scale(4);
+            }
+    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, panel.h * 0.3, title_w, 0, LEFT | DT_END_ELLIPSIS);
+    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, panel.h * 0.6, artist_w, 0, LEFT | DT_END_ELLIPSIS);
+        } else if (!ppt.mode.enabled && panel.w > scaler.s600 && panel.h >= scaler.s80) {
+            if (ppt.rating.enabled) { rating.y = panel.h * 0.75; rating.x = track_info_x - _scale(2); }
+            if (ppt.art.enabled && ww > scaler.s800) {
+                title_w = (ww == scaler.s1080) ? panel.w / 9 : panel.w / 6.4;
+                artist_w = panel.w * 0.13;
+            } else {
+                title_w = panel.w / 3.4;
+                artist_w = panel.w * 0.23;
+            }
+            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, panel.h * 0.1, title_w, _scale(18), LEFT | DT_END_ELLIPSIS); // # w needs calibration
+            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, panel.h * 0.43, artist_w, _scale(18), LEFT | DT_END_ELLIPSIS);
+        }
+
+        if (ppt.rating.enabled && panel.h >= scaler.s80 && ((!ppt.mode.enabled && ww > scaler.s800) || (ppt.mode.enabled && ww > scaler.s1200))) {
+            ratingHover = true;
+            rating.paint(gr);
+        } else {
+            ratingHover = false;
         }
 
         // Draw the next track information
@@ -460,9 +466,9 @@ rating.paint = (gr) => {
         gr.SetTextRenderingHint(4);
         for (let i = 0; i < rating.get_max(); i++) {
             if (i + 1 > (rating.hover ? rating.hrating : rating.rating)) {
-                gr.DrawString(chars.rating_off, rating.font, colours.rating_bg, rating.x + (i * rating.h), rating.y, rating.h, rating.h, SF_CENTRE);
+                gr.DrawString(chars.rating_off, rating.font, g_textcolour, rating.x + (i * rating.h), rating.y, rating.h, rating.h, SF_CENTRE);
             } else {
-                gr.DrawString(chars.rating_on, rating.font, ppt.rate.value, rating.x + (i * rating.h), rating.y, rating.h, rating.h, SF_CENTRE);
+                gr.DrawString(chars.rating_on, rating.font, g_textcolour_hl, rating.x + (i * rating.h), rating.y, rating.h, rating.h, SF_CENTRE);
             }
         }
     }
@@ -744,7 +750,6 @@ function on_mouse_rbtn_up(x, y) {
     let _submenu12 = window.CreatePopupMenu(); // // Love Mode menu
     let _menu2 = window.CreatePopupMenu(); // Show... menu
     let _menu3 = window.CreatePopupMenu(); // Background Wallpaper menu
-    let _submenu4 = window.CreatePopupMenu(); // Background Colours
     let _menu4 = window.CreatePopupMenu(); // Colours menu
 
     if (fb.IsPlaying) {
@@ -759,17 +764,17 @@ function on_mouse_rbtn_up(x, y) {
     _submenu1.AppendMenuItem(MF_STRING, 111, 'Waveform');
     _submenu1.CheckMenuRadioItem(110, 111, ppt.mode.enabled ? 110 : 111);
     _submenu1.AppendTo(_menu1, MF_STRING, 'Seekbar');
-    
+
     _submenu11.AppendMenuItem(MF_STRING, 112, 'List');
     _submenu11.AppendMenuItem(MF_STRING, 113, 'Cycle');
     _submenu11.CheckMenuRadioItem(112, 113, ppt.pboMode.enabled ? 112 : 113);
     _submenu11.AppendTo(_menu1, MF_STRING, 'PBO Button');
-    
+
     _submenu12.AppendMenuItem(MF_STRING, 114, 'last.fm sync');
     _submenu12.AppendMenuItem(MF_STRING, 115, 'LOVED tag');
     _submenu12.CheckMenuRadioItem(114, 115, ppt.loveMode.enabled ? 115 : 114);
     _submenu12.AppendTo(_menu1, MF_STRING, 'Love Mode');
-    
+
     _menu1.AppendTo(m, MF_STRING, 'Modes');
 
     _menu2.AppendMenuItem(MF_STRING, 210, 'Album art');
@@ -800,12 +805,10 @@ function on_mouse_rbtn_up(x, y) {
     _menu3.CheckMenuRadioItem(312, 313, ppt.bgMode.enabled ? 313 : 312);
     _menu3.AppendTo(m, MF_STRING, 'Background Wallpaper');
 
-    _submenu4.AppendMenuItem(MF_STRING, 410, 'System');
-    _submenu4.AppendMenuItem(MF_STRING, 411, 'Dynamic');
-    _submenu4.AppendMenuItem(MF_STRING, 412, 'Custom');
-    _submenu4.CheckMenuRadioItem(410, 412, Math.min(Math.max(410 + ppt.col_mode.value - 1, 410), 412));
-    _submenu4.AppendTo(_menu4, MF_STRING, 'Colors');
-    _menu4.AppendMenuItem(MF_STRING, 413, 'Rating');
+    _menu4.AppendMenuItem(MF_STRING, 410, 'System');
+    _menu4.AppendMenuItem(MF_STRING, 411, 'Dynamic');
+    _menu4.AppendMenuItem(MF_STRING, 412, 'Custom');
+    _menu4.CheckMenuRadioItem(410, 412, Math.min(Math.max(410 + ppt.col_mode.value - 1, 410), 412));
     _menu4.AppendTo(m, MF_STRING, 'Colours');
 
     m.AppendMenuSeparator();
@@ -906,12 +909,6 @@ function on_mouse_rbtn_up(x, y) {
         on_colours_changed();
         bg_img = null;
         window.ShowProperties();
-        window.Repaint();
-        break;
-    case 413:
-        ppt.rate.value = utils.ColourPicker(window.ID, ppt.rate.value);
-        get_colours(ppt.col_mode.value);
-        buttons.update();
         window.Repaint();
         break;
     case 999:

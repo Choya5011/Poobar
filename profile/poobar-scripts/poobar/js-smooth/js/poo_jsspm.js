@@ -1,5 +1,3 @@
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col_helper.js');
-
 var need_repaint = false;
 
 ppt = {
@@ -1693,10 +1691,10 @@ var g_focus_album_id = -1;
 var g_populate_opt = 1;
 // color vars
 var g_color_normal_bg = 0;
-var g_color_selected_bg = 0;
+//var g_color_selected_bg = 0; declared in poo_col.js
 var g_color_normal_txt = 0;
 var g_color_selected_txt = 0;
-var g_color_highlight = 0;
+//var g_color_highlight = 0; declared in poo_col.js
 var g_syscolor_window_bg = 0;
 var g_syscolor_highlight = 0;
 var g_syscolor_button_bg = 0;

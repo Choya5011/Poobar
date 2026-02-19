@@ -9,6 +9,7 @@ A crappy responsive [JSplitter](https://hydrogenaudio.org/index.php/topic,126743
 
 ## Preview
 ![Preview](gallery/preview.png)  
+![Preview_2](gallery/preview_2.png)  
 Responds to window size & seamlessly snaps to Windows 11 snap layouts.  
 [Gallery](#gallery)
 
@@ -19,6 +20,7 @@ This repository provides a basic JSplitter/SMP customization guide for foobar200
 * The main panel is the blueprint for the layout & controls panel placement within the main JSplitter
     * Can be used to easily make other themes responsive with some modding
     * Panels can be swapped out if the same title is kept or if the script is modified
+    * It currently comes with two pre-configured transforming layouts as can be seen in the preview.
 * Panels within the tab panel are not hardcoded, they can easily be edited.
 
 Refer to the wiki's [script descriptions](https://github.com/Choya5011/Poobar/wiki/Poobar#script-descriptions) for further info
