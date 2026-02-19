@@ -149,7 +149,7 @@ buttons.update = () => {
             let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
             if (selected_items && selected_items.Count !== 0) {
                 let tags = {};
-                tags['MOOD'] = isLoved ? '' : '1';
+                tags['FEEDBACK'] = isLoved ? '' : '1';
                 selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags));
                 isLoved = !isLoved;
             }
