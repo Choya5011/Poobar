@@ -17,7 +17,7 @@ Responds to window size & seamlessly snaps to Windows 11 snap layouts.
 This repository provides a basic JSplitter/SMP customization guide for foobar2000, as well as a showcase of JSplitter’s capabilities. It includes some basic scripts and component recommendations to help achieve these customizations.
 
 * All panel scripts can easily be used individually for other themes
-* The main panel is the blueprint for the layout & controls panel placement within the main JSplitter
+* The main panel script is the blueprint for the layout & controls panel placement within the main JSplitter
     * Can be used to easily make other themes responsive with some modding
     * Panels can be swapped out if the same title is kept or if the script is modified
     * It currently comes with two pre-configured transforming layouts as can be seen in the preview.
@@ -55,8 +55,6 @@ Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 
 4. Start Foobar & pick 'Columns UI' if prompted.
 
 **Notes**  
-See this [README](https://github.com/Choya5011/Poobar/tree/main/fcl%20presets/Poobar) in the presets folder for performance & optimization info as well as different presets.
-
 After setup the theme is also usually set to the Not-A-Waveform-Seekbar-SMP waveform seekbar (```_naws``` presets). If this is not desired:  
 - To delete: Preferences -> Columns UI -> Layout -> Bottommost JSplitter -> Right-Click -> Remove Panel  
 - To replace: Delete (previous instruct) -> JSplitter it was nested in -> Insert panel -> Panels -> Waveform minibar (mod)  
