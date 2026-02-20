@@ -1,0 +1,423 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+
+<head>
+	<title>Library-Tree-SMP Syntax Help</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" type="text/css" href="syntax.css" />
+</head>
+
+<body>
+	<div class="dokuwiki export">
+		<div class="toc">
+			<div class="tocheader toctoggle" id="toc__header">Table of Contents</div>
+			<div id="toc__inside">
+				<ul class="toc">
+					<div class="li"><span class="li"><a href="#query_syntax_help" class="toc">Syntax Help</a></span></div>
+					<ul class="toc">
+						<li class="level1">
+							<div class="li"><span class="li"><a href="#view_summary" class="toc">Views</a></span></div>
+						</li>
+						<li class="level1">
+							<div class="li"><span class="li"><a href="#filter_summary" class="toc">Filters and Search box</a></span></div>
+						</li>
+						<li class="level1">
+							<div class="li"><span class="li"><a href="#sorting_summary" class="toc">Playlist and Top tracks Sorting</a></span></div>
+						</li>
+					</ul>
+				</ul>
+			</div>
+		</div>
+
+
+
+		<h1><a name="query_syntax_help" id="query_syntax_help">Library-Tree-SMP Syntax Help</a></h1>
+		<div class="level1"></div>
+		<!-- SECTION "Views" -->
+		<h2><a name="view_summary" id="view_summary">Views</a></h2>
+		<div class="level2">
+			<table class="inline" style="width: 99%;">
+				<tr>
+					<th> Function </th>
+					<th> Description </th>
+					<th> Example </th>
+					<th> Comment </th>
+				</tr>
+				<tr>
+					<td> <em>%&ltfield&gt%</em> </td>
+					<td> Splits multiple values into separate items. </td>
+					<td> <em>%&ltartist&gt%</em> </td>
+					<td> Splits artists into same level. </td>
+				</tr>
+				<tr>
+					<td> <em>$stripbranchprefix{%&ltfield&gt%}</em> </td>
+					<td> Same as above, additionally removes prefixes (like leading "The" or "A") from each value. </td>
+					<td> <em>use $stripbranchprefix{%&ltartist&gt%}</em> </td>
+					<td> Splits artists and removes prefixes. </td>
+				</tr>
+				<tr>
+					<td> <em>$swapbranchprefix{%&ltfield&gt%}</em> </td>
+					<td> Same as above, additionally moves prefixes (like leading "The" or "A") to end of each value. </td>
+					<td> <em>$swapbranchprefix{%&ltartist&gt%}</em> </td>
+					<td> Splits artists and swaps prefixes to end. </td>
+				</tr>
+				<tr>
+					<td> <em>%field1%&#166%field2%&#166...</em> </td>
+					<td> &#166 combines different fields into the same branch level </td>
+					<td> <em>%album artist%&#166%artist%</em> </td>
+					<td> Merges album artists and artists into same level. </td>
+				</tr>
+				<tr>
+					<td> <em>$nodisplay{X}</em> </td>
+					<td> Sorts and groups by X (TF expression) without displaying the result.</td>
+					<td> <em>%artist%|$nodisplay{$sub(99999,%date%)}%album%[ &#39[&#39%date%&#39]&#39]|%tracknumber%. %title%</em> </td>
+					<td> Sorts latest albums first and displays the date. </td>
+				</tr>
+				<tr>
+					<td> <em>$colour{normal,hover,selected}</em> </td>
+					<td> Sets different colours for parts of a line of text, see below for more info. </td>
+					<td>
+						<em>
+							$colour{255-0-0}
+							<br>
+							<br>
+							$colour{}
+							<br>
+							<br>
+							$colour{,,+++}
+						</em>
+					</td>
+					<td>
+						Sets normal colour to red; hover and selected colours to defaults.
+						<br>
+						<br>
+						Resets all colours to defaults.
+						<br>
+						<br>
+						Sets selected colour to brightest, normal and hover colours to defaults.
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="level2">
+			<h2>Notes:</h3>
+				<ul>
+					<li>
+						<div class="li"> Regarding date sorting, in most cases is preferable to use the 'Settings\Views\Sort selected view by' menu instead of directly adding an expression to the View pattern. This way you can easily change and switch sorting without further editing.</div>
+					</li>
+				</ul>
+		</div>
+		<!-- SECTION "Views" -->
+		<!-- SECTION "Filters and Search box" -->
+		<h2><a name="filter_summary" id="filter_summary">Filters and Search box</a></h2>
+		<div class="level2">
+			<table class="inline" style="width: 99%;">
+				<tr>
+					<th> Function </th>
+					<th> Description </th>
+					<th> Example </th>
+					<th> Comment </th>
+				</tr>
+				<tr>
+					<td> <em>$nowplaying{X}</em> </td>
+					<td> Returns value of X (TF expression) for the playing track. </td>
+					<td> <em>ARTIST IS $nowplaying{$meta(ARTIST,0)}</em> </td>
+					<td> Displays tracks by nowplaying artist. </td>
+				</tr>
+				<tr>
+					<td> <em>$selected{X}</em> </td>
+					<td> Returns value of X (TF expression) for the selected track. </td>
+					<td> <em>ARTIST IS $selected{$meta(ARTIST,0)}</em> </td>
+					<td> Displays tracks by selected (focused) artist. </td>
+				</tr>
+				<tr>
+					<td> <em>$nowplayingorselected{X}</em> </td>
+					<td> Returns value of X (TF expression) for the playing or selected (focused) track as fallback. </td>
+					<td> <em>ARTIST IS $nowplayingorselected{$meta(ARTIST,0)}</em> </td>
+					<td> Displays tracks by nowplaying arist while playing, selected (focused) artist otherwise. </td>
+				</tr>
+				<tr>
+					<td> <em>$searchtext</em> </td>
+					<td> Returns search text into the filter pattern.</td>
+					<td>
+						Filter: <em>GENRE HAS $searchtext</em>
+						<br>
+						Search box: <em>rock</em>
+					</td>
+					<td>
+						Use example as filter, then type "rock" in search box.
+						<br>
+						Result: "GENRE HAS rock"
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="level2">
+			<h2>Notes:</h3>
+				<ul>
+					<li>
+						<div class="li"> Search  box also supports RegExp. They must be written in /[expression]/[flags] form, where flags can be any of 'gimsuyt'. </div>
+					</li>
+					<ul>
+						<li>
+							<div class="li"> Tags used for lookup are those present on the current View TF expression, ignoring those related to track and disc number; on folder view, paths are used instead. </div>
+						</li>
+						<li>
+							<div class="li"> RegExps and queries can not be mixed. </div>
+						</li>
+						<li>
+							<div class="li"> Non-official flag 't' applies transliteration to tag values before matching.<br>Transliteration supports Cyrillic, Greek and Japanese (Katakana and Hiragana), like quick-search and sorting. </div>
+						</li>
+						<li>
+							<div class="li"> RegExp reference: <a href="https://regexr.com/">https://regexr.com/</a> </div>
+						</li>
+					</ul>
+					<li>
+						<div class="li"> Search box expression is applied on top of Filters. i.e. after current View and Filter patterns have been processed.</div>
+					</li>
+					<li>
+						<div class="li"> Search box expression may be updated on playback or selection changes. i.e. functionally equivalent to Filters. <br>
+						</div>
+					</li>
+					<ul>
+						<li>
+							<div class="li"> Great performance impact, when used, compared to Filters. </div>
+						</li>
+						<li>
+							<div class="li"> It's preferable to directly use a Filter than permanently using the search box with a dynamic expression to do the same. Filters are much faster. </div>
+						</li>
+						<li>
+							<div class="li"> Playback/selection changes automatic evaluation can be switched at 'Search' tab (HTML options panel) or 'Search Auto-refresh TF Expressions' (properties panel). </div>
+						</li>
+						<li>
+							<div class="li"> If automatic evaluation is disabled, then search can be refreshed by pressing 'enter'. </div>
+						</li>
+					</ul>
+				</ul>
+		</div>
+		<!-- SECTION "Filters and Search box" -->
+		<!-- SECTION "Sorting" -->
+		<h2><a name="sorting_summary" id="sorting_summary">Playlist and Top tracks Sorting</a></h2>
+		<div class="level2">
+			<table class="inline" style="width: 99%;">
+				<tr>
+					<th> Function </th>
+					<th> Description </th>
+					<th> Example </th>
+					<th> Comment </th>
+				</tr>
+				<tr>
+					<td> <em>$rand()</em> </td>
+					<td> Random sorting. </td>
+					<td>
+						<em>
+							$rand()
+							<br>
+							<br>
+							$if($meta_test(COMPILATION),$rand(),0)
+						</em>
+					</td>
+					<td>
+						Shuffles all tracks randomly.
+						<br>
+						<br>
+						Shuffles all tracks with a COMPILATION tag randomly, any other track follows panel sorting.
+					</td>
+				</tr>
+				<tr>
+					<td> <em>$harmonicsort{bShuffle}</em> </td>
+					<td>
+						Sorting by incremental KEY.
+						<br>
+						&emsp;&#x2219; Set <b>bShuffle</b> to <i>true</i>, <i>1</i>, any string or empty to shuffle.
+						<br>
+						&emsp;&#x2219; Set <b>bShuffle</b> to <i>false</i> or <i>0</i> to skip shuffling.
+					</td>
+					<td>
+						<em>
+							$harmonicsort{1}
+							<br>
+							<br>
+							$harmonicsort{false}
+						</em>
+					</td>
+					<td>
+						Shuffles all tracks and then sorts by KEY.
+						<br>
+						<br>
+						Sorts by KEY.
+					</td>
+				</tr>
+				<tr>
+					<td> <em>$harmonicmix{bShuffle}</em> </td>
+					<td>
+						Sorting by harmonic mixing rules.
+						<br>
+						&emsp;&#x2219; Set <b>bShuffle</b> to <i>true</i>, <i>1</i>, any string or empty to shuffle.
+						<br>
+						&emsp;&#x2219; Set <b>bShuffle</b> to <i>false</i> or <i>0</i> to skip shuffling.
+					</td>
+					<td>
+						<em>
+							$harmonicmix{}
+							<br>
+							<br>
+							$harmonicmix{0}
+						</em>
+					</td>
+					<td>
+						Shuffles all tracks and then does harmonic mixing.
+						<br>
+						<br>
+						Does harmonic mixing.
+					</td>
+				</tr>
+				<tr>
+					<td> <em>$shufflebytags{tagName,sortBias,sortDir}</em> </td>
+					<td>
+						Scatters tracks with same tag values semi-randomly.
+						<br>
+						&emsp;&#x2219; <b>tagName</b> can be set to any tag -<i>ARTIST</i>- or array of tags -<i>["ARTIST","ALBUM ARTIST"]</i>-
+						<br>
+						&emsp;&#x2219; <b>sortBias</b> can set to: <i>playcount, rating, popularity, lastplayed, key, key6acentered, random, none</i> or omitted (<i>random</i> used).
+						<br>
+						&emsp;&#x2219; <b>sortDir</b> can be set to <i>1</i>, <i>-1</i> or omitted (<i>1</i> used).
+					</td>
+					<td>
+						<em>
+							$shufflebytags{["ARTIST","ALBUM ARTIST"],random,1}
+							<br>
+							<br>
+							$shufflebytags{"GENRE",rating,-1}
+							<br>
+							<br>
+							$shufflebytags{["GENRE","STYLE"],key6acentered,-1}
+						</em>
+					</td>
+					<td>
+						Shuffles all tracks by ARTIST and ALBUM ARTIST, trying to scatter values from any of them, with a random bias.
+						<br>
+						<br>
+						Shuffles all tracks by GENRE, with a rating bias, putting lower rated tracks first.
+						<br>
+						<br>
+						Shuffles all tracks by GENRE and STYLE, with a key 6A centered bias, putting tracks with a Camelot Key equivalent to 6A first and slowly adding higher/lower keys.
+					</td>
+				</tr>
+				<tr>
+					<td> <em>$nowplaying{X}</em> </td>
+					<td> Returns value of X (TF expression) for the playing track. </td>
+					<td> <em>$if($strcmp(%ARTIST%,$nowplaying{%ARTIST%}),0,1)</em> </td>
+					<td> Puts nowplaying artist first, then follows panel sorting. </td>
+				</tr>
+				<tr>
+					<td> <em>$selected{X}</em> </td>
+					<td> Returns value of X (TF expression) for the selected track. </td>
+					<td> <em>$if($strcmp(%ARTIST%,$nowplaying{%ARTIST%}),0,1)$harmonicmix{}</em> </td>
+					<td> Performs harmonic mixing, then puts selected (focused) artist first, leaving the rest as previously sorted. </td>
+				</tr>
+				<tr>
+					<td> <em>$nowplayingorselected{X}</em> </td>
+					<td> Returns value of X (TF expression) for the playing or selected (focused) track as fallback. </td>
+					<td> <em>$if($strcmp(Rock,$nowplayingorselected{$meta(GENRE,0)}),$rand(),0)$harmonicmix{}</em> </td>
+					<td> Performs harmonic mixing and when playing or selecting a Rock track applies a random sorting. </td>
+				</tr>
+			</table>
+		</div>
+		<div class="level2">
+			<h2>Notes:</h3>
+				<ul>
+					<li>
+						<div class="li"> Special sorting functions can be applied on top of any standard TF expressions, being replaced with $not(0) on real time. The sorting algorithms will then be applied before the standard TF sorting. </div>
+					</li>
+					<li>
+						<div class="li"> Execution order: harmonicsort -> harmonicmix -> shufflebytags -> standard TF </div>
+					</li>
+					<li>
+						<div class="li">
+							Conditional execution can be partially achieved, but note the special sorting functions are evaluated only once (for all tracks). This means that TF expressions based on tags will probably not work as expected except when evaluating against playback or selection. For example:
+						</div>
+					</li>
+					<br>
+					<ul>
+						<li>
+							<div class="li">
+								$if($strcmp(%ARTIST%,$nowplaying{%ARTIST%}),0,1)$harmonicmix{}
+								<br>
+								Always does harmonic mixing, then puts now playing artist first, leaving the rest as previously sorted.
+							</div>
+						</li>
+						<br>
+						<li>
+							<div class="li">
+								$if($strcmp(%ARTIST%,$nowplaying{%ARTIST%}),0$harmonicmix{},1)
+								<br>
+								Only does harmonic mixing while playing in which case also puts now playing artist first, leaving the rest as previously sorted. When not playing, leaves all tracks as selected from panel.
+								<br>
+								Note this is pretty different to only applying harmonic mixing when tracks' artists match the now playing artist.
+							</div>
+						</li>
+						<br>
+						<li>
+							<div class="li">
+								$if($strcmp(%ARTIST%,$nowplaying{%ARTIST%}),0,1$harmonicmix{})
+								<br>
+								Only does harmonic mixing while not playing. When playing, puts now playing artist first and leaves all other tracks as selected from panel.
+								<br>
+								Note this is pretty different to only applying harmonic mixing when tracks' artists don't match the now playing artist.
+							</div>
+						</li>
+						<br>
+						<li>
+							<div class="li">
+								$if($strcmp(%ARTIST%,$nowplaying{$replace(%ARTIST%,',',''',''')}),0,1$harmonicmix{})
+								<br>
+								Instead of the previous examples, the nowplaying part should be sanitized so multi-value tags works by escaping ','.
+							</div>
+						</li>
+						<br>
+						<li>
+							<div class="li">
+								$if($nowplaying{%ARTIST%},$harmonicmix{})
+								<br>
+								Will never do harminic mixing, since the evaluated nowplaying part, being a string in any case, is treated as false.
+							</div>
+						</li>
+					</ul>
+					<li>
+						<div class="li">
+							For conditional execution based on player state is better to use global variables like '%ISPLAYING%'', '%ISPAUSED%', ... For example:
+						</div>
+					</li>
+					<br>
+					<ul>
+						<li>
+							<div class="li">
+								$if(%ISPLAYING%,$harmonicmix{})
+								<br>
+								Only does harmonic mixing while playing.
+							</div>
+						</li>
+						<br>
+						<li>
+							<div class="li">
+								$if(%ISPLAYING%,$if($strcmp(%ARTIST%,$nowplaying{%ARTIST%}),0,1))
+								<br>
+								While playing puts the now playing artist first and leaves all other tracks as selected from panel.
+							</div>
+						</li>
+						<br>
+						<li>
+							<div class="li">
+								$if(%ISPLAYING%,$harmonicmix{}$if($strcmp(%ARTIST%,$nowplaying{%ARTIST%}),0,1))
+								<br>
+								Only does harmonic mixing while playing and also puts the now playing artist first, leaving the rest as previously sorted.
+							</div>
+						</li>
+					</ul>
+				</ul>
+		</div>
+		<!-- SECTION "Sorting" -->
+	</div>
+</body>
+
+</html>
