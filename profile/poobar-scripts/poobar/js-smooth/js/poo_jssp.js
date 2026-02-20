@@ -12,7 +12,7 @@ let ppt = {
 	tf_lfm_playcount: fb.TitleFormat("%lfm_playcount%"),
 	tf_playcount: fb.TitleFormat("%play_count%"),
 	tf_loved: fb.TitleFormat("%lfm_loved%"),
-	tf_LOVED: fb.TitleFormat("%loved%"),
+	tf_LOVED: fb.TitleFormat("%feedback%"),
 	tf_disc: fb.TitleFormat("$ifgreater(%totaldiscs%,1,Disc %discnumber%/%totaldiscs%$if2($if(%disctitle%, - %discsubtitle%,),),)"),
 	defaultRowHeight: window.GetProperty("_PROPERTY: Row Height", 35),
 	doubleRowPixelAdds: 3,
@@ -44,7 +44,6 @@ let ppt = {
 	showRating: window.GetProperty("_DISPLAY: Show Rating in Track Row", true),
 	showPlaycount: window.GetProperty("_DISPLAY: Show Playcount in Track Row", true),
 	playcountMode:  window.GetProperty("_PROPERTY: Switch Playcount mode last.fm/foo_playcount", 0),
-	likeMode: window.GetProperty("_PROPERTY: Switch like mode last.fm/LOVED(tag)", 0),
 	likeToggle: window.GetProperty("_DISPLAY: Show Liked/LOVED in Track Row", true),
 	showMood: window.GetProperty("_DISPLAY: Show Mood in Track Row", true),
 	enableTouchControl: window.GetProperty("_PROPERTY: Touch control", true)
@@ -2211,16 +2210,12 @@ oBrowser = function (name) {
 
                                         // draw playing last.fm or LOVED(tag) like status
                                         if (ppt.likeToggle) {
-                                            const lovedTagValue = (ppt.likeMode == 0) ? ppt.tf_loved.EvalWithMetadb(this.rows[i].metadb) : ppt.tf_LOVED.EvalWithMetadb(this.rows[i].metadb);
+                                            const lovedTagValue = ppt.tf_loved.EvalWithMetadb(this.rows[i].metadb) || ppt.tf_LOVED.EvalWithMetadb(this.rows[i].metadb);
                                             const pc_offset = Math.max(18, Math.min(32, Math.round(tw / 57.05)));
 										    const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
                                             const heart_x = pc_x - pc_box_width - pc_offset - heartOffset - 16;
 
-                                            if (lovedTagValue == 1) {
-                                                gr.DrawString(chars.heartFill, g_font_fluent_small, RGB(255, 0, 0), heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX);
-                                            } else {
-                                                gr.DrawString(chars.heart, g_font_fluent_small, track_artist_color_text, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX);
-                                            }
+                                            if (lovedTagValue == 1) { gr.DrawString(chars.heartFill, g_font_fluent_small, RGB(255, 0, 0), heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); } //else { gr.DrawString(chars.heart, g_font_fluent_small, track_artist_color_text, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); }
                                         };
 									} else {
 										cColumns.track_num_part = gr.CalcTextWidth(track_num_part, g_font) + 10;
@@ -2305,16 +2300,12 @@ oBrowser = function (name) {
 
                                         // draw not playing last.fm or LOVED(tag) like status
                                         if (ppt.likeToggle) {
-                                            const lovedTagValue = (ppt.likeMode == 0) ? ppt.tf_loved.EvalWithMetadb(this.rows[i].metadb) : ppt.tf_LOVED.EvalWithMetadb(this.rows[i].metadb);
+                                            const lovedTagValue = ppt.tf_loved.EvalWithMetadb(this.rows[i].metadb) || ppt.tf_LOVED.EvalWithMetadb(this.rows[i].metadb);
                                             const pc_offset = Math.max(18, Math.min(32, Math.round(tw / 57.05)));
 										    const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
                                             const heart_x = pc_x - pc_box_width - pc_offset - heartOffset - 16;
 
-                                            if (lovedTagValue == 1) {
-                                                gr.DrawString(chars.heartFill, g_font_fluent_small, RGB(255, 0, 0), heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX);
-                                            } else {
-                                                gr.DrawString(chars.heart, g_font_fluent_small, track_artist_color_text, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX);
-                                            }
+                                            if (lovedTagValue == 1) { gr.DrawString(chars.heartFill, g_font_fluent_small, RGB(255, 0, 0), heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); } //else { gr.DrawString(chars.heart, g_font_fluent_small, track_artist_color_text, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); }
                                         };
 									};
 								} else {
@@ -2526,25 +2517,6 @@ oBrowser = function (name) {
 			this.ishover_rating = false;
 		};
 
-		// heart check
-		this.ishover_heart_prev = this.ishover_heart;
-        this.ishover_heart = false;
-        if (this.activeRow > -1 && ppt.likeToggle) {
-            var tw = this.w - cColumns.track_num_part;
-            var tx = this.marginLR + cColumns.track_num_part;
-            const rOffset = (tw < 1212) ? 16 : 0;
-            const pc_box_width = (ppt.showPlaycount) ? 25 : 0;
-            const pc_offset = Math.max(18, Math.min(32, Math.round(tw / 57.05)));
-            const hOffActive = (ppt.showPlaycount) ? Math.max(35, Math.min(50, Math.round(tw / 38.03))) : 0;
-            const heartOffset = (tw < 1800) ? 0 : hOffActive;
-			const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
-
-			const heart_x = pc_x - pc_box_width - pc_offset - heartOffset - 16;
-        	const heart_y = Math.floor(this.y + (this.activeRow * ppt.rowHeight) - scroll_);
-
-        	this.ishover_heart = (this.rows[this.activeRow].type == 0 && x >= heart_x && x <= heart_x + ppt.rowHeight && y >= heart_y + 9 && y <= heart_y + 9 + ppt.rowHeight);
-        }
-
 		switch (event) {
 		case "down":
 			this.metadblist_selection = plman.GetPlaylistSelectedItems(g_active_playlist);
@@ -2691,27 +2663,6 @@ oBrowser = function (name) {
 				this.repaint();
 			};
 
-            // heart click interaction
-            if (this.ishover_heart) {
-            	const row = this.rows[this.activeRow];
-            	const metadb = row.metadb;
-            	if (!metadb) return;
-
-            	if (ppt.likeMode === 0) {
-            		// Last.fm mode
-            		let fav = ppt.tf_loved.EvalWithMetadb(metadb);
-            		fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), metadb);
-            	} else {
-            		// LOVED(tag) mode
-            		let isLoved = ppt.tf_LOVED.EvalWithMetadb(metadb);
-            		let update = { LOVED: isLoved == 1 ? "" : "1" };
-            		let handles = new FbMetadbHandleList(metadb);
-            		handles.UpdateFileInfoFromJSON(JSON.stringify(update));
-            	}
-
-            	window.Repaint();
-            }
-
 			this.drag_clicked = false;
 			// scrollbar
 			if (cScrollBar.enabled && cScrollBar.visible) {
@@ -2783,12 +2734,6 @@ oBrowser = function (name) {
 					brw.scrollbar && brw.scrollbar.on_mouse(event, x, y);
 				};
 			};
-            // heart hover cursor
-			if (this.ishover_heart) {
-            	if (!this.ishover_heart_prev) window.SetCursor(IDC_HAND);
-            } else {
-            	if (this.ishover_heart_prev) window.SetCursor(IDC_ARROW);
-            };
 			break;
 		case "right":
 			this.metadblist_selection = plman.GetPlaylistSelectedItems(g_active_playlist);
@@ -3028,23 +2973,17 @@ oBrowser = function (name) {
 		_menu1.AppendMenuItem(MF_STRING, 113, "Rating");
 		_menu1.CheckMenuItem(113, ppt.showRating);
 
-		_submenu1.AppendMenuItem(MF_STRING, 114, "Toggle");
-        _submenu1.CheckMenuItem(114, ppt.showPlaycount);
+		_menu1.AppendMenuItem(MF_STRING, 114, "Show Like Status");
+        _menu1.CheckMenuItem(114, ppt.likeToggle);
+
+		_submenu1.AppendMenuItem(MF_STRING, 115, "Toggle");
+        _submenu1.CheckMenuItem(115, ppt.showPlaycount);
         _submenu1.AppendMenuSeparator();
-        _submenu1.AppendMenuItem(MF_STRING, 115, "Last.fm sync");
-        _submenu1.AppendMenuItem(MF_STRING, 116, "foo_playcount");
+        _submenu1.AppendMenuItem(MF_STRING, 116, "Last.fm sync");
+        _submenu1.AppendMenuItem(MF_STRING, 117, "foo_playcount");
         let playcountModeChecked = Math.max(0, Math.min(1, ppt.playcountMode)); // clamp
-        _submenu1.CheckMenuRadioItem(115, 116, playcountModeChecked + 115);
+        _submenu1.CheckMenuRadioItem(116, 117, playcountModeChecked + 116);
         _submenu1.AppendTo(_menu1, MF_STRING, "Playcount Mode");
-        
-        _submenu11.AppendMenuItem(MF_STRING, 118, "Toggle");
-        _submenu11.CheckMenuItem(118, ppt.likeToggle);
-        _submenu11.AppendMenuSeparator();
-        _submenu11.AppendMenuItem(MF_STRING, 119, "Last.fm sync");
-        _submenu11.AppendMenuItem(MF_STRING, 120, "LOVED tag");
-        let likeModeChecked = Math.max(0, Math.min(1, ppt.likeMode)); // clamp
-        _submenu11.CheckMenuRadioItem(119, 120, 119 + likeModeChecked);
-        _submenu11.AppendTo(_menu1, MF_STRING, "Love Mode");
 
 		_menu1.AppendTo(_menu, MF_STRING, "Extra Track Infos");
 
@@ -3101,28 +3040,22 @@ oBrowser = function (name) {
 			brw.repaint();
 			break;
 		case (idx == 114):
+            ppt.likeToggle = !ppt.likeToggle;
+            window.SetProperty("_DISPLAY: Show Liked/LOVED in Track Row", ppt.likeToggle);
+            get_metrics();
+            brw.repaint();
+            break;
+		case (idx == 115):
             ppt.showPlaycount = !ppt.showPlaycount;
             window.SetProperty("_DISPLAY: Show Playcount in Track Row", ppt.showPlaycount);
             get_metrics();
             brw.repaint();
             break;
-        case (idx == 115):
         case (idx == 116):
+        case (idx == 117):
             ppt.playcountMode
-            ppt.playcountMode = idx - 115;
-            window.SetProperty("_PROPERTY: Switch Playcount mode last.fm/foo_playcount", ppt.likeMode);
-            get_metrics();
-            brw.repaint();
-            break;
-        case (idx == 118):
-            ppt.likeToggle = !ppt.likeToggle;
-            window.SetProperty("_DISPLAY: Show Liked/LOVED in Track Row", ppt.likeToggle);
-            get_metrics();
-            brw.repaint();
-        case (idx == 119):
-        case (idx == 120):
-            ppt.likeMode = idx - 119;
-            window.SetProperty("_PROPERTY: Switch like mode last.fm/LOVED(tag)", ppt.likeMode);
+            ppt.playcountMode = idx - 116;
+            window.SetProperty("_PROPERTY: Switch Playcount mode last.fm/foo_playcount", ppt.playcountMode);
             get_metrics();
             brw.repaint();
             break;

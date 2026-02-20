@@ -52,7 +52,7 @@ let ppt = {
     col_mode : new _p('_PROPERTY: Color Mode (1,2,3)', 1),
     // modes
     mode: new _p('_DISPLAY: Seekbar Mode', true),
-    loveMode : new _p('_PROPERTY: Love Mode', false),
+    loveMode : new _p('_PROPERTY: Love Mode', 1),
     pboMode : new _p('_PROPERTY: Playback Order Button Mode', true),
     bar_mode : new _p('_DISPLAY: Show Bar Core', false),
     roundBars : new _p('_DISPLAY: Show Rounded Bars', true),
@@ -68,7 +68,7 @@ let tfo = {
     title : fb.TitleFormat('%title%'),
     playback_time : fb.TitleFormat('%playback_time%  '),
     length : fb.TitleFormat('  %length%'),
-    lov: fb.TitleFormat('$if2(%loved%,0)'),
+    lov: fb.TitleFormat('$if2(%feedback%,0)'),
     lfm_loved: fb.TitleFormat('$if2(%lfm_loved%,0)')
 };
 
@@ -141,42 +141,30 @@ buttons.update = () => {
     let fluent_font = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 38) : gdi.Font('Segoe Fluent Icons', 48);
     let fluent_font_hover = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 44) : gdi.Font('Segoe Fluent Icons', 54);
 
-    if (ppt.loveMode.enabled) {
+    const loveModeValue = ppt.loveMode.value || 1;
+    if (!_cc('foo_lastfm_playcount_sync') || loveModeValue == 1) { // FEEDBACK mode
+        runOnce = true;
         let lv = tfo.lov.Eval();
-        buttons.buttons.love = new _button(x, y, bs, bs, {
-        normal : lv == 1 ? _chrToImg(chara.heart_on, colours.love, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font),
-        hover : lv == 1 ? _chrToImg(chara.heart_break, colours.red, fluent_font_hover) : _chrToImg(chara.heart_on, colours.love, fluent_font_hover)}, () => {
-            let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
-            if (selected_items && selected_items.Count !== 0) {
-                let tags = {};
-                tags['FEEDBACK'] = isLoved ? '' : '1';
-                selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags));
-                isLoved = !isLoved;
-            }
-        }, '');
+        buttons.buttons.love = new _button(x, y, bs, bs, { normal : lv == 1 ? _chrToImg(chara.heart_on, colours.love, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover : lv == 1 ? _chrToImg(chara.heart_break, colours.red, fluent_font_hover) : _chrToImg(chara.heart_on, colours.love, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; } }, '');
+    } else if (loveModeValue == 2) { // Last.fm mode
+        let fav = tfo.lfm_loved.Eval();
+        buttons.buttons.love = new _button(x, y, bs, bs, { normal: fav == 0 ? _chrToImg(chara.heart_off, g_textcolour, fluent_font) : _chrToImg(chara.heart_on, colours.love, fluent_font), hover: fav == 0 ? _chrToImg(chara.heart_on, colours.red, fluent_font_hover) : _chrToImg(chara.heart_break, colours.love, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
+    } else if (loveModeValue == 3) { // Dual mode
+        let lv = tfo.lov.Eval();
+        let fav = tfo.lfm_loved.Eval();
+        buttons.buttons.love = new _button(x, y, bs, bs, { normal: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_on, colours.love, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_break, colours.red, fluent_font_hover) : _chrToImg(chara.heart_on, colours.love, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
     } else {
-        if (_cc('foo_lastfm_playcount_sync')) {
-           let fav = tfo.lfm_loved.Eval();
-           buttons.buttons.love = new _button(x, y, bs, bs, {
-           normal : fav == 0 ? _chrToImg(chara.heart_off, g_textcolour, fluent_font) : _chrToImg(chara.heart_on, colours.love, fluent_font),
-           hover : fav == 0 ? _chrToImg(chara.heart_on, colours.red, fluent_font_hover) : _chrToImg(chara.heart_break, colours.love, fluent_font_hover)}, () => {
-                let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
-                if (selected_items && selected_items.Count !== 0) {
-                fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items);
-                }
-            }, '');
-        } else {
-            if (runOnce) {
-                runOnce = false;
-                ppt.loveMode.enabled = true;
-                fb.ShowPopupMessage("The 'foo_lastfm_playcount_sync' component is not present.\n\nThe Like button has been set to the 'LOVED tag' mode.\nAcquire the component to use the 'last.fm sync' mode.", window.ScriptInfo.Name + ': Missing Component');
-            }
-        }
+        fb.ShowPopupMessage("Invalid love mode value, setting to FEEDBACK tag mode", window.ScriptInfo.Name);
+    }
+    if ((loveModeValue == 2 || loveModeValue == 3) && !_cc('foo_lastfm_playcount_sync') && runOnce) {
+        runOnce = false;
+        ppt.loveMode.value = 1;
+        fb.ShowPopupMessage("Missing 'foo_lastfm_playcount_sync'.\nSwitched to FEEDBACK tag mode.", window.ScriptInfo.Name);
     }
 
     buttons.buttons.stop = new _button(x + bs, y, bs, bs, {normal : fb.StopAfterCurrent ? _chrToImg(chara.stop, colours.red, fluent_font) : _chrToImg(chara.stop, g_textcolour, fluent_font), hover : _chrToImg(chara.stop, g_textcolour_hl, fluent_font_hover)}, () => { fb.Stop(); }, '');
     buttons.buttons.previous = new _button(x + (bs * 2), y, bs, bs, {normal : _chrToImg(chara.prev, g_textcolour, fluent_font), hover : _chrToImg(chara.prev, g_textcolour_hl, fluent_font_hover)}, () => { plman.PlaybackOrder !== 3 ? fb.Prev() : fb.Next(); }, '');
-    buttons.buttons.play = new _button( x + (bs * 3), y, bs, bs, {normal : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour, fluent_font) : _chrToImg(chara.pause, g_textcolour, fluent_font), hover : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour_hl, fluent_font_hover) : _chrToImg(chara.pause, g_textcolour_hl, fluent_font_hover)}, () => { fb.PlayOrPause(); }, !fb.IsPlaying || fb.IsPaused ? '' : '');
+    buttons.buttons.play = new _button(x + (bs * 3), y, bs, bs, {normal : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour, fluent_font) : _chrToImg(chara.pause, g_textcolour, fluent_font), hover : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour_hl, fluent_font_hover) : _chrToImg(chara.pause, g_textcolour_hl, fluent_font_hover)}, () => { fb.PlayOrPause(); }, !fb.IsPlaying || fb.IsPaused ? '' : '');
     buttons.buttons.next = new _button(x + (bs * 4), y, bs, bs, {normal : _chrToImg(chara.next, g_textcolour, fluent_font), hover : _chrToImg(chara.next, g_textcolour_hl, fluent_font_hover)}, () => { fb.Next(); }, '');
 	if (ppt.pboMode.enabled) {
 	    buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { _pbo(x + (bs * 3.41), y); }, '');
@@ -195,8 +183,13 @@ buttons.update = () => {
 
     let xx, yy, vol_x, vol_y;
     if ((panel.w <= scaler.s520 && panel.h <= scaler.s130) || (panel.w > scaler.s520 && panel.h < scaler.s80)) { // out of bounds to hide, temp fix
-        xx = panel.w;
-        yy = panel.h;
+        if (ww > scaler.s520) {
+            xx = (panel.w > scaler.s800) ? (panel.w - (bs * 2)) : (panel.w - bs);
+            yy = y;
+        } else {
+            xx = panel.w;
+            yy = panel.h;
+        }
     } else {
         xx = (panel.w > scaler.s800) ? (panel.w - (bs * 2)) : (panel.w - bs);
         yy = (panel.w > scaler.s520) ? Math.round((panel.h - bs) / 2) : panel.h - _scale(38);
@@ -269,6 +262,7 @@ function on_size() {
     } else {
         // rating.x & y are in on_paint
 
+        //waveformH = Math.round(wh / 3);
         waveformH = _scale(32);
         waveformY = _scale((panel.h / 2) - (waveformH / 2));
 
@@ -770,9 +764,10 @@ function on_mouse_rbtn_up(x, y) {
     _submenu11.CheckMenuRadioItem(112, 113, ppt.pboMode.enabled ? 112 : 113);
     _submenu11.AppendTo(_menu1, MF_STRING, 'PBO Button');
 
-    _submenu12.AppendMenuItem(MF_STRING, 114, 'last.fm sync');
-    _submenu12.AppendMenuItem(MF_STRING, 115, 'LOVED tag');
-    _submenu12.CheckMenuRadioItem(114, 115, ppt.loveMode.enabled ? 115 : 114);
+    _submenu12.AppendMenuItem(MF_STRING, 114, 'FEEDBACK tag');
+    _submenu12.AppendMenuItem(MF_STRING, 115, 'last.fm sync');
+    _submenu12.AppendMenuItem(MF_STRING, 116, 'Dual mode');
+    _submenu12.CheckMenuRadioItem(114, 116, Math.min(Math.max(114 + ppt.loveMode.value - 1, 114), 116));
     _submenu12.AppendTo(_menu1, MF_STRING, 'Love Mode');
 
     _menu1.AppendTo(m, MF_STRING, 'Modes');
@@ -833,9 +828,15 @@ function on_mouse_rbtn_up(x, y) {
         buttons.update();
         break;
     case 114:
+        ppt.loveMode.value = 1;
+        buttons.update();
+        break;
     case 115:
-        runOnce = true;
-        ppt.loveMode.toggle();
+        ppt.loveMode.value = 2;
+        buttons.update();
+        break;
+    case 116:
+        ppt.loveMode.value = 3;
         buttons.update();
         break;
     case 210:
