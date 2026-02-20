@@ -55,6 +55,8 @@ Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 
 4. Start Foobar & pick 'Columns UI' if prompted.
 
 **Notes**  
+After setup the theme is usually set to the ```split``` preset, to swap this to for example ```multi``` refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#swapping-layouts) section.  
+
 After setup the theme is also usually set to the Not-A-Waveform-Seekbar-SMP waveform seekbar (```_naws``` presets). If this is not desired:  
 - To delete: Preferences -> Columns UI -> Layout -> Bottommost JSplitter -> Right-Click -> Remove Panel  
 - To replace: Delete (previous instruct) -> JSplitter it was nested in -> Insert panel -> Panels -> Waveform minibar (mod)  
