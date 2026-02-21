@@ -15,7 +15,6 @@ let ppt = {
     bgBlur : new _p('_DISPLAY: Wallpaper Blurred', false),
     bgMode : new _p('_DISPLAY: Wallpaper Mode', false),
     col_mode : new _p('_PROPERTY: Color Mode (1,2,3)', 1),
-    orientation : new _p('_DISPLAY: Tab Orientation', false),
     fontMode : new _p ('_DISPLAY: Switch  Icon or Text Font', false),
     bgPath : new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
 };
@@ -60,15 +59,14 @@ function initTabs() {
         }
         if (!p) break;  // Also stop if null/undefined
 
-        //if (p.Text === 'Control Panel' || p.Name === 'Control Panel') continue;
+        if (p.Text === 'poobar tabs' || p.Name === 'poobar tabs') continue;
 
         tabs.push({ index: i, name: p.Text || ('Panel ' + (i + 1)) });
     }
     if (!tabs.length) tabs.push({ index: 0, name: 'Panel 1' });
 
     for (let i = 0; i < tabs.length; i++) {
-        const p = window.GetPanelByIndex(tabs[i].index);
-        if (p) p.Show(i === activeTab);
+        try { const p = window.GetPanelByIndex(tabs[i].index); if (p) p.Show(i === activeTab); } catch (e) { console.log(window.ScriptInfo.Name + ': Missing Panels \nNo panels found inside main panel: re-import theme'); fb.ShowPopupMessage('Error: No Panels present\nPlease re-install the theme or insert panels according to main panel theme structure\n\nNote: use "ctrl + p" to access properties in case of errors', window.ScriptInfo.Name); }
     }
 }
 
@@ -78,18 +76,17 @@ let tabFont;
 let tabFont_hover;
 let tab_textCol;
 
-
-
 let buttons = new _buttons();
 buttons.update = () => {
     let fluent_font = gdi.Font('Segoe Fluent Icons', TAB_W);
     let fluent_font_hover = gdi.Font('Segoe Fluent Icons', TAB_W);
     const w = TAB_W * 2
     const h = TAB_H * 2
-    buttons.buttons.borgir = new _button(0 - w / 4, 0 - h / 4, w, h, {normal : _chrToImg(chara.globalNavButton, g_textcolour, tabFont), hover : _chrToImg(chara.globalNavButton, g_textcolour_hl, tabFont_hover)}, () => { isExpanded = !isExpanded; updateTabSize(); on_size(); window.Repaint(); }, '');
+    buttons.buttons.borgir = new _button(0 - w / 4, 0 - h / 4, w, h, {normal : _chrToImg(chara.globalNavButton, g_textcolour, tabFont), hover : _chrToImg(chara.globalNavButton, g_textcolour_hl, tabFont_hover)}, () => { isExpanded = !isExpanded; on_size(); window.Repaint(); }, '');
     buttons.buttons.settings = new _button(0 - w / 4, wh - h / 1.3, w, h, {normal : _chrToImg(chara.settings, g_textcolour, tabFont), hover : _chrToImg(chara.settings, g_textcolour_hl, tabFont_hover)}, () => { fb.ShowPreferences(); }, '');
 }
 
+let tabStack; try { tabStack = window.GetPanel('poobar tabs'); } catch (e) { tabStack = null; }
 function on_size() {
     panel.size();
     ww = window.Width;
@@ -98,29 +95,38 @@ function on_size() {
 
     updateTabSize();
 
-    let panelW = (ppt.orientation.enabled) ? window.Width - TAB_W : window.Width;
-    let panelH = (ppt.orientation.enabled) ? window.Height : window.Height - TAB_H;
-    let switchH = (ppt.orientation.enabled) ? 0 : TAB_H;
-    let switchW = (ppt.orientation.enabled) ? TAB_W : 0;
+    const panelW = (isExpanded) ? window.Width - TAB_W - _scale(300) : window.Width - TAB_W;
+    const panelH = window.Height;
+    const panelX = (isExpanded) ? TAB_W + _scale(300) : TAB_W;
+    const panelY = 0;
 
     for (let i = 0; i < tabs.length; i++) {
         const p = window.GetPanelByIndex(tabs[i].index);
         if (p) {
-            p.Move(switchW, switchH, panelW, panelH, true);
+            p.Move(panelX, panelY, panelW, panelH, true);
             p.ShowCaption = false;
             p.Locked = true;
         }
+        if (p.Name === 'ESLyric') {
+            p.SupportPseudoTransparency = true;
+        } else {
+            continue;
+        }
     }
-    window.Repaint();
+    if (isExpanded) {
+        if (tabStack) { tabStack.Move(TAB_W, 0, _scale(300), wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
+    } else {
+        tabStack.Hidden = true;
+    }
 
     buttons.update();
 }
 
 function on_paint(gr) {
+    gr.FillSolidRect(TAB_W, 0, panel.w, panel.h, g_backcolour);
+
     if (ppt.bgShow.enabled && bg_img) {
-        let switchBgW = (ppt.orientation.enabled) ? TAB_W : panel.w; TAB_H;
-        let switchBgH = (ppt.orientation.enabled) ? panel.h : TAB_H;
-        _drawImage(gr, bg_img, 0, 0, switchBgW, switchBgH, image.crop);
+        _drawImage(gr, bg_img, 0, 0, TAB_W, panel.h, image.crop);
         const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
         gr.FillSolidRect(0, 0, panel.w, panel.h, overlayColor);
     } else if (!ppt.bgShow.enabled) {
@@ -137,7 +143,8 @@ function on_paint(gr) {
     tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
     updateTabSize();
     for (let i = 0; i < tabs.length; i++) {
-        const text = !isExpanded ? tabs[i].name.charAt(0) : tabs[i].name;
+        //const text = !isExpanded ? tabs[i].name.charAt(0) : tabs[i].name;
+        const text = tabs[i].name.charAt(0);
         font = (i === hoveredTab) ? tabFont_hover : tabFont;
         tab_textCol = i === hoveredTab ? g_textcolour_hl : g_textcolour;
         // Vertical tabs
@@ -145,8 +152,7 @@ function on_paint(gr) {
         //if (!ppt.bgShow.enabled) gr.FillSolidRect(0, y, TAB_W, h, g_backcolour);
         if (i === hoveredTab) gr.FillRoundRect(0, y, TAB_W - 1, TAB_H, 10, 10, g_color_highlight);
         if (i === activeTab && i !== hoveredTab) gr.FillRoundRect(0, y, TAB_W - 1, TAB_H, 10, 10, g_color_selected_bg);
-        gr.GdiDrawText(text, font, tab_textCol, textPos, y, TAB_W, TAB_H,
-            DT_SINGLELINE | DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
+        gr.GdiDrawText(text, font, tab_textCol, textPos, y, TAB_W, TAB_H, DT_SINGLELINE | DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
     }
 }
 
@@ -163,11 +169,7 @@ function drawIconBlock(gr, id, x, y, w, h, isHover) {
 }
 
 function updateTabSize() {
-    if (isExpanded) {
-        TAB_W = _scale(200); // expanded width
-    } else {
-        TAB_W = _scale(45);
-    }
+    TAB_W = _scale(45);
     TAB_H = _scale(45);
     textPos = TAB_H / 3;
 }
@@ -228,11 +230,11 @@ function on_mouse_rbtn_up(x, y) {
     let _submenu31 = window.CreatePopupMenu(); // Tab Color menu
     let _menu4 = window.CreatePopupMenu(); // Font Menu
 
-    _menu1.AppendMenuItem(MF_STRING, 90, 'Horizontal');
-    _menu1.AppendMenuItem(MF_STRING, 91, 'Vertical');
-    _menu1.CheckMenuRadioItem(90, 91, ppt.orientation.enabled ? 91 : 90);
-    _menu1.AppendTo(m, MF_STRING, 'Orientation');
-    m.AppendMenuSeparator();
+//    _menu1.AppendMenuItem(MF_STRING, 90, 'Horizontal');
+//    _menu1.AppendMenuItem(MF_STRING, 91, 'Vertical');
+//    _menu1.CheckMenuRadioItem(90, 91, ppt.orientation.enabled ? 91 : 90);
+//    _menu1.AppendTo(m, MF_STRING, 'Orientation');
+//    m.AppendMenuSeparator();
 
     _menu2.AppendMenuItem(MF_STRING, 110, 'Enable');
     _menu2.CheckMenuItem(110, ppt.bgShow.enabled);
@@ -264,13 +266,13 @@ function on_mouse_rbtn_up(x, y) {
     switch (idx) {
     case 0:
         break;
-    case 90:
-    case 91:
-        ppt.orientation.toggle();
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
-        on_size();
-        window.Repaint();
-        break;
+//    case 90:
+//    case 91:
+//        ppt.orientation.toggle();
+//        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+//        on_size();
+//        window.Repaint();
+//        break;
     case 110:
         ppt.bgShow.toggle();
         ppt.col_mode.value = 1;
@@ -293,18 +295,21 @@ function on_mouse_rbtn_up(x, y) {
         ppt.col_mode.value = 1;
         ppt.bgShow.enabled = false;
         get_colours(ppt.col_mode.value, true);
+        refresh_pt_panel();
         window.Repaint();
         break;
     case 211:
         ppt.col_mode.value = 2;
         ppt.bgShow.enabled = false;
         get_colours(ppt.col_mode.value, true);
+        refresh_pt_panel();
         window.Repaint();
         break;
     case 212:
         ppt.col_mode.value = 3;
         ppt.bgShow.enabled = false;
         get_colours(ppt.col_mode.value, true);
+        refresh_pt_panel();
         window.ShowProperties();
         window.Repaint();
         break;
@@ -336,6 +341,15 @@ function on_playback_new_track() {
     on_colours_changed();
     //get_colours(ppt.col_mode.value, true);
     update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+    refresh_pt_panel();
+}
+
+function refresh_pt_panel() {
+    const p = window.GetPanelByIndex(tabs[activeTab].index);
+    if (p.Text === 'ESLyric' || p.Name === 'ESLyric') {
+        p.Hidden = true;
+        p.Hidden = false;
+    }
 }
 
 function get_font() {
@@ -362,22 +376,9 @@ function get_font() {
         g_fstyle = 0;
     }
 
-    if (ppt.orientation.enabled) {
-        // Vertical tabs | icons constrained by tab width
-        fluent_size = Math.max(_scale(12), Math.min(_scale(18), Math.round(TAB_W * 0.4)));
-        fluent_size_hover = Math.max(_scale(15), Math.min(_scale(24), Math.round(TAB_W * 0.5)));
-    } else {
-        // Horizontal tab text
-        if (ppt.fontMode.enabled) {
-            // text constrained by tab width
-            g_fsize = Math.max(_scale(10.5), Math.min(_scale(18), Math.round(TAB_W * 0.07)));
-            g_fsize_hover = Math.max(_scale(13.5), Math.min(_scale(25.5), Math.round(TAB_W * 0.09)));
-        } else {
-            // icons constrained by tab height
-            fluent_size = Math.max(_scale(10.5), Math.min(_scale(18), Math.round(TAB_H * 0.6)));
-            fluent_size_hover = Math.max(_scale(13.5), Math.min(_scale(25.5), Math.round(TAB_H * 0.7)));
-        }
-    }
+    fluent_size = Math.max(_scale(12), Math.min(_scale(18), Math.round(TAB_W * 0.4)));
+    fluent_size_hover = Math.max(_scale(15), Math.min(_scale(24), Math.round(TAB_W * 0.5)));
+
     return {
         default_font: gdi.Font(g_fname, g_fsize, g_fstyle),
         default_font_hover: gdi.Font(g_fname, g_fsize_hover, g_fstyle),

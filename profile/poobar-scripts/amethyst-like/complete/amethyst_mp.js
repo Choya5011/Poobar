@@ -50,37 +50,17 @@ try { LUFs = window.GetPanel('LUFS'); } catch (e) { LUFs = null; }
 */
 function updateLayout(layout, ww, wh, scaler) {
     if (ww >= scaler.s300) {
+        const y = wh - cpH - _scale(20);
         if (layout === 'horizontal')  { // Block 1: Horizontal view
-            if (tabStack) {
-                tabStack.Move(0, 0, ww, wh);
-                tabStack.ShowCaption = false;
-                tabStack.Locked = true;
-                tabStack.Hidden = false;
-                tabStack.TopMost = false;
-            }
-	        if (controlPanel) {
-                controlPanel.Move(ww / 3.4, wh - cpH * 1.13, ww / 2.4, cpH);
-                controlPanel.ShowCaption = false;
-                controlPanel.Locked = true;
-                controlPanel.Hidden = false;
-                //controlPanel.SupportPseudoTransparency = true;
-	        }
-            if (oscilloscope) {
-                oscilloscope.Move(ww / 5.32, wh - cpH * 1.13, ww / 18, cpH);
-                oscilloscope.ShowCaption = false;
-                oscilloscope.Locked = true;
-                oscilloscope.Hidden = false;
-                //oscilloscope. SupportPseudoTransparency = true;
-            }
-            if (curve) {
-                curve.Move(ww / 1.32, wh - cpH * 1.13, ww / 6, cpH);
-                curve.ShowCaption = false;
-                curve.Locked = true;
-                curve.Hidden = false;
-                //curve. SupportPseudoTransparency = true;
-            }
+            if (tabStack) { tabStack.Move(0, 0, ww, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
+            if (controlPanel) { controlPanel.Move(ww / 3.4, y, ww / 2.4, cpH); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
+            if (oscilloscope) { oscilloscope.Move(ww / 5.32, y, ww / 18, cpH); oscilloscope.ShowCaption = false; oscilloscope.Locked = true; oscilloscope.Hidden = false;}
+            if (curve) { curve.Move(ww / 1.39, y, ww / 6, cpH); curve.ShowCaption = false; curve.Locked = true; curve.Hidden = false; }
         } else if (layout === 'halfscreen') { // Block 2: Half screen view
-
+            if (tabStack) { tabStack.Move(0, 0, ww, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
+            if (controlPanel) { controlPanel.Move(ww / 3.4, y, ww / 2.4, cpH); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
+            if (oscilloscope) { oscilloscope.Move(ww / 5.32, y, ww / 18, cpH); oscilloscope.ShowCaption = false; oscilloscope.Locked = true; oscilloscope.Hidden = false;}
+            if (curve) { curve.Move(ww / 1.39, y, ww / 6, cpH); curve.ShowCaption = false; curve.Locked = true; curve.Hidden = false; }
         } else if (layout === 'miniplayer') { // Block 3: Mini player view
 
         } else if (layout === 'miniplayer_2') { // Block 4: Mini player 2 (Control Panel Only)
@@ -88,9 +68,15 @@ function updateLayout(layout, ww, wh, scaler) {
             if (curve) { curve.Hidden = true; }
             if (controlPanel) { controlPanel.Move(0, 0, ww, wh); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
         } else if (layout === 'normalvertical') { // Block 5: Normal vertical view
-
+            if (tabStack) { tabStack.Move(0, 0, ww, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
+            if (controlPanel) { controlPanel.Move(ww / 3.4, y, ww / 2.4, cpH); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
+            if (oscilloscope) oscilloscope.Hidden = true;
+            if (curve) curve.Hidden = true;
         } else if (layout === 'narrowvertical') { // Block 6: Narrow vertical view
-
+            if (tabStack) { tabStack.Move(0, 0, ww, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
+            if (controlPanel) { controlPanel.Move(ww / 3.4, y, ww / 2.4, cpH); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
+            if (oscilloscope) oscilloscope.Hidden = true;
+            if (curve) curve.Hidden = true;
         }
     }
 }
