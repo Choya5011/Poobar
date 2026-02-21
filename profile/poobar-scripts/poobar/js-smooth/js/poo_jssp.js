@@ -2215,7 +2215,7 @@ oBrowser = function (name) {
 										    const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
                                             const heart_x = pc_x - pc_box_width - pc_offset - heartOffset - 16;
 
-                                            if (lovedTagValue == 1) { gr.DrawString(chars.heartFill, g_font_fluent_small, RGB(255, 0, 0), heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); } //else { gr.DrawString(chars.heart, g_font_fluent_small, track_artist_color_text, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); }
+                                            if (lovedTagValue == 1) { gr.DrawString(chars.heartFill, g_font_fluent_small, g_color_normal_txt, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); } //else { gr.DrawString(chars.heart, g_font_fluent_small, track_artist_color_text, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); }
                                         };
 									} else {
 										cColumns.track_num_part = gr.CalcTextWidth(track_num_part, g_font) + 10;
@@ -2305,7 +2305,7 @@ oBrowser = function (name) {
 										    const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
                                             const heart_x = pc_x - pc_box_width - pc_offset - heartOffset - 16;
 
-                                            if (lovedTagValue == 1) { gr.DrawString(chars.heartFill, g_font_fluent_small, RGB(255, 0, 0), heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); } //else { gr.DrawString(chars.heart, g_font_fluent_small, track_artist_color_text, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); }
+                                            if (lovedTagValue == 1) { gr.DrawString(chars.heartFill, g_font_fluent_small, g_color_normal_txt, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); } //else { gr.DrawString(chars.heart, g_font_fluent_small, track_artist_color_text, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); }
                                         };
 									};
 								} else {

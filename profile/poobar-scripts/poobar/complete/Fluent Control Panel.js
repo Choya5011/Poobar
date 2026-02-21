@@ -36,9 +36,7 @@ const SF_CENTER_VCENTER = SF_CENTER | SF_VCENTER;
 let colours = {
     white : _RGB(255, 255, 255),
     red : _RGB(255, 0, 0),
-    love : _RGB(255, 0, 0),
     seekbar_background : _RGBA(128, 128, 128, 128),
-    //rating_bg : _RGBA(128, 128, 128, 224)
 };
 
 let ppt = {
@@ -145,14 +143,14 @@ buttons.update = () => {
     if (!_cc('foo_lastfm_playcount_sync') || loveModeValue == 1) { // FEEDBACK mode
         runOnce = true;
         let lv = tfo.lov.Eval();
-        buttons.buttons.love = new _button(x, y, bs, bs, { normal : lv == 1 ? _chrToImg(chara.heart_on, colours.love, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover : lv == 1 ? _chrToImg(chara.heart_break, colours.red, fluent_font_hover) : _chrToImg(chara.heart_on, colours.love, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; } }, '');
+        buttons.buttons.love = new _button(x, y, bs, bs, { normal : lv == 1 ? _chrToImg(chara.heart_on, g_textcolour, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover : lv == 1 ? _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; } }, '');
     } else if (loveModeValue == 2) { // Last.fm mode
         let fav = tfo.lfm_loved.Eval();
-        buttons.buttons.love = new _button(x, y, bs, bs, { normal: fav == 0 ? _chrToImg(chara.heart_off, g_textcolour, fluent_font) : _chrToImg(chara.heart_on, colours.love, fluent_font), hover: fav == 0 ? _chrToImg(chara.heart_on, colours.red, fluent_font_hover) : _chrToImg(chara.heart_break, colours.love, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
+        buttons.buttons.love = new _button(x, y, bs, bs, { normal: fav == 0 ? _chrToImg(chara.heart_off, g_textcolour, fluent_font) : _chrToImg(chara.heart_on, g_textcolour, fluent_font), hover: fav == 0 ? _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
     } else if (loveModeValue == 3) { // Dual mode
         let lv = tfo.lov.Eval();
         let fav = tfo.lfm_loved.Eval();
-        buttons.buttons.love = new _button(x, y, bs, bs, { normal: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_on, colours.love, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_break, colours.red, fluent_font_hover) : _chrToImg(chara.heart_on, colours.love, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
+        buttons.buttons.love = new _button(x, y, bs, bs, { normal: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_on, g_textcolour, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
     } else {
         fb.ShowPopupMessage("Invalid love mode value, setting to FEEDBACK tag mode", window.ScriptInfo.Name);
     }
