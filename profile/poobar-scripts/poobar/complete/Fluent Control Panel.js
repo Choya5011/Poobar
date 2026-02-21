@@ -211,7 +211,7 @@ buttons.update = () => {
     } else if (ppt.vol.enabled && panel.w <= scaler.s520 && panel.h > scaler.s130) {
         vol_x = xx - (bs * (2.9 + offsets.s4));
         vol_y = panel.h - _scale(24);
-    } else if (!ppt.vol.enabled) {
+    } else if (!ppt.vol.enabled || (ppt.vol.enabled && wh < scaler.s100)) {
         vol_x = xx - (bs * (3.9 + offsets.s5));
         vol_y = yy + 1;
     } else {
