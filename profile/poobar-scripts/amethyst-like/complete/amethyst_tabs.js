@@ -6,6 +6,7 @@ include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
 
 let ww = 0;
 let wh = 0;
@@ -95,9 +96,10 @@ function on_size() {
 
     updateTabSize();
 
-    const panelW = (isExpanded) ? window.Width - TAB_W - _scale(300) : window.Width - TAB_W;
+    let expandSize; if (ww <= scaler.s600) { expandSize = ww - TAB_W; } else if (ww < scaler.s800) { expandSize = _scale(180) } else { expandSize = _scale(300) }
+    const panelW = (isExpanded) ? window.Width - TAB_W - expandSize : window.Width - TAB_W;
     const panelH = window.Height;
-    const panelX = (isExpanded) ? TAB_W + _scale(300) : TAB_W;
+    const panelX = (isExpanded) ? TAB_W + expandSize : TAB_W;
     const panelY = 0;
 
     for (let i = 0; i < tabs.length; i++) {
@@ -114,7 +116,7 @@ function on_size() {
         }
     }
     if (isExpanded) {
-        if (tabStack) { tabStack.Move(TAB_W, 0, _scale(300), wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
+        if (tabStack) { tabStack.Move(TAB_W, 0, expandSize, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
     } else {
         tabStack.Hidden = true;
     }

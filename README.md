@@ -20,7 +20,7 @@ This repository provides a basic JSplitter/SMP customization guide for foobar200
 * The main panel script is the blueprint for the layout & controls panel placement within the main JSplitter
     * Can be used to easily make other themes responsive with some modding
     * Panels can be swapped out if the same title is kept or if the script is modified
-    * It currently comes with two pre-configured transforming layouts as can be seen in the preview.
+    * It currently comes with three pre-configured transforming layouts as can be seen [here](https://github.com/Choya5011/Poobar/wiki).
 * Panels within the tab panel are not hardcoded, they can easily be edited.
 
 Refer to the wiki's [script descriptions](https://github.com/Choya5011/Poobar/wiki/Poobar#script-descriptions) for further info
@@ -55,13 +55,7 @@ Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 
 4. Start Foobar & pick 'Columns UI' if prompted.
 
 **Notes**  
-After setup the theme is usually set to the ```split``` preset, to swap this to for example ```multi``` refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#swapping-layouts) section.  
-
-After setup the Fluent Control Panel is also usually set to the Not-A-Waveform-Seekbar-SMP waveform seekbar. If this is not desired:  
-- To delete: Preferences -> Columns UI -> Layout -> Bottommost JSplitter -> Right-Click -> Remove Panel  
-- To replace: Delete (previous instruct) -> JSplitter it was nested in -> Insert panel -> Panels -> Waveform minibar (mod)  
-
-If deleted the Fluent Control Panel will show an error, simply switch the seekbar mode from waveform to normal.
+The theme comes with three main presets. After setup the theme is usually set to the ```split``` preset, to swap to another refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#swapping-layouts) section.  
 
 **Useful To Know**  
 Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further info. Such as customization or for troubleshooting.
@@ -87,3 +81,4 @@ Credits to the original authors of any modified scripts. Names can be found in t
 
 Themes in this repo are inspired by:
 * Classic Poobar: [Eureka Theme](https://www.reddit.com/r/foobar2000/comments/1mhdyy5/comment/n6ve749/)
+* Amethyst-like: [Amethyst](https://github.com/Geoxor/amethyst)

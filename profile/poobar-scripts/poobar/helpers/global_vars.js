@@ -8,7 +8,11 @@
 /**
  * storing in scaler instead of accessing _scale() directly
  * reason: easier to find back in script
- * s300 = 300px in 1440p
+ * s300 = 300px in 1440p (96 DPI)
+ * _scale func for reference:
+    function _scale(size) {
+    	return Math.round(size * DPI / 72);
+    }
  */
 const scaler = {
     //global

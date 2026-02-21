@@ -1,43 +1,38 @@
 ﻿"use strict";
 
-window.DefineScript('Poobar Main Panel', {author:'Choya', options:{grab_focus:false}});
+window.DefineScript('Amethyst Main Panel', {author:'Choya', options:{grab_focus:false}});
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
-include(fb.ProfilePath + 'poobar-scripts\\amethyst-like\\helpers\\mp_helpers.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_mp_helpers.js');
 
 let ppt = {
-	hPanelScale : new _p ('_MAIN_DISPLAY: Horizontal Monitor Panel Division (0-1)', 0.5),
-	vPanelScale : new _p ('_MAIN_DISPLAY: Vertical Monitor Panel Division (0-1)', 0.4),
-	cpH : new _p ('_MAIN_DISPLAY: Control Panel Height (Horizontal mode)', 105),
-	cpV : new _p ('_MAIN_DISPLAY: Control Panel Height (Vertical mode)', 108),
+	cph : new _p ('_DISPLAY: Control Panel & Visualizer Heights', 80),
 };
 
-let cpH = _scale(80); // Control Panel Height in Horizontal orientation
-let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
+let ww = 0;
+let wh = 0;
+let cph = _scale(ppt.cph.value); // Control Panel & visualizer heights
+let delay = 150;
 
 function on_size(width, height) {
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
 
-    // tabStack/playlistView placement ratio in horizontal orientation (.5 splitscreen)
-    psH = (wh <= scaler.s730 && ww > scaler.s800 && ppt.hPanelScale.value >= 0.5) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value;
-    // (tabStack & smoothBrowser)/playlistView placement ratio in vertical orientation
-    psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value;
-
-    const layout = getLayoutType(ww, wh);
+    const layout = getLayoutType(ww, wh, scaler);
 
     updateLayout(layout, ww, wh, scaler);
 }
 
 // using GetPanel instead of GetPanelByIndex to make layout editing more flexible
-let controlPanel; let plView; let LUFs; let oscilloscope; let tabStack; let curve;
-try { controlPanel = window.GetPanel('Control Panel'); } catch (e) { nestedCP = null; }
+let controlPanel, plView, radial, oscilloscope, tabStack,curve;
+try { controlPanel = window.GetPanel('Control Panel'); } catch (e) { nestedcph = null; }
 try { tabStack = window.GetPanel('tabstack'); } catch (e) { tabStack = null; }
 try { oscilloscope = window.GetPanel('Oscilloscope'); } catch (e) { oscilloscope = null; }
 try { curve = window.GetPanel('Spectrum Analyzer'); } catch (e) { curve = null; }
-try { LUFs = window.GetPanel('LUFS'); } catch (e) { LUFs = null; }
+try { radial = window.GetPanel('Radial Bars'); } catch (e) { radial = null; }
 
 /* instruct comment
  * Function that decides layout depending on main JSplitter dimensions
@@ -50,85 +45,79 @@ try { LUFs = window.GetPanel('LUFS'); } catch (e) { LUFs = null; }
 */
 function updateLayout(layout, ww, wh, scaler) {
     if (ww >= scaler.s300) {
-        const y = wh - cpH - _scale(20);
+        const y = wh - cph - _scale(20);
+        let cpx;
         if (layout === 'horizontal')  { // Block 1: Horizontal view
+            if (oscilloscope) { oscilloscope.Move(ww / 9, y, ww / 8, cph); oscilloscope.ShowCaption = false; oscilloscope.Locked = true; oscilloscope.Hidden = false;}
+            if (curve) { curve.Move(ww / 1.39, y, ww / 6, cph); curve.ShowCaption = false; curve.Locked = true; curve.Hidden = false; }
+            if (radial) { radial.Move(ww / 4.1, y, ww / 23.4, cph); radial.ShowCaption = false; radial.Locked = true; radial.Hidden = false; }
             if (tabStack) { tabStack.Move(0, 0, ww, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
-            if (controlPanel) { controlPanel.Move(ww / 3.4, y, ww / 2.4, cpH); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
-            if (oscilloscope) { oscilloscope.Move(ww / 5.32, y, ww / 18, cpH); oscilloscope.ShowCaption = false; oscilloscope.Locked = true; oscilloscope.Hidden = false;}
-            if (curve) { curve.Move(ww / 1.39, y, ww / 6, cpH); curve.ShowCaption = false; curve.Locked = true; curve.Hidden = false; }
+            if (controlPanel) { controlPanel.Move(ww / 3.4, y, ww / 2.4, cph); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
         } else if (layout === 'halfscreen') { // Block 2: Half screen view
+            if (oscilloscope) { oscilloscope.Move(ww / 9, y, ww / 8, cph); oscilloscope.ShowCaption = false; oscilloscope.Locked = true; oscilloscope.Hidden = false;}
+            if (curve) { curve.Move(ww / 1.39, y, ww / 6, cph); curve.ShowCaption = false; curve.Locked = true; curve.Hidden = false; }
+            if (radial) { radial.Move(ww / 4.1, y, ww / 23.4, cph); radial.ShowCaption = false; radial.Locked = true; radial.Hidden = false; }
             if (tabStack) { tabStack.Move(0, 0, ww, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
-            if (controlPanel) { controlPanel.Move(ww / 3.4, y, ww / 2.4, cpH); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
-            if (oscilloscope) { oscilloscope.Move(ww / 5.32, y, ww / 18, cpH); oscilloscope.ShowCaption = false; oscilloscope.Locked = true; oscilloscope.Hidden = false;}
-            if (curve) { curve.Move(ww / 1.39, y, ww / 6, cpH); curve.ShowCaption = false; curve.Locked = true; curve.Hidden = false; }
+            if (controlPanel) { controlPanel.Move(ww / 3.4, y, ww / 2.4, cph); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
         } else if (layout === 'miniplayer') { // Block 3: Mini player view
-
+            if (oscilloscope) oscilloscope.Hidden = true;
+            if (curve) curve.Hidden = true;
+            if (radial) radial.Hidden = true;
+            if (tabStack) { tabStack.Move(0, 0, ww, wh - cph); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
+            if (controlPanel) { controlPanel.Move(0, wh - cph, ww, cph); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
         } else if (layout === 'miniplayer_2') { // Block 4: Mini player 2 (Control Panel Only)
-            if (oscilloscope) { oscilloscope.Hidden = true; }
-            if (curve) { curve.Hidden = true; }
+            if (oscilloscope) oscilloscope.Hidden = true;
+            if (curve) curve.Hidden = true;
+            if (radial) radial.Hidden = true;
+            if (tabStack) tabstack.Hidden = true;
             if (controlPanel) { controlPanel.Move(0, 0, ww, wh); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
         } else if (layout === 'normalvertical') { // Block 5: Normal vertical view
-            if (tabStack) { tabStack.Move(0, 0, ww, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
-            if (controlPanel) { controlPanel.Move(ww / 3.4, y, ww / 2.4, cpH); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
             if (oscilloscope) oscilloscope.Hidden = true;
             if (curve) curve.Hidden = true;
+            if (tabStack) { tabStack.Move(0, 0, ww, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
+            if (ww >= scaler.s1080) {
+                if (radial) { radial.Move(ww * 0.08, y, ww * 0.12, cph); radial.ShowCaption = false; radial.Locked = true; radial.Hidden = false; }
+                if (controlPanel) { controlPanel.Move(ww * 0.22, y, ww * 0.56, cph); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
+                if (curve) { curve.Move(ww * 0.8, y, ww * 0.12, cph); curve.ShowCaption = false; curve.Locked = true; curve.Hidden = false; }
+            } else {
+                if (radial) radial.Hidden = true;
+                if (curve) curve.Hidden = true;
+                //if (controlPanel) { controlPanel.Move(_scale(100), y, ww - _scale(220), cph); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
+                if (controlPanel) { controlPanel.Move(ww * 0.12, y, ww * 0.75, cph); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
+            }
         } else if (layout === 'narrowvertical') { // Block 6: Narrow vertical view
-            if (tabStack) { tabStack.Move(0, 0, ww, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
-            if (controlPanel) { controlPanel.Move(ww / 3.4, y, ww / 2.4, cpH); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
             if (oscilloscope) oscilloscope.Hidden = true;
             if (curve) curve.Hidden = true;
+            if (radial) radial.Hidden = true;
+            if (tabStack) { tabStack.Move(0, 0, ww, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; tabStack.TopMost = false; }
+            if (controlPanel) { controlPanel.Move(_scale(60), y, ww - _scale(90), cph); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
         }
     }
 }
 
 /* ==================================================
  * Debounced code blocks
-================================================== */
+==================================================
 
 const debouncedHorizontalView = debounce(function() {
     // Horizontal View
-    if (tabStack) { tabStack.Move(0, 0, ww * psH, wh - cpH); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
 }, delay);
 
 const debouncedHalfScreen = debounce(function() {
     // Half screen view
-    if (tabStack) { tabStack.Move(0, 0, ww * 0.5, (wh - cpV) * psV); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-    if (smoothBrowser) { smoothBrowser.Move(ww * 0.5, 0, ww * 0.5, (wh - cpV) * psV); smoothBrowser.ShowCaption = false; smoothBrowser.Locked = true; smoothBrowser.Hidden = false; }
 }, delay);
 
 const debouncedMiniPlayer = debounce(function() {
     // Mini Player
-    initTabs(ignore);
-    updateTabSize();
-
-    let panelW = ppt.orientation.enabled ? ww - TAB_W : ww;
-    let panelH = ppt.orientation.enabled ? wh - cpV : wh - cpV - TAB_H;
-    let switchH = ppt.orientation.enabled ? 0 : TAB_H;
-    let switchW = ppt.orientation.enabled ? TAB_W : 0;
-
-    for (let i = 0; i < tabs.length; i++) {
-        const p = window.GetPanelByIndex(tabs[i].index);
-        if (p) {
-            p.Move(switchW, switchH, panelW, panelH, true);
-            p.ShowCaption = false;
-            p.Locked = true;
-            p.Hidden = false;
-        }
-    }
 }, delay);
 
 
 const debouncedNormalVertical = debounce(function() {
     // Normal vertical view
-    if (tabStack) { tabStack.Move(0, 0, ww * 0.7, (wh - cpV) * psV); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-    if (smoothBrowser) { smoothBrowser.Move(ww * 0.7, 0, ww - ww * 0.7, (wh - cpV) * psV); smoothBrowser.ShowCaption = false; smoothBrowser.Locked = true; smoothBrowser.Hidden = false; }
 }, delay);
 
 const debouncedNarrowVertical = debounce(function() {
     // Narrow vertical view
-    if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-    if (tabStack) { tabStack.Move(0, 0, ww, (wh - cpV) * psV); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-    if (playlistView) { const remainingH = wh - cpV - ((wh - cpV) * psV); playlistView.Move(0, (wh - cpV) * psV, ww, remainingH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
 }, delay);
 
-/* ================================================== */
+================================================== */
