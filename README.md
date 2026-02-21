@@ -87,4 +87,3 @@ Credits to the original authors of any modified scripts. Names can be found in t
 
 Themes in this repo are inspired by:
 * Classic Poobar: [Eureka Theme](https://www.reddit.com/r/foobar2000/comments/1mhdyy5/comment/n6ve749/)
-* Amethyst-like (WIP): [Amethyst](https://github.com/Geoxor/amethyst)
