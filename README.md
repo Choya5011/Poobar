@@ -47,12 +47,12 @@ Optional (Lyrics): UD Digi Kyokasho (NP-B)
 Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 by default.
 **Portable Instructions**  
 1. Install [Foobar](https://www.foobar2000.org/windows) as portable.
-2. Download Poobar from the [main branch](https://github.com/Choya5011/Poobar/archive/refs/heads/main.zip)
+2. Download Poobar from the [release page](https://github.com/Choya5011/Poobar/releases) or as nightly from the [main branch](https://github.com/Choya5011/Poobar/archive/refs/heads/main.zip)
 3. Extract the 'profile' folder from the zip into Foobar's root folder.
 2. Start Foobar & pick ```Columns UI``` if prompted.
 
 **Standard non-portable Instructions**
-1. Install [Foobar](https://www.foobar2000.org/windows) as a standard installation.
+1. Install Foobar as a standard installation.
 2. Download Poobar as before.
 3. Extract the contents of the 'profile' folder into Foobar's root folder. This is typically located at:
    - ```C:\Users\\[Username]\AppData\Roaming\foobar2000-v2```
