@@ -69,7 +69,7 @@ function updateLayout(layout, ww, wh, scaler) {
             if (oscilloscope) oscilloscope.Hidden = true;
             if (curve) curve.Hidden = true;
             if (radial) radial.Hidden = true;
-            if (tabStack) tabstack.Hidden = true;
+            if (tabStack) tabStack.Hidden = true;
             if (controlPanel) { controlPanel.Move(0, 0, ww, wh); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
         } else if (layout === 'normalvertical') { // Block 5: Normal vertical view
             if (oscilloscope) oscilloscope.Hidden = true;
@@ -82,7 +82,6 @@ function updateLayout(layout, ww, wh, scaler) {
             } else {
                 if (radial) radial.Hidden = true;
                 if (curve) curve.Hidden = true;
-                //if (controlPanel) { controlPanel.Move(_scale(100), y, ww - _scale(220), cph); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
                 if (controlPanel) { controlPanel.Move(ww * 0.12, y, ww * 0.75, cph); controlPanel.ShowCaption = false; controlPanel.Locked = true; controlPanel.Hidden = false; }
             }
         } else if (layout === 'narrowvertical') { // Block 6: Narrow vertical view
