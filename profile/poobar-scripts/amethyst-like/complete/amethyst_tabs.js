@@ -27,12 +27,10 @@ let activeTab = 0;
 let hoveredTab = -999;
 const borgirIdx = -1;
 const settingsIdx = -2;
-let TAB_W = 0;
-let TAB_H = 0;
-const TAB_MIN_W = 45;
-const TAB_MIN_H = 45;
+let TAB_W, TAB_H;
 let isExpanded = false;
-let textPos = 0;
+
+let tabStack; try { tabStack = window.GetPanel('poobar tabs'); } catch (e) { tabStack = null; }
 
 const SF_CENTER = 0x00000001;
 const SF_VCENTER = 0x00000004;
@@ -48,6 +46,20 @@ initTabs();
 updateTabSize();
 update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
 get_colours(ppt.col_mode.value, true);
+
+let { default_font, default_font_hover, fluent_font, fluent_font_hover } = get_font();
+let tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
+let tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
+let buttons = new _buttons();
+buttons.update = () => {
+    //let fluent_font = gdi.Font('Segoe Fluent Icons', TAB_W);
+    //let fluent_font_hover = gdi.Font('Segoe Fluent Icons', TAB_W);
+
+    const w = TAB_W * 2
+    const h = TAB_H * 2
+    buttons.buttons.borgir = new _button(0 - w / 4, 0 - h / 4, w, h, {normal : _chrToImg(chara.globalNavButton, g_textcolour, tabFont), hover : _chrToImg(chara.globalNavButton, g_textcolour_hl, tabFont_hover)}, () => { isExpanded = !isExpanded; on_size(); }, '');
+    buttons.buttons.settings = new _button(0 - w / 4, wh - h / 1.3, w, h, {normal : _chrToImg(chara.settings, g_textcolour, tabFont), hover : _chrToImg(chara.settings, g_textcolour_hl, tabFont_hover)}, () => { fb.ShowPreferences(); }, '');
+}
 
 function initTabs() {
     tabs = [];
@@ -71,23 +83,6 @@ function initTabs() {
     }
 }
 
-let font;
-let { default_font, default_font_hover, fluent_font, fluent_font_hover } = get_font();
-let tabFont;
-let tabFont_hover;
-let tab_textCol;
-
-let buttons = new _buttons();
-buttons.update = () => {
-    let fluent_font = gdi.Font('Segoe Fluent Icons', TAB_W);
-    let fluent_font_hover = gdi.Font('Segoe Fluent Icons', TAB_W);
-    const w = TAB_W * 2
-    const h = TAB_H * 2
-    buttons.buttons.borgir = new _button(0 - w / 4, 0 - h / 4, w, h, {normal : _chrToImg(chara.globalNavButton, g_textcolour, tabFont), hover : _chrToImg(chara.globalNavButton, g_textcolour_hl, tabFont_hover)}, () => { isExpanded = !isExpanded; on_size(); window.Repaint(); }, '');
-    buttons.buttons.settings = new _button(0 - w / 4, wh - h / 1.3, w, h, {normal : _chrToImg(chara.settings, g_textcolour, tabFont), hover : _chrToImg(chara.settings, g_textcolour_hl, tabFont_hover)}, () => { fb.ShowPreferences(); }, '');
-}
-
-let tabStack; try { tabStack = window.GetPanel('poobar tabs'); } catch (e) { tabStack = null; }
 function on_size() {
     panel.size();
     ww = window.Width;
@@ -134,23 +129,21 @@ function on_paint(gr) {
     //drawIconBlock(gr, settingsIdx, 0, wh - TAB_H, TAB_W, TAB_H, hoveredTab === settingsIdx);
 
     gr.SetSmoothingMode(2);
-    tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
-    tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
     updateTabSize();
     for (let i = 0; i < tabs.length; i++) {
-        //const text = !isExpanded ? tabs[i].name.charAt(0) : tabs[i].name;
-        const text = tabs[i].name.charAt(0);
-        font = (i === hoveredTab) ? tabFont_hover : tabFont;
-        tab_textCol = i === hoveredTab ? g_textcolour_hl : g_textcolour;
-        // Vertical tabs
         const y = TAB_H * (i + 1);
-        //if (!ppt.bgShow.enabled) gr.FillSolidRect(0, y, TAB_W, h, g_backcolour);
-        if (i === hoveredTab) gr.FillRoundRect(0, y, TAB_W - 1, TAB_H, 10, 10, g_color_highlight);
-        if (i === activeTab && i !== hoveredTab) gr.FillRoundRect(0, y, TAB_W - 1, TAB_H, 10, 10, g_color_selected_bg);
+        const x = 0;
+        const text = tabs[i].name.charAt(0);
+        const textPos = (i === hoveredTab) ? TAB_H / 3.7 : TAB_H / 3.2;
+        const font = (i === hoveredTab) ? tabFont_hover : tabFont;
+        const tab_textCol = i === hoveredTab ? g_textcolour_hl : g_textcolour;
+        if (i === hoveredTab) gr.FillRoundRect(x, y, TAB_W - 1, TAB_H, 10, 10, g_color_highlight);
+        if (i === activeTab && i !== hoveredTab) gr.FillRoundRect(x, y, TAB_W - 1, TAB_H, 10, 10, g_color_selected_bg);
         gr.GdiDrawText(text, font, tab_textCol, textPos, y, TAB_W, TAB_H, DT_SINGLELINE | DT_LEFT | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
     }
 }
 
+/*
 function drawIconBlock(gr, id, x, y, w, h, isHover) {
     const col = isHover ? g_textcolour_hl : g_textcolour;
     const font = gdi.Font('Segoe Fluent Icons', w);
@@ -162,11 +155,11 @@ function drawIconBlock(gr, id, x, y, w, h, isHover) {
     gr.FillSolidRect(x, y, w, h, isHover ? g_color_highlight : g_backcolour);
     gr.GdiDrawText(charaCode, font, col, x, y, w, h, DT_CENTER | DT_VCENTER | DT_NOPREFIX);
 }
+*/
 
 function updateTabSize() {
     TAB_W = _scale(45);
     TAB_H = _scale(45);
-    textPos = TAB_H / 3;
 }
 
 function on_mouse_lbtn_up(x, y) {

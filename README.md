@@ -3,7 +3,7 @@ A crappy responsive [JSplitter](https://hydrogenaudio.org/index.php/topic,126743
 ## Contents
 1. [Preview](#preview)
 2. [Modularity](#modularity)
-3. [Components & Packages](#components--packages)
+3. [Assets](#components--packages)
 4. [Installation](#installation)
 5. [Gallery](#gallery)
 
@@ -29,12 +29,13 @@ This repository provides a basic JSplitter/SMP customization guide for foobar200
 
 Refer to the wiki's [script descriptions](https://github.com/Choya5011/Poobar/wiki/Poobar#script-descriptions) for further info
 
-## Components & Packages
-**Fonts**  
+## Assets
+### Fonts  
 Standard already on Windows 11: [Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts)  
 Optional (For Biography): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)  
 Optional (Lyrics): UD Digi Kyokasho (NP-B)
 
+### Components & Packages (included)
 **Components**  
 [Columns UI](https://www.foobar2000.org/components/view/foo_ui_columns) | [JSplitter](https://hydrogenaudio.org/index.php/topic,126743.msg1063721.html#msg1063721) | [ESLyric](https://github.com/ESLyric/release) | [Playback Statistics](https://www.foobar2000.org/components/view/foo_playcount) | [Waveform minibar (mod)](https://www.foobar2000.org/components/view/foo_wave_minibar_mod) | [Oscilloscope Visualisation](https://www.foobar2000.org/components/view/foo_vis_oscilloscope) | [Spectrum Analyzer](https://www.foobar2000.org/components/view/foo_vis_spectrum_analyzer)
 
@@ -44,19 +45,18 @@ Optional (Lyrics): UD Digi Kyokasho (NP-B)
 ## Installation
 **Fonts**  
 Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 by default.
-
 **Portable Instructions**  
-1. Install Foobar as portable (clean install)
+1. Install [Foobar](https://www.foobar2000.org/windows) as portable.
 2. Download Poobar from the [main branch](https://github.com/Choya5011/Poobar/archive/refs/heads/main.zip)
 3. Extract the 'profile' folder from the zip into Foobar's root folder.
-2. Start Foobar & pick 'Columns UI' if prompted.
+2. Start Foobar & pick ```Columns UI``` if prompted.
 
 **Standard non-portable Instructions**
-1. Install Foobar as a standard installation.
-2. Download Poobar from the [main branch](https://github.com/Choya5011/Poobar/archive/refs/heads/main.zip)
+1. Install [Foobar](https://www.foobar2000.org/windows) as a standard installation.
+2. Download Poobar as before.
 3. Extract the contents of the 'profile' folder into Foobar's root folder. This is typically located at:
-   - C:\Users\\[Username]\AppData\Roaming\foobar2000-v2
-4. Start Foobar & pick 'Columns UI' if prompted.
+   - ```C:\Users\\[Username]\AppData\Roaming\foobar2000-v2```
+4. Start Foobar & pick ```Columns UI``` if prompted.
 
 **Notes**  
 The theme comes with three main presets. After setup the theme is usually set to the ```split``` preset, to swap to another refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#swapping-layouts) section.  
@@ -81,7 +81,8 @@ If window gets small enough. Smallest state is Fluent Control Panel only.
 ![Mini player](gallery/mini_player.png)
 
 ## Credits
-Credits to the original authors of any modified scripts. Names can be found in their respective scripts.
+Credits to the original authors of any modified scripts as well as any included packages & components.    
+Original author names are present in modified scripts.
 
 Themes in this repo are inspired by:
 * Classic Poobar: [Eureka Theme](https://www.reddit.com/r/foobar2000/comments/1mhdyy5/comment/n6ve749/)
