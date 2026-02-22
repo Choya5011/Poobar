@@ -109,11 +109,6 @@ function on_size() {
             p.ShowCaption = false;
             p.Locked = true;
         }
-        if (p.Name === 'ESLyric') {
-            p.SupportPseudoTransparency = true;
-        } else {
-            continue;
-        }
     }
     if (isExpanded) {
         if (tabStack) { tabStack.Move(TAB_W, 0, expandSize, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
@@ -125,8 +120,6 @@ function on_size() {
 }
 
 function on_paint(gr) {
-    gr.FillSolidRect(TAB_W, 0, panel.w, panel.h, g_backcolour);
-
     if (ppt.bgShow.enabled && bg_img) {
         _drawImage(gr, bg_img, 0, 0, TAB_W, panel.h, image.crop);
         const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
@@ -297,21 +290,18 @@ function on_mouse_rbtn_up(x, y) {
         ppt.col_mode.value = 1;
         ppt.bgShow.enabled = false;
         get_colours(ppt.col_mode.value, true);
-        refresh_pt_panel();
         window.Repaint();
         break;
     case 211:
         ppt.col_mode.value = 2;
         ppt.bgShow.enabled = false;
         get_colours(ppt.col_mode.value, true);
-        refresh_pt_panel();
         window.Repaint();
         break;
     case 212:
         ppt.col_mode.value = 3;
         ppt.bgShow.enabled = false;
         get_colours(ppt.col_mode.value, true);
-        refresh_pt_panel();
         window.ShowProperties();
         window.Repaint();
         break;
@@ -343,15 +333,6 @@ function on_playback_new_track() {
     on_colours_changed();
     //get_colours(ppt.col_mode.value, true);
     update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
-    refresh_pt_panel();
-}
-
-function refresh_pt_panel() {
-    const p = window.GetPanelByIndex(tabs[activeTab].index);
-    if (p.Text === 'ESLyric' || p.Name === 'ESLyric') {
-        p.Hidden = true;
-        p.Hidden = false;
-    }
 }
 
 function get_font() {

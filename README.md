@@ -8,8 +8,12 @@ A crappy responsive [JSplitter](https://hydrogenaudio.org/index.php/topic,126743
 5. [Gallery](#gallery)
 
 ## Preview
+### Poobar Split
 ![Preview](gallery/preview.png)  
-![Preview_2](gallery/preview_2.png)  
+### Poobar Multi
+![Preview_2](gallery/preview_2.png)
+### Amethyst-like
+![Preview_3](gallery/preview_3.png)
 Responds to window size & seamlessly snaps to Windows 11 snap layouts.  
 [Gallery](#gallery) | [Wiki Showcase](https://github.com/Choya5011/Poobar/wiki)
 
