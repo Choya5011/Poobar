@@ -95,7 +95,7 @@ function GetNowPlayingColours() {
  			return [background_colour, text_colour, selected_background_colour, selected_text_colour];
  		}
  	}
- 	return [];
+ 	return [window.GetColourCUI(ColourTypeCUI.background), window.GetColourCUI(ColourTypeCUI.text), window.GetColourCUI(ColourTypeCUI.inactive_selection_background), window.GetColourCUI(ColourTypeCUI.selection_text)];
 }
 ////////////////////////////////////////////////////////////////////////////
 
