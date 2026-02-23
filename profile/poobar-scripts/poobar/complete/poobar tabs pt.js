@@ -71,6 +71,8 @@ function on_paint(gr) {
         } else if (ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled)) {
             _drawImage(gr, g_img, 0 + TAB_W, 0, ww - TAB_W, wh, image.crop);
         }
+    } else {
+        gr.FillSolidRect(0, 0, ww, wh, g_backcolour); let name; let font = window.InstanceType ? window.GetFontDUI(0) : window.GetFontCUI(0); if (font) {	name = font.Name; } else {	name = 'Segoe UI'; } gr.GdiDrawText('NO SELECTION', _gdiFont(name, _scale(20), 1), g_textcolour, (ww - _scale(400)) / 2, wh / 2, _scale(400), _scale(100), SF_CENTER_VCENTER | DT_END_ELLIPSIS);
     }
 
     const p = window.GetPanelByIndex(tabs[activeTab].index);
@@ -104,11 +106,11 @@ function update_album_art_pt(artBlur) {
         if (artBlur) g_img.StackBlur(24);
 
         if (bg_img) {
-          // attempt to reduce RAM usage by reducing res; experimental/marginal results
-          bg_img_res = ppt.bgBlur.enabled ? 200 : (bg_img.Width > 1280 ? 1280 : bg_img.Width);
-          const r = bg_img_res / bg_img.Width;
-          bg_img = bg_img.Resize(bg_img_res, bg_img.Height * r, 2);
-          if (ppt.bgBlur.enabled) bg_img.StackBlur(24);
+            // attempt to reduce RAM usage by reducing res; experimental/marginal results
+            bg_img_res = ppt.bgBlur.enabled ? 200 : (bg_img.Width > 1280 ? 1280 : bg_img.Width);
+            const r = bg_img_res / bg_img.Width;
+            bg_img = bg_img.Resize(bg_img_res, bg_img.Height * r, 2);
+            if (ppt.bgBlur.enabled) bg_img.StackBlur(24);
         }
 
         window.Repaint();
