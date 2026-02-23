@@ -24,7 +24,7 @@ This repository provides a basic JSplitter/SMP customization guide for foobar200
 * The main panel script is the blueprint for the layout & controls panel placement within the main JSplitter
     * Can be used to easily make other themes responsive with some modding
     * Panels can be swapped out if the same title is kept or if the script is modified
-    * It currently comes with three pre-configured transforming layouts as can be seen [here](https://github.com/Choya5011/Poobar/wiki).
+    * It currently comes with three pre-configured transforming layouts.
 * Panels within the tab panel are not hardcoded, they can easily be edited.
 
 Refer to the wiki's [script descriptions](https://github.com/Choya5011/Poobar/wiki/Poobar#script-descriptions) for further info
@@ -59,10 +59,10 @@ Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 
 4. Start Foobar & pick ```Columns UI``` if prompted.
 
 **Notes**  
-The theme comes with three main presets. After setup the theme is usually set to the ```split``` preset, to swap to another refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#swapping-layouts) section.  
+The theme comes with three main presets. After setup the theme is usually set to the ```split``` preset, to swap to another refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Swapping-Layouts) section.  
 
 **Useful To Know**  
-Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Poobar) for further info. Such as customization or for troubleshooting.
+Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Useful-to-know) for further info. Such as customization or for troubleshooting.
 
 ## Gallery
 **Fluent Control Panel**  
