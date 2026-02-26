@@ -8,11 +8,7 @@
 /**
  * storing in scaler instead of accessing _scale() directly
  * reason: easier to find back in script
- * s300 = 300px in 1440p (96 DPI)
- * _scale func for reference:
-    function _scale(size) {
-    	return Math.round(size * DPI / 72);
-    }
+ * s300 = 300px in 1440p
  */
 const scaler = {
     //global
@@ -32,4 +28,17 @@ const scaler = {
     s380: _scale(285),
     s400: _scale(300),
     s730: _scale(547.5)
+};
+
+const log = {
+    memory: () => {
+        return "MB | " + window.ScriptInfo.Name + ": " + Math.round(window.JsMemoryStats.MemoryUsage / 1048576 * 10) / 10 + "\n" +
+               "MB | total: " + Math.round(window.JsMemoryStats.TotalMemoryUsage / 1048576 * 10) / 10 + "\n" +
+               "Byt | " + window.ScriptInfo.Name + ": " + window.JsMemoryStats.MemoryUsage + "\n" +
+               "Byt | total: " + window.JsMemoryStats.TotalMemoryUsage + "\n------------";
+    },
+    dimensions: () => {
+        return "Window W: ", window.Width + "\n" +
+               "Window H: ", window.Height;
+    },
 };

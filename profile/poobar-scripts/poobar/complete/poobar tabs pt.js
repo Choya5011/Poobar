@@ -7,7 +7,6 @@
 window.DefineScript('Pseudo Transparency Poobar Tabs', {author:'Choya', options:{grab_focus:false}});
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab_basic.js');
 
@@ -20,14 +19,16 @@ let ppt = {
     overlay : new _p('_DISPLAY: Show tab shadow/overlay', true),
     orientation : new _p('_DISPLAY: Tab Orientation', false),
     fontMode : new _p ('_DISPLAY: Switch  Icon or Text Font', false),
-    bgPath : new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image")
+    bgPath : new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
 };
 
 // arr of panels that require pseudo transparency
 let ptArr = window.GetProperty("_PROPERTY: Pseudo Transparent Panels (delimiter: ',')", ",,").split(",");
 
-let ww = 0;
-let wh = 0;
+let ww, wh = 0;
+let g_img = null; // album art
+let bg_img = null; // background if blurred/custom.
+let g_img_res, bg_img_res;
 
 initTabs();
 updateTabSize(ppt);
@@ -80,12 +81,12 @@ function on_paint(gr) {
 
     const switchBgW = (ppt.orientation.enabled) ? TAB_W : ww; TAB_H;
     const switchBgH = (ppt.orientation.enabled) ? wh : TAB_H;
-    //const overlayColor = setAlpha(g_textcolour_hl, 128);
-    const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
+    const overlayColor = setAlpha(g_backcolour, 128); //const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
     if (p.Text === '' || p.Name === 'JS Smooth Playlist Manager') { gr.FillSolidRect(0, 0, ww, wh, overlayColor); } else if (p.Name !== 'ESLyric' && ppt.overlay.enabled && (ppt.bgShow.enabled || ppt.bgBlur.enabled)) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); }
 
     if (bg_img && (ppt.bgBlur.enabled || ppt.bgMode.enabled)) {
         _drawImage(gr, bg_img, 0, 0, switchBgW, switchBgH, image.crop);
+        if (ppt.overlay.enabled) gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor);
     } else if (!ppt.bgShow.enabled) {
         gr.FillSolidRect(0, 0, switchBgW, switchBgH, g_backcolour);
     }
@@ -183,8 +184,6 @@ function on_mouse_rbtn_up(x, y) {
     let _menu2 = window.CreatePopupMenu(); // Show... menu
     let _menu3 = window.CreatePopupMenu(); // Background Wallpaper menu
     let _menu4 = window.CreatePopupMenu(); // Colours menu
-    let _submenu4 = window.CreatePopupMenu(); // Button Highlight menu
-    let _submenu41 = window.CreatePopupMenu(); // Tab Color menu
     let _menu5 = window.CreatePopupMenu(); // Font Menu
 
     _menu1.AppendMenuItem(MF_STRING, 90, 'Horizontal');
@@ -223,6 +222,10 @@ function on_mouse_rbtn_up(x, y) {
 
     m.AppendMenuSeparator();
 
+    m.AppendMenuItem(MF_STRING, 998, 'Open readme...');
+
+    m.AppendMenuSeparator();
+
     m.AppendMenuItem(MF_STRING, 999, 'Panel Properties');
     m.AppendMenuItem(MF_STRING, 1000, 'Configure...');
 
@@ -243,7 +246,6 @@ function on_mouse_rbtn_up(x, y) {
         break;
     case 210:
         ppt.bgShow.toggle();
-        //ppt.col_mode.value = 1;
         get_colours(ppt.col_mode.value, true);
         update_album_art_pt();
         refresh_pt_panel();
@@ -293,6 +295,11 @@ function on_mouse_rbtn_up(x, y) {
     case 411:
         ppt.fontMode.toggle();
         window.Repaint();
+        break;
+    case 998:
+        let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\ptpt_readme.txt', 65001); } catch (e) { readme = 'readme file not found' };
+        fb.ShowPopupMessage(readme, window.ScriptInfo.Name);
+        readme = null;
         break;
     case 999:
         window.ShowProperties();

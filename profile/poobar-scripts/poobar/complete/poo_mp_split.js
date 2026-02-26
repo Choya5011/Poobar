@@ -11,20 +11,20 @@ include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab_basic.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_mp_helpers.js');
 
 let ppt = {
-	hPanelScale : new _p ('_MAIN_DISPLAY: Horizontal Monitor Panel Division (0-1)', 0.5),
-	vPanelScale : new _p ('_MAIN_DISPLAY: Vertical Monitor Panel Division (0-1)', 0.4),
-	cpH : new _p ('_MAIN_DISPLAY: Control Panel Height (Horizontal mode)', 105),
-	cpV : new _p ('_MAIN_DISPLAY: Control Panel Height (Vertical mode)', 108),
+	hPanelScale : new _p ('_PANEL_PLACEMENT: Horizontal Monitor Panel Division (0-1)', 0.5),
+	vPanelScale : new _p ('_PANEL_PLACEMENT: Vertical Monitor Panel Division (0-1)', 0.4),
+	cpH : new _p ('_PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
+	cpV : new _p ('_PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 108),
 
-    bgShow : new _p('_DISPLAY: Show Wallpaper', true),
-    bgBlur : new _p('_DISPLAY: Wallpaper Blurred', false),
-    bgMode : new _p('_DISPLAY: Wallpaper Mode', false),
-    col_mode : new _p('_PROPERTY: Color Mode (1,2,3)', 1),
-    //borders : new _p('_PROPERTY: Show tab separators', true),
-    //overlay : new _p('_DISPLAY: Show tab shadow/overlay', true),
-    orientation : new _p('_DISPLAY: Tab Orientation', false),
-    fontMode : new _p ('_DISPLAY: Switch  Icon or Text Font', false),
-    bgPath : new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
+    bgShow : new _p('_TAB_DISPLAY: Show Wallpaper', false),
+    bgBlur : new _p('_TAB_DISPLAY: Wallpaper Blurred', false),
+    bgMode : new _p('_TAB_DISPLAY: Wallpaper Mode', false),
+    col_mode : new _p('_TAB_PROPERTY: Color Mode (1,2,3)', 1),
+    borders : new _p('_TAB_PROPERTY: Show tab separators', true),
+    overlay : new _p('_TAB_DISPLAY: Show tab shadow/overlay', false),
+    orientation : new _p('_TAB_DISPLAY: Tab Orientation', false),
+    fontMode : new _p ('_TAB_DISPLAY: Switch  Icon or Text Font', false),
+    bgPath : new _p('_TAB_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
 };
 
 let ww = 0;
@@ -35,7 +35,7 @@ let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
 let paintRect = false;
 let delay = 150;
 
-update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
 get_colours(ppt.col_mode.value, true);
 
 function on_size(width, height) {
@@ -53,7 +53,10 @@ function on_size(width, height) {
     updateLayout(layout, ww, wh, scaler);
 }
 
-// ensure update once with a delay after loading
+/*
+ * ensure update once with a delay after loading
+ * if foobar is closed while in miniplayer mode, it can cause update issues when opened again
+*/
 window.SetTimeout(function() {
     ww = window.Width;
     wh = window.Height;
@@ -184,14 +187,22 @@ const debouncedNarrowVertical = debounce(function() {
 /* ================================================== */
 
 function on_paint(gr) {
-    if (!paintRect) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
+    if (!paintRect) {
+        const rX = (ppt.orientation.enabled) ? TAB_W : 0;
+        const rY = (ppt.orientation.enabled) ? 0 : TAB_H;
+        const rW = (ppt.orientation.enabled) ? ww - TAB_W : ww;
+        const rH = (ppt.orientation.enabled) ? wh : wh - TAB_H;
+        gr.FillSolidRect(rX, rY, rW, rH, g_backcolour);
+    }
 
-    if (ppt.bgShow.enabled && g_img) {
-        let switchBgW = (ppt.orientation.enabled) ? TAB_W : ww; TAB_H;
-        let switchBgH = (ppt.orientation.enabled) ? wh : TAB_H;
-        _drawImage(gr, bg_img, 0, 0, switchBgW, switchBgH, image.crop);
-        const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
-        gr.FillSolidRect(0, 0, ww, wh, overlayColor);
+    if (ppt.bgShow.enabled && bg_img) {
+        const bgW = (ppt.orientation.enabled) ? TAB_W : ww;
+        const bgH = (ppt.orientation.enabled) ? wh : TAB_H;
+        _drawImage(gr, bg_img, 0, 0, bgW, bgH, image.crop);
+        if (ppt.overlay.enabled) {
+            const overlayColor = setAlpha(g_backcolour, 128);
+            gr.FillSolidRect(0, 0, bgW, bgH, overlayColor);
+        }
     }
 
     tab.paint_mp(gr, ppt);
@@ -248,11 +259,10 @@ function on_mouse_rbtn_up(x, y) {
     let c = fb.CreateContextMenuManager();
 
     let _menu1 = window.CreatePopupMenu(); // Orientation menu
-    let _menu2 = window.CreatePopupMenu(); // Background Wallpaper menu
-    let _menu3 = window.CreatePopupMenu(); // Colours menu
-    let _submenu3 = window.CreatePopupMenu(); // Button Highlight menu
-    let _submenu31 = window.CreatePopupMenu(); // Tab Color menu
-    let _menu4 = window.CreatePopupMenu(); // Font Menu
+    let _menu2 = window.CreatePopupMenu(); // Show... menu
+    let _menu3 = window.CreatePopupMenu(); // Background Wallpaper menu
+    let _menu4 = window.CreatePopupMenu(); // Colours menu
+    let _menu5 = window.CreatePopupMenu(); // Font Menu
 
     _menu1.AppendMenuItem(MF_STRING, 90, 'Horizontal');
     _menu1.AppendMenuItem(MF_STRING, 91, 'Vertical');
@@ -260,28 +270,40 @@ function on_mouse_rbtn_up(x, y) {
     _menu1.AppendTo(m, MF_STRING, 'Orientation');
     m.AppendMenuSeparator();
 
-    _menu2.AppendMenuItem(MF_STRING, 110, 'Enable');
-    _menu2.CheckMenuItem(110, ppt.bgShow.enabled);
-    _menu2.AppendMenuItem(MF_STRING, 111, 'Blur');
-    _menu2.CheckMenuItem(111, ppt.bgBlur.enabled);
-    _menu2.AppendMenuSeparator();
-    _menu2.AppendMenuItem(MF_STRING, 112, 'Playing Album Cover');
-    _menu2.AppendMenuItem(MF_STRING, 113, 'Default');
-    _menu2.CheckMenuRadioItem(112, 113, ppt.bgMode.enabled ? 113 : 112);
-    _menu2.AppendTo(m, MF_STRING, 'Background Wallpaper');
-
-    _menu3.AppendMenuItem(MF_STRING, 210, 'System');
-    _menu3.AppendMenuItem(MF_STRING, 211, 'Dynamic');
-    _menu3.AppendMenuItem(MF_STRING, 212, 'Custom');
-    _menu3.CheckMenuRadioItem(210, 212, Math.min(Math.max(210 + ppt.col_mode.value - 1, 210), 212));
-    _menu3.AppendTo(m, MF_STRING, 'Colours');
-
-    _menu4.AppendMenuItem(MF_STRING, 310, 'Segoe Fluent Icons');
-    _menu4.AppendMenuItem(MF_STRING, 311, 'System');
-    _menu4.CheckMenuRadioItem(310, 311, ppt.fontMode.enabled ? 311 : 310);
-    _menu4.AppendTo(m, MF_STRING, 'Font');
+    _menu2.AppendMenuItem(MF_STRING, 110, 'Borders');
+    _menu2.CheckMenuItem(110, ppt.borders.enabled);
+    _menu2.AppendTo(m, MF_STRING, 'Show...');
 
     m.AppendMenuSeparator();
+
+    _menu3.AppendMenuItem(MF_STRING, 210, 'Enable');
+    _menu3.CheckMenuItem(210, ppt.bgShow.enabled);
+    _menu3.AppendMenuItem(MF_STRING, 211, 'Blur');
+    _menu3.CheckMenuItem(211, ppt.bgBlur.enabled);
+    _menu3.AppendMenuItem(MF_STRING, 212, 'Shadow');
+    _menu3.CheckMenuItem(212, ppt.overlay.enabled);
+    _menu3.AppendMenuSeparator();
+    _menu3.AppendMenuItem(MF_STRING, 213, 'Playing Album Cover');
+    _menu3.AppendMenuItem(MF_STRING, 214, 'Default');
+    _menu3.CheckMenuRadioItem(213, 214, ppt.bgMode.enabled ? 214 : 213);
+    _menu3.AppendTo(m, MF_STRING, 'Background Wallpaper');
+
+    _menu4.AppendMenuItem(MF_STRING, 310, 'System');
+    _menu4.AppendMenuItem(MF_STRING, 311, 'Dynamic');
+    _menu4.AppendMenuItem(MF_STRING, 312, 'Custom');
+    _menu4.CheckMenuRadioItem(310, 312, Math.min(Math.max(310 + ppt.col_mode.value - 1, 310), 312));
+    _menu4.AppendTo(m, MF_STRING, 'Colours');
+
+    _menu5.AppendMenuItem(MF_STRING, 410, 'Segoe Fluent Icons');
+    _menu5.AppendMenuItem(MF_STRING, 411, 'System');
+    _menu5.CheckMenuRadioItem(410, 411, ppt.fontMode.enabled ? 411 : 410);
+    _menu5.AppendTo(m, MF_STRING, 'Font');
+
+    m.AppendMenuSeparator();
+
+    m.AppendMenuItem(MF_STRING, 998, 'Open readme...');
+
+    m.AppendMenuSeparator()
 
     m.AppendMenuItem(MF_STRING, 999, 'Panel Properties');
     m.AppendMenuItem(MF_STRING, 1000, 'Configure...');
@@ -293,51 +315,61 @@ function on_mouse_rbtn_up(x, y) {
     case 90:
     case 91:
         ppt.orientation.toggle();
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
         on_size();
         window.Repaint();
         break;
     case 110:
-        ppt.bgShow.toggle();
-        ppt.col_mode.value = 1;
-        get_colours(ppt.col_mode.value, true);
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
-        window.Repaint();
-        break;
-    case 111:
-        ppt.bgBlur.toggle();
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
-        window.Repaint();
-        break;
-    case 112:
-    case 113:
-        ppt.bgMode.toggle();
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        ppt.borders.toggle();
         window.Repaint();
         break;
     case 210:
-        ppt.col_mode.value = 1;
-        ppt.bgShow.enabled = false;
+        ppt.bgShow.toggle();
         get_colours(ppt.col_mode.value, true);
+        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
         window.Repaint();
         break;
     case 211:
-        ppt.col_mode.value = 2;
-        ppt.bgShow.enabled = false;
-        get_colours(ppt.col_mode.value, true);
+        ppt.bgBlur.toggle();
+        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
         window.Repaint();
         break;
     case 212:
+        ppt.overlay.toggle();
+        window.Repaint();
+        break;
+    case 213:
+    case 214:
+        ppt.bgMode.toggle();
+        if (ppt.bgMode.enabled && ppt.bgPath.value === "path\\to\\custom\\image") window.ShowProperties();
+        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        window.Repaint();
+        break;
+    case 310:
+        ppt.col_mode.value = 1;
+        get_colours(ppt.col_mode.value, true);
+        window.Repaint();
+        break;
+    case 311:
+        ppt.col_mode.value = 2;
+        get_colours(ppt.col_mode.value, true);
+        window.Repaint();
+        break;
+    case 312:
         ppt.col_mode.value = 3;
-        ppt.bgShow.enabled = false;
         get_colours(ppt.col_mode.value, true);
         window.ShowProperties();
         window.Repaint();
         break;
-    case 310:
-    case 311:
+    case 410:
+    case 411:
         ppt.fontMode.toggle();
         window.Repaint();
+        break;
+    case 998:
+        let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\mp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' };
+        fb.ShowPopupMessage(readme, window.ScriptInfo.Name);
+        readme = null;
         break;
     case 999:
         window.ShowProperties();
@@ -360,5 +392,5 @@ function on_colours_changed() {
 function on_playback_new_track() {
     on_colours_changed();
     //get_colours(ppt.col_mode.value, true);
-    update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+    update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
 }

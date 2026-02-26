@@ -170,6 +170,7 @@ const tab = { // Tab painting logic, tab background painting is still handled in
                 if (!ppt.bgShow.enabled) gr.FillSolidRect(0, y, TAB_W, h, g_backcolour);
                 if (i === hoveredTab) gr.FillSolidRect(0, y, TAB_W, h, g_color_highlight);
                 if (i === activeTab && i !== hoveredTab) gr.FillSolidRect(0, y, TAB_W, h, tab_hl_col);
+                if (i >= 1 && i < tabs.length && ppt.borders.enabled) gr.DrawLine(_scale(6), TAB_H * i, TAB_W - _scale(6), TAB_H * i, 0.5, g_color_selected_bg);
                 gr.GdiDrawText(text, font, tab_textCol, 0, y, TAB_W, h, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
             } else {
                 // Horizontal tabs
@@ -178,6 +179,7 @@ const tab = { // Tab painting logic, tab background painting is still handled in
                 if (!ppt.bgShow.enabled) gr.FillSolidRect(x, 0, w, TAB_H, g_backcolour);
                 if (i === hoveredTab) gr.FillSolidRect(x, 0, w, TAB_H, g_color_highlight);
                 if (i === activeTab && i !== hoveredTab) gr.FillSolidRect(x, 0, w, TAB_H, tab_hl_col);
+                if (i >= 1 && i < tabs.length && ppt.borders.enabled) gr.DrawLine(TAB_W * i, _scale(4), TAB_W * i, TAB_H - _scale(4), 0.5, g_color_selected_bg);
                 gr.GdiDrawText(text, font, tab_textCol, x + 5, 0, w - 10, TAB_H, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
             }
         }

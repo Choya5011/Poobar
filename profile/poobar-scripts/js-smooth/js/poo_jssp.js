@@ -137,7 +137,7 @@ cover = {
 };
 
 images = {
-	path: fb.ProfilePath + "poobar-scripts\\poobar\\js-smooth\\images\\",
+	path: fb.ProfilePath + "poobar-scripts\\js-smooth\\images\\",
 	glass_reflect: null,
 	loading_angle: 0,
 	loading_draw: null,

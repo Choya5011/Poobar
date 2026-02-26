@@ -1,12 +1,5 @@
 A crappy responsive [JSplitter](https://hydrogenaudio.org/index.php/topic,126743.0.html) based 64-bit CUI foobar2000 theme.
 
-## Contents
-1. [Preview](#preview)
-2. [Modularity](#modularity)
-3. [Assets](#components--packages)
-4. [Installation](#installation)
-5. [Gallery](#gallery)
-
 ## Preview
 **Split**  
 ![Preview](gallery/preview.png)  

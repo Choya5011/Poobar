@@ -12,33 +12,6 @@ include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
 
-let g_hot = false;
-let seekbar_hover = false;
-let volume_hover = false;
-let runOnce = true;
-let dbShow = false;
-let dbHideDelay = 300;
-
-let ww = 0;
-let wh = 0;
-
-let bx = 0;
-let by = 0;
-let cx = 0;
-let cy = 0;
-
-var nextTrackInfo = "No next track."; // Stores the text to display
-var isPlaying = false; // To track playback state
-const SF_CENTER = 0x00000001;
-const SF_VCENTER = 0x00000004;
-const SF_CENTER_VCENTER = SF_CENTER | SF_VCENTER;
-
-let colours = {
-    white : _RGB(255, 255, 255),
-    red : _RGB(255, 0, 0),
-    seekbar_background : _RGBA(128, 128, 128, 128),
-};
-
 let ppt = {
     // show/hide
     art : new _p('_DISPLAY: Show Cover Art', true),
@@ -55,10 +28,43 @@ let ppt = {
     bar_mode : new _p('_DISPLAY: Show Bar Core', false),
     roundBars : new _p('_DISPLAY: Show Rounded Bars', true),
     // background
-    bgShow : new _p('_DISPLAY: Show Wallpaper', true),
+    bgShow : new _p('_DISPLAY: Show Wallpaper', false),
     bgBlur : new _p('_DISPLAY: Wallpaper Blurred', false),
+    overlay : new _p('_DISPLAY: Show background shadow/overlay', false),
     bgMode : new _p('_DISPLAY: Wallpaper Mode', false),
     bgPath : new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
+};
+
+let panel = new _panel();
+let seekbar = new _seekbar(0, 0, 0, 0);
+let buttons = new _buttons();
+let rating = new _rating(0, 0, 14, 0); // x, y, size, colour
+let volume = new _volume(0, 0, 100, 40);
+
+let g_hot = false;
+let seekbar_hover = false;
+let volume_hover = false;
+let errFlag_lv = true;
+let errFlag_wf = true;
+let dbShow = false;
+let dbHideDelay = 300;
+let isLoved = '';
+let ratingHover = false;
+
+let ww, wh = 0;
+const bs = _scale(32);
+let bx, by, cx, cy = 0;
+
+let nextTrackInfo = "No next track."; // Stores the text to display
+let isPlaying = false; // To track playback state
+const SF_CENTER = 0x00000001;
+const SF_VCENTER = 0x00000004;
+const SF_CENTER_VCENTER = SF_CENTER | SF_VCENTER;
+
+let colours = {
+    white : _RGB(255, 255, 255),
+    red : _RGB(255, 0, 0),
+    seekbar_background : _RGBA(128, 128, 128, 128),
 };
 
 let tfo = {
@@ -94,7 +100,7 @@ let chara = {
     circleRing : '\uea3a',
     rating_on : '\ue735',
     rating_off : '\ue734',
-    //
+    // pbo chars
 	repeat_all : '\ue8ee',
 	repeat_one : '\ue8ed',
 	repeat_off : '\uf5e7',
@@ -108,77 +114,29 @@ let chara = {
 const pbo_chars = [chara.repeat_off, chara.repeat_all, chara.repeat_one, chara.random, chara.shuffle, chara.album, chara.folder];
 const pbo_names = ['Default', 'Repeat (playlist)', 'Repeat (track)', 'Random', 'Shuffle (tracks)', 'Shuffle (albums)', 'Shuffle (folders)'];
 
-/*=============================================================*/
-
-let panel = new _panel();
-
-let seekbar = new _seekbar(0, 0, 0, 0);
-let buttons = new _buttons();
-let rating = new _rating(0, 0, 14, 0); // x, y, size, colour
-let volume = new _volume(0, 0, 100, 40);
-let isLoved = '';
-let ratingHover = false;
-
-const bs = _scale(32);
-
 let waveformH = 0;
 let waveformY = 0;
+const wf_instruct = 'Preferences -> Display -> Columns UI -> Layout -> JSplitter titled Fluent Control Panel -> Right click -> Insert panel -> Waveform panel of choice';
 let waveformPanel; try { waveformPanel = window.GetPanelByIndex(0); } catch (e) { waveformPanel = null; }
 
 // Initial updates
 get_colours(ppt.col_mode.value);
 panel.item_focus_change();
-update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
+update_album_art(ppt.art.enabled);
+update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
 updateNextTrackInfo();
 
 buttons.update = () => {
+    const fluent_font = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 38) : gdi.Font('Segoe Fluent Icons', 48);
+    const fluent_font_hover = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 44) : gdi.Font('Segoe Fluent Icons', 54);
+
+    // Middle section button vars
     const x = ((panel.w - (bs * 7)) / 2);
     const y = ppt.mode.enabled ? seekbar.y - _scale(36) : _scale(4);
-    let pbo = plman.PlaybackOrder;
+    const pbo = plman.PlaybackOrder;
+    const pboText = (ppt.pboMode.enabled) ? '' : 'Playback Order: ' + pbo_names[pbo];
 
-    let fluent_font = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 38) : gdi.Font('Segoe Fluent Icons', 48);
-    let fluent_font_hover = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 44) : gdi.Font('Segoe Fluent Icons', 54);
-
-    const loveModeValue = ppt.loveMode.value || 1;
-    if (!_cc('foo_lastfm_playcount_sync') || loveModeValue == 1) { // FEEDBACK mode
-        runOnce = true;
-        let lv = tfo.lov.Eval();
-        buttons.buttons.love = new _button(x, y, bs, bs, { normal : lv == 1 ? _chrToImg(chara.heart_on, g_textcolour, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover : lv == 1 ? _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; } }, '');
-    } else if (loveModeValue == 2) { // Last.fm mode
-        let fav = tfo.lfm_loved.Eval();
-        buttons.buttons.love = new _button(x, y, bs, bs, { normal: fav == 0 ? _chrToImg(chara.heart_off, g_textcolour, fluent_font) : _chrToImg(chara.heart_on, g_textcolour, fluent_font), hover: fav == 0 ? _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
-    } else if (loveModeValue == 3) { // Dual mode
-        let lv = tfo.lov.Eval();
-        let fav = tfo.lfm_loved.Eval();
-        buttons.buttons.love = new _button(x, y, bs, bs, { normal: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_on, g_textcolour, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
-    } else {
-        fb.ShowPopupMessage("Invalid love mode value, setting to FEEDBACK tag mode", window.ScriptInfo.Name);
-    }
-    if ((loveModeValue == 2 || loveModeValue == 3) && !_cc('foo_lastfm_playcount_sync') && runOnce) {
-        runOnce = false;
-        ppt.loveMode.value = 1;
-        fb.ShowPopupMessage("Missing 'foo_lastfm_playcount_sync'.\nSwitched to FEEDBACK tag mode.", window.ScriptInfo.Name);
-    }
-
-    buttons.buttons.stop = new _button(x + bs, y, bs, bs, {normal : fb.StopAfterCurrent ? _chrToImg(chara.stop, colours.red, fluent_font) : _chrToImg(chara.stop, g_textcolour, fluent_font), hover : _chrToImg(chara.stop, g_textcolour_hl, fluent_font_hover)}, () => { fb.Stop(); }, '');
-    buttons.buttons.previous = new _button(x + (bs * 2), y, bs, bs, {normal : _chrToImg(chara.prev, g_textcolour, fluent_font), hover : _chrToImg(chara.prev, g_textcolour_hl, fluent_font_hover)}, () => { plman.PlaybackOrder !== 3 ? fb.Prev() : fb.Next(); }, '');
-    buttons.buttons.play = new _button(x + (bs * 3), y, bs, bs, {normal : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour, fluent_font) : _chrToImg(chara.pause, g_textcolour, fluent_font), hover : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour_hl, fluent_font_hover) : _chrToImg(chara.pause, g_textcolour_hl, fluent_font_hover)}, () => { fb.PlayOrPause(); }, !fb.IsPlaying || fb.IsPaused ? '' : '');
-    buttons.buttons.next = new _button(x + (bs * 4), y, bs, bs, {normal : _chrToImg(chara.next, g_textcolour, fluent_font), hover : _chrToImg(chara.next, g_textcolour_hl, fluent_font_hover)}, () => { fb.Next(); }, '');
-	if (ppt.pboMode.enabled) {
-	    buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { _pbo(x + (bs * 3.41), y); }, '');
-	} else {
-	    buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { plman.PlaybackOrder = (pbo >= pbo_chars.length - 1) ? 0 : pbo + 1; }, 'Playback Order: ' + pbo_names[pbo]);
-	}
-
-    buttons.buttons.add_queue = new _button(bx + (bs * 6), y, bs, bs, {normal : _chrToImg(chara.add_queue, g_textcolour, fluent_font), hover : _chrToImg(chara.add_queue, g_textcolour_hl, fluent_font_hover)}, () => {
-        let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
-        if (selected_items && selected_items.Count !== 0) {
-            fb.RunContextCommandWithMetadb("Add to playback queue", selected_items);
-        }
-    }, '');
-
-    /* === right button section === */
-
+    // Right section button vars
     let xx, yy, vol_x, vol_y;
     if ((panel.w <= scaler.s520 && panel.h <= scaler.s130) || (panel.w > scaler.s520 && panel.h < scaler.s80)) { // out of bounds to hide, temp fix
         if (ww > scaler.s520) {
@@ -217,6 +175,35 @@ buttons.update = () => {
         vol_y = panel.h;
     }
 
+    // Middle section buttons
+    const loveModeValue = ppt.loveMode.value || 1;
+    if (!_cc('foo_lastfm_playcount_sync') || loveModeValue == 1) { // FEEDBACK mode
+        errFlag_lv = true;
+        let lv = tfo.lov.Eval();
+        buttons.buttons.love = new _button(x, y, bs, bs, { normal : lv == 1 ? _chrToImg(chara.heart_on, g_textcolour, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover : lv == 1 ? _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; } }, '');
+    } else if (loveModeValue == 2) { // Last.fm mode
+        let fav = tfo.lfm_loved.Eval();
+        buttons.buttons.love = new _button(x, y, bs, bs, { normal: fav == 0 ? _chrToImg(chara.heart_off, g_textcolour, fluent_font) : _chrToImg(chara.heart_on, g_textcolour, fluent_font), hover: fav == 0 ? _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
+    } else if (loveModeValue == 3) { // Dual mode
+        let lv = tfo.lov.Eval();
+        let fav = tfo.lfm_loved.Eval();
+        buttons.buttons.love = new _button(x, y, bs, bs, { normal: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_on, g_textcolour, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
+    } else {
+        fb.ShowPopupMessage("Invalid love mode value, setting to FEEDBACK tag mode", window.ScriptInfo.Name);
+    }
+    if ((loveModeValue == 2 || loveModeValue == 3) && !_cc('foo_lastfm_playcount_sync') && errFlag_lv) {
+        errFlag_lv = false;
+        ppt.loveMode.value = 1;
+        fb.ShowPopupMessage("Missing 'foo_lastfm_playcount_sync'.\nSwitched to FEEDBACK tag mode.", window.ScriptInfo.Name);
+    }
+    buttons.buttons.stop = new _button(x + bs, y, bs, bs, {normal : fb.StopAfterCurrent ? _chrToImg(chara.stop, colours.red, fluent_font) : _chrToImg(chara.stop, g_textcolour, fluent_font), hover : _chrToImg(chara.stop, g_textcolour_hl, fluent_font_hover)}, () => { fb.Stop(); }, '');
+    buttons.buttons.previous = new _button(x + (bs * 2), y, bs, bs, {normal : _chrToImg(chara.prev, g_textcolour, fluent_font), hover : _chrToImg(chara.prev, g_textcolour_hl, fluent_font_hover)}, () => { plman.PlaybackOrder !== 3 ? fb.Prev() : fb.Next(); }, '');
+    buttons.buttons.play = new _button(x + (bs * 3), y, bs, bs, {normal : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour, fluent_font) : _chrToImg(chara.pause, g_textcolour, fluent_font), hover : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour_hl, fluent_font_hover) : _chrToImg(chara.pause, g_textcolour_hl, fluent_font_hover)}, () => { fb.PlayOrPause(); }, !fb.IsPlaying || fb.IsPaused ? '' : '');
+    buttons.buttons.next = new _button(x + (bs * 4), y, bs, bs, {normal : _chrToImg(chara.next, g_textcolour, fluent_font), hover : _chrToImg(chara.next, g_textcolour_hl, fluent_font_hover)}, () => { fb.Next(); }, '');
+	buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { if (ppt.pboMode.enabled) { _pbo(x + (bs * 3.41), y); } else { plman.PlaybackOrder = (pbo >= pbo_chars.length - 1) ? 0 : pbo + 1; } }, pboText );
+    buttons.buttons.add_queue = new _button(bx + (bs * 6), y, bs, bs, {normal : _chrToImg(chara.add_queue, g_textcolour, fluent_font), hover : _chrToImg(chara.add_queue, g_textcolour_hl, fluent_font_hover)}, () => { const selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { fb.RunContextCommandWithMetadb("Add to playback queue", selected_items); } }, '');
+
+    // Right section buttons
     buttons.buttons.volume = new _button(vol_x, vol_y, bs, bs, {normal : fb.Volume === -100 ? _chrToImg(chara.vol0, g_textcolour, fluent_font) : fb.Volume > -4 ? _chrToImg(chara.vol3, g_textcolour, fluent_font) : fb.Volume > -15 ? _chrToImg(chara.vol2, g_textcolour, fluent_font) : fb.Volume > -30 ? _chrToImg(chara.vol1, g_textcolour, fluent_font) : _chrToImg(chara.vol0, g_textcolour, fluent_font), hover : _chrToImg(chara.volume, g_textcolour_hl, fluent_font_hover)}, () => { fb.VolumeMute(); }, '');
     buttons.buttons.upd = new _button (xx - (bs * (3 + offsets.s2)), yy + 2, bs, bs, {normal: _chrToImg(chara.eject, g_textcolour, fluent_font),  hover : _chrToImg(chara.eject, g_textcolour_hl, fluent_font_hover)}, () => { switchOutputDevice(xx - (bs * (5.9 + offsets.s2)), yy) }, '');
     buttons.buttons.search = new _button(xx - (bs * (2 + offsets.s1)), yy, bs, bs, {normal : _chrToImg(chara.search, g_textcolour, fluent_font), hover : _chrToImg(chara.search, g_textcolour_hl, fluent_font_hover)}, () => { fb.RunMainMenuCommand('Library/Search'); }, '');
@@ -274,8 +261,9 @@ function on_size() {
             } else {
                 waveformPanel.Hidden = true;
             }
-        } else {
-            console.log(window.ScriptInfo.Name + ': Missing Panel \nNo Waveform panel found: make sure the waveform panel is the topmost panel inside the control panel');
+        } else if (errFlag_wf) {
+            errFlag_wf = false;
+            console.log(window.ScriptInfo.Name + ': Missing Panel \nNo Waveform panel found: make sure the waveform panel is the topmost panel inside the control panel. See instructions:\n' + wf_instruct);
         }
     }
 
@@ -290,8 +278,7 @@ function on_size() {
 function on_paint(gr) {
     if (ppt.bgShow.enabled && bg_img) {
         _drawImage(gr, bg_img, 0, 0, panel.w, panel.h, image.crop);
-        const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
-        gr.FillSolidRect(0, 0, panel.w, panel.h, overlayColor);
+        if (ppt.overlay.enabled) { const overlayColor = setAlpha(g_backcolour, 128); /* const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128); */ gr.FillSolidRect(0, 0, panel.w, panel.h, overlayColor); }
     } else if (!ppt.bgShow.enabled) {
         gr.FillSolidRect(0, 0, panel.w, panel.h, g_backcolour);
     }
@@ -310,8 +297,8 @@ function on_paint(gr) {
         }
     } else if (!waveformPanel) {
         gr.FillRoundRect(seekbar.x, waveformY, seekbar.w, waveformH, 10, 10, colours.red);
-        gr.GdiDrawText('No waveform panel present', panel.fonts.title, colours.white, seekbar.x, waveformY, seekbar.w, waveformH, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
-        gr.GdiDrawText('Preferences -> Display -> Columns UI -> Layout -> JSplitter titled Fluent Control Panel -> Right click -> Insert panel -> Waveform panel of choice', panel.fonts.normal, colours.white, seekbar.x, waveformY + 18, seekbar.w, waveformH, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
+        gr.GdiDrawText('No waveform panel present (see logs)', panel.fonts.title, colours.white, seekbar.x, waveformY, seekbar.w, waveformH, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
+        gr.GdiDrawText(wf_instruct, panel.fonts.normal, colours.white, seekbar.x, waveformY + 18, seekbar.w, waveformH, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
     }
     // test for playback time repaint
     // gr.FillSolidRect(bx - (bs * 4), _scale(12), _scale(72), _scale(18), colours.red);
@@ -458,7 +445,7 @@ rating.paint = (gr) => {
         gr.SetTextRenderingHint(4);
         for (let i = 0; i < rating.get_max(); i++) {
             if (i + 1 > (rating.hover ? rating.hrating : rating.rating)) {
-                gr.DrawString(chars.rating_off, rating.font, g_textcolour, rating.x + (i * rating.h), rating.y, rating.h, rating.h, SF_CENTRE);
+                gr.DrawString(chars.rating_off, rating.font, setAlpha(g_textcolour, 128), rating.x + (i * rating.h), rating.y, rating.h, rating.h, SF_CENTRE);
             } else {
                 gr.DrawString(chars.rating_on, rating.font, g_textcolour_hl, rating.x + (i * rating.h), rating.y, rating.h, rating.h, SF_CENTRE);
             }
@@ -473,7 +460,8 @@ function on_metadb_changed() {
 function on_playback_new_track() {
     get_colours(ppt.col_mode.value);
     updateNextTrackInfo(); // When a new track starts, the "next" track might change.
-    update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
+    update_album_art(ppt.art.enabled);
+    update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
     panel.item_focus_change();
     buttons.update();
 }
@@ -591,7 +579,7 @@ function on_key_down(vkey) {
             fb.Pause();
             break;
         case VK_LEFT:
-            fb.Prev();
+            plman.PlaybackOrder !== 3 ? fb.Prev() : fb.Next();
             break;
         case VK_RIGHT:
             fb.Next();
@@ -776,7 +764,7 @@ function on_mouse_rbtn_up(x, y) {
     _menu2.CheckMenuItem(211, ppt.vol.enabled);
     _menu2.AppendMenuItem(MF_STRING, 212, 'Rating');
     _menu2.CheckMenuItem(212, ppt.rating.enabled);
-    _menu2.AppendMenuItem(MF_STRING, 213, 'Bar Cores');
+    _menu2.AppendMenuItem(MF_STRING, 213, 'Bar cores');
     _menu2.CheckMenuItem(213, ppt.bar_mode.enabled);
     _menu2.AppendMenuItem(MF_STRING, 214, 'Rounded bars');
     _menu2.CheckMenuItem(214, ppt.roundBars.enabled);
@@ -792,10 +780,12 @@ function on_mouse_rbtn_up(x, y) {
     _menu3.CheckMenuItem(310, ppt.bgShow.enabled);
     _menu3.AppendMenuItem(MF_STRING, 311, 'Blur');
     _menu3.CheckMenuItem(311, ppt.bgBlur.enabled);
+    _menu3.AppendMenuItem(MF_STRING, 312, 'Shadow');
+    _menu3.CheckMenuItem(312, ppt.overlay.enabled);
     _menu3.AppendMenuSeparator();
-    _menu3.AppendMenuItem(MF_STRING, 312, 'Playing Album Cover');
-    _menu3.AppendMenuItem(MF_STRING, 313, 'Default');
-    _menu3.CheckMenuRadioItem(312, 313, ppt.bgMode.enabled ? 313 : 312);
+    _menu3.AppendMenuItem(MF_STRING, 313, 'Playing Album Cover');
+    _menu3.AppendMenuItem(MF_STRING, 314, 'Default');
+    _menu3.CheckMenuRadioItem(313, 314, ppt.bgMode.enabled ? 314 : 313);
     _menu3.AppendTo(m, MF_STRING, 'Background Wallpaper');
 
     _menu4.AppendMenuItem(MF_STRING, 410, 'System');
@@ -803,6 +793,10 @@ function on_mouse_rbtn_up(x, y) {
     _menu4.AppendMenuItem(MF_STRING, 412, 'Custom');
     _menu4.CheckMenuRadioItem(410, 412, Math.min(Math.max(410 + ppt.col_mode.value - 1, 410), 412));
     _menu4.AppendTo(m, MF_STRING, 'Colours');
+
+    m.AppendMenuSeparator();
+
+    m.AppendMenuItem(MF_STRING, 998, 'Open readme...');
 
     m.AppendMenuSeparator();
 
@@ -839,7 +833,7 @@ function on_mouse_rbtn_up(x, y) {
         break;
     case 210:
         ppt.art.toggle();
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
+        update_album_art(ppt.art.enabled);
         on_size();
         window.Repaint();
         break;
@@ -870,45 +864,46 @@ function on_mouse_rbtn_up(x, y) {
         break;
     case 310:
         ppt.bgShow.toggle();
-        ppt.col_mode.value = 1;
-        get_colours(ppt.col_mode.value);
         buttons.update();
-		update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
+		update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
         window.Repaint();
         break;
     case 311:
         ppt.bgBlur.toggle();
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
+        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
         window.Repaint();
         break;
     case 312:
+        ppt.overlay.toggle();
+        window.Repaint();
+        break;
     case 313:
+    case 314:
         ppt.bgMode.toggle();
         if (ppt.bgMode.enabled && ppt.bgPath.value === "path\\to\\custom\\image") window.ShowProperties();
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value, ppt.art.enabled);
+        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
         window.Repaint();
         break;
     case 410:
-        ppt.bgShow.enabled = false;
         ppt.col_mode.value = 1;
         on_colours_changed();
-        bg_img = null;
         window.Repaint();
         break;
     case 411:
-        ppt.bgShow.enabled = false;
         ppt.col_mode.value = 2;
         on_colours_changed();
-        bg_img = null;
         window.Repaint();
         break;
     case 412:
-        ppt.bgShow.enabled = false;
         ppt.col_mode.value = 3;
         on_colours_changed();
-        bg_img = null;
         window.ShowProperties();
         window.Repaint();
+        break;
+    case 998:
+        let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\fcp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' };
+        fb.ShowPopupMessage(readme, window.ScriptInfo.Name);
+        readme = null;
         break;
     case 999:
         window.ShowProperties();

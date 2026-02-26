@@ -2,7 +2,7 @@
 include(fb.ComponentPath + "samples\\js-smooth\\js\\JScommon.js");
 include(fb.ComponentPath + "samples\\js-smooth\\js\\JSinputbox.js");
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
-include(fb.ProfilePath + "poobar-scripts\\poobar\\js-smooth\\js\\poo_jssp.js");
+include(fb.ProfilePath + "poobar-scripts\\js-smooth\\js\\poo_jssp.js");
 
 /*
 [Features]
