@@ -1,7 +1,10 @@
-'use strict';
-//12/01/26
+﻿'use strict';
+//26/02/26
 
 if (!window.ScriptInfo.PackageId) { window.DefineScript('Not-A-Waveform-Seekbar-SMP', { author: 'regorxxx', version: '3.4.0' }); }
+
+// GDI/D2D draw mode
+window.DrawMode = Math.max(Math.min(window.GetProperty('Draw mode: GDI (0), D2D (1)', 0), 1), 0);
 
 include('helpers\\helpers_xxx.js');
 /* global folders:readable, globSettings:readable, globTags:readable, soFeat:readable, globFonts:readable, globProfiler:readable, VK_CONTROL:readable, popup:readable, VK_ALT:readable, VK_SHIFT:readable */
@@ -12,17 +15,17 @@ include('helpers\\helpers_xxx_UI.js');
 include('helpers\\helpers_xxx_file.js');
 /* global _open:readable, utf8:readable, WshShell:readable, _save:readable, _foldPath:readable, _isFile:readable, _isFolder:readable, _copyDependencies:readable */
 include('helpers\\helpers_xxx_prototypes.js');
-/* global isJSON:readable, isBoolean:readable, isString:readable, clone:readable */
+/* global isJSON:readable, isBoolean:readable, isString:readable, clone:readable, isInt:readable */
 include('helpers\\helpers_xxx_prototypes_smp.js');
 /* global extendGR:readable */
 include('helpers\\helpers_xxx_properties.js');
-/* global setProperties:readable, getPropertiesPairs:readable, overwriteProperties:readable */
+/* global setProperties:readable, getPropertiesPairs:readable, overwriteProperties:readable, checkJsonProperties:readable */
 include('helpers\\menu_xxx.js');
 /* global _menu:readable */
 include('main\\seekbar\\seekbar_xxx.js');
 /* global _seekbar:readable */
 include('main\\seekbar\\seekbar_xxx_menu.js');
-/* global settingsMenu:readable, importSettingsMenu:readable, Input:readable */
+/* global settingsMenu:readable, onRbtnUpImportSettings:readable, Input:readable */
 include('helpers\\callbacks_xxx.js');
 include('main\\window\\window_xxx_background.js');
 /* global _background:readable */
@@ -37,6 +40,7 @@ if (_isFolder(folders.binaries + 'audiowaveform\\')) { _copyDependencies(['', 'a
 globProfiler.Print('helpers');
 
 let seekbarProperties = {
+	drawMode: ['Draw mode: GDI (0), D2D (1)', 0, { func: isInt, range: [[0,1]] }],
 	binaries: ['Binaries paths',
 		JSON.stringify({
 			ffprobe: _foldPath(folders.binaries) + 'ffprobe\\ffprobe' + (soFeat.x64 ? '' : '_32') + '.exe',
@@ -61,7 +65,7 @@ let seekbarProperties = {
 	preset: ['Preset config',
 		JSON.stringify({
 			analysisMode: 'peak_level',
-			waveMode: 'waveform',
+			waveMode: 'soundcloudgradient',
 			paintMode: 'partial',
 			bPrePaint: true,
 			bPaintCurrent: true,
@@ -93,8 +97,8 @@ let seekbarProperties = {
 			},
 			refreshRate: 200,
 			bVariableRefreshRate: true,
-			bNormalizeWidth: false,
-			normalizeWidth: _scale(4),
+			bNormalizeWidth: true,
+			normalizeWidth: _scale(2),
 			bLogScale: true
 		}), { func: isJSON, forceDefaults: true }],
 	logging: ['Logging config',
@@ -120,6 +124,7 @@ let seekbarProperties = {
 Object.keys(seekbarProperties).forEach(p => seekbarProperties[p].push(seekbarProperties[p][1]));
 setProperties(seekbarProperties, '', 0); //This sets all the panel properties at once
 seekbarProperties = getPropertiesPairs(seekbarProperties, '', 0);
+checkJsonProperties(seekbarProperties);
 
 {	// Delete pos property bug size
 	const ui = JSON.parse(seekbarProperties.ui[1]);
@@ -148,16 +153,19 @@ const background = new _background({
 		artColors: (colArray, bForced, bRepaint = true) => {
 			if (!bForced && !seekbarProperties.bDynamicColors[1]) { return; }
 			else if (colArray) {
+				const bgColor = seekbar.ui.colors.bg !== -1 && seekbar.ui.opacity.bg !== 0
+					? background.getAvgPanelColor([{ col: seekbar.ui.colors.bg, freq: seekbar.ui.opacity.bg / 100 }])
+					: background.getAvgPanelColor();
 				const { main, sec, note, mainAlt, secAlt } = dynamicColors(
 					colArray,
-					seekbar.ui.colors.bg !== -1 ? seekbar.ui.colors.bg : background.getAvgPanelColor(),
+					bgColor,
 					seekbar.preset.waveMode !== 'vumeter'
 				);
 				if (seekbar.ui.colors.main !== -1) { seekbar.ui.colors.main = main; }
 				if (seekbar.ui.colors.alt !== -1) { seekbar.ui.colors.alt = sec; }
 				if (seekbar.ui.colors.currPos !== -1) {
 					seekbar.ui.colors.currPos = mostContrastColor(
-						seekbar.ui.colors.bg !== -1 ? seekbar.ui.colors.bg : background.getAvgPanelColor(),
+						bgColor,
 						[note, blendColors(note, RGB(0, 0, 0), 0.4), blendColors(note, RGB(255, 255, 255), 0.4)]
 					).color;
 				}
@@ -165,7 +173,7 @@ const background = new _background({
 				if (seekbar.ui.colors.altFuture !== -1) { seekbar.ui.colors.altFuture = secAlt; }
 			} else {
 				const defColors = JSON.parse(seekbarProperties.ui[1]).colors;
-				this.updateConfig({ ui: { colors: defColors } });
+				seekbar.updateConfig({ ui: { colors: defColors } });
 				background.changeConfig({ config: { colorModeOptions: { color: JSON.parse(seekbarProperties.background[1]).colorModeOptions.color } }, callbackArgs: { bSaveProperties: false } });
 			}
 			if (bRepaint) { window.Repaint(); }
@@ -403,7 +411,7 @@ addEventListener('on_script_unload', () => {
 
 addEventListener('on_mouse_rbtn_up', (x, y) => {
 	if (utils.IsKeyPressed(VK_CONTROL) && utils.IsKeyPressed(VK_LWIN)) {
-		return importSettingsMenu.call(seekbar).btn_up(x, y);
+		return onRbtnUpImportSettings.call(seekbar, seekbarProperties).btn_up(x, y);
 	}
 	seekbar.rbtn_up(x, y);
 	return true; // left shift + left windows key will bypass this callback and will open default context menu.

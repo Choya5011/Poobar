@@ -1,5 +1,7 @@
 ﻿'use strict';
 
+window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
+
 /**
   * 'poobar tabs pt' is specifically meant for the poobar theme
   * use 'poobar tabs' for custom themes unless psuedo transparency is desired for specific panels.

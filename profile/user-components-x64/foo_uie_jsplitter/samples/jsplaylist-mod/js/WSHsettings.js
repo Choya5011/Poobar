@@ -1854,7 +1854,7 @@ oListBox = function (id, object_name, x, y, w, h, row_height, label, arr, select
 		case 1:
 			if (p.headerBar.totalColumns < properties.max_columns) {
 				var source_ref = p.headerBar.columns[id].ref;
-				if (source_ref != "Cover" && source_ref != "State" && source_ref != "Mood" && source_ref != "Rating") {
+				if (source_ref != "Cover" && source_ref != "State" && source_ref != "Loved" && source_ref != "Rating") {
 					_menu.AppendMenuItem(MF_STRING, 10, "Duplicate this Column");
 				};
 			};

@@ -34,9 +34,11 @@ const English = {
 	"Alignment horizontal": "Alignment horizontal",
 	"Alignment vertical": "Alignment vertical",
 	"All tagger settings...": "All tagger settings...",
-	"Allmusic": "Allmusic",
-	"Allmusic:": "Allmusic:",
-	"Allmusic: ": "Allmusic: ",
+	// Regorxxx <- Language fixes
+	"AllMusic": "AllMusic",
+	"AllMusic:": "AllMusic:",
+	"AllMusic: ": "AllMusic: ",
+	// Regorxxx ->
 	"Alt+Click": "Alt+Click",
 	"Alt+Middle click": "Alt+Middle click",
 	"Amalgamate": "Amalgamate",
@@ -167,6 +169,12 @@ const English = {
 	"- Unsupported foo_spider_monkey_panel version -": "- Unsupported foo_spider_monkey_panel version -",
 	"- Unsupported foo_uie_jsplitter version -": "- Unsupported foo_uie_jsplitter version -",
 	// Regorxxx ->
+	// Regorxxx <- Source folder menu entries
+	"Images folder": "Images folder",
+	"AllMusic folder": "AllMusic folder",
+	"Last.fm folder": "Last.fm folder",
+	"Wikipedia folder": "Wikipedia folder",
+	// Regorxxx ->
 }
 
 const simplifiedChinese = {
@@ -199,9 +207,11 @@ const simplifiedChinese = {
 	"Alignment horizontal": "水平对齐",
 	"Alignment vertical": "垂直对齐",
 	"All tagger settings...": "标签设置...",
-	"Allmusic": "Allmusic",
-	"Allmusic:": "Allmusic：",
-	"Allmusic: ": "Allmusic：",
+	// Regorxxx <- Language fixes
+	"AllMusic": "AllMusic",
+	"AllMusic:": "AllMusic：",
+	"AllMusic: ": "AllMusic：",
+	// Regorxxx ->
 	"Alt+Click": "Alt+单击",
 	"Alt+Middle click": "Alt+中键单击",
 	"Amalgamate": "合并",
@@ -330,7 +340,13 @@ const simplifiedChinese = {
 	"Network": "网络",
 	"Web requests method priority:": "Web 请求方法优先级:",
 	"- Unsupported foo_spider_monkey_panel version -": "- 不支持的 foo_spider_monkey_panel 版本 -",
-	"- Unsupported foo_uie_jsplitter version -": "- 不支持的 foo_uie_jsplitter 版本 -"
+	"- Unsupported foo_uie_jsplitter version -": "- 不支持的 foo_uie_jsplitter 版本 -",
+	// Regorxxx ->
+	// Regorxxx <- Source folder menu entries
+	"Images folder": "图片文件夹",
+	"AllMusic folder": "AllMusic文件夹",
+	"Last.fm folder": "Last.fm文件夹",
+	"Wikipedia folder": "Wikipedia文件夹",
 	// Regorxxx ->
 }
 
@@ -364,9 +380,11 @@ const traditionalChinese = {
 	"Alignment horizontal": "水平對齊",
 	"Alignment vertical": "垂直對齊",
 	"All tagger settings...": "所有標籤編輯器設置...",
-	"Allmusic": "Allmusic",
-	"Allmusic:": "Allmusic：",
-	"Allmusic: ": "Allmusic： ",
+	// Regorxxx <- Language fixes
+	"AllMusic": "AllMusic",
+	"AllMusic:": "AllMusic：",
+	"AllMusic: ": "AllMusic： ",
+	// Regorxxx ->
 	"Alt+Click": "Alt+點擊",
 	"Alt+Middle click": "Alt+點擊中鍵",
 	"Amalgamate": "合併",
@@ -495,7 +513,13 @@ const traditionalChinese = {
 	"Network": "網絡",
 	"Web requests method priority:": "Web 請求方法優先權:",
 	"- Unsupported foo_spider_monkey_panel version -": "- 不支援的 foo_spider_monkey_panel 版本 -",
-	"- Unsupported foo_uie_jsplitter version -": "- 不支援的 foo_uie_jsplitter 版本 -"
+	"- Unsupported foo_uie_jsplitter version -": "- 不支援的 foo_uie_jsplitter 版本 -",
+	// Regorxxx ->
+	// Regorxxx <- Source folder menu entries
+	"Images folder": "圖片資料夾",
+	"AllMusic folder": "AllMusic資料夾",
+	"Last.fm folder": "Last.fm資料夾",
+	"Wikipedia folder": "Wikipedia資料夾",
 	// Regorxxx ->
 }
 

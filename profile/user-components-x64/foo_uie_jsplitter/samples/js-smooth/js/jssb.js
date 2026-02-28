@@ -50,7 +50,7 @@ ppt = {
 	wallpaperblurred: window.GetProperty("_DISPLAY: Wallpaper Blurred", true),
 	wallpaperblurvalue: 1.05,
 	wallpapermode: window.GetProperty("_SYSTEM: Wallpaper Mode", 0),
-	wallpaperpath: window.GetProperty("_PROPERTY: Default Wallpaper Path", ".\\user-components\\foo_spider_monkey_panel\\samples\\js-smooth\\images\\default.png"),
+	wallpaperpath: window.GetProperty("_PROPERTY: Default Wallpaper Path", ".\\user-components\\foo_uie_jsplitter\\samples\\js-smooth\\images\\default.png"),
 	extra_font_size: window.GetProperty("_SYSTEM: Extra font size value", 0),
 	enableTouchControl: window.GetProperty("_PROPERTY: Enable Scroll Touch Control", true),
 	default_botStampHeight: 48,
@@ -2288,7 +2288,7 @@ oBrowser = function (name) {
 				brw.tt_h = 60;
 				gr.FillRoundRect(brw.tt_x, brw.tt_y, brw.tt_w, brw.tt_h, 5, 5, RGBA(0, 0, 0, 150));
 				gr.DrawRoundRect(brw.tt_x, brw.tt_y, brw.tt_w, brw.tt_h, 5, 5, 1.0, RGBA(0, 0, 0, 100));
-				gr.DrawRoundRect(brw.tt_x + 1, brw.tt_y + 1, brw.tt_w - 2, brw.tt_h - 2, 4, 4, 1.0, RGBA(255, 255, 255, 050));
+				gr.DrawRoundRect(brw.tt_x + 1, brw.tt_y + 1, brw.tt_w - 2, brw.tt_h - 2, 4, 4, 1.0, RGBA(255, 255, 255, 50));
 				try {
 					gr.GdiDrawText(cList.search_string, cList.incsearch_font_big, RGB(0, 0, 0), brw.tt_x + 1, brw.tt_y + 1, brw.tt_w, brw.tt_h, DT_CENTER | DT_NOPREFIX | DT_CALCRECT | DT_VCENTER);
 					gr.GdiDrawText(cList.search_string, cList.incsearch_font_big, cList.inc_search_noresult ? RGB(255, 70, 70) : RGB(250, 250, 250), brw.tt_x, brw.tt_y, brw.tt_w, brw.tt_h, DT_CENTER | DT_NOPREFIX | DT_CALCRECT | DT_VCENTER);
@@ -2610,7 +2610,7 @@ oBrowser = function (name) {
 					try {
 						fso.DeleteFile(CACHE_FOLDER + crc);
 					} catch (e) {
-						console.log("Spider Monkey Panel Error: Image cache [" + crc + "] can't be deleted on disk, file in use, try later or reload panel.");
+						console.log("JSplitter Error: Image cache [" + crc + "] can't be deleted on disk, file in use, try later or reload panel.");
 					};
 				};
 				this.groups[albumIndex].tid = -1;
@@ -2869,7 +2869,7 @@ var g_font_headers = null;
 var g_font_group1 = null;
 var g_font_group2 = null;
 var g_font_rating = null;
-var g_font_mood = null;
+// var g_font_mood = null;
 var g_font_guifx_found = utils.CheckFont("guifx v2 transports");
 var g_font_wingdings2_found = utils.CheckFont("wingdings 2");
 
@@ -3012,7 +3012,7 @@ function on_mouse_lbtn_down(x, y) {
 				timers.mouseDown = window.SetTimeout(function () {
 						window.ClearTimeout(timers.mouseDown);
 						timers.mouseDown = false;
-						if (Math.abs(cTouch.y_start - m_y) > 015) {
+						if (Math.abs(cTouch.y_start - m_y) > 15) {
 							cTouch.down = true;
 						} else {
 							brw.on_mouse("down", x, y);
@@ -3048,7 +3048,7 @@ function on_mouse_lbtn_up(x, y) {
 	if (timers.mouseDown) {
 		window.ClearTimeout(timers.mouseDown);
 		timers.mouseDown = false;
-		if (Math.abs(cTouch.y_start - m_y) <= 030) {
+		if (Math.abs(cTouch.y_start - m_y) <= 30) {
 			brw.on_mouse("down", x, y);
 		};
 	};
@@ -3058,9 +3058,9 @@ function on_mouse_lbtn_up(x, y) {
 		cTouch.down = false;
 		cTouch.y_end = y;
 		cTouch.scroll_delta = scroll - scroll_;
-		if (Math.abs(cTouch.scroll_delta) > 015) {
+		if (Math.abs(cTouch.scroll_delta) > 15) {
 			cTouch.multiplier = ((1000 - cTouch.t1.Time) / 20);
-			cTouch.delta = Math.round((cTouch.scroll_delta) / 015);
+			cTouch.delta = Math.round((cTouch.scroll_delta) / 15);
 			if (cTouch.multiplier < 1)
 				cTouch.multiplier = 1;
 			if (cTouch.timer)
@@ -3121,7 +3121,7 @@ function on_mouse_move(x, y) {
 			if (x < brw.w) {
 				scroll -= cTouch.y_move;
 				cTouch.scroll_delta = scroll - scroll_;
-				if (Math.abs(cTouch.scroll_delta) < 030)
+				if (Math.abs(cTouch.scroll_delta) < 30)
 					cTouch.y_start = cTouch.y_current;
 				cTouch.y_prev = cTouch.y_current;
 			};
@@ -3365,7 +3365,7 @@ function get_font() {
 		g_fsize = default_font.Size;
 		g_fstyle = default_font.Style;
 	} catch (e) {
-		console.log("Spider Monkey Panel Error: Unable to use the default font. Using Arial font instead.");
+		console.log("JSplitter Error: Unable to use the default font. Using Arial font instead.");
 		g_fname = "arial";
 		g_fsize = 12;
 		g_fstyle = 0;
@@ -3385,13 +3385,13 @@ function get_font() {
 
 	if (g_font_guifx_found) {
 		g_font_rating = gdi.Font("guifx v2 transports", (g_fsize * 140 / 100), 0);
-		g_font_mood = gdi.Font("guifx v2 transports", (g_fsize * 130 / 100), 0);
+		// g_font_mood = gdi.Font("guifx v2 transports", (g_fsize * 130 / 100), 0);
 	} else if (g_font_wingdings2_found) {
 		g_font_rating = gdi.Font("wingdings 2", (g_fsize * 140 / 100), 0);
-		g_font_mood = gdi.Font("wingdings 2", (g_fsize * 200 / 100), 0);
+		// g_font_mood = gdi.Font("wingdings 2", (g_fsize * 200 / 100), 0);
 	} else {
 		g_font_rating = gdi.Font("arial", (g_fsize * 140 / 100), 0);
-		g_font_mood = gdi.Font("arial", (g_fsize * 140 / 100), 0);
+		// g_font_mood = gdi.Font("arial", (g_fsize * 140 / 100), 0);
 	};
 };
 

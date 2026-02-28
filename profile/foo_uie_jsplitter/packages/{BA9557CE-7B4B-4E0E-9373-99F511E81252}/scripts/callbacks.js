@@ -2,7 +2,7 @@
 
 function on_colours_changed() {
 	ui.getColours();
-	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecessary callbacks ->
 	alb_scrollbar.setCol();
 	art_scrollbar.setCol();
 	img.createImages();
@@ -29,7 +29,7 @@ function on_colours_changed() {
 
 function on_font_changed() {
 	ui.getFont();
-	if (!ppt.panelActive) { window.Repaint(); return; } // Regorxxx <- Disable unnecesary callbacks ->
+	if (!ppt.panelActive) { window.Repaint(); return; } // Regorxxx <- Disable unnecessary callbacks ->
 	alb_scrollbar.reset();
 	art_scrollbar.reset();
 	alb_scrollbar.resetAuto();
@@ -40,7 +40,7 @@ function on_font_changed() {
 }
 
 function on_focus(is_focused) {
-	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecessary callbacks ->
 	resize.focus = is_focused;
 }
 
@@ -77,7 +77,7 @@ function on_item_focus_change() {
 }
 
 function on_key_down(vkey) {
-	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecessary callbacks ->
 	switch (vkey) {
 		case 0x10:
 		case 0x11:
@@ -118,7 +118,7 @@ function on_key_down(vkey) {
 }
 
 function on_key_up(vkey) {
-	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecessary callbacks ->
 	if (vkey == 0x10 || vkey == 0x11 || vkey == 0x12) window.Repaint();
 }
 
@@ -145,21 +145,14 @@ function on_load_image_done(task_id, image, image_path) {
 	filmStrip.on_load_image_done(image, image_path);
 }
 
-function on_metadb_changed(handleList) {
+function on_metadb_changed(handleList, fromhook) {
 	if (!ppt.panelActive) return;
 	if (panel.isRadio(panel.id.focus) || panel.block() && !$.server || !panel.updateNeeded() || txt.lyricsDisplayed()) return;
 	// Regorxxx <- Tag changes affect panel focus
-	if (fb.IsPlaying && !panel.id.focus) {
-		const np = fb.GetNowPlaying();
-		if (np && handleList.BSearch(np) === -1) { return; }
-		else if (np && plman.PlayingPlaylist !== -1) { plman.SetPlaylistFocusItemByHandle(plman.PlayingPlaylist, np); }
-	} else {
-		const sel = fb.GetFocusItem(true);
-		if (sel) {
-			if (handleList.BSearch(sel) === -1) { return; }
-			if (plman.ActivePlaylist !== -1) { plman.SetPlaylistFocusItemByHandle(plman.ActivePlaylist, sel); }
-		}
-	}
+	const [handle, pls] = fb.IsPlaying && !panel.id.focus
+		? [fb.GetNowPlaying(), plman.PlayingPlaylist]
+		: [fb.GetFocusItem(true), plman.ActivePlaylist];
+	if (!handle || handleList.BSearch(handle) === -1) { return; }
 	// Regorxxx ->
 	panel.getList(true, true);
 	panel.focusLoad();
@@ -173,14 +166,7 @@ function on_mouse_lbtn_dblclk(x, y) {
 	bDblclk = true;
 	if (panel.trace.image && !ppt.dblClickToggle) {
 		timer.clear(timer.dblclk);
-		const imgPth = img.pth().imgPth;
-		if (imgPth) {
-			let bViewer = false;
-			if (fb.ShowPictureViewer) {
-				try { fb.ShowPictureViewer(imgPth); bViewer = true; } catch (e) { }
-			}
-			if (!bViewer) { $.browser('"' + imgPth + '"', false); }
-		}
+		img.showOnViewerOrExplorer();
 		return;
 	}
 	// Regorxxx ->
@@ -211,7 +197,7 @@ function on_mouse_lbtn_down(x, y) {
 }
 
 function on_mouse_lbtn_up(x, y) {
-	if (!ppt.panelActive) {panel.inactivate(); return;}
+	if (!ppt.panelActive) { panel.inactivate(); return; }
 	alb_scrollbar.lbtn_drag_up();
 	art_scrollbar.lbtn_drag_up();
 	art_scroller.lbtn_drag_up();
@@ -219,14 +205,7 @@ function on_mouse_lbtn_up(x, y) {
 	// Regorxxx <- D. Click open art
 	if (panel.trace.image && (!timer.dblclk.id || vk.k('alt'))) {
 		if (vk.k('alt')) {
-			const imgPth = img.pth().imgPth;
-			if (imgPth) {
-				let bViewer = false;
-				if (fb.ShowPictureViewer) {
-					try { fb.ShowPictureViewer(imgPth); bViewer = true; } catch (e) { }
-				}
-				if (!bViewer) { $.browser('"' + imgPth + '"', false); }
-			}
+			img.showOnViewerOrExplorer();
 		} else if (!timer.dblclk.id && !bDblclk) {
 			timer.dblclk.id = setTimeout(on_mouse_lbtn_up, 300, x, y);
 		}
@@ -333,7 +312,7 @@ function on_mouse_wheel(step) {
 }
 
 function on_notify_data(name, info) {
-	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecessary callbacks ->
 	let clone;
 	if (ui.id.local && name.startsWith('opt_')) {
 		clone = typeof info === 'string' ? String(info) : info;
@@ -463,7 +442,7 @@ function on_notify_data(name, info) {
 			ppt.themeBgImage = info.themeBgImage;
 			ppt.themeColour = info.themeColour;
 			on_colours_changed();
-			break;	
+			break;
 		case 'Sync col': {
 			if (!ppt.themed) break;
 			const themeLight = ppt.themeLight;
@@ -475,7 +454,7 @@ function on_notify_data(name, info) {
 		}
 		case 'Sync image':
 			if (!ppt.themed) break;
-			sync.img = {image: new GdiBitmap(info.image), id: info.id};
+			sync.img = { image: new GdiBitmap(info.image), id: info.id };
 			if (!panel.block()) {
 				sync.image(sync.img.image, sync.img.id);
 				sync.get = false;
@@ -534,12 +513,12 @@ function on_playback_new_track() {
 }
 
 function on_playback_pause(state) {
-	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecessary callbacks ->
 	if (panel.id.lyricsSource) lyrics.on_playback_pause(state);
 }
 
 function on_playback_seek() {
-	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecessary callbacks ->
 	if (panel.id.lyricsSource) lyrics.seek();
 	if (panel.block()) return;
 	const n = ppt.artistView ? 'bio' : 'rev';
@@ -551,7 +530,7 @@ function on_playback_seek() {
 }
 
 function on_playback_time() {
-	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecesary callbacks ->
+	if (!ppt.panelActive) { return; } // Regorxxx <- Disable unnecessary callbacks ->
 	if (panel.block()) return;
 	const n = ppt.artistView ? 'bio' : 'rev';
 	if ((txt[n].loaded.txt && txt.reader[n].nowplaying || ppt.sourceAll) && txt.reader[n].perSec) {
@@ -564,7 +543,7 @@ function on_playback_time() {
 function on_playback_stop(reason) {
 	if (!ppt.panelActive) return;
 	const n = ppt.artistView ? 'bio' : 'rev';
-    if (reason != 2 && txt[n].loaded.txt && txt.reader[n].lyrics) txt.getText();
+	if (reason != 2 && txt[n].loaded.txt && txt.reader[n].lyrics) txt.getText();
 	if (panel.id.lyricsSource) lyrics.clear();
 	if (reason == 2) return;
 	on_item_focus_change();
@@ -622,7 +601,7 @@ function on_size() {
 	txt.on_size();
 
 	if (ppt.themed && (ppt.theme || ppt.themeBgImage)) {
-		const themed_image = `${fb.ProfilePath}settings\\themed\\themed_image.bmp`;	
+		const themed_image = `${fb.ProfilePath}settings\\themed\\themed_image.bmp`;
 		if ($.file(themed_image) && !panel.block()) sync.image(gdi.Image(themed_image));
 	}
 	img.on_size();
@@ -643,7 +622,7 @@ function on_size() {
 function on_http_request_done(task_id, success, response_text, status, headers) {
 	let init = XMLHttpRequests.length;
 	XMLHttpRequests.forEach((request) => {
-		if (request.id === task_id) { 
+		if (request.id === task_id) {
 			request.readyState = 4;
 			request.status = status;
 			request.responseText = response_text;

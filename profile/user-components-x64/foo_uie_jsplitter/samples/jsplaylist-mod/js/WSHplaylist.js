@@ -208,7 +208,7 @@ oItem = function (playlist, row_index, type, handle, track_index, group_index, t
 						};
 					};
 					break;
-				case "Mood":
+				case "Loved":
 					if (typeof(this.mood) == "undefined") {
 						this.mood = fb.TitleFormat(p.headerBar.columns[j].tf).EvalWithMetadb(this.metadb);
 						var moodArray = this.parseTF(this.mood, this.text_colour);
@@ -366,7 +366,7 @@ oItem = function (playlist, row_index, type, handle, track_index, group_index, t
 				};
 			} else {
 				switch (p.headerBar.columns[j].ref) {
-				case "Mood":
+				case "Loved":
 					columns.mood = false;
 					break;
 				case "Rating":
@@ -691,7 +691,7 @@ oItem = function (playlist, row_index, type, handle, track_index, group_index, t
 				var lg3_right_field = (this.group_index + 1) + " / " + p.list.groups.length;
 				var lg3_right_field_w = gr.CalcTextWidth(lg3_right_field, g_font) + cList.borderWidth * 2;
 				gr.GdiDrawText(lg3_left_field, g_font, blendColors(g_color_normal_txt, g_color_normal_bg, 0.35), this.x + cover.w + text_left_padding, (this.y + cTrack.height * 2 - groupDelta) - 2, this.w - cover.w - text_left_padding * 4 - lg3_right_field_w - scrollbar_gape, cTrack.height, DT_LEFT | DT_TOP | DT_VCENTER | DT_CALCRECT | DT_NOPREFIX | DT_SINGLELINE | DT_END_ELLIPSIS);
-				gr.GdiDrawText(lg3_right_field, g_font, blendColors(g_color_normal_txt, g_color_normal_bg, 0.35), this.x + cover.w + text_left_padding, (this.y + cTrack.height * 2 - groupDelta) - 2, this.w - cover.w - text_left_padding * 5 + 01 - scrollbar_gape, cTrack.height, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_NOPREFIX | DT_SINGLELINE | DT_END_ELLIPSIS);
+				gr.GdiDrawText(lg3_right_field, g_font, blendColors(g_color_normal_txt, g_color_normal_bg, 0.35), this.x + cover.w + text_left_padding, (this.y + cTrack.height * 2 - groupDelta) - 2, this.w - cover.w - text_left_padding * 5 + 1 - scrollbar_gape, cTrack.height, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_NOPREFIX | DT_SINGLELINE | DT_END_ELLIPSIS);
 			};
 
 			// highlight group that contains a selected track
@@ -1065,10 +1065,10 @@ oItem = function (playlist, row_index, type, handle, track_index, group_index, t
 						if (this.tracktype < 2) {
 							var handles = new FbMetadbHandleList(this.metadb);
 							if (this.l_mood != this.mood) {
-								handles.UpdateFileInfoFromJSON(JSON.stringify({"MOOD" : getTimestamp()}));
+								handles.UpdateFileInfoFromJSON(JSON.stringify({"FEEDBACK" : 1}));
 								this.mood = this.l_mood;
 							} else {
-								handles.UpdateFileInfoFromJSON(JSON.stringify({"MOOD" : ""}));
+								handles.UpdateFileInfoFromJSON(JSON.stringify({"FEEDBACK" : ""}));
 								this.mood = 0;
 							};
 						};

@@ -435,7 +435,8 @@ let properties = [
 	['Zoom Button LookUp Size (%)', 100, 'zoomLookUpBtn'],
 	['Zoom Tooltip (%)', 100, 'zoomTooltip'],
 	
-	['Text Reader Default codepage (auto = 0)', 65001, 'fileCodePage'] // Regorxxx <- Fix text reading for files without BOM ->
+	['Text Reader Default codepage (auto = 0)', 65001, 'fileCodePage'], // Regorxxx <- Fix text reading for files without BOM ->
+	['- Draw mode: GDI (0), D2D (1)', 0, 'drawMode'] // Regorxxx <- GDI/D2D draw mode ->
 ];
 
 const ppt = new PanelProperties;

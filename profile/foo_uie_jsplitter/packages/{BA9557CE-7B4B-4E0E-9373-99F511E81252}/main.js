@@ -1,5 +1,7 @@
 ﻿'use strict';
 
+window.DrawMode = Math.max(Math.min(window.GetProperty('- Draw mode: GDI (0), D2D (1)', 0), 1), 0);  // Regorxxx <- GDI/D2D draw mode ->
+
 if (typeof my_utils === 'undefined') include('utils.js');
 
 let isRadioStreamParser = false;

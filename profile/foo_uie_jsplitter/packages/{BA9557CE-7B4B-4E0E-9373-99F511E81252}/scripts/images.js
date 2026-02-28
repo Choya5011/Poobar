@@ -1632,6 +1632,26 @@ class Images {
 		}
 	}
 
+	// Regorxxx <- D. Click open art | Source folder menu entries
+	showOnViewerOrExplorer() {
+		const imgPth = this.pth().imgPth;
+		if (imgPth) {
+			let bViewer = false;
+			if (fb.ShowPictureViewer) {
+				try { fb.ShowPictureViewer(imgPth); bViewer = true; } catch (e) { }
+			}
+			if (!bViewer) { $.browser('"' + imgPth + '"', false); }
+		} else {
+			this.showParentFolder();
+		}
+	}
+
+	showParentFolder() {
+		if (!$.folder(this.art.folder)) { $.buildPth(this.art.folder); }
+		$.browser('explorer /e,' + '"' + this.art.folder + '"', false);
+	}
+	// Regorxxx ->
+
 	sizeFilter(v, i, arr) {
 		const fileSize = utils.GetFileSize(v);
 		if (arr.length - this.removed <= this.filter.minNo || fileSize <= this.filter.maxSz && fileSize > this.filter.minSz) return true;

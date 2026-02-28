@@ -1217,6 +1217,40 @@ const UIInstanceType = {
 };
 
 /**
+ * Compilation flags for {@link d2d.Compile}
+ * @memberof module:Flags
+ * @default
+ */
+const D2DCompileFlags = {
+    D3DCOMPILE_DEBUG:                              1, // (1 << 0)
+    D3DCOMPILE_SKIP_VALIDATION:                    2, // (1 << 1),
+    D3DCOMPILE_SKIP_OPTIMIZATION:                  4, // (1 << 2),
+    D3DCOMPILE_PACK_MATRIX_ROW_MAJOR:              8, // (1 << 3),
+    D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR:           16, // (1 << 4),
+    D3DCOMPILE_PARTIAL_PRECISION:                  32, // (1 << 5),
+    D3DCOMPILE_FORCE_VS_SOFTWARE_NO_OPT:           64, // (1 << 6),
+    D3DCOMPILE_FORCE_PS_SOFTWARE_NO_OPT:           128, // (1 << 7),
+    D3DCOMPILE_NO_PRESHADER:                       256, // (1 << 8),
+    D3DCOMPILE_AVOID_FLOW_CONTROL:                 512, // (1 << 9),
+    D3DCOMPILE_PREFER_FLOW_CONTROL:                1024, // (1 << 10),
+    D3DCOMPILE_ENABLE_STRICTNESS:                  2048, // (1 << 11),
+    D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY:     4096, // (1 << 12),
+    D3DCOMPILE_IEEE_STRICTNESS:                    8192, // (1 << 13),
+    D3DCOMPILE_OPTIMIZATION_LEVEL0:                16384, // (1 << 14),
+    D3DCOMPILE_OPTIMIZATION_LEVEL1:                0,     // 0,
+    D3DCOMPILE_OPTIMIZATION_LEVEL2:                49152, // ((1 << 14) | (1 << 15)),
+    D3DCOMPILE_OPTIMIZATION_LEVEL3:                32768, // (1 << 15),
+    D3DCOMPILE_RESERVED16:                         65536, // (1 << 16),
+    D3DCOMPILE_RESERVED17:                         131072, // (1 << 17),
+    D3DCOMPILE_WARNINGS_ARE_ERRORS:                262144, // (1 << 18),
+    D3DCOMPILE_RESOURCES_MAY_ALIAS:                524288, // (1 << 19),
+    D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES: 1048576, // (1 << 20),
+    D3DCOMPILE_ALL_RESOURCES_BOUND:                2097152, // (1 << 21),
+    D3DCOMPILE_DEBUG_NAME_FOR_SOURCE:              4194304, // (1 << 22),
+    D3DCOMPILE_DEBUG_NAME_FOR_BINARY:              8388608, // (1 << 23)
+};
+
+/**
  * SupportColourFlagCUI = {
  *     text: 0x0,
  *     selection_text: 0x2,

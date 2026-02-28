@@ -1,7 +1,7 @@
 ﻿'use strict';
-//11/01/26
+//31/01/26
 
-/* exported compareObjects, compareKeys, isJSON, roughSizeOfObject, deepAssign, BiMap, isFunction, $args, isPromise, matchCase, capitalizePartial, capitalizeAll, _p, _bt, _qCond, _ascii, _asciify, isArrayStrings, isArrayNumbers, isArrayEqual, zeroOrVal, emptyOrVal, isInt, isFloat, cyclicOffset, range, round, isUUID, isBoolean, regExBool, cartesian, isArray, _ps, isGetter, isSetter, isReal */
+/* exported compareObjects, compareKeys, isJSON, roughSizeOfObject, deepAssign, BiMap, isFunction, $args, isPromise, matchCase, capitalizePartial, capitalizeAll, _p, _bt, _qCond, _ascii, _asciify, isArrayStrings, isArrayNumbers, isArrayEqual, zeroOrVal, emptyOrVal, isInt, isFloat, cyclicOffset, range, round, isUUID, isBoolean, regExBool, cartesian, isArray, _ps, isGetter, isSetter, isReal, isIntInf, isFloatInf */
 
 include('helpers_xxx_basic_js.js');
 /* global require:readable, strNumCollator:readable */
@@ -475,9 +475,16 @@ if (!String.prototype.replaceAll) {
 
 if (!String.prototype.count) {
 	String.prototype.count = function count(c) { // NOSONAR
-		let result = 0, i = 0;
-		for (i; i < this.length; i++) {
-			if (this[i] == c) { result++; }
+		let result = 0, i = 0, len = this.length;
+		if (typeof c === 'string') {
+			for (i; i < len; i++) {
+				if (c === this[i]) { result++; }
+			}
+		} else {
+			c = new Set(c);
+			for (i; i < len; i++) {
+				if (c.has(this[i])) { result++; }
+			}
 		}
 		return result;
 	};
@@ -708,7 +715,7 @@ if (!Array.prototype.joinEvery) {
 		let i = 0;
 		let str = '';
 		while (i < len) {
-			str += (str.length ? sep + newLineChar : '') + this.slice(i + 1, i + n).join(sep);
+			str += (str.length ? sep + newLineChar : '') + this.slice(i, i + n).join(sep);
 			i += n;
 		}
 		return str;
@@ -892,15 +899,23 @@ if (!Set.prototype.differenceSize) {
 */
 
 function isInt(n) {
-	return Number(n) === n && Number.isFinite(n) && n <= Number.MAX_SAFE_INTEGER && n % 1 === 0;
+	return Number(n) === n && Number.isSafeInteger(n) && n % 1 === 0;
+}
+
+function isIntInf(n) {
+	return Number(n) === n && (!Number.isFinite(n) || Number.isSafeInteger(n) && n % 1 === 0);
 }
 
 function isFloat(n) {
-	return Number(n) === n && Number.isFinite(n) && n % 1 !== 0;
+	return Number(n) === n && n < Number.MAX_SAFE_INTEGER && n > Number.MIN_SAFE_INTEGER && n % 1 !== 0;
+}
+
+function isFloatInf(n) {
+	return Number(n) === n && (!Number.isFinite(n) || n < Number.MAX_SAFE_INTEGER && n > Number.MIN_SAFE_INTEGER && n % 1 !== 0);
 }
 
 function isReal(n) {
-	return isFloat(n) || isInt(n);
+	return Number(n) === n && (!Number.isFinite(n) || n < Number.MAX_SAFE_INTEGER && n > Number.MIN_SAFE_INTEGER);
 }
 
 // Adds/subtracts 'offset' to 'reference' considering the values must follow cyclic logic within 'limits' range (both values included)

@@ -1,5 +1,7 @@
 ﻿"use strict";
 
+window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
+
 window.DefineScript('Poobar Main Panel', {author:'Choya', options:{grab_focus:false}});
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');

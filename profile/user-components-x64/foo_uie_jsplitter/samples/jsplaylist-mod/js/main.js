@@ -112,7 +112,7 @@ properties = {
 	wallpaperblurred: window.GetProperty("CUSTOM Wallpaper Blurred", true),
 	wallpaperblurvalue: window.GetProperty("CUSTOM Wallpaper Blur value", 1.05),
 	wallpapermode: window.GetProperty("CUSTOM Wallpaper Type", 0),
-	wallpaperpath: window.GetProperty("CUSTOM Default Wallpaper Path", ".\\user-components\\foo_spider_monkey_panel\\samples\\jsplaylist-mod\\images\\default.jpg"),
+	wallpaperpath: window.GetProperty("CUSTOM Default Wallpaper Path", ".\\user-components\\foo_uie_jsplitter\\samples\\jsplaylist-mod\\images\\default.jpg"),
 	oddevenrowshighlight: window.GetProperty("CUSTOM Highlight Odd/Even Rows", true),
 	settingspanel: false,
 	smoothscrolling: window.GetProperty("CUSTOM Enable Smooth Scrolling", true),

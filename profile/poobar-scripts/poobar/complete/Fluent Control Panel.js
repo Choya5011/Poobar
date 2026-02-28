@@ -1,5 +1,7 @@
 ﻿'use strict';
 
+window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
+
 // This script is a modified version of Fluent Control Panel version 0.9 by eurekagliese
 window.DefineScript('Fluent Control Panel', {author:'eurekagliese & Choya', options:{grab_focus:false}});
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');

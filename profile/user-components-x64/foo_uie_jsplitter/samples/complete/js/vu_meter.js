@@ -50,7 +50,7 @@ function _vu_meter(x, y, w, h) {
 	}
 
 	this.update_graph = function () {
-		var cur_time = fb.Time;
+		var cur_time = fb.PlaybackTime;
 
 		if (cur_time < this.rms_window)
 			return;

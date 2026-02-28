@@ -15,7 +15,7 @@ ppt = {
 	wallpaperblurred: window.GetProperty("_DISPLAY: Wallpaper Blurred", true),
 	wallpaperblurvalue: 1.05,
 	wallpapermode: window.GetProperty("_SYSTEM: Wallpaper Mode", 0),
-	wallpaperpath: window.GetProperty("_PROPERTY: Default Wallpaper Path", ".\\user-components\\foo_spider_monkey_panel\\samples\\js-smooth\\images\\default.png"),
+	wallpaperpath: window.GetProperty("_PROPERTY: Default Wallpaper Path", ".\\user-components\\foo_uie_jsplitter\\samples\\js-smooth\\images\\default.png"),
 	extra_font_size: window.GetProperty("_SYSTEM: Extra font size value", 0),
 	showFilterBox: window.GetProperty("_PROPERTY: Enable Playlist Filterbox in Top Bar", true),
 	enableTouchControl: window.GetProperty("_PROPERTY: Touch control", true)
@@ -1572,7 +1572,7 @@ oBrowser = function (name) {
 		case (idx == 250):
 			var total = plman.PlaylistCount;
 			//p.playlistManager.inputboxID = -1;
-			plman.CreateAutoPlaylist(total, "Loved Tracks", "%mood% GREATER 0", "%album artist% | $if(%album%,%date%,'9999') | %album% | %discnumber% | %tracknumber% | %title%", 0);
+			plman.CreateAutoPlaylist(total, "Loved Tracks", "%FEEDBACK% IS 1 OR %2003_LOVED% IS 1 OR %LFM_LOVED% IS 1 OR %SMP_LOVED% IS 1", "%album artist% | $if(%album%,%date%,'9999') | %album% | %discnumber% | %tracknumber% | %title%", 0);
 			plman.MovePlaylist(total, pl_idx);
 			plman.ActivePlaylist = pl_idx;
 			break;
@@ -1666,7 +1666,7 @@ var g_font_headers = null;
 var g_font_group1 = null;
 var g_font_group2 = null;
 var g_font_rating = null;
-var g_font_mood = null;
+// var g_font_mood = null;
 var g_font_guifx_found = utils.CheckFont("guifx v2 transports");
 var g_font_wingdings2_found = utils.CheckFont("wingdings 2");
 
@@ -1805,7 +1805,7 @@ function on_mouse_lbtn_down(x, y) {
 				timers.mouseDown = window.SetTimeout(function () {
 						window.ClearTimeout(timers.mouseDown);
 						timers.mouseDown = false;
-						if (Math.abs(cTouch.y_start - m_y) > 015) {
+						if (Math.abs(cTouch.y_start - m_y) > 15) {
 							cTouch.down = true;
 						} else {
 							brw.on_mouse("down", x, y);
@@ -1837,7 +1837,7 @@ function on_mouse_lbtn_up(x, y) {
 	if (timers.mouseDown) {
 		window.ClearTimeout(timers.mouseDown);
 		timers.mouseDown = false;
-		if (Math.abs(cTouch.y_start - m_y) <= 030) {
+		if (Math.abs(cTouch.y_start - m_y) <= 30) {
 			brw.on_mouse("down", x, y);
 		};
 	};
@@ -1848,9 +1848,9 @@ function on_mouse_lbtn_up(x, y) {
 		cTouch.y_end = y;
 		cTouch.scroll_delta = scroll - scroll_;
 		//cTouch.y_delta = cTouch.y_start - cTouch.y_end;
-		if (Math.abs(cTouch.scroll_delta) > 030) {
+		if (Math.abs(cTouch.scroll_delta) > 30) {
 			cTouch.multiplier = ((1000 - cTouch.t1.Time) / 20);
-			cTouch.delta = Math.round((cTouch.scroll_delta) / 030);
+			cTouch.delta = Math.round((cTouch.scroll_delta) / 30);
 			if (cTouch.multiplier < 1)
 				cTouch.multiplier = 1;
 			if (cTouch.timer)
@@ -1907,7 +1907,7 @@ function on_mouse_move(x, y) {
 		if (x < brw.w) {
 			scroll -= cTouch.y_move;
 			cTouch.scroll_delta = scroll - scroll_;
-			if (Math.abs(cTouch.scroll_delta) < 030)
+			if (Math.abs(cTouch.scroll_delta) < 30)
 				cTouch.y_start = cTouch.y_current;
 			cTouch.y_prev = cTouch.y_current;
 		};
@@ -2090,7 +2090,7 @@ function get_font() {
 		g_fsize = default_font.Size;
 		g_fstyle = default_font.Style;
 	} catch (e) {
-		console.log("Spider Monkey Panel Error: Unable to use the default font. Using Arial font instead.");
+		console.log("JSplitter Error: Unable to use the default font. Using Arial font instead.");
 		g_fname = "arial";
 		g_fsize = 12;
 		g_fstyle = 0;
@@ -2113,13 +2113,13 @@ function get_font() {
 
 	if (g_font_guifx_found) {
 		g_font_rating = gdi.Font("guifx v2 transports", Math.round(g_fsize * 140 / 100), 0);
-		g_font_mood = gdi.Font("guifx v2 transports", Math.round(g_fsize * 130 / 100), 0);
+		// g_font_mood = gdi.Font("guifx v2 transports", Math.round(g_fsize * 130 / 100), 0);
 	} else if (g_font_wingdings2_found) {
 		g_font_rating = gdi.Font("wingdings 2", Math.round(g_fsize * 140 / 100), 0);
-		g_font_mood = gdi.Font("wingdings 2", Math.round(g_fsize * 200 / 100), 0);
+		// g_font_mood = gdi.Font("wingdings 2", Math.round(g_fsize * 200 / 100), 0);
 	} else {
 		g_font_rating = gdi.Font("arial", Math.round(g_fsize * 200 / 100), 0);
-		g_font_mood = gdi.Font("arial", Math.round(g_fsize * 140 / 100), 0);
+		// g_font_mood = gdi.Font("arial", Math.round(g_fsize * 140 / 100), 0);
 	};
 };
 

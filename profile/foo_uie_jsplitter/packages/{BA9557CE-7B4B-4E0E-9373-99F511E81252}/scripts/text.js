@@ -2356,6 +2356,27 @@ class Text {
 		return panel.getPth('rev', panel.id.focus, this.artist, field, '', cfg.supCache, $.clean(this.artist), $.clean(this.albumartist), $.clean(field), `fo${n}Rev`, false);
 	}
 
+	// Regorxxx <- Source folder menu entries
+	showParentFolder(type) {
+		let path;
+		switch (type.toLowerCase()) {
+			case 'allmusic': path = ppt.artistView ? this.bioPth('Am') : this.revPth('Am'); break;
+			case 'last.fm': path = ppt.artistView ? this.bioPth('Lfm') : this.revPth('Lfm'); break;
+			case 'text': path = ppt.artistView ? this.txtBioPth() : this.txtRevPth(); break;
+			case 'wikipedia': path = ppt.artistView ? this.bioPth('Wiki') : this.revPth('Wiki'); break;
+			case 'track allmusic': path = ppt.artistView ? null : this.trackPth('Am'); break;
+			case 'track last.fm': path = ppt.artistView ? null : this.trackPth('Lfm'); break;
+			case 'track wikipedia': path = ppt.artistView ? null : this.trackPth('Wiki'); break;
+			default: // Show current file shown
+		}
+		if (path) { path = path[0]; }
+		if (path) {
+			if (!$.folder(path)) { $.buildPth(path); }
+			$.browser('explorer /e,' + '"' + path + '"', false);
+		}
+	}
+	// Regorxxx ->
+
 	scrollbar_type() {
 		return ppt.artistView ? art_scrollbar : alb_scrollbar;
 	}
@@ -2437,7 +2458,7 @@ class Text {
 		this.reader.items.some((v, i) => {
 			if (v.view == n) {
 				if (v.tag) {
-					this[n].readerItem = $.eval('[$trim(' + v.pth + ')]', !v.nowPlaying); // Regorxxx <- Fixed text reader not working for selection while playing ->
+					this[n].readerItem = $.eval('[$trim(' + v.pth + ')]', panel.id.focus && !v.nowPlaying); // Regorxxx <- Fixed text reader not working for selection while playing ->
 					if (this[n].readerItem.length) {
 						found = i;
 						return true;

@@ -4,7 +4,7 @@ ppt = {
 	tf_artist: fb.TitleFormat("%artist%"),
 	tf_albumartist: fb.TitleFormat("%album artist%"),
 	tf_groupkey: fb.TitleFormat(window.GetProperty("_PROPERTY: tf_groupkey", "$if2(%album artist%,$if(%length%,'?',%title%)) ^^ $if2(%album%,$if(%length%,'?',%path%)) ^^ %discnumber% ## [%artist%] ^^ %title% ^^ [%genre%] ^^ [%date%]")),
-	tf_track: fb.TitleFormat("%tracknumber% ^^ [%length%] ^^ $if2(%rating%,0) ^^ %mood%"),
+	tf_track: fb.TitleFormat("%tracknumber% ^^ [%length%] ^^ $if2(%rating%,0) ^^ $if2(%feedback%,0)"),
 	tf_path: fb.TitleFormat("$directory_path(%path%)\\"),
 	tf_crc: fb.TitleFormat("$crc32(%path%)"),
 	tf_time_remaining: fb.TitleFormat("$if(%length%,-%playback_time_remaining%,'ON AIR')"),
@@ -29,13 +29,13 @@ ppt = {
 	wallpaperblurred: window.GetProperty("_DISPLAY: Wallpaper Blurred", true),
 	wallpaperblurvalue: 1.05,
 	wallpapermode: window.GetProperty("_SYSTEM: Wallpaper Mode", 0),
-	wallpaperpath: window.GetProperty("_PROPERTY: Default Wallpaper Path", ".\\user-components\\foo_spider_monkey_panel\\samples\\js-smooth\\images\\default.png"),
+	wallpaperpath: window.GetProperty("_PROPERTY: Default Wallpaper Path", ".\\user-components\\foo_uie_jsplitter\\samples\\js-smooth\\images\\default.png"),
 	extra_font_size: window.GetProperty("_SYSTEM: Extra font size value", 0),
 	showFilterBox: window.GetProperty("_PROPERTY: Enable Playlist Filterbox in Top Bar", true),
 	doubleRowText: window.GetProperty("_PROPERTY: Double Row Text Info", true),
 	showArtistAlways: window.GetProperty("_DISPLAY: Show Artist in Track Row", true),
 	showRating: window.GetProperty("_DISPLAY: Show Rating in Track Row", true),
-	showMood: window.GetProperty("_DISPLAY: Show Mood in Track Row", true),
+	// showMood: window.GetProperty("_DISPLAY: Show Mood in Track Row", true),
 	enableTouchControl: window.GetProperty("_PROPERTY: Touch control", true)
 };
 
@@ -2758,7 +2758,7 @@ oBrowser = function (name) {
 					try {
 						fso.DeleteFile(CACHE_FOLDER + crc);
 					} catch (e) {
-						console.log("Spider Monkey Panel Error: Image cache [" + crc + "] can't be deleted on disk, file in use, try later or reload panel.");
+						console.log("JSplitter Error: Image cache [" + crc + "] can't be deleted on disk, file in use, try later or reload panel.");
 					};
 				};
 				this.groups[albumIndex].tid = -1;
@@ -2846,10 +2846,10 @@ oBrowser = function (name) {
 			brw.repaint();
 			break;
 		case (idx == 112):
-			ppt.showMood = !ppt.showMood;
-			window.SetProperty("_DISPLAY: Show Mood in Track Row", ppt.showMood);
-			get_metrics();
-			brw.repaint();
+			// ppt.showMood = !ppt.showMood;
+			// window.SetProperty("_DISPLAY: Show Mood in Track Row", ppt.showMood);
+			// get_metrics();
+			// brw.repaint();
 			break;
 		case (idx == 113):
 			ppt.showRating = !ppt.showRating;
@@ -3075,7 +3075,7 @@ var g_font_headers = null;
 var g_font_group1 = null;
 var g_font_group2 = null;
 var g_font_rating = null;
-var g_font_mood = null;
+// var g_font_mood = null;
 var g_font_guifx_found = utils.CheckFont("guifx v2 transports");
 var g_font_wingdings2_found = utils.CheckFont("wingdings 2");
 
@@ -3584,7 +3584,7 @@ function get_font() {
 		g_fsize = default_font.Size;
 		g_fstyle = default_font.Style;
 	} catch (e) {
-		console.log("Spider Monkey Panel Error: Unable to use the default font. Using Arial font instead.");
+		console.log("JSplitter Error: Unable to use the default font. Using Arial font instead.");
 		g_fname = "arial";
 		g_fsize = 12;
 		g_fstyle = 0;
@@ -3607,13 +3607,13 @@ function get_font() {
 
 	if (g_font_guifx_found) {
 		g_font_rating = gdi.Font("guifx v2 transports", Math.round(g_fsize * 130 / 100), 0);
-		g_font_mood = gdi.Font("guifx v2 transports", Math.round(g_fsize * 130 / 100), 0);
+		// g_font_mood = gdi.Font("guifx v2 transports", Math.round(g_fsize * 130 / 100), 0);
 	} else if (g_font_wingdings2_found) {
 		g_font_rating = gdi.Font("wingdings 2", Math.round(g_fsize * 130 / 100), 0);
-		g_font_mood = gdi.Font("wingdings 2", Math.round(g_fsize * 200 / 100), 0);
+		// g_font_mood = gdi.Font("wingdings 2", Math.round(g_fsize * 200 / 100), 0);
 	} else {
 		g_font_rating = gdi.Font("arial", Math.round(g_fsize * 170 / 100), 0);
-		g_font_mood = gdi.Font("arial", Math.round(g_fsize * 120 / 100), 0);
+		// g_font_mood = gdi.Font("arial", Math.round(g_fsize * 120 / 100), 0);
 	};
 };
 

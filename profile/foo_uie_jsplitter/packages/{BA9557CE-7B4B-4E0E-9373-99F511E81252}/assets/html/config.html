@@ -2796,7 +2796,7 @@
 		}
 
 		window.btn_reset.onclick = function () {
-			var msg = cur.tab == 'PanelCfg' ? 'Reset panel settings to default\\nContinue?' : 'Reset server settings to default\\n\\nOriginal (' + cfg.cfgBaseName + '.cfg ) will be backed up\\n\\nContinue?';
+			var msg = cur.tab == 'PanelCfg' ? 'Reset panel settings to default\nContinue?' : 'Reset server settings to default\n\nOriginal (' + cfg.cfgBaseName + '.cfg ) will be backed up\n\nContinue?';
 			var r = window.confirm(msg);
 			if (r == true) {
 				var new_cur = JSON.stringify(cur);

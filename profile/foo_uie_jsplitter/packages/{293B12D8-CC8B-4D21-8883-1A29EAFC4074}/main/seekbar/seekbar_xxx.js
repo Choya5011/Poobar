@@ -1,5 +1,5 @@
 'use strict';
-//12/01/26
+//26/02/26
 
 /* exported _seekbar */
 /* global _gdiFont:readable, _scale:readable, _isFile:readable, _isLink:readable, convertCharsetToCodepage:readable, throttle:readable, _isFolder:readable, _createFolder:readable, deepAssign:readable, clone:readable, _jsonParseFile:readable, _open:readable, _deleteFile:readable, DT_VCENTER:readable, DT_CENTER:readable, DT_END_ELLIPSIS:readable, DT_CALCRECT:readable, DT_NOPREFIX:readable, invert:readable, _p:readable, MK_LBUTTON:readable, _deleteFolder:readable, _q:readable, sanitizePath:readable, _runCmd:readable, round:readable, _saveFSO:readable, _save:readable, _resolvePath:readable, _foldPath:readable, addNested:readable, getNested:readable */
@@ -94,6 +94,7 @@ function _seekbar({
 	logging = {
 		bDebug: false,
 		bProfile: false,
+		bProfilePaint: false,
 		bLoad: true,
 		bSave: true,
 		bError: true,
@@ -174,6 +175,7 @@ function _seekbar({
 		const defLogging = {
 			bDebug: false,
 			bProfile: false,
+			bProfilePaint: false,
 			bLoad: true,
 			bSave: true,
 			bError: true
@@ -305,7 +307,6 @@ function _seekbar({
 	 * @property {Boolean} bNormalizeWidth - Flag to use data interpolation to display it normalized to the window width adjusted by normalizeWidth param (instead of showing more or less points according to track length). Any track with any length will display with the same amount of detail this way.
 	 * @property {number} normalizeWidth - Size unit for normalization.
 	 * @property {Boolean} bLogScale - Flag to display VU Meter scale in log (dB) or linear scale.
-	 * @property {number} refreshRate - Size unit for normalization.
 	 */
 	/** @type {UI} - Panel UI related settings */
 	this.ui = ui;
@@ -350,6 +351,7 @@ function _seekbar({
 	 * @typedef {object} Logging - Panel logging related settings.
 	 * @property {boolean} [bDebug] - Debug logging flag.
 	 * @property {boolean} [bProfile] - Profiling logging flag.
+	 * @property {boolean} [bProfilePaint] - On Paint Profiling logging flag.
 	 * @property {boolean} [bLoad] - On seekbar file load logging flag.
 	 * @property {boolean} [bSave] - On seekbar file save logging flag.
 	 * @property {boolean} [bError] - On seekbar errors logging flag.
@@ -483,7 +485,7 @@ function _seekbar({
 	let throttlePaint;
 	/** @type {(x:number, y:number, w:number, h:number, bForce = false) => void(0)} - Repaint part of window throttled */
 	let throttlePaintRect;
-	/** @type {FbProfiler} - Used for profiling when this.logging.bProfile is true */
+	/** @type {FbProfiler} - Used for profiling when this.logging.bProfilePaint is true, also for variable refresh rate */
 	const profilerPaint = new FbProfiler('paint');
 
 	// Check & Init
@@ -1611,7 +1613,7 @@ function _seekbar({
 	*/
 	this.paint = (gr) => {
 		if (!window.IsVisible) { return; }
-		profilerPaint.Reset();
+		if (this.ui.bVariableRefreshRate || this.logging.bProfilePaint) { profilerPaint.Reset(); }
 		const colors = this.getColors();
 		// Panel background
 		if (colors.bg !== -1) { gr.FillSolidRect(this.x, this.y, this.w, this.h, colors.bg); }
@@ -2674,6 +2676,7 @@ function _seekbar({
 			if (profilerPaint.Time > this.ui.refreshRate) { this.updateConfig({ ui: { refreshRate: this.ui.refreshRate + 50 } }); }
 			else if (profilerPaint.Time < this.ui.refreshRate && profilerPaint.Time >= this.ui.refreshRateOpt) { this.updateConfig({ ui: { refreshRate: this.ui.refreshRate - 25 } }); }
 		}
+		if (this.logging.bProfilePaint) { profilerPaint.Print('On Paint'); }
 	};
 	/**
 	 * Checks if position is over panel
@@ -3135,6 +3138,19 @@ function _seekbar({
 		return data;
 	};
 	/**
+	 * Clamps RGBA components
+	 *
+	 * @property
+	 * @name clampRGB
+	 * @kind method
+	 * @memberof _seekbar
+	 * @param {number} C
+	 * @returns {number} 0-255
+	*/
+	this.clampRGB = (c) => {
+		return Math.max(Math.min(c, 255), 0);
+	};
+	/**
 	 * Creates color by RGBA components
 	 *
 	 * @property
@@ -3148,8 +3164,8 @@ function _seekbar({
 	 * @returns {[number, number, number, number]}
 	*/
 	this.RGBA = (r, g, b, a) => {
-		const res = 0xff000000 | (r << 16) | (g << 8) | (b);
-		if (typeof a !== 'undefined') { return (res & 0x00ffffff) | (a << 24); }
+		const res = 0xff000000 | (this.clampRGB(r) << 16) | (this.clampRGB(g) << 8) | this.clampRGB(b);
+		if (typeof a !== 'undefined') { return (res & 0x00ffffff) | (this.clampRGB(a) << 24); }
 		return res;
 	};
 	/**
@@ -3164,7 +3180,7 @@ function _seekbar({
 	*/
 	this.getRGBA = (color) => {
 		const a = color - 0xFF000000;
-		return [a >> 16 & 0xFF, a >> 8 & 0xFF, a & 0xFF, this.getAlpha(color)];
+		return [this.clampRGB(a >> 16 & 0xFF), this.clampRGB(a >> 8 & 0xFF), this.clampRGB(a & 0xFF), this.getAlpha(color)];
 	};
 	/**
 	 * Blends two RGBA colors.
@@ -3179,9 +3195,9 @@ function _seekbar({
 	 * @returns {number}
 	*/
 	this.blendColors = (color1, color2, factor) => {
-		const [c1, c2] = [this.getRGBA(color1), this.getRGBA(color2)];
 		factor = Math.max(0, Math.min(1, factor));
-		return this.RGBA(...c1.map((_, i) => Math.min(Math.round(c1[i] + factor * (c2[i] - c1[i])), 255)));
+		const [c1, c2] = [this.getRGBA(color1), this.getRGBA(color2)];
+		return this.RGBA(...c1.map((_, i) => this.clampRGB(Math.round(c1[i] + factor * (c2[i] - c1[i])))));
 	};
 	/**
 	 * Gets alpha component [0-255] of a color.
@@ -3194,7 +3210,7 @@ function _seekbar({
 	 * @returns {number}
 	*/
 	this.getAlpha = (color) => {
-		return ((color >> 24) & 0xff);
+		return this.clampRGB((color >> 24) & 0xff);
 	};
 	/**
 	 * Applies transparency to a color. Uses a lookup table to be as efficient as possible.

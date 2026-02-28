@@ -372,7 +372,37 @@ class MenuItems {
 			separator: !i && this.openName.length > 1 && this.path.img || this.path.txt[3] && i == this.openName.length - 2 && this.openName.length > 2,
 			hide: !this.openName[i]
 		});
-
+		// Regorxxx <- Source folder menu entries
+		menu.addSeparator({menuName: lg['Open file location']});
+		menu.newItem({
+			menuName: lg['Open file location'],
+			str:  lg['Images folder'] + (!this.path.img && img.art.folder ? ' \t' + lg['Alt+Click'] : ''),
+			func: () => {
+				img.showParentFolder();
+			}
+		});
+		menu.newItem({
+			menuName: lg['Open file location'],
+			str:  lg['AllMusic folder'],
+			func: () => {
+				txt.showParentFolder('allmusic');
+			}
+		});
+		menu.newItem({
+			menuName: lg['Open file location'],
+			str:  lg['Last.fm folder'],
+			func: () => {
+				txt.showParentFolder('last.fm');
+			}
+		});
+		menu.newItem({
+			menuName: lg['Open file location'],
+			str:  lg['Wikipedia folder'],
+			func: () => {
+				txt.showParentFolder('wikipedia');
+			}
+		});
+		// Regorxxx ->
 		menu.addSeparator({menuName: lg['Sources']});
 
 		if (ppt.menuShowPaste == 2 || ppt.menuShowPaste && this.shift) {
@@ -701,7 +731,6 @@ class MenuItems {
 		this.img.name = this.img.isLfm && this.path.img.lastIndexOf('\\') < this.path.img.lastIndexOf('_')
 			? this.path.img.slice(this.path.img.lastIndexOf('_') + 1) 
 			: this.path.img.slice(this.path.img.lastIndexOf('\\') + 1); // needed for init
-		console.log(this.img.name)
 		// Regorxxx ->
 		this.img.blacklist = [];
 		this.path.blackList = `${cfg.storageFolder}blacklist_image.json`;
@@ -740,8 +769,8 @@ class MenuItems {
 	getlookUpStr(i, j, artist) {
 		return [
 			[lg['Manual cycle: wheel over button'], lg['Auto cycle items'], popUpBox.ok ? lg['Options...'] : lg['Options: see console'], lg['Reload']][i],
-			[lg['Show similar artists'], lg['Show more tags (circle button if present)'], lg['Show artist history'], lg['Auto lock'], lg['Reset artist history...'], lg['Last.fm: '] + artist + lg['...'], lg['Last.fm: '] + artist + lg[': similar artists...'], lg['Last.fm: '] + artist + lg[': top albums...'], lg['Allmusic: '] + artist + lg['...']][i],
-			[lg['Show top albums'], lg['Show album history'], lg['Auto lock'], lg['Reset album history...'], lg['Last.fm: '] + artist + lg['...'], lg['Last.fm: '] + artist + lg[': similar artists...'], lg['Last.fm: '] + artist + lg[': top albums...'], lg['Allmusic: '] + artist + lg['...']][i]
+			[lg['Show similar artists'], lg['Show more tags (circle button if present)'], lg['Show artist history'], lg['Auto lock'], lg['Reset artist history...'], lg['Last.fm: '] + artist + lg['...'], lg['Last.fm: '] + artist + lg[': similar artists...'], lg['Last.fm: '] + artist + lg[': top albums...'], lg['AllMusic: '] + artist + lg['...']][i], // Regorxxx <- Language fixes ->
+			[lg['Show top albums'], lg['Show album history'], lg['Auto lock'], lg['Reset album history...'], lg['Last.fm: '] + artist + lg['...'], lg['Last.fm: '] + artist + lg[': similar artists...'], lg['Last.fm: '] + artist + lg[': top albums...'], lg['AllMusic: '] + artist + lg['...']][i] // Regorxxx <- Language fixes ->
 		][j];
 	}
 	
@@ -765,7 +794,7 @@ class MenuItems {
 		const b = ppt.artistView ? 'Bio' : 'Rev';
 		const n = b.toLowerCase();
 		this.types = !txt[n].reader ? $.source.amLfmWiki : $.source.amLfmWikiTxt;
-		this.sources = [lg['Allmusic'], lg['Last.fm'], lg['Wikipedia']];
+		this.sources = [lg['AllMusic'], lg['Last.fm'], lg['Wikipedia']]; // Regorxxx <- Language fixes ->
 		this.sources = this.sources.map(v => v + (ppt.artistView ? ' biography' : ' review'));
 		if (txt[n].reader) this.sources.push(txt[n].subhead.txt[0] || '');
 		if (!panel.stndItem() && (txt.reader[n].lyrics || txt.reader[n].props)) this.sources[3] += ' // current track';
