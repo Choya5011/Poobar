@@ -56,7 +56,6 @@ function GetNowPlayingColours() {
             });
 
             img = null;
- 			//img.Dispose();
 
             let background_colour = extracted_colours[0].colour;
  			// Find least gray/white/black color

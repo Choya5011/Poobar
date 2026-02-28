@@ -35,7 +35,7 @@ let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
 let paintRect = false;
 let delay = 150;
 
-update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+update_background_art(ppt);
 get_colours(ppt.col_mode.value, true);
 
 function on_size(width, height) {
@@ -315,7 +315,7 @@ function on_mouse_rbtn_up(x, y) {
     case 90:
     case 91:
         ppt.orientation.toggle();
-        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_background_art(ppt);
         on_size();
         window.Repaint();
         break;
@@ -326,12 +326,12 @@ function on_mouse_rbtn_up(x, y) {
     case 210:
         ppt.bgShow.toggle();
         get_colours(ppt.col_mode.value, true);
-        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_background_art(ppt);
         window.Repaint();
         break;
     case 211:
         ppt.bgBlur.toggle();
-        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_background_art(ppt);
         window.Repaint();
         break;
     case 212:
@@ -342,7 +342,7 @@ function on_mouse_rbtn_up(x, y) {
     case 214:
         ppt.bgMode.toggle();
         if (ppt.bgMode.enabled && ppt.bgPath.value === "path\\to\\custom\\image") window.ShowProperties();
-        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_background_art(ppt);
         window.Repaint();
         break;
     case 310:
@@ -390,7 +390,6 @@ function on_colours_changed() {
 }
 
 function on_playback_new_track() {
-    on_colours_changed();
-    //get_colours(ppt.col_mode.value, true);
-    update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+    get_colours(ppt.col_mode.value, true);
+    update_background_art(ppt);
 }

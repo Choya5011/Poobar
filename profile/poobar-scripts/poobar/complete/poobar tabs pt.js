@@ -271,21 +271,18 @@ function on_mouse_rbtn_up(x, y) {
         break;
     case 310:
         ppt.col_mode.value = 1;
-        //ppt.bgShow.enabled = false;
         get_colours(ppt.col_mode.value, true);
         refresh_pt_panel();
         window.Repaint();
         break;
     case 311:
         ppt.col_mode.value = 2;
-        //ppt.bgShow.enabled = false;
         get_colours(ppt.col_mode.value, true);
         refresh_pt_panel();
         window.Repaint();
         break;
     case 312:
         ppt.col_mode.value = 3;
-        //ppt.bgShow.enabled = false;
         get_colours(ppt.col_mode.value, true);
         refresh_pt_panel();
         window.ShowProperties();
@@ -320,10 +317,8 @@ function on_colours_changed() {
 }
 
 function on_playback_new_track() {
-    on_colours_changed();
-    //get_colours(ppt.col_mode.value, true);
+    get_colours(ppt.col_mode.value, true);
     update_album_art_pt();
-
     refresh_pt_panel();
 }
 

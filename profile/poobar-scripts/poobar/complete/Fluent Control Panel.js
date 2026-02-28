@@ -122,8 +122,8 @@ let waveformPanel; try { waveformPanel = window.GetPanelByIndex(0); } catch (e) 
 // Initial updates
 get_colours(ppt.col_mode.value);
 panel.item_focus_change();
-update_album_art(ppt.art.enabled);
-update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+update_background_art(ppt);
+update_album_art(ppt);
 updateNextTrackInfo();
 
 buttons.update = () => {
@@ -460,8 +460,8 @@ function on_metadb_changed() {
 function on_playback_new_track() {
     get_colours(ppt.col_mode.value);
     updateNextTrackInfo(); // When a new track starts, the "next" track might change.
-    update_album_art(ppt.art.enabled);
-    update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+    update_background_art(ppt);
+    update_album_art(ppt);
     panel.item_focus_change();
     buttons.update();
 }
@@ -833,7 +833,7 @@ function on_mouse_rbtn_up(x, y) {
         break;
     case 210:
         ppt.art.toggle();
-        update_album_art(ppt.art.enabled);
+        update_album_art(ppt);
         on_size();
         window.Repaint();
         break;
@@ -865,12 +865,12 @@ function on_mouse_rbtn_up(x, y) {
     case 310:
         ppt.bgShow.toggle();
         buttons.update();
-		update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+		update_background_art(ppt);
         window.Repaint();
         break;
     case 311:
         ppt.bgBlur.toggle();
-        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_background_art(ppt);
         window.Repaint();
         break;
     case 312:
@@ -881,7 +881,7 @@ function on_mouse_rbtn_up(x, y) {
     case 314:
         ppt.bgMode.toggle();
         if (ppt.bgMode.enabled && ppt.bgPath.value === "path\\to\\custom\\image") window.ShowProperties();
-        update_background_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_background_art(ppt);
         window.Repaint();
         break;
     case 410:

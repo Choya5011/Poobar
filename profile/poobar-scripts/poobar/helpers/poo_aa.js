@@ -11,18 +11,18 @@ let g_img = null; // album art for fluent control panel
 let bg_img = null; // background image
 let g_img_res = 200;
 let bg_img_res = 0;
-function update_background_art(bgShow, bgMode, bgBlur, bgPath) {
+function update_background_art(ppt) {
     bg_img = null;
-    if (!bgShow) return;
+    if (!ppt || !ppt.bgShow.enabled) return;
     const metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
     if (metadb) {
-       bg_img = bgMode ? gdi.Image(bgPath) : utils.GetAlbumArtV2(metadb, 0, false);
+       bg_img = ppt.bgMode.enabled ? gdi.Image(ppt.bgPath.value) : utils.GetAlbumArtV2(metadb, 0, false);
        if (bg_img) {
            // attempt to reduce RAM usage by reducing res; experimental/marginal results
-           bg_img_res = bgBlur ? 200 : (bg_img.Width > 1280 ? 1280 : bg_img.Width);
+           bg_img_res = ppt.bgBlur.enabled ? 200 : (bg_img.Width > 1280 ? 1280 : bg_img.Width);
            const r = bg_img_res / bg_img.Width;
            bg_img = bg_img.Resize(bg_img_res, bg_img.Height * r, 2);
-           if (bgBlur) bg_img.StackBlur(24);
+           if (ppt.bgBlur.enabled) bg_img.StackBlur(24);
        }
        window.Repaint();
     }
@@ -33,9 +33,14 @@ function update_album_art(art) {
     if (!art) return;
     const metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
     if (metadb) {
-        g_img = utils.GetAlbumArtV2(metadb, 0, false);
-        const r = g_img_res / g_img.Width;
-        g_img = g_img.Resize(g_img_res, g_img.Height * r, 2); apply_corners_mask(g_img, 0.1);
+        if (bg_img && !ppt.bgBlur.enabled) {
+            const r = g_img_res / bg_img.Width;
+            g_img = bg_img.Resize(g_img_res, bg_img.Height * r, 2); apply_corners_mask(g_img, 0.1);
+        } else {
+            g_img = utils.GetAlbumArtV2(metadb, 0, false);
+            const r = g_img_res / g_img.Width;
+            g_img = g_img.Resize(g_img_res, g_img.Height * r, 2); apply_corners_mask(g_img, 0.1);
+        }
     }
     window.Repaint();
 }
