@@ -11,5 +11,5 @@ Background:
 
 The "Shadow" option is a transparent overlay for the background image that uses the color set by the color mode (e.g. system/dynamic/custom).
 
-Selecting "Default" uses the custom image at path\to\custom\image. If this path hasn’t been changed, the properties window opens automatically so you can set the correct path. Click Apply to save changes—leaving the default path will cause drawing issues.
+Selecting "Default" uses the custom image at path\to\custom\image. If this path hasn’t been changed, the properties window opens automatically so you can set the correct path. Click Apply to save changes, leaving the default string will make it fall back on a default image or cause drawing issues.
 

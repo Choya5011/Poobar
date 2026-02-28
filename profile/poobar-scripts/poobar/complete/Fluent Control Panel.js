@@ -880,7 +880,7 @@ function on_mouse_rbtn_up(x, y) {
     case 313:
     case 314:
         ppt.bgMode.toggle();
-        if (ppt.bgMode.enabled && ppt.bgPath.value === "path\\to\\custom\\image") window.ShowProperties();
+        if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties();
         update_background_art(ppt);
         window.Repaint();
         break;

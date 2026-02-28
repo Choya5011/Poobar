@@ -28,11 +28,10 @@ let ptArr = window.GetProperty("_PROPERTY: Pseudo Transparent Panels (delimiter:
 let ww, wh = 0;
 let g_img = null; // album art
 let bg_img = null; // background if blurred/custom.
-let g_img_res, bg_img_res;
 
 initTabs();
 updateTabSize(ppt);
-update_album_art_pt();
+update_album_art();
 get_colours(ppt.col_mode.value, true);
 
 function on_size() {
@@ -94,26 +93,24 @@ function on_paint(gr) {
     tab.paint_pt(gr, ppt);
 }
 
-function update_album_art_pt(artBlur) {
+function update_album_art() {
     bg_img = null; g_img = null;
-    //if (!bgShow && !art) return;
     const metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
     if (metadb) {
         g_img = utils.GetAlbumArtV2(metadb, 0);
-        g_img_res = artBlur ? 200 : (g_img.Width > 1280 ? 1280 : g_img.Width);
+        const g_img_res = g_img.Width > 1280 ? 1280 : g_img.Width;
         const r = g_img_res / g_img.Width;
         g_img = g_img.Resize(g_img_res, g_img.Height * r, 2);
-        if (ppt.bgShow.enabled) bg_img = ppt.bgMode.enabled ? gdi.Image(ppt.bgPath.value) : g_img.Clone(0, 0, g_img.Width, g_img.Height);
-        if (artBlur) g_img.StackBlur(24);
 
-        if (bg_img) {
-            // attempt to reduce RAM usage by reducing res; experimental/marginal results
-            bg_img_res = ppt.bgBlur.enabled ? 200 : (bg_img.Width > 1280 ? 1280 : bg_img.Width);
+        if (ppt.bgMode.enabled || ppt.bgBlur.enabled) {
+            let def_img_path;
+            if (typeof ppt.bgPath.value === 'string' && /\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) { def_img_path = ppt.bgPath.value; } else { def_img_path = fb.ComponentPath + 'samples\\jsplaylist-mod\\images\\default.jpg'; }
+            bg_img = ppt.bgMode.enabled ? gdi.Image(def_img_path) : g_img.Clone(0, 0, g_img.Width, g_img.Height);
+            const bg_img_res = ppt.bgBlur.enabled ? 200 : (bg_img.Width > 1280 ? 1280 : bg_img.Width);
             const r = bg_img_res / bg_img.Width;
             bg_img = bg_img.Resize(bg_img_res, bg_img.Height * r, 2);
             if (ppt.bgBlur.enabled) bg_img.StackBlur(24);
         }
-
         window.Repaint();
     }
 }
@@ -132,20 +129,6 @@ function on_mouse_lbtn_up(x, y) {
             for (let i = 0; i < tabs.length; i++) {
                 const p = window.GetPanelByIndex(tabs[i].index);
                 if (p) p.Show(i === activeTab);
-            }
-
-            for (let i = 0; i < tabs.length; i++) {
-                const p = window.GetPanelByIndex(tabs[i].index);
-                if (p) {
-                    p.Show(i === activeTab);
-//                    if (i === activeTab) {
-//                        if (p.Name === 'ESLyric') {
-//                            update_album_art_pt(true);
-//                        } else {
-//                            update_album_art_pt();
-//                        }
-//                    }
-                }
             }
             window.Repaint();
             return true;
@@ -236,7 +219,7 @@ function on_mouse_rbtn_up(x, y) {
     case 90:
     case 91:
         ppt.orientation.toggle();
-        update_album_art_pt();
+        update_album_art();
         on_size();
         window.Repaint();
         break;
@@ -247,13 +230,13 @@ function on_mouse_rbtn_up(x, y) {
     case 210:
         ppt.bgShow.toggle();
         get_colours(ppt.col_mode.value, true);
-        update_album_art_pt();
+        update_album_art();
         refresh_pt_panel();
         window.Repaint();
         break;
     case 211:
         ppt.bgBlur.toggle();
-        update_album_art_pt();
+        update_album_art();
         refresh_pt_panel();
         window.Repaint();
         break;
@@ -264,8 +247,8 @@ function on_mouse_rbtn_up(x, y) {
     case 213:
     case 214:
         ppt.bgMode.toggle();
-        if (ppt.bgMode.enabled && ppt.bgPath.value === "path\\to\\custom\\image") window.ShowProperties();
-        update_album_art_pt();
+        if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties();
+        update_album_art();
         refresh_pt_panel();
         window.Repaint();
         break;
@@ -318,7 +301,7 @@ function on_colours_changed() {
 
 function on_playback_new_track() {
     get_colours(ppt.col_mode.value, true);
-    update_album_art_pt();
+    update_album_art();
     refresh_pt_panel();
 }
 
@@ -328,5 +311,5 @@ function refresh_pt_panel() {
         p.Hidden = true;
         p.Hidden = false;
     }
-    //if (p.Name === 'ESLyric') { update_album_art_pt(true); } else { update_album_art_pt(); }
+    //if (p.Name === 'ESLyric') { update_album_art_pt(true); } else { update_album_art(); }
 }
