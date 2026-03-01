@@ -13,6 +13,7 @@ Waveform:
 The waveform is nested inside the control panel & MUST be the TOPMOST panel inside the control panel, see:
 * To delete: Preferences -> Columns UI -> Layout -> Bottommost JSplitter -> Right-Click -> Remove Panel
 * To replace: Delete (previous instruct) -> JSplitter it was nested in -> Insert panel -> Panels -> Waveform minibar (mod)
+* To configure: Right click the waveform area
 If deleted the Fluent Control Panel will show an error, simply switch the seekbar mode from waveform to normal.
 It is recommended to delete it if it's not in use as it speeds up start-up times & removes useless background processing.
 
