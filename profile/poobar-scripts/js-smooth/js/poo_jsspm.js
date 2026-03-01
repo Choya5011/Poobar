@@ -2159,7 +2159,7 @@ function get_colors() {
                 g_color_highlight = window.GetColourCUI(ColorTypeCUI.active_item_frame);
 		    } else if (ppt.col_mode === 2) {
 		        bgAlpha = window.GetProperty('_PROPERTY: Background Color Alpha (0-255)');
-                g_color_normal_txt = bgAlpha < 128 ? RGB(255, 255, 255) : nowPlayingColours[1];
+                g_color_normal_txt = nowPlayingColours[1]; //bgAlpha < 128 ? RGB(255, 255, 255) : nowPlayingColours[1];
                 g_color_selected_txt = nowPlayingColours[3];
                 g_color_normal_bg = setAlpha(nowPlayingColours[0], bgAlpha);
                 g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
@@ -2175,7 +2175,7 @@ function get_colors() {
                 g_color_highlight = window.GetColourDUI(ColorTypeDUI.highlight);
 		    } else if (ppt.col_mode === 2) {
 		        bgAlpha = window.GetProperty('_PROPERTY: Background Color Alpha (0-255)');
-		        g_color_normal_txt = bgAlpha < 128 ? RGB(255, 255, 255) : nowPlayingColours[1];
+		        g_color_normal_txt = nowPlayingColours[1]; //bgAlpha < 128 ? RGB(255, 255, 255) : nowPlayingColours[1];
                 g_color_selected_txt = nowPlayingColours[3];
                 g_color_normal_bg = setAlpha(nowPlayingColours[0], bgAlpha);
                 g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);

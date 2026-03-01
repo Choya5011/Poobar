@@ -1,9 +1,8 @@
 ﻿'use strict';
 
-window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
-
 // This script is a modified version of Fluent Control Panel version 0.9 by eurekagliese
 window.DefineScript('Fluent Control Panel', {author:'eurekagliese & Choya', options:{grab_focus:false}});
+window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
@@ -118,8 +117,12 @@ const pbo_names = ['Default', 'Repeat (playlist)', 'Repeat (track)', 'Random', '
 
 let waveformH = 0;
 let waveformY = 0;
+let spectrumW = 0;
+let spectrumH = 0;
+const js_wf_name = 'Not-A-Waveform-Seekbar-SMP';
 const wf_instruct = 'Preferences -> Display -> Columns UI -> Layout -> JSplitter titled Fluent Control Panel -> Right click -> Insert panel -> Waveform panel of choice';
-let waveformPanel; try { waveformPanel = window.GetPanelByIndex(0); } catch (e) { waveformPanel = null; }
+let waveformPanel; try { waveformPanel = window.GetPanelByIndex(0); if (waveformPanel.Name === 'JSplitter') { waveformPanel.Text = js_wf_name; } else if (waveformPanel.Name !== 'Waveform minibar (mod)') { waveformPanel = null; }  } catch (e) { waveformPanel = null; }
+let spectrumPanel; try { spectrumPanel = window.GetPanel('Spectrum Analyzer'); } catch (e) { spectrumPanel = null; }
 
 // Initial updates
 get_colours(ppt.col_mode.value);
@@ -192,6 +195,7 @@ buttons.update = () => {
         buttons.buttons.love = new _button(x, y, bs, bs, { normal: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_on, g_textcolour, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover: (lv == 1 || fav == 1) ? _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; fb.RunContextCommandWithMetadb("Last.fm Playcount Sync/" + (fav == 1 ? "Unlove" : "Love"), selected_items); } }, '');
     } else {
         fb.ShowPopupMessage("Invalid love mode value, setting to FEEDBACK tag mode", window.ScriptInfo.Name);
+        ppt.loveMode.value = 1;
     }
     if ((loveModeValue == 2 || loveModeValue == 3) && !_cc('foo_lastfm_playcount_sync') && errFlag_lv) {
         errFlag_lv = false;
@@ -239,6 +243,11 @@ function on_size() {
     seekbar.h = _scale(14);
     seekbar.y = panel.h * 0.6;
 
+    volume.x = (panel.w > scaler.s800) ? panel.w - (bs * 4) : panel.w - (bs * 2.5);
+    volume.y = (panel.w > scaler.s520) ? seekbar.y + _scale(12) : panel.h - _scale(10);
+    volume.h =  _scale(4);
+    volume.w = _scale(74);
+
     if (ppt.mode.enabled) {
         rating.x = bx - (bs * 3);
         rating.y = seekbar.y - _scale(24);
@@ -248,31 +257,18 @@ function on_size() {
         }
     } else {
         // rating.x & y are in on_paint
-
-        //waveformH = Math.round(wh / 3);
-        waveformH = _scale(32);
-        waveformY = _scale((panel.h / 2) - (waveformH / 2));
-
         if (waveformPanel) {
-            if (wh > scaler.s100) {
-                waveformPanel.Move(seekbar.x - _scale(40), waveformY, seekbar.w + _scale(80), waveformH, true);
-                waveformPanel.SupportPseudoTransparency = true;
-                waveformPanel.ShowCaption = false;
-                waveformPanel.Hidden = false;
-                waveformPanel.Locked = true;
-            } else {
-                waveformPanel.Hidden = true;
-            }
+            //waveformH = Math.round(wh / 3);
+            waveformH = _scale(32);
+            waveformY = _scale((panel.h / 2) - (waveformH / 2));
+            if (wh > scaler.s100) { waveformPanel.Move(seekbar.x - _scale(40), waveformY, seekbar.w + _scale(80), waveformH); waveformPanel.SupportPseudoTransparency = true; waveformPanel.ShowCaption = false; waveformPanel.Hidden = false; waveformPanel.Locked = true; } else { waveformPanel.Hidden = true; }
         } else if (errFlag_wf) {
             errFlag_wf = false;
             console.log(window.ScriptInfo.Name + ': Missing Panel \nNo Waveform panel found: make sure the waveform panel is the topmost panel inside the control panel. See instructions:\n' + wf_instruct);
         }
     }
 
-    volume.x = (panel.w > scaler.s800) ? panel.w - (bs * 4) : panel.w - (bs * 2.5);
-    volume.y = (panel.w > scaler.s520) ? seekbar.y + _scale(12) : panel.h - _scale(10);
-    volume.h =  _scale(4);
-    volume.w = _scale(74);
+    if (spectrumPanel && ww > scaler.s800 && panel.h > scaler.s80) { spectrumW = Math.min(seekbar.x - _scale(46), wh); spectrumH = wh; spectrumPanel.Move(0, 0, spectrumW, spectrumH); spectrumPanel.SupportPseudoTransparency = false; spectrumPanel.ShowCaption = false; spectrumPanel.Hidden = false; spectrumPanel.Locked = true; } else if (spectrumPanel) { spectrumPanel.Hidden = true; }
 
     buttons.update();
 }
@@ -307,7 +303,7 @@ function on_paint(gr) {
 
     if (fb.IsPlaying) {
         let size; let art_x; let art_y;
-        if (ppt.art.enabled && g_img && ww > scaler.s800 && panel.h > scaler.s80) {
+        if (ppt.art.enabled && g_img && ww > scaler.s800 && panel.h > scaler.s80 && !spectrumPanel) {
             size = Math.min(seekbar.x - _scale(46), panel.h * 0.86);
             art_x = panel.h * 0.06
             art_y = panel.h * 0.5 - size / 2
@@ -316,26 +312,14 @@ function on_paint(gr) {
 
         // Track information
         let title_w, artist_w;
-        const track_info_x = (ppt.art.enabled && g_img && ww > scaler.s800 && panel.h > scaler.s80) ? art_y + size + 10 : _scale(12);
+        const track_info_x = (ppt.art.enabled && g_img && ww > scaler.s800 && panel.h > scaler.s80 && !spectrumPanel) ? art_y + size + 10 : (spectrumPanel && ww > scaler.s800 && panel.h > scaler.s80 ? spectrumW + _scale(12) : _scale(12));
         if (ppt.mode.enabled && panel.w > scaler.s600 && panel.h >= scaler.s80) {
-            if (ppt.art.enabled && ww > scaler.s800) {
-                title_w = panel.w / 5;
-                artist_w = panel.w / 9;
-            } else {
-                title_w = panel.w / 4;
-                artist_w = seekbar.x - panel.h - _scale(4);
-            }
+            if (ppt.art.enabled && ww > scaler.s800) { title_w = panel.w / 5; artist_w = panel.w / 9; } else { title_w = panel.w / 4; artist_w = seekbar.x - panel.h - _scale(4); }
     		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, panel.h * 0.3, title_w, 0, LEFT | DT_END_ELLIPSIS);
     		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, panel.h * 0.6, artist_w, 0, LEFT | DT_END_ELLIPSIS);
         } else if (!ppt.mode.enabled && panel.w > scaler.s600 && panel.h >= scaler.s80) {
             if (ppt.rating.enabled) { rating.y = panel.h * 0.75; rating.x = track_info_x - _scale(2); }
-            if (ppt.art.enabled && ww > scaler.s800) {
-                title_w = (ww == scaler.s1080) ? panel.w / 9 : panel.w / 6.4;
-                artist_w = panel.w * 0.13;
-            } else {
-                title_w = panel.w / 3.4;
-                artist_w = panel.w * 0.23;
-            }
+            if (ppt.art.enabled && ww > scaler.s800) { title_w = (ww == scaler.s1080) ? panel.w / 9 : panel.w / 6.4; artist_w = panel.w * 0.13; } else { title_w = panel.w / 3.4; artist_w = panel.w * 0.23; }
             gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, panel.h * 0.1, title_w, _scale(18), LEFT | DT_END_ELLIPSIS); // # w needs calibration
             gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, panel.h * 0.43, artist_w, _scale(18), LEFT | DT_END_ELLIPSIS);
         }
@@ -455,6 +439,12 @@ rating.paint = (gr) => {
     }
 }
 
+function refresh_wf_panel() {
+    let p; try { p = window.GetPanelByIndex(0); } catch (e) { return; }
+    if (p.Text === js_wf_name || p.Name === 'JSplitter') { p.Hidden = true; p.Hidden = false; }
+    if (p.Name === 'Waveform minibar (mod)') { p.ShowCaption = true; p.ShowCaption = false; }
+}
+
 function on_metadb_changed() {
     rating.metadb_changed();
 }
@@ -464,6 +454,7 @@ function on_playback_new_track() {
     updateNextTrackInfo(); // When a new track starts, the "next" track might change.
     update_background_art(ppt);
     update_album_art(ppt);
+    refresh_wf_panel();
     panel.item_focus_change();
     buttons.update();
 }
@@ -838,6 +829,7 @@ function on_mouse_rbtn_up(x, y) {
         update_album_art(ppt);
         on_size();
         window.Repaint();
+        if (spectrumPanel && ppt.art.enabled) fb.ShowPopupMessage('A Spectrum Analyzer panel is present.\nAlbum art hidden.', window.ScriptInfo.Name);
         break;
     case 211:
         ppt.vol.toggle();
@@ -869,15 +861,18 @@ function on_mouse_rbtn_up(x, y) {
         buttons.update();
 		update_background_art(ppt);
         window.Repaint();
+        refresh_wf_panel();
         break;
     case 311:
         ppt.bgBlur.toggle();
         update_background_art(ppt);
         window.Repaint();
+        refresh_wf_panel();
         break;
     case 312:
         ppt.overlay.toggle();
         window.Repaint();
+        refresh_wf_panel();
         break;
     case 313:
     case 314:
@@ -885,22 +880,26 @@ function on_mouse_rbtn_up(x, y) {
         if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties();
         update_background_art(ppt);
         window.Repaint();
+        refresh_wf_panel();
         break;
     case 410:
         ppt.col_mode.value = 1;
         on_colours_changed();
         window.Repaint();
+        refresh_wf_panel();
         break;
     case 411:
         ppt.col_mode.value = 2;
         on_colours_changed();
         window.Repaint();
+        refresh_wf_panel();
         break;
     case 412:
         ppt.col_mode.value = 3;
         on_colours_changed();
         window.ShowProperties();
         window.Repaint();
+        refresh_wf_panel();
         break;
     case 998:
         let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\fcp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' };

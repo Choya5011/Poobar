@@ -10,7 +10,7 @@ Selecting "Default" uses the custom image at path\to\custom\image. If this path 
 
 Waveform:
 --------
-The waveform is nested inside the control panel, see:
+The waveform is nested inside the control panel & MUST be the TOPMOST panel inside the control panel, see:
 * To delete: Preferences -> Columns UI -> Layout -> Bottommost JSplitter -> Right-Click -> Remove Panel
 * To replace: Delete (previous instruct) -> JSplitter it was nested in -> Insert panel -> Panels -> Waveform minibar (mod)
 If deleted the Fluent Control Panel will show an error, simply switch the seekbar mode from waveform to normal.

@@ -2,6 +2,7 @@
 
 // This script is a modified version of Fluent Control Panel version 0.9 by eurekagliese
 window.DefineScript('Fluent Control Panel', {author:'eurekagliese', options:{grab_focus:false}});
+window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');

@@ -1,12 +1,11 @@
 ﻿'use strict';
 
-window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
-
 /**
   * 'poobar tabs pt' is specifically meant for the poobar theme
   * use 'poobar tabs' for custom themes unless psuedo transparency is desired for specific panels.
 */
 window.DefineScript('Pseudo Transparency Poobar Tabs', {author:'Choya', options:{grab_focus:false}});
+window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
