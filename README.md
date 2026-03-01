@@ -38,6 +38,7 @@ Optional (Lyrics): UD Digi Kyokasho (NP-B)
 ## Installation
 **Fonts**  
 Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 by default.  
+
 **Portable Instructions**  
 1. Install [Foobar](https://www.foobar2000.org/windows) as portable.
 2. Download Poobar from the [release page](https://github.com/Choya5011/Poobar/releases) or as nightly from the [main branch](https://github.com/Choya5011/Poobar/archive/refs/heads/main.zip)
