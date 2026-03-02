@@ -23,6 +23,7 @@ function D2DBitmap(arg) {
     this.ApplyAlpha = function (alpha) { }; // (D2DBitmap)
 
     /**
+     * Apllies alpha for entire image. Unlike {@link D2DBitmap#ApplyAlpha} changes the current object
      * @param {number} alpha Valid values 0-255.
      */
     this.ApplyAlphaIndirect = function (alpha) { }; // (void)
@@ -55,6 +56,7 @@ function D2DBitmap(arg) {
     this.CreateRawBitmap = function () { }; // (D2DBitmap)
 
     /**
+     * Takes the top of colors found in the image
      * @param {number} max_count
      * @return {Array<number>}
      */
@@ -63,7 +65,7 @@ function D2DBitmap(arg) {
     /**
      * Returns a JSON array in string form so you need to use JSON.parse() on the result.<br>
      * Each entry in the array is an object which contains colour and frequency values.<br>
-     * Uses a different method for calculating colours than {@link D2DBitmap#GetColourScheme GetColourScheme}.<br>
+     * Uses a different method for calculating colours than {@link GdiBitmap#GetColourScheme GetColourScheme}.<br>
      * Image is automatically resized during processing for performance reasons so there's no
      * need to resize before calling the method.
      *
@@ -72,7 +74,7 @@ function D2DBitmap(arg) {
      *
      * @example
      * // See docs\Helpers.js for "toRGB" function.
-     * img = ... // use utils.GetAlbumArtV2 d2d.Image / etc
+     * img = ... // use utils.GetAlbumArtV2 / gdi.Image / etc
      * colours = JSON.parse(img.GetColourSchemeJSON(5));
      * console.log(colours[0].col); // -4194304
      * console.log(colours[0].freq); // 0.34
@@ -81,7 +83,18 @@ function D2DBitmap(arg) {
     this.GetColourSchemeJSON = function (max_count) { }; // (string)
 
     /**
-     * Note: don't forget to use {@link D2DBitmap#ReleaseGraphics ReleaseGraphics} after work on D2DGraphics is done!
+     * Returns a JSON array in string form so you need to use JSON.parse() on the result.<br>
+     * Each entry in the array is an object which contains colour and frequency values.<br>
+     * Uses a different method than {@link GdiBitmap#GetColourSchemeJSON GetColourSchemeJSON} for calculating colours (K-means++ with Oklab).<br>
+     *
+     * @param {number} max_count
+     * @return {string}
+     */
+    this.GetColourSchemeJSONV2 = function (max_count) { }; // (string)
+
+    /**
+     * <b>IMPORTANT</b>: You MUST call {@link D2DBitmap#ReleaseGraphics ReleaseGraphics} after work on D2DGraphics is done!<br>
+     * It is illegal to call any methods of D2DBitmap object while working with the obtained D2DGraphics object until {@link D2DBitmap#ReleaseGraphics ReleaseGraphics} is called.
      *
      * @return {D2DGraphics}
      */
@@ -109,9 +122,14 @@ function D2DBitmap(arg) {
     this.Resize = function (w, h, mode) { }; // (D2DBitmap)
 
     /**
+     * Resizes image. Unlike {@link D2DBitmap#Resize} changes the current object
      * @param {number} w
      * @param {number} h
      * @param {number=} [mode=0] See {@link module:Flags.AlbumArtId InterpolationMode}
+     * @param {number=} [sharpness=0.0]
+     * @param {number=} [border_hard=false]
+     * @param {number=} [cx=0] Scale center point x
+     * @param {number=} [cy=0] Scale center point y
      */
     this.ResizeIndirect = function (w, h, mode) { }; // (void)
 
@@ -207,35 +225,6 @@ function D2DFont(name, size_px, style) {
 }
 
 /**
- * Used as a line drawing <b>style</b> parameter value in:<br>
- *    {@link D2DGraphics#DrawLine DrawLine}<br>
- *    {@link D2DGraphics#DrawRect DrawRect}<br>
- *    {@link D2DGraphics#DrawRoundRect DrawRoundRect}<br>
- *    {@link D2DGraphics#DrawEllipse DrawEllipse}<br>
- *    {@link D2DGraphics#DrawPolygon DrawPolygon}<br>
- *    {@link D2DGraphics#DrawLines DrawLines}<br>
- * @default
- */
-const DashStyle = {
-    Solid: 0,
-    Dash: 1,
-    Dot: 2,
-    DashDot: 3,
-    DashDotDot: 4
-};
-
-/**
- * Used as a line drawing <b>startCap</b> and <b>endCap</b> parameter value in {@link D2DGraphics#DrawLine DrawLine}<br>
- * @default
- */
-const CapStyle = {
-    Flat: 0,
-    Square: 1,
-    Round: 2,
-    Triangle: 3
-}
-
-/**
  * Creates Direct2D effect.
  * @constructor
  * @param {string} CLSID CLSID of Direct2D effect. See {@link module:Effects Effects} for effects' CLSID.
@@ -279,7 +268,7 @@ function D2DEffect(CLSID) {
     * 
     * include(`${fb.ComponentPath}\\docs\\Effects.js`);
     * 
-    * const img = d2d.Image(`${fb.ProfilePath}\\images\\Flowers.jpg`);
+    * const img = d2d.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Flowers.jpg`);
     * 
     * const effect = d2d.Effect(Effects.Sepia.ID);
     * effect.SetInput(0, img);
@@ -300,7 +289,7 @@ function D2DEffect(CLSID) {
      * 
      * include(`${fb.ComponentPath}\\docs\\Effects.js`);
      * 
-     * const img = d2d.Image(`${fb.ProfilePath}\\images\\Flowers.jpg`);
+     * const img = d2d.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Flowers.jpg`);
      * 
      * const sepia = d2d.Effect(Effects.Sepia.ID);
      * sepia.SetInput(0, img);
@@ -398,7 +387,7 @@ function D2DGraphics() {
      * @param {number} h
      * @param {number} line_width
      * @param {number} colour
-     * @param {DashStyle=} [style=DashStyle.Solid]
+     * @param {DashStyle=} [style=DashStyle.Solid] See {@link module:Flags.DashStyle DashStyle}
      */
     this.DrawEllipse = function (x, y, w, h, line_width, colour, style) { }; // (void)
 
@@ -424,9 +413,9 @@ function D2DGraphics() {
      * @param {number} y2
      * @param {number} line_width
      * @param {number} colour
-     * @param {DashStyle=} [style=DashStyle.Solid]
-     * @param {CapStyle=} [startCap=CapStyle.Solid]
-     * @param {CapStyle=} [endCap=CapStyle.Solid]
+     * @param {DashStyle=} [style=DashStyle.Solid] See {@link module:Flags.DashStyle DashStyle}
+     * @param {CapStyle=} [startCap=CapStyle.Solid] See {@link module:Flags.CapStyle CapStyle}
+     * @param {CapStyle=} [endCap=CapStyle.Solid] See {@link module:Flags.CapStyle CapStyle}
      */
     this.DrawLine = function (x1, y1, x2, y2, line_width, colour, style, startCap, endCap) { }; // (void)
 
@@ -434,7 +423,7 @@ function D2DGraphics() {
      * @param {number} colour
      * @param {number} line_width
      * @param {Array<Array<number>>} points
-     * @param {DashStyle=} [style=DashStyle.Solid]
+     * @param {DashStyle=} [style=DashStyle.Solid] See {@link module:Flags.DashStyle DashStyle}
      */
     this.DrawPolygon = function (colour, line_width, points, style) { }; // (void)
 
@@ -459,7 +448,7 @@ function D2DGraphics() {
      * @param {number} h
      * @param {number} line_width
      * @param {number} colour
-     * @param {DashStyle=} [style=DashStyle.Solid]
+     * @param {DashStyle=} [style=DashStyle.Solid] See {@link module:Flags.DashStyle DashStyle}
      */
     this.DrawRect = function (x, y, w, h, line_width, colour, style) { }; // (void)
 
@@ -472,7 +461,7 @@ function D2DGraphics() {
      * @param {number} arc_height
      * @param {number} line_width
      * @param {number} colour
-     * @param {DashStyle=} [style=DashStyle.Solid]
+     * @param {DashStyle=} [style=DashStyle.Solid] See {@link module:Flags.DashStyle DashStyle}
      */
     this.DrawRoundRect = function (x, y, w, h, arc_width, arc_height, line_width, colour, style) { }; // (void)
 
@@ -877,6 +866,7 @@ let d2d = {
      * 
      * window.DrawMode = 1;
      * 
+     * // Simple colour inversion shader
      * const shaderSource = `
      *     // Input texture (Direct2D passed it into t0)
      *     Texture2D InputTexture : register(t0);
@@ -900,11 +890,11 @@ let d2d = {
      *     }
      * `;
      * 
-     * const shaderCode = d2d.Compile(shaderSource);
-     * 
-     * const img = d2d.Image('Flowers.jpg');
+     * const img = d2d.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Flowers.jpg`);
      * const effect = d2d.Effect(Effects.CustomShader.ID);
      * effect.SetInput(0, img);
+     * 
+     * const shaderCode = d2d.Compile(shaderSource);
      * if (shaderCode.Error !== "") 
      *     fb.ShowPopupMessage(code.Error, "Direct2D compile error!");
      * else

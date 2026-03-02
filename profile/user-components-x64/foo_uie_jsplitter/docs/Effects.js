@@ -8,14 +8,14 @@
  * 
  * include(`${fb.ComponentPath}\\docs\\Effects.js`);
  * 
- * const img = d2d.Image(`${fb.ProfilePath}\\images\\Flowers.jpg`);
+ * const img = d2d.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Flowers.jpg`);
  * 
  * const effect = d2d.Effect(Effects.Sepia.ID);
  * effect.SetInput(0, img);
  * effect.SetValue(Effects.Sepia.Intensity, 0.5);
  * 
  * function on_paint(dgr) {	
- *     dgr.DrawEffect(effect, 10, 10, 0, 0, img.Width, img.Height);
+ *     dgr.DrawEffect(effect, 0, 0, 0, 0, img.Width, img.Height);
  * }
  * 
  * @example
@@ -23,7 +23,7 @@
  * 
  * include(`${fb.ComponentPath}\\docs\\Effects.js`);
  * 
- * const img = d2d.Image(`${fb.ProfilePath}\\images\\Flowers.jpg`);
+ * const img = d2d.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Flowers.jpg`);
  * 
  * const sepia = d2d.Effect(Effects.Sepia.ID);
  * sepia.SetInput(0, img);
@@ -46,6 +46,7 @@
  * 
  * window.DrawMode = 1;
  * 
+ * // Simple colour inversion shader
  * const shaderSource = `
  *     // Input texture (Direct2D passed it into t0)
  *     Texture2D InputTexture : register(t0);
@@ -69,11 +70,11 @@
  *     }
  * `;
  * 
- * const shaderCode = d2d.Compile(shaderSource);
- * 
- * const img = d2d.Image('Flowers.jpg');
+ * const img = d2d.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Flowers.jpg`);
  * const effect = d2d.Effect(Effects.CustomShader.ID);
  * effect.SetInput(0, img);
+ * 
+ * const shaderCode = d2d.Compile(shaderSource);
  * if (shaderCode.Error !== "") 
  *     fb.ShowPopupMessage(code.Error, "Direct2D compile error!");
  * else
@@ -132,7 +133,7 @@
  * The default value for the property is FALSE.     
  * 
  * @property {Object} Scale
- * Increases or decreases the contrast of an image.<br>
+ * Use this effect to scale an image up or down.<br>
  * For more information, see: {@link https://learn.microsoft.com/en-us/windows/win32/direct2d/high-quality-scale}
  * @property {string} Scale.ID
  * CLSID of effect.
@@ -151,9 +152,9 @@
  * The interpolation mode the effect uses to scale the image. There are 6 scale modes that range in quality and speed. See Interpolation modes for more info.<br>
  * The default value is {@link module:Effects.ScaleInterpolationMode ScaleInterpolationMode.Linear}
  * @property {number} Scale.BorderMode
- * Value type: <b>{@link module:Effects.ScaleBorderMode ScaleBorderMode}</b><br>
+ * Value type: <b>{@link module:Effects.BorderMode BorderMode}</b><br>
  * The mode used to calculate the border of the image, soft or hard.<br>
- * The default value is {@link module:Effects.ScaleBorderMode ScaleBorderMode.Soft}
+ * The default value is {@link module:Effects.BorderMode BorderMode.Soft}
  * 
  * @property {Object} GaussianBlur
  * Use the Gaussian blur effect to create a blur based on the Gaussian function over the entire input image.<br>

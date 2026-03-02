@@ -1217,6 +1217,37 @@ const UIInstanceType = {
 };
 
 /**
+ * Used as a line drawing <b>style</b> parameter value in:<br>
+ *    {@link D2DGraphics#DrawLine DrawLine}<br>
+ *    {@link D2DGraphics#DrawRect DrawRect}<br>
+ *    {@link D2DGraphics#DrawRoundRect DrawRoundRect}<br>
+ *    {@link D2DGraphics#DrawEllipse DrawEllipse}<br>
+ *    {@link D2DGraphics#DrawPolygon DrawPolygon}<br>
+ *    {@link D2DGraphics#DrawLines DrawLines}<br>
+ * @memberof module:Flags
+ * @default
+ */
+const DashStyle = {
+    Solid: 0,
+    Dash: 1,
+    Dot: 2,
+    DashDot: 3,
+    DashDotDot: 4
+};
+
+/**
+ * Used as a line drawing <b>startCap</b> and <b>endCap</b> parameter value in {@link D2DGraphics#DrawLine DrawLine}<br>
+ * @memberof module:Flags
+ * @default
+ */
+const CapStyle = {
+    Flat: 0,
+    Square: 1,
+    Round: 2,
+    Triangle: 3
+}
+
+/**
  * Compilation flags for {@link d2d.Compile}
  * @memberof module:Flags
  * @default

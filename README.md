@@ -53,7 +53,7 @@ Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 
 4. Start Foobar & pick ```Columns UI``` if prompted.
 
 **Notes**  
-The theme comes with three main presets and their stripped counterparts. After setup the theme is usually set to the ```split_lite``` preset, a stripped version of the ```split``` preset. To swap to another refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Swapping-Layouts) section.  
+The theme comes with three main presets and their stripped counterparts. After setup the theme is set to the ```split``` preset. To swap to another refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Swapping-Layouts) section.  
 
 **Useful To Know**  
 Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Useful-to-know) for further info. Such as customization or for troubleshooting.

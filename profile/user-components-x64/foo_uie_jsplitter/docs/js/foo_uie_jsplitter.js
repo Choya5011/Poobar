@@ -847,6 +847,36 @@ let gdi = {
     CreateImage: function (w, h) { }, // (GdiBitmap)
 
     /**
+     * Create GdiBitmap from raw pixel data in memory.
+     *
+     * @param {Uint8Array} pixelData Raw pixel bytes
+     * @param {number} width Image width in pixels
+     * @param {number} height Image height in pixels
+     * @param {string} [format="bgra32"] Pixel format string (default: "bgra32")
+     * Supported formats:<br>
+     *   "bgra32"  32bpp BGRA<br>
+     *   "rgba32"  32bpp RGBA<br>
+     *   "bgr24"   24bpp BGR<br>
+     *   "rgb24"   24bpp RGB<br>
+     * @returns {GdiBitmap} null if was an error (for example pixelData array length is not suitable for the specified parameters)
+     * @example
+     * const img = gdi.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Field.jpg`);
+     * 
+     * let imgPixelData = img.GetPixelData();
+     * 
+     * utils.WriteBinaryFile("D:\\Field.bin", imgPixelData);
+     * 
+     * let rData = utils.ReadBinaryFile("D:\\Field.bin");
+     * 
+     * let rImg = gdi.CreateImageFromPixelData(rData, 2208, 1242);
+     * 
+     * function on_paint(gr) {
+     *     gr.DrawImage(rImg, 0, 0, img.Width, img.Height, 0, 0, img.Width, img.Height);
+     * }
+     */
+    CreateImageFromPixelData: function(pixelData, width, height, format = "bgra32") { }, // (GdiBitmap)
+
+    /**
      * Performance note: avoid using inside `on_paint`.<br>
      * Performance note II: try caching and reusing `GdiFont` objects,
      * since the maximum amount of such objects is hard-limited by Windows.
@@ -1961,6 +1991,27 @@ let utils = {
     ReplaceIllegalChars(str, strip_trailing_periods) { },
     
     /**
+     * Read a file as raw binary.
+     * @param {string} path Absolute file path
+     * @returns {Uint8Array} File bytes, or null if was an error
+     * @example
+     * const img = gdi.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Field.jpg`);
+     * 
+     * let imgPixelData = img.GetPixelData();
+     * 
+     * utils.WriteBinaryFile("D:\\Field.bin", imgPixelData);
+     * 
+     * let rData = utils.ReadBinaryFile("D:\\Field.bin");
+     * 
+     * let rImg = gdi.CreateImageFromPixelData(rData, 2208, 1242);
+     * 
+     * function on_paint(gr) {
+     *     gr.DrawImage(rImg, 0, 0, img.Width, img.Height, 0, 0, img.Width, img.Height);
+     * }
+     */
+    ReadBinaryFile: function(path) { },
+
+    /**
      * Note: this only returns up to 255 characters per value.
      *
      * @param {string} filename
@@ -2029,6 +2080,28 @@ let utils = {
      * // arr[2] <= '.txt'
      */
     SplitFilePath: function (path) { }, // (boolean)
+
+    /**
+     * Write raw binary data to a file.
+     * @param {string} path Absolute file path
+     * @param {Uint8Array} data Bytes to write
+     * @returns {boolean} true on success
+     * @example
+     * const img = gdi.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Field.jpg`);
+     * 
+     * let imgPixelData = img.GetPixelData();
+     * 
+     * utils.WriteBinaryFile("D:\\Field.bin", imgPixelData);
+     * 
+     * let rData = utils.ReadBinaryFile("D:\\Field.bin");
+     * 
+     * let rImg = gdi.CreateImageFromPixelData(rData, 2208, 1242);
+     * 
+     * function on_paint(gr) {
+     *     gr.DrawImage(rImg, 0, 0, img.Width, img.Height, 0, 0, img.Width, img.Height);
+     * }
+     */
+    WriteBinaryFile: function(path, data) { },
 
     /**
      * @param {string} filename
@@ -2136,6 +2209,18 @@ let window = {
      * window.SetInterval(() => { window.Repaint(); }, 50);
      */
     EraseOnRepaint: true, // (read, write)
+
+    /**
+     * Current graphics rendering mode.<br>
+     * 0 (default) - GDI+<br>
+     * 1 - Direct2D<br>
+     * <b>IMPORTANT</b>: After switching the rendering mode, all drawing objects created for the other mode will be unavailable for use in the current mode.<br>
+     * Therefore, the developer should create all drawing objects only after changing the mode.<br>
+     * Ideally, the mode change should be made in the VERY first line of the main script to avoid accidentally creating objects of the wrong type.<br>
+     * Also, calling any of d2d.* methods for creating objects like fonts, bitmaps or effects, will cause a script crash until the DrawMode is set to 1 at least once (in this case, the resources required for D2D operation are initialized).
+     * @type {number}
+     */
+    DrawMode: 0, // (read, write)
 
     /**
      * Window handle
@@ -3588,6 +3673,7 @@ function GdiBitmap(arg) {
     this.CreateRawBitmap = function () { }; // (GdiRawBitmap)
 
     /**
+     * Takes the top of colors found in the image
      * @param {number} max_count
      * @return {Array<number>}
      */
@@ -3614,11 +3700,48 @@ function GdiBitmap(arg) {
     this.GetColourSchemeJSON = function (max_count) { }; // (string)
 
     /**
+     * Returns a JSON array in string form so you need to use JSON.parse() on the result.<br>
+     * Each entry in the array is an object which contains colour and frequency values.<br>
+     * Uses a different method than {@link GdiBitmap#GetColourSchemeJSON GetColourSchemeJSON} for calculating colours (K-means++ with Oklab).<br>
+     *
+     * @param {number} max_count
+     * @return {string}
+     */
+    this.GetColourSchemeJSONV2 = function (max_count) { }; // (string)
+
+    /**
      * Note: don't forget to use {@link GdiBitmap#ReleaseGraphics ReleaseGraphics} after work on GdiGraphics is done!
      *
      * @return {GdiGraphics}
      */
     this.GetGraphics = function () { };
+
+    /**
+     * Extract raw pixels from bitmap as a byte array in specified pixel format
+     *
+     * @param {string} [format="bgra32"] Pixel format string (default: "bgra32")
+     * Supported formats:<br>
+     *   "bgra32"  32bpp BGRA<br>
+     *   "rgba32"  32bpp RGBA<br>
+     *   "bgr24"   24bpp BGR<br>
+     *   "rgb24"   24bpp RGB<br>
+     * @returns {Uint8Array} null if was an error (for example, bitmap in unsupported format or unsupported format specified)
+     * @example
+     * const img = gdi.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Field.jpg`);
+     * 
+     * let imgPixelData = img.GetPixelData();
+     * 
+     * utils.WriteBinaryFile("D:\\Field.bin", imgPixelData);
+     * 
+     * let rData = utils.ReadBinaryFile("D:\\Field.bin");
+     * 
+     * let rImg = gdi.CreateImageFromPixelData(rData, 2208, 1242);
+     * 
+     * function on_paint(gr) {
+     *     gr.DrawImage(rImg, 0, 0, img.Width, img.Height, 0, 0, img.Width, img.Height);
+     * }
+     */
+    this.GetPixelData = function(format) { };
 
     /**
      * Inverts the colours in a bitmap, to create a negative image.

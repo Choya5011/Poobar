@@ -1,7 +1,7 @@
-"use strict";
+﻿"use strict";
 
 window.DrawMode = 1;
-let iconsCount = 1000;
+let iconsCount = 100;
 
 include(`${fb.ComponentPath}\\docs\\Flags.js`);
 
