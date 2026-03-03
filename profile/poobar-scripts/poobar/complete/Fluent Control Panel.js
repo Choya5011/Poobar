@@ -439,9 +439,9 @@ rating.paint = (gr) => {
     }
 }
 
-function refresh_wf_panel() {
+function refresh_wf_panel(panelName) {
     let p; try { p = window.GetPanelByIndex(0); } catch (e) { return; }
-    if (p.Text === js_wf_name || p.Name === 'JSplitter') { p.Hidden = true; p.Hidden = false; }
+    if (p.Text === panelName || p.Name === panelName) { p.Hidden = true; p.Hidden = false; }
     if (p.Name === 'Waveform minibar (mod)') { p.ShowCaption = true; p.ShowCaption = false; }
 }
 
@@ -861,18 +861,18 @@ function on_mouse_rbtn_up(x, y) {
         buttons.update();
 		update_background_art(ppt);
         window.Repaint();
-        refresh_wf_panel();
+        refresh_wf_panel(js_wf_name);
         break;
     case 311:
         ppt.bgBlur.toggle();
         update_background_art(ppt);
         window.Repaint();
-        refresh_wf_panel();
+        refresh_wf_panel(js_wf_name);
         break;
     case 312:
         ppt.overlay.toggle();
         window.Repaint();
-        refresh_wf_panel();
+        refresh_wf_panel(js_wf_name);
         break;
     case 313:
     case 314:
@@ -880,26 +880,26 @@ function on_mouse_rbtn_up(x, y) {
         if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties();
         update_background_art(ppt);
         window.Repaint();
-        refresh_wf_panel();
+        refresh_wf_panel(js_wf_name);
         break;
     case 410:
         ppt.col_mode.value = 1;
         on_colours_changed();
         window.Repaint();
-        refresh_wf_panel();
+        refresh_wf_panel(js_wf_name);
         break;
     case 411:
         ppt.col_mode.value = 2;
         on_colours_changed();
         window.Repaint();
-        refresh_wf_panel();
+        refresh_wf_panel(js_wf_name);
         break;
     case 412:
         ppt.col_mode.value = 3;
         on_colours_changed();
         window.ShowProperties();
         window.Repaint();
-        refresh_wf_panel();
+        refresh_wf_panel(js_wf_name);
         break;
     case 998:
         let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\fcp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' };
