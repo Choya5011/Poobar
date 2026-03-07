@@ -8,7 +8,7 @@ A crappy responsive [JSplitter](https://hydrogenaudio.org/index.php/topic,126743
 **Amethyst-like (WIP)**  
 ![Preview_3](gallery/preview_3.png)
 Responds to window size & seamlessly snaps to Windows 11 snap layouts.  
-[Gallery](#gallery) | [Wiki Showcase](https://github.com/Choya5011/Poobar/wiki)
+[Gallery](https://github.com/Choya5011/Poobar/wiki)
 
 ## Modularity
 This repository provides a basic JSplitter/SMP customization guide for foobar2000, as well as a showcase of JSplitter’s capabilities. It includes some basic scripts and component recommendations to help achieve these customizations.
@@ -58,25 +58,9 @@ The theme comes with three main presets and their stripped counterparts. After s
 **Useful To Know**  
 Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Useful-to-know) for further info. Such as customization or for troubleshooting.
 
-## Gallery
-**Fluent Control Panel**  
-
-![Control Panel: Seekbar](gallery/control_panel_sb.png)
-![Control Panel: Waveform](gallery/control_panel_wf.png)
-[wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#fluent-control-panel)
-
-**Tabs**
-
-![Tabs: Vertical/Horizontal](gallery/tabs.png)
-[wiki](https://github.com/Choya5011/Poobar/wiki/Poobar#poobar-tabs)
-
-**Mini Player**  
-If window gets small enough. Smallest state is Fluent Control Panel only.
-![Mini player](gallery/mini_player.png)
-
 ## Credits
 Credits to the original authors of any modified scripts as well as any included packages & components.    
-Original author names are present in modified scripts.
+Original author names are present in modified scripts & most item links are present in this readme at [Assets](#assets).
 
 Themes in this repo are inspired by:
 * Classic Poobar: [Eureka Theme](https://www.reddit.com/r/foobar2000/comments/1mhdyy5/comment/n6ve749/)
