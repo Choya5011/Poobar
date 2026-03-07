@@ -886,20 +886,20 @@ function on_mouse_rbtn_up(x, y) {
         ppt.col_mode.value = 1;
         on_colours_changed();
         window.Repaint();
-        refresh_wf_panel(js_wf_name);
+        if (!ppt.mode.enabled) refresh_wf_panel(js_wf_name);
         break;
     case 411:
         ppt.col_mode.value = 2;
         on_colours_changed();
         window.Repaint();
-        refresh_wf_panel(js_wf_name);
+        if (!ppt.mode.enabled) refresh_wf_panel(js_wf_name);
         break;
     case 412:
         ppt.col_mode.value = 3;
         on_colours_changed();
         window.ShowProperties();
         window.Repaint();
-        refresh_wf_panel(js_wf_name);
+        if (!ppt.mode.enabled) refresh_wf_panel(js_wf_name);
         break;
     case 998:
         let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\fcp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' };
