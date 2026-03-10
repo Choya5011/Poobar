@@ -10,12 +10,14 @@ include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab_basic.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_mp_helpers.js');
+include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
 let ppt = {
 	hPanelScale : new _p ('_PANEL_PLACEMENT: Horizontal Monitor Panel Division (0-1)', 0.5),
 	vPanelScale : new _p ('_PANEL_PLACEMENT: Vertical Monitor Panel Division (0-1)', 0.4),
 	cpH : new _p ('_PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
 	cpV : new _p ('_PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 108),
+	unified_bg : new _p('_PANEL_BEHAVIOR: Unify background across panels', false),
 
     bgShow : new _p('_TAB_DISPLAY: Show Wallpaper', false),
     bgBlur : new _p('_TAB_DISPLAY: Wallpaper Blurred', false),
@@ -36,7 +38,7 @@ let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
 let paintRect = false;
 let delay = 150;
 
-update_background_art(ppt);
+update_art(ppt);
 get_colours(ppt.col_mode.value, true);
 
 function on_size(width, height) {
@@ -136,6 +138,17 @@ function updateLayout(layout, ww, wh, scaler) {
             if (playlistView) { const remainingH = wh - cpV - ((wh - cpV) * psV); playlistView.Move(0, (wh - cpV) * psV, ww, remainingH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
             debouncedNarrowVertical();
         }
+        if (ppt.unified_bg.enabled) {
+            fluentControlPanel.SupportPseudoTransparency = true;
+            playlistView.SupportPseudoTransparency = true;
+            tabStack.SupportPseudoTransparency = true;
+            smoothBrowser.SupportPseudoTransparency = true;
+        } else {
+            fluentControlPanel.SupportPseudoTransparency = false;
+            playlistView.SupportPseudoTransparency = false;
+            tabStack.SupportPseudoTransparency = false;
+            smoothBrowser.SupportPseudoTransparency = false;
+        }
     }
 }
 
@@ -188,7 +201,7 @@ const debouncedNarrowVertical = debounce(function() {
 /* ================================================== */
 
 function on_paint(gr) {
-    if (!paintRect) {
+    if (!paintRect && !ppt.unified_bg.enabled) {
         const rX = (ppt.orientation.enabled) ? TAB_W : 0;
         const rY = (ppt.orientation.enabled) ? 0 : TAB_H;
         const rW = (ppt.orientation.enabled) ? ww - TAB_W : ww;
@@ -196,7 +209,7 @@ function on_paint(gr) {
         gr.FillSolidRect(rX, rY, rW, rH, g_backcolour);
     }
 
-    if (ppt.bgShow.enabled && bg_img) {
+    if (ppt.bgShow.enabled && bg_img && !ppt.unified_bg.enabled) {
         const bgW = (ppt.orientation.enabled) ? TAB_W : ww;
         const bgH = (ppt.orientation.enabled) ? wh : TAB_H;
         _drawImage(gr, bg_img, 0, 0, bgW, bgH, image.crop);
@@ -204,11 +217,28 @@ function on_paint(gr) {
             const overlayColor = setAlpha(g_backcolour, 128);
             gr.FillSolidRect(0, 0, bgW, bgH, overlayColor);
         }
+    } else if (ppt.bgShow.enabled && bg_img && ppt.unified_bg.enabled) {
+        _drawImage(gr, bg_img, 0, 0, ww, wh, image.crop);
+        if (ppt.overlay.enabled) {
+            const overlayColor = setAlpha(g_backcolour, 128);
+            gr.FillSolidRect(0, 0, ww, wh, overlayColor);
+        }
     }
 
     tab.paint_mp(gr, ppt);
 
-    if (paintRect) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
+    if (paintRect && !ppt.unified_bg.enabled) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
+}
+
+function on_colours_changed() {
+    get_colours(ppt.col_mode.value, true);
+    window.Repaint();
+}
+
+function on_playback_new_track() {
+    get_colours(ppt.col_mode.value, true);
+    update_art(ppt);
+    window.Repaint();
 }
 
 function on_mouse_lbtn_up(x, y) {
@@ -255,142 +285,58 @@ function on_mouse_leave() {
 }
 
 function on_mouse_rbtn_up(x, y) {
+    let menu = new _menu();
 
-    let m = window.CreatePopupMenu();
-    let c = fb.CreateContextMenuManager();
+    menu.newEntry({entryText: 'Configure main panel:', flags: MF_GRAYED});
 
-    let _menu1 = window.CreatePopupMenu(); // Orientation menu
-    let _menu2 = window.CreatePopupMenu(); // Show... menu
-    let _menu3 = window.CreatePopupMenu(); // Background Wallpaper menu
-    let _menu4 = window.CreatePopupMenu(); // Colours menu
-    let _menu5 = window.CreatePopupMenu(); // Font Menu
+    menu.newEntry({entryText: 'sep'});
 
-    _menu1.AppendMenuItem(MF_STRING, 90, 'Horizontal');
-    _menu1.AppendMenuItem(MF_STRING, 91, 'Vertical');
-    _menu1.CheckMenuRadioItem(90, 91, ppt.orientation.enabled ? 91 : 90);
-    _menu1.AppendTo(m, MF_STRING, 'Orientation');
-    m.AppendMenuSeparator();
+    let or_menu = menu.newMenu('Orientation');
+    menu.newCheckMenu(or_menu, 'Horizontal', 'Vertical', () => !ppt.orientation.enabled ? 0 : 1);
+    menu.newEntry({menuName: or_menu, entryText: 'Horizontal', func: () => {ppt.orientation.enabled = false; update_art(ppt, true); on_size(); window.Repaint();}});
+    menu.newEntry({menuName: or_menu, entryText: 'Vertical', func: () => {ppt.orientation.enabled = true; update_art(ppt, true); on_size(); window.Repaint();}});
 
-    _menu2.AppendMenuItem(MF_STRING, 110, 'Borders');
-    _menu2.CheckMenuItem(110, ppt.borders.enabled);
-    _menu2.AppendTo(m, MF_STRING, 'Show...');
+    let show_menu = menu.newMenu('Show...');
+    menu.newEntry({menuName: show_menu, entryText: 'Separators', func: () => {ppt.borders.toggle(); window.Repaint();}, flags: () => ppt.borders.enabled ? MF_CHECKED : MF_STRING});
 
-    m.AppendMenuSeparator();
+    menu.newEntry({entryText: 'sep'});
 
-    _menu3.AppendMenuItem(MF_STRING, 210, 'Enable');
-    _menu3.CheckMenuItem(210, ppt.bgShow.enabled);
-    _menu3.AppendMenuItem(MF_STRING, 211, 'Blur');
-    _menu3.CheckMenuItem(211, ppt.bgBlur.enabled);
-    _menu3.AppendMenuItem(MF_STRING, 212, 'Shadow');
-    _menu3.CheckMenuItem(212, ppt.overlay.enabled);
-    _menu3.AppendMenuSeparator();
-    _menu3.AppendMenuItem(MF_STRING, 213, 'Playing Album Cover');
-    _menu3.AppendMenuItem(MF_STRING, 214, 'Default');
-    _menu3.CheckMenuRadioItem(213, 214, ppt.bgMode.enabled ? 214 : 213);
-    _menu3.AppendTo(m, MF_STRING, 'Background Wallpaper');
+    let tp_menu = menu.newMenu('Unified Background');
+    menu.newEntry({menuName: tp_menu, entryText: 'Unify child-panel backgrounds', flags: MF_GRAYED});
+    menu.newEntry({menuName: tp_menu, entryText: 'sep'});
+    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.unified_bg.toggle(); window.Repaint(); if (ppt.unified_bg.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'transparency readme file not found' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.unified_bg.enabled ? MF_CHECKED : MF_STRING});
 
-    _menu4.AppendMenuItem(MF_STRING, 310, 'System');
-    _menu4.AppendMenuItem(MF_STRING, 311, 'Dynamic');
-    _menu4.AppendMenuItem(MF_STRING, 312, 'Custom');
-    _menu4.CheckMenuRadioItem(310, 312, Math.min(Math.max(310 + ppt.col_mode.value - 1, 310), 312));
-    _menu4.AppendTo(m, MF_STRING, 'Colours');
+    const unif_flag = ppt.unified_bg.enabled ? MF_GRAYED : MF_STRING
+    let bg_menu = menu.newMenu('Background', 'main', unif_flag);
+    menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
+    menu.newEntry({menuName: bg_menu, entryText: 'sep'});
+    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint();}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'sep'});
+    menu.newCheckMenu(bg_menu, 'Playing album cover', 'Default', () => !ppt.bgMode.enabled ? 0 : 1);
+    menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt, true); window.Repaint();}});
+    menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt, true); refresh_pt_panel(); window.Repaint();}});
 
-    _menu5.AppendMenuItem(MF_STRING, 410, 'Segoe Fluent Icons');
-    _menu5.AppendMenuItem(MF_STRING, 411, 'System');
-    _menu5.CheckMenuRadioItem(410, 411, ppt.fontMode.enabled ? 411 : 410);
-    _menu5.AppendTo(m, MF_STRING, 'Font');
+    let col_menu = menu.newMenu('Colours');
+    menu.newEntry({menuName: col_menu, entryText: 'System', func: () => {ppt.col_mode.value = 1; get_colours(ppt.col_mode.value, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: col_menu, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; get_colours(ppt.col_mode.value, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; get_colours(ppt.col_mode.value, true); refresh_pt_panel(); window.ShowProperties(); window.Repaint();}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
 
-    m.AppendMenuSeparator();
+    let font_menu = menu.newMenu('Font');
+    menu.newCheckMenu(font_menu, 'Segoe Fluent Icons', 'System', () => !ppt.fontMode.enabled ? 0 : 1);
+    menu.newEntry({menuName: font_menu, entryText: 'Segoe Fluent Icons', func: () => {ppt.fontMode.enabled = false; window.Repaint();}});
+    menu.newEntry({menuName: font_menu, entryText: 'System', func: () => {ppt.fontMode.enabled = true; window.Repaint();}});
+    //menu.newEntry({menuName: font_menu, entryText: 'Custom', func: () => {}});
 
-    m.AppendMenuItem(MF_STRING, 998, 'Open readme...');
+    menu.newEntry({entryText: 'sep'});
 
-    m.AppendMenuSeparator()
+    menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\ptpt_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
 
-    m.AppendMenuItem(MF_STRING, 999, 'Panel Properties');
-    m.AppendMenuItem(MF_STRING, 1000, 'Configure...');
+    menu.newEntry({entryText: 'sep'});
 
-    const idx = m.TrackPopupMenu(x, y);
-    switch (idx) {
-    case 0:
-        break;
-    case 90:
-    case 91:
-        ppt.orientation.toggle();
-        update_background_art(ppt);
-        on_size();
-        window.Repaint();
-        break;
-    case 110:
-        ppt.borders.toggle();
-        window.Repaint();
-        break;
-    case 210:
-        ppt.bgShow.toggle();
-        get_colours(ppt.col_mode.value, true);
-        update_background_art(ppt);
-        window.Repaint();
-        break;
-    case 211:
-        ppt.bgBlur.toggle();
-        update_background_art(ppt);
-        window.Repaint();
-        break;
-    case 212:
-        ppt.overlay.toggle();
-        window.Repaint();
-        break;
-    case 213:
-    case 214:
-        ppt.bgMode.toggle();
-        if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties();
-        update_background_art(ppt);
-        window.Repaint();
-        break;
-    case 310:
-        ppt.col_mode.value = 1;
-        get_colours(ppt.col_mode.value, true);
-        window.Repaint();
-        break;
-    case 311:
-        ppt.col_mode.value = 2;
-        get_colours(ppt.col_mode.value, true);
-        window.Repaint();
-        break;
-    case 312:
-        ppt.col_mode.value = 3;
-        get_colours(ppt.col_mode.value, true);
-        window.ShowProperties();
-        window.Repaint();
-        break;
-    case 410:
-    case 411:
-        ppt.fontMode.toggle();
-        window.Repaint();
-        break;
-    case 998:
-        let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\mp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' };
-        fb.ShowPopupMessage(readme, window.ScriptInfo.Name);
-        readme = null;
-        break;
-    case 999:
-        window.ShowProperties();
-        break;
-    case 1000:
-        window.ShowConfigureV2();
-        break;
-    default:
-        c.ExecuteByID(idx - 1);
-        break;
-    }
-    return true;
-}
+    menu.newEntry({entryText: 'Panel Properties', func: () => {window.ShowProperties();}});
+    menu.newEntry({entryText: 'Configure...', func: () => {window.ShowConfigureV2();}});
 
-function on_colours_changed() {
-    get_colours(ppt.col_mode.value, true);
-    window.Repaint();
-}
-
-function on_playback_new_track() {
-    get_colours(ppt.col_mode.value, true);
-    update_background_art(ppt);
+    return menu.btn_up(x, y);
 }

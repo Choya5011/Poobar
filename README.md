@@ -26,7 +26,7 @@ Refer to the wiki's [script descriptions](https://github.com/Choya5011/Poobar/wi
 ### Fonts  
 Standard already on Windows 11: [Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts)  
 Optional (For Biography): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)  
-Optional (Lyrics): UD Digi Kyokasho (NP-B)
+Lyrics (optional): UD Digi Kyokasho (NP-B)
 
 ### Components & Packages (included)
 **Components**  
@@ -34,6 +34,9 @@ Optional (Lyrics): UD Digi Kyokasho (NP-B)
 
 **Packages**  
 [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) | [Biography](https://hydrogenaudio.org/index.php/topic,112914.msg1071222.html#msg1071222) | [Library Tree](https://github.com/regorxxx/Library-Tree-SMP)
+
+**Frameworks**  
+[Menu-Framework-SMP](https://github.com/regorxxx/Menu-Framework-SMP)
 
 ## Installation
 **Fonts**  

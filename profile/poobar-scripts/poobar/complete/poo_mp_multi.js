@@ -34,7 +34,7 @@ let paintRect = false;
 let delay = 150;
 let layout;
 
-update_background_art(ppt);
+update_art(ppt);
 get_colours(ppt.col_mode.value, true);
 
 function on_size(width, height) {
@@ -266,6 +266,9 @@ function on_mouse_rbtn_up(x, y) {
     let _menu4 = window.CreatePopupMenu(); // Colours menu
     let _menu5 = window.CreatePopupMenu(); // Font Menu
 
+    m.AppendMenuItem(MF_GRAYED, 80, 'Configure main panel:');
+    m.AppendMenuSeparator();
+
     _menu1.AppendMenuItem(MF_STRING, 90, 'Horizontal');
     _menu1.AppendMenuItem(MF_STRING, 91, 'Vertical');
     _menu1.CheckMenuRadioItem(90, 91, ppt.orientation.enabled ? 91 : 90);
@@ -317,7 +320,7 @@ function on_mouse_rbtn_up(x, y) {
     case 90:
     case 91:
         ppt.orientation.toggle();
-        update_background_art(ppt);
+        update_art(ppt);
         on_size();
         window.Repaint();
         break;
@@ -328,12 +331,12 @@ function on_mouse_rbtn_up(x, y) {
     case 210:
         ppt.bgShow.toggle();
         get_colours(ppt.col_mode.value, true);
-        update_background_art(ppt);
+        update_art(ppt);
         window.Repaint();
         break;
     case 211:
         ppt.bgBlur.toggle();
-        update_background_art(ppt);
+        update_art(ppt);
         window.Repaint();
         break;
     case 212:
@@ -344,7 +347,7 @@ function on_mouse_rbtn_up(x, y) {
     case 214:
         ppt.bgMode.toggle();
         if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties();
-        update_background_art(ppt);
+        update_art(ppt);
         window.Repaint();
         break;
     case 310:
@@ -396,6 +399,6 @@ function on_colours_changed() {
 
 function on_playback_new_track() {
     get_colours(ppt.col_mode.value, true);
-    update_background_art(ppt);
+    update_art(ppt);
     if (lyrics && layout !== 'narrowvertical') { lyrics.Hidden = true; lyrics.Hidden = false; }
 }

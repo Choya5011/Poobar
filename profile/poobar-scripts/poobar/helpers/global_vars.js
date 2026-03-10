@@ -7,7 +7,6 @@
 
 /**
  * storing in scaler instead of accessing _scale() directly
- * reason: easier to find back in script
  * s300 = 300px in 1440p
  */
 const scaler = {
@@ -42,3 +41,5 @@ const log = {
                "Window H: ", window.Height;
     },
 };
+
+const MF_CHECKED = 0x8; // temp

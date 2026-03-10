@@ -12,6 +12,7 @@ include(fb.ComponentPath + 'samples\\complete\\js\\volume.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
+include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
 let ppt = {
     // show/hide
@@ -29,6 +30,7 @@ let ppt = {
     bar_mode : new _p('_DISPLAY: Show Bar Core', false),
     roundBars : new _p('_DISPLAY: Show Rounded Bars', true),
     // background
+    transparency : new _p ('_DISPLAY: Enable transparent background', false),
     bgShow : new _p('_DISPLAY: Show Wallpaper', false),
     bgBlur : new _p('_DISPLAY: Wallpaper Blurred', false),
     overlay : new _p('_DISPLAY: Show background shadow/overlay', false),
@@ -127,37 +129,36 @@ let spectrumPanel; try { spectrumPanel = window.GetPanel('Spectrum Analyzer'); }
 // Initial updates
 get_colours(ppt.col_mode.value);
 panel.item_focus_change();
-update_background_art(ppt);
-update_album_art(ppt);
+update_art(ppt);
 updateNextTrackInfo();
 
 buttons.update = () => {
-    const fluent_font = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 38) : gdi.Font('Segoe Fluent Icons', 48);
-    const fluent_font_hover = (panel.w < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 44) : gdi.Font('Segoe Fluent Icons', 54);
+    const fluent_font = (ww < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 38) : gdi.Font('Segoe Fluent Icons', 48);
+    const fluent_font_hover = (ww < scaler.s1080 && !ppt.mode.enabled) ? gdi.Font('Segoe Fluent Icons', 44) : gdi.Font('Segoe Fluent Icons', 54);
 
     // Middle section button vars
-    const x = ((panel.w - (bs * 7)) / 2);
+    const x = ((ww - (bs * 7)) / 2);
     const y = ppt.mode.enabled ? seekbar.y - _scale(36) : _scale(4);
     const pbo = plman.PlaybackOrder;
     const pboText = (ppt.pboMode.enabled) ? '' : 'Playback Order: ' + pbo_names[pbo];
 
     // Right section button vars
     let xx, yy, vol_x, vol_y;
-    if ((panel.w <= scaler.s520 && panel.h <= scaler.s130) || (panel.w > scaler.s520 && panel.h < scaler.s80)) { // out of bounds to hide, temp fix
+    if ((ww <= scaler.s520 && wh <= scaler.s130) || (ww > scaler.s520 && wh < scaler.s80)) { // out of bounds to hide, temp fix
         if (ww > scaler.s520) {
-            xx = (panel.w > scaler.s800) ? (panel.w - (bs * 2)) : (panel.w - bs);
+            xx = (ww > scaler.s800) ? (ww - (bs * 2)) : (ww - bs);
             yy = y;
         } else {
-            xx = panel.w;
-            yy = panel.h;
+            xx = ww;
+            yy = wh;
         }
     } else {
-        xx = (panel.w > scaler.s800) ? (panel.w - (bs * 2)) : (panel.w - bs);
-        yy = (panel.w > scaler.s520) ? Math.round((panel.h - bs) / 2) : panel.h - _scale(38);
+        xx = (ww > scaler.s800) ? (ww - (bs * 2)) : (ww - bs);
+        yy = (ww > scaler.s520) ? Math.round((wh - bs) / 2) : wh - _scale(38);
     }
 
     // right section button offsets
-    const is800 = panel.w > scaler.s800;
+    const is800 = ww > scaler.s800;
     const offsets = {
         s1: is800 ? 0 : -0.9,
         s2: is800 ? 0 : -1.4,
@@ -166,18 +167,18 @@ buttons.update = () => {
         s5: is800 ? 0 : -1.9
     };
 
-    if (ppt.vol.enabled && panel.w >= scaler.s520 && panel.h >= scaler.s80) {
+    if (ppt.vol.enabled && ww >= scaler.s520 && wh >= scaler.s80) {
         vol_x = xx - (bs * (2.9 + offsets.s4));
         vol_y = volume.y - _scale(14);
-    } else if (ppt.vol.enabled && panel.w <= scaler.s520 && panel.h > scaler.s130) {
+    } else if (ppt.vol.enabled && ww <= scaler.s520 && wh > scaler.s130) {
         vol_x = xx - (bs * (2.9 + offsets.s4));
-        vol_y = panel.h - _scale(24);
+        vol_y = wh - _scale(24);
     } else if (!ppt.vol.enabled || (ppt.vol.enabled && wh < scaler.s100)) {
         vol_x = xx - (bs * (3.9 + offsets.s5));
         vol_y = yy + 1;
     } else {
-        vol_x = panel.w;
-        vol_y = panel.h;
+        vol_x = ww;
+        vol_y = wh;
     }
 
     // Middle section buttons
@@ -218,33 +219,31 @@ buttons.update = () => {
 }
 
 function on_size() {
-    panel.size();
-
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
 
-    bx = ((panel.w - (bs * 7)) / 2);
+    bx = ((ww - (bs * 7)) / 2);
     by = seekbar.y - _scale(36);
 
 //    if (!ppt.art.enabled || ww < scaler.s600) {
-//        cx = (panel.w - (bs * 2));
-//        cy = Math.round((panel.h - bs) / 2);
+//        cx = (ww - (bs * 2));
+//        cy = Math.round((wh - bs) / 2);
 //    }
 
-    if (panel.w >= scaler.s1200) {
-        seekbar.x = Math.round(panel.w * 0.22);
-    } else if (panel.w <= scaler.s520 && panel.h) {
-        seekbar.x = Math.round(panel.w * 0.18);
-    } else if (panel.w > scaler.s520 && panel.w < scaler.s1200) {
-        seekbar.x = Math.round(panel.w * 0.3);
+    if (ww >= scaler.s1200) {
+        seekbar.x = Math.round(ww * 0.22);
+    } else if (ww <= scaler.s520 && wh) {
+        seekbar.x = Math.round(ww * 0.18);
+    } else if (ww > scaler.s520 && ww < scaler.s1200) {
+        seekbar.x = Math.round(ww * 0.3);
     }
-    seekbar.w = panel.w - seekbar.x * 2;
+    seekbar.w = ww - seekbar.x * 2;
     seekbar.h = _scale(14);
-    seekbar.y = panel.h * 0.6;
+    seekbar.y = wh * 0.6;
 
-    volume.x = (panel.w > scaler.s800) ? panel.w - (bs * 4) : panel.w - (bs * 2.5);
-    volume.y = (panel.w > scaler.s520) ? seekbar.y + _scale(12) : panel.h - _scale(10);
+    volume.x = (ww > scaler.s800) ? ww - (bs * 4) : ww - (bs * 2.5);
+    volume.y = (ww > scaler.s520) ? seekbar.y + _scale(12) : wh - _scale(10);
     volume.h =  _scale(4);
     volume.w = _scale(74);
 
@@ -260,25 +259,26 @@ function on_size() {
         if (waveformPanel) {
             //waveformH = Math.round(wh / 3);
             waveformH = _scale(32);
-            waveformY = _scale((panel.h / 2) - (waveformH / 2));
-            if (wh > scaler.s100) { waveformPanel.Move(seekbar.x - _scale(40), waveformY, seekbar.w + _scale(80), waveformH); waveformPanel.SupportPseudoTransparency = true; waveformPanel.ShowCaption = false; waveformPanel.Hidden = false; waveformPanel.Locked = true; } else { waveformPanel.Hidden = true; }
+            waveformY = _scale((wh / 2) - (waveformH / 2));
+            if (wh > scaler.s100) { waveformPanel.Move(seekbar.x - _scale(40), waveformY, seekbar.w + _scale(80), waveformH); waveformPanel.SupportPseudoTransparency = true; waveformPanel.ShowCaption = false; waveformPanel.Hidden = false; waveformPanel.Locked = true; refresh_wf_panel(); } else { waveformPanel.Hidden = true; }
         } else if (errFlag_wf) {
             errFlag_wf = false;
             console.log(window.ScriptInfo.Name + ': Missing Panel \nNo Waveform panel found: make sure the waveform panel is the topmost panel inside the control panel. See instructions:\n' + wf_instruct);
         }
     }
 
-    if (spectrumPanel && ww > scaler.s800 && panel.h > scaler.s80) { spectrumW = Math.min(seekbar.x - _scale(46), wh); spectrumH = wh; spectrumPanel.Move(0, 0, spectrumW, spectrumH); spectrumPanel.SupportPseudoTransparency = false; spectrumPanel.ShowCaption = false; spectrumPanel.Hidden = false; spectrumPanel.Locked = true; } else if (spectrumPanel) { spectrumPanel.Hidden = true; }
+    if (spectrumPanel && ww > scaler.s800 && wh > scaler.s80) { spectrumW = Math.min(seekbar.x - _scale(46), wh); spectrumH = wh; spectrumPanel.Move(0, 0, spectrumW, spectrumH); spectrumPanel.SupportPseudoTransparency = false; spectrumPanel.ShowCaption = false; spectrumwhidden = false; spectrumPanel.Locked = true; } else if (spectrumPanel) { spectrumwhidden = true; }
 
     buttons.update();
 }
 
 function on_paint(gr) {
     if (ppt.bgShow.enabled && bg_img) {
-        _drawImage(gr, bg_img, 0, 0, panel.w, panel.h, image.crop);
-        if (ppt.overlay.enabled) { const overlayColor = setAlpha(g_backcolour, 128); /* const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128); */ gr.FillSolidRect(0, 0, panel.w, panel.h, overlayColor); }
+        _drawImage(gr, bg_img, 0, 0, ww, wh, image.crop);
+        if (ppt.overlay.enabled) { const overlayColor = setAlpha(g_backcolour, 128); gr.FillSolidRect(0, 0, ww, wh, overlayColor); }
     } else if (!ppt.bgShow.enabled) {
-        gr.FillSolidRect(0, 0, panel.w, panel.h, g_backcolour);
+        const bg_col = (ppt.transparency.enabled) ? _RGBA(0, 0, 0, 0) : g_backcolour;
+        gr.FillSolidRect(0, 0, ww, wh, bg_col);
     }
 
     buttons.paint(gr);
@@ -303,28 +303,28 @@ function on_paint(gr) {
 
     if (fb.IsPlaying) {
         let size; let art_x; let art_y;
-        if (ppt.art.enabled && g_img && ww > scaler.s800 && panel.h > scaler.s80 && !spectrumPanel) {
-            size = Math.min(seekbar.x - _scale(46), panel.h * 0.86);
-            art_x = panel.h * 0.06
-            art_y = panel.h * 0.5 - size / 2
-            _drawImage(gr, g_img, art_x, art_y, size, size, image.crop_top);
+        if (ppt.art.enabled && thumb_img && ww > scaler.s800 && wh > scaler.s80 && !spectrumPanel) {
+            size = Math.min(seekbar.x - _scale(46), wh * 0.86);
+            art_x = wh * 0.06
+            art_y = wh * 0.5 - size / 2
+            _drawImage(gr, thumb_img, art_x, art_y, size, size, image.crop_top);
         }
 
         // Track information
         let title_w, artist_w;
-        const track_info_x = (ppt.art.enabled && g_img && ww > scaler.s800 && panel.h > scaler.s80 && !spectrumPanel) ? art_y + size + 10 : (spectrumPanel && ww > scaler.s800 && panel.h > scaler.s80 ? spectrumW + _scale(12) : _scale(12));
-        if (ppt.mode.enabled && panel.w > scaler.s600 && panel.h >= scaler.s80) {
-            if (ppt.art.enabled && ww > scaler.s800) { title_w = panel.w / 5; artist_w = panel.w / 9; } else { title_w = panel.w / 4; artist_w = seekbar.x - panel.h - _scale(4); }
-    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, panel.h * 0.3, title_w, 0, LEFT | DT_END_ELLIPSIS);
-    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, panel.h * 0.6, artist_w, 0, LEFT | DT_END_ELLIPSIS);
-        } else if (!ppt.mode.enabled && panel.w > scaler.s600 && panel.h >= scaler.s80) {
-            if (ppt.rating.enabled) { rating.y = panel.h * 0.75; rating.x = track_info_x - _scale(2); }
-            if (ppt.art.enabled && ww > scaler.s800) { title_w = (ww == scaler.s1080) ? panel.w / 9 : panel.w / 6.4; artist_w = panel.w * 0.13; } else { title_w = panel.w / 3.4; artist_w = panel.w * 0.23; }
-            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, panel.h * 0.1, title_w, _scale(18), LEFT | DT_END_ELLIPSIS); // # w needs calibration
-            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, panel.h * 0.43, artist_w, _scale(18), LEFT | DT_END_ELLIPSIS);
+        const track_info_x = (ppt.art.enabled && thumb_img && ww > scaler.s800 && wh > scaler.s80 && !spectrumPanel) ? art_y + size + 10 : (spectrumPanel && ww > scaler.s800 && wh > scaler.s80 ? spectrumW + _scale(12) : _scale(12));
+        if (ppt.mode.enabled && ww > scaler.s600 && wh >= scaler.s80) {
+            if (ppt.art.enabled && ww > scaler.s800) { title_w = ww / 5; artist_w = ww / 9; } else { title_w = ww / 4; artist_w = seekbar.x - wh - _scale(4); }
+    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, wh * 0.3, title_w, 0, LEFT | DT_END_ELLIPSIS);
+    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, track_info_x, wh * 0.6, artist_w, 0, LEFT | DT_END_ELLIPSIS);
+        } else if (!ppt.mode.enabled && ww > scaler.s600 && wh >= scaler.s80) {
+            if (ppt.rating.enabled) { rating.y = wh * 0.75; rating.x = track_info_x - _scale(2); }
+            if (ppt.art.enabled && ww > scaler.s800) { title_w = (ww == scaler.s1080) ? ww / 9 : ww / 6.4; artist_w = ww * 0.13; } else { title_w = ww / 3.4; artist_w = ww * 0.23; }
+            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, track_info_x, wh * 0.1, title_w, _scale(18), LEFT | DT_END_ELLIPSIS); // # w needs calibration
+            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  track_info_x, wh * 0.43, artist_w, _scale(18), LEFT | DT_END_ELLIPSIS);
         }
 
-        if (ppt.rating.enabled && panel.h >= scaler.s80 && ((!ppt.mode.enabled && ww > scaler.s800) || (ppt.mode.enabled && ww > scaler.s1200))) {
+        if (ppt.rating.enabled && wh >= scaler.s80 && ((!ppt.mode.enabled && ww > scaler.s800) || (ppt.mode.enabled && ww > scaler.s1200))) {
             ratingHover = true;
             rating.paint(gr);
         } else {
@@ -334,16 +334,16 @@ function on_paint(gr) {
         // Draw the next track information
         var queueHandles = plman.GetPlaybackQueueHandles();
         if (((plman.PlaybackOrder === 0 || plman.PlaybackOrder === 1) && ppt.nxt.enabled) || queueHandles.Count > 0) {
-            const text_w = panel.w / 2;
-            const text_x = (panel.w - text_w) / 2;
-            if (ppt.mode.enabled && panel.w >= scaler.s600) {
+            const text_w = ww / 2;
+            const text_x = (ww - text_w) / 2;
+            if (ppt.mode.enabled && ww >= scaler.s600) {
                 gr.GdiDrawText(nextTrackInfo, panel.fonts.normal, g_textcolour, text_x, seekbar.y + _scale(16), text_w, _scale(18), SF_CENTER_VCENTER | DT_END_ELLIPSIS);
                 //gr.DrawRect(text_x, seekbar.y + 18, text_w, _scale(18), 1, colours.red); //debugging border
-            } else if (panel.w >= scaler.s600 && panel.h > scaler.s100) {
-                if (panel.w < scaler.s1080) {
+            } else if (ww >= scaler.s600 && wh > scaler.s100) {
+                if (ww < scaler.s1080) {
                     gr.GdiDrawText(nextTrackInfo, panel.fonts.normal, g_textcolour, text_x, seekbar.y + _scale(18), text_w, _scale(18), SF_CENTER_VCENTER | DT_END_ELLIPSIS);
                 } else {
-                    gr.GdiDrawText(nextTrackInfo, panel.fonts.normal, g_textcolour, (panel.w / 5) * 3.2, _scale(10), panel.w / 3.5, _scale(18), LEFT);
+                    gr.GdiDrawText(nextTrackInfo, panel.fonts.normal, g_textcolour, (ww / 5) * 3.2, _scale(10), ww / 3.5, _scale(18), LEFT);
                 }
             }
         }
@@ -378,21 +378,21 @@ function on_paint(gr) {
     			gr.GdiDrawText(tfo.length.Eval(), panel.fonts.normal, g_textcolour, seekbar.x + seekbar.w + _scale(6), seekbar.y + _scale(5), _scale(45), 0, LEFT);
             } else {
                 // playback time and length
-                if (panel.w >= scaler.s1080) {
+                if (ww >= scaler.s1080) {
                     gr.GdiDrawText(tfo.playback_time.Eval(), panel.fonts.title, g_textcolour, bx - (bs * 4), _scale(20), _scale(72), 0, RIGHT);
                     gr.GdiDrawText("/" + tfo.length.Eval(), panel.fonts.normal, g_textcolour, bx - (bs * 1.7), _scale(20), _scale(72), 0, LEFT);
-                } else if (panel.h > scaler.s130) {
-                    gr.GdiDrawText(tfo.playback_time.Eval(), panel.fonts.title, g_textcolour, (panel.w / 4) - _scale(17), seekbar.y - _scale(33), panel.w / 2, _scale(18), SF_CENTER_VCENTER);
-                    gr.GdiDrawText("/" + tfo.length.Eval(), panel.fonts.title, g_textcolour, (panel.w / 4) + _scale(15), seekbar.y - _scale(33), panel.w / 2, _scale(18), SF_CENTER_VCENTER);
+                } else if (wh > scaler.s130) {
+                    gr.GdiDrawText(tfo.playback_time.Eval(), panel.fonts.title, g_textcolour, (ww / 4) - _scale(17), seekbar.y - _scale(33), ww / 2, _scale(18), SF_CENTER_VCENTER);
+                    gr.GdiDrawText("/" + tfo.length.Eval(), panel.fonts.title, g_textcolour, (ww / 4) + _scale(15), seekbar.y - _scale(33), ww / 2, _scale(18), SF_CENTER_VCENTER);
                 }
             }
         }
 
-        if (ppt.vol.enabled && ((panel.w > scaler.s520 && panel.h > scaler.s80) || (panel.w < scaler.s520 && panel.h > scaler.s130))) {
+        if (ppt.vol.enabled && ((ww > scaler.s520 && wh > scaler.s80) || (ww < scaler.s520 && wh > scaler.s130))) {
             let vol_pos = volume.pos();
             let barColor = getBarColor(volume_hover);
             let coreColor = getCoreColor(volume_hover);
-            let volumeWidth = panel.w > scaler.s800 ? volume.w : volume.w.value * 0.8;
+            let volumeWidth = ww > scaler.s800 ? volume.w : volume.w.value * 0.8;
 
             if (ppt.roundBars.enabled && vol_pos >= volume.h && ww > scaler.s800) { // s800 check cause of unfound stripe bug likely related to volume icon
                 let vol_radius = volume.h / 2;
@@ -413,7 +413,7 @@ function on_paint(gr) {
                 }
             }
             var dbFont = gdi.Font(panel.fonts.normal.Name, 12);
-            if (panel.w > scaler.s800 && (ppt.db.enabled || volume_hover || dbShow)) gr.GdiDrawText(fb.Volume.toFixed(2) + ' dB', dbFont, g_textcolour, _scale(8), volume.y + _scale(2), volume.x + _scale(106), 0, RIGHT);
+            if (ww > scaler.s800 && (ppt.db.enabled || volume_hover || dbShow)) gr.GdiDrawText(fb.Volume.toFixed(2) + ' dB', dbFont, g_textcolour, _scale(8), volume.y + _scale(2), volume.x + _scale(106), 0, RIGHT);
         }
     }
 }
@@ -440,9 +440,11 @@ rating.paint = (gr) => {
 }
 
 function refresh_wf_panel(panelName) {
-    let p; try { p = window.GetPanelByIndex(0); } catch (e) { return; }
-    if (p.Text === panelName || p.Name === panelName) { p.Hidden = true; p.Hidden = false; }
-    if (p.Name === 'Waveform minibar (mod)') { p.ShowCaption = true; p.ShowCaption = false; }
+    if (!ppt.mode.enabled) {
+        let p; try { p = window.GetPanelByIndex(0); } catch (e) { return; }
+        if (p.Text === panelName || p.Name === panelName) { p.Hidden = true; p.Hidden = false; }
+        if (p.Name === 'Waveform minibar (mod)') { p.ShowCaption = true; p.ShowCaption = false; }
+    }
 }
 
 function on_metadb_changed() {
@@ -452,8 +454,7 @@ function on_metadb_changed() {
 function on_playback_new_track() {
     get_colours(ppt.col_mode.value);
     updateNextTrackInfo(); // When a new track starts, the "next" track might change.
-    update_background_art(ppt);
-    update_album_art(ppt);
+    update_art(ppt);
     refresh_wf_panel();
     panel.item_focus_change();
     buttons.update();
@@ -563,6 +564,101 @@ function switchOutputDevice(x, y) {
         // Set the selected device
         fb.SetOutputDevice(arr[idx - 1].output_id, arr[idx - 1].device_id);
     }
+}
+
+function vol2pos(v) {
+    return (Math.pow(10, v / 50) - 0.01) / 0.99;
+}
+
+function pos2vol(pos) {
+    return 50 * Math.log(0.99 * pos + 0.01) / Math.LN10;
+}
+
+/**
+ * Updates the information about the next upcoming track.
+ * Prioritizes tracks in the playback queue.
+ */
+function updateNextTrackInfo() {
+    var nextTrack = null;
+    // Use GetPlaybackQueueHandles to get a FbMetadbHandleList directly
+    var queueHandles = plman.GetPlaybackQueueHandles();
+
+    // 1. Check for tracks in the playback queue first
+    if (queueHandles.Count > 0) {
+        // The first item in the queueHandles list is the highest priority next track
+        nextTrack = queueHandles[0];
+        // console.log("Next track from queue (from updateNextTrackInfo):", nextTrack ? fb.TitleFormat("%title%").EvalWithMetadb(nextTrack) : "N/A"); // For debugging
+    } else {
+        // 2. If no queue, check the next track in the current playlist
+        var currentPlaylistIndex = plman.PlayingPlaylist;
+        // Ensure a valid playlist is currently playing and it has items
+        if (currentPlaylistIndex !== -1 && plman.PlaylistItemCount(currentPlaylistIndex) > 0) {
+            var playingItemLocation = plman.GetPlayingItemLocation();
+            if (playingItemLocation.IsValid) {
+                var currentIndex = playingItemLocation.PlaylistItemIndex;
+                var playlistLength = plman.PlaylistItemCount(currentPlaylistIndex);
+
+                // Check if there's a next track in the playlist
+                if (currentIndex < playlistLength - 1) {
+                    // Get all items in the current playlist and then access the next one by index
+                    var playlistItems = plman.GetPlaylistItems(currentPlaylistIndex);
+                    if (playlistItems && playlistItems.Count > currentIndex + 1) {
+                        nextTrack = playlistItems[currentIndex + 1];
+                        // console.log("Next track from playlist (from updateNextTrackInfo):", nextTrack ? fb.TitleFormat("%title%").EvalWithMetadb(nextTrack) : "N/A"); // For debugging
+                    }
+                }
+            }
+        }
+    }
+
+    // Format the track information for display
+    if (nextTrack) {
+        // Use TitleFormat to get artist and title reliably
+        var tf = fb.TitleFormat("%artist% - %title%");
+        nextTrackInfo = "Next: " + tf.EvalWithMetadb(nextTrack);
+    } else {
+        nextTrackInfo = "No next track.";
+    }
+
+    window.Repaint(); // Request a repaint to update the display
+}
+
+function on_playback_queue_changed() {
+    // Add a small delay to ensure foobar2000 has fully processed the queue change
+    window.SetTimeout(function() {
+        updateNextTrackInfo();
+    }, 50); // 50ms delay
+}
+
+// Add selected tracks to the queue in a random order (append to queue, do not flush)
+function queueSelectedTracksRandomizedAppend() {
+    const activePlaylistIndex = plman.ActivePlaylist;
+    const selectedHandles = plman.GetPlaylistSelectedItems(activePlaylistIndex);
+
+    if (!selectedHandles || selectedHandles.Count === 0) {
+        fb.ShowPopupMessage("No tracks selected. Please select one or more tracks in your playlist.");
+        return;
+    }
+
+    // Fisher-Yates shuffle
+    for (let i = selectedHandles.Count - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = selectedHandles[i];
+        selectedHandles[i] = selectedHandles[j];
+        selectedHandles[j] = temp;
+    }
+
+    // Get all items in the playlist
+    const playlistItems = plman.GetPlaylistItems(activePlaylistIndex);
+
+    // Add shuffled tracks to the queue (append)
+    for (let i = 0; i < selectedHandles.Count; i++) {
+        const idx = playlistItems.Find(selectedHandles[i]);
+        if (idx !== -1) {
+            plman.AddPlaylistItemToPlaybackQueue(activePlaylistIndex, idx);
+        }
+    }
+    // fb.ShowPopupMessage("Selected tracks appended to the queue in random order.");
 }
 
 // keyboard events
@@ -712,304 +808,69 @@ function on_mouse_rbtn_up(x, y) {
         if (rating.trace(x, y)) return panel.rbtn_up(x, y, rating);
     }
 
-    // menu
-    let m = window.CreatePopupMenu();
-    let s = window.CreatePopupMenu();
-    let c = fb.CreateContextMenuManager();
+    let menu = new _menu();
 
-    let _menu1 = window.CreatePopupMenu(); // Modes menu
-    let _submenu1 = window.CreatePopupMenu(); // Seekbar Mode menu
-    let _submenu11 = window.CreatePopupMenu(); // PBO Button Mode menu
-    let _submenu12 = window.CreatePopupMenu(); // // Love Mode menu
-    let _menu2 = window.CreatePopupMenu(); // Show... menu
-    let _menu3 = window.CreatePopupMenu(); // Background Wallpaper menu
-    let _menu4 = window.CreatePopupMenu(); // Colours menu
+    let np_menu = menu.newMenu('Now playing', 'main', MF_STRING, {type: 'nowplaying'});
 
-    if (fb.IsPlaying) {
-        c.InitNowPlaying();
-        c.BuildMenu(s, 1);
-        s.AppendTo(m, MF_STRING, 'Now playing');
-        m.AppendMenuSeparator();
-    }
+    menu.newEntry({entryText: 'sep'});
 
-    // Modes menu
-    _submenu1.AppendMenuItem(MF_STRING, 110, 'Normal');
-    _submenu1.AppendMenuItem(MF_STRING, 111, 'Waveform');
-    _submenu1.CheckMenuRadioItem(110, 111, ppt.mode.enabled ? 110 : 111);
-    _submenu1.AppendTo(_menu1, MF_STRING, 'Seekbar');
+    let show_menu = menu.newMenu('Show...');
+    menu.newEntry({menuName: show_menu, entryText: 'Album art', func: () => {ppt.art.toggle(); update_art(ppt); on_size(); window.Repaint(); if (spectrumPanel && ppt.art.enabled) fb.ShowPopupMessage('A Spectrum Analyzer panel is present.\nAlbum art hidden.', window.ScriptInfo.Name);}, flags: () => ppt.art.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: show_menu, entryText: 'Next track', func: () => {ppt.nxt.toggle(); window.Repaint();}, flags: () => ppt.nxt.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: show_menu, entryText: 'Rating', func: () => {ppt.rating.toggle(); window.Repaint();}, flags: () => ppt.rating.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: show_menu, entryText: 'Volume slider', func: () => {ppt.vol.toggle(); buttons.update(); window.Repaint();}, flags: () => ppt.vol.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: show_menu, entryText: 'dB permanent', func: () => {ppt.db.toggle(); window.Repaint();}, flags: () => ppt.db.enabled ? MF_CHECKED : MF_STRING});
 
-    _submenu11.AppendMenuItem(MF_STRING, 112, 'List');
-    _submenu11.AppendMenuItem(MF_STRING, 113, 'Cycle');
-    _submenu11.CheckMenuRadioItem(112, 113, ppt.pboMode.enabled ? 112 : 113);
-    _submenu11.AppendTo(_menu1, MF_STRING, 'PBO Button');
+    let sbar_menu = menu.newMenu('Bars');
+    menu.newCheckMenu(sbar_menu, 'Normal', 'Waveform', () => ppt.mode.enabled ? 0 : 1);
+    menu.newEntry({menuName: sbar_menu, entryText: 'Normal', func: () => {ppt.mode.enabled = true; on_size(); buttons.update(); window.Repaint();}});
+    menu.newEntry({menuName: sbar_menu, entryText: 'Waveform', func: () => {ppt.mode.enabled = false; on_size(); buttons.update(); window.Repaint();}});
+    menu.newEntry({menuName: sbar_menu, entryText: 'sep'});
+    menu.newEntry({menuName: sbar_menu, entryText: 'Rounded bars', func: () => {ppt.roundBars.toggle(); window.Repaint();}, flags: () => ppt.roundBars.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: sbar_menu, entryText: 'Bar cores', func: () => {ppt.bar_mode.toggle(); window.Repaint();}, flags: () => ppt.bar_mode.enabled ? MF_CHECKED : MF_STRING});
 
-    _submenu12.AppendMenuItem(MF_STRING, 114, 'FEEDBACK tag');
-    _submenu12.AppendMenuItem(MF_STRING, 115, 'last.fm sync');
-    _submenu12.AppendMenuItem(MF_STRING, 116, 'Dual mode');
-    _submenu12.CheckMenuRadioItem(114, 116, Math.min(Math.max(114 + ppt.loveMode.value - 1, 114), 116));
-    _submenu12.AppendTo(_menu1, MF_STRING, 'Love Mode');
+    let but_menu = menu.newMenu('Buttons');
+    let sub_but_2 = menu.newMenu('PBO Button', but_menu);
+    menu.newCheckMenu(sub_but_2, 'List', 'Cycle', () => ppt.pboMode.enabled ? 0 : 1);
+    menu.newEntry({menuName: sub_but_2, entryText: 'List', func: () => {ppt.pboMode.enabled = true; buttons.update();}});
+    menu.newEntry({menuName: sub_but_2, entryText: 'Cycle', func: () => {ppt.pboMode.enabled = false; buttons.update();}});
+    let sub_but_3 = menu.newMenu('Like Mode', but_menu);
+    menu.newEntry({menuName: sub_but_3, entryText: 'FEEDBACK tag', func: () => {ppt.loveMode.value = 1; buttons.update();}, flags: () => ppt.loveMode.value === 1 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: sub_but_3, entryText: 'last.fm sync', func: () => {ppt.loveMode.value = 2; buttons.update();}, flags: () => ppt.loveMode.value === 2 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: sub_but_3, entryText: 'Dual mode', func: () => {ppt.loveMode.value = 3; buttons.update();}, flags: () => ppt.loveMode.value === 3 ? MF_CHECKED : MF_STRING});
 
-    _menu1.AppendTo(m, MF_STRING, 'Modes');
+    menu.newEntry({entryText: 'sep'});
 
-    _menu2.AppendMenuItem(MF_STRING, 210, 'Album art');
-    _menu2.CheckMenuItem(210, ppt.art.enabled);
-    _menu2.AppendMenuItem(MF_STRING, 211, 'Volume slider');
-    _menu2.CheckMenuItem(211, ppt.vol.enabled);
-    _menu2.AppendMenuItem(MF_STRING, 212, 'Rating');
-    _menu2.CheckMenuItem(212, ppt.rating.enabled);
-    _menu2.AppendMenuItem(MF_STRING, 213, 'Bar cores');
-    _menu2.CheckMenuItem(213, ppt.bar_mode.enabled);
-    _menu2.AppendMenuItem(MF_STRING, 214, 'Rounded bars');
-    _menu2.CheckMenuItem(214, ppt.roundBars.enabled);
-    _menu2.AppendMenuItem(MF_STRING, 215, 'dB permanent');
-    _menu2.CheckMenuItem(215, ppt.db.enabled);
-    _menu2.AppendMenuItem(MF_STRING, 216, 'Next track');
-    _menu2.CheckMenuItem(216, ppt.nxt.enabled);
-    _menu2.AppendTo(m, MF_STRING, 'Show...');
+    let tp_menu = menu.newMenu('Transparency');
+    menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
+    menu.newEntry({menuName: tp_menu, entryText: 'sep'});
+    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.transparency.toggle(); window.Repaint(); refresh_wf_panel(js_wf_name); if (ppt.transparency.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'transparency readme file not found' }; fb.ShowPopupMessage(tp_readme, 'Transparency'); tp_readme = null;} }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
 
-    m.AppendMenuSeparator();
+    const tp_flag = ppt.transparency.enabled ? MF_GRAYED : MF_STRING
+    let bg_menu = menu.newMenu('Background', 'main', tp_flag);
+    menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
+    menu.newEntry({menuName: bg_menu, entryText: 'sep'});
+    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); buttons.update(); update_art(ppt); window.Repaint(); refresh_wf_panel(js_wf_name);}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt); window.Repaint(); refresh_wf_panel(js_wf_name);}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint(); refresh_wf_panel(js_wf_name);}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'sep'});
+    menu.newCheckMenu(bg_menu, 'Playing album cover', 'Default', () => !ppt.bgMode.enabled ? 0 : 1);
+    menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt); window.Repaint(); refresh_wf_panel(js_wf_name);}});
+    menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (!/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt); window.Repaint(); refresh_wf_panel(js_wf_name);}});
 
-    _menu3.AppendMenuItem(MF_STRING, 310, 'Enable');
-    _menu3.CheckMenuItem(310, ppt.bgShow.enabled);
-    _menu3.AppendMenuItem(MF_STRING, 311, 'Blur');
-    _menu3.CheckMenuItem(311, ppt.bgBlur.enabled);
-    _menu3.AppendMenuItem(MF_STRING, 312, 'Shadow');
-    _menu3.CheckMenuItem(312, ppt.overlay.enabled);
-    _menu3.AppendMenuSeparator();
-    _menu3.AppendMenuItem(MF_STRING, 313, 'Playing Album Cover');
-    _menu3.AppendMenuItem(MF_STRING, 314, 'Default');
-    _menu3.CheckMenuRadioItem(313, 314, ppt.bgMode.enabled ? 314 : 313);
-    _menu3.AppendTo(m, MF_STRING, 'Background Wallpaper');
+    let col_menu = menu.newMenu('Colours');
+    menu.newEntry({menuName: col_menu, entryText: 'System', func: () => {ppt.col_mode.value = 1; on_colours_changed(); window.Repaint(); refresh_wf_panel(js_wf_name);}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: col_menu, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; on_colours_changed(); window.Repaint(); refresh_wf_panel(js_wf_name);}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; on_colours_changed(); window.Repaint(); refresh_wf_panel(js_wf_name);}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
 
-    _menu4.AppendMenuItem(MF_STRING, 410, 'System');
-    _menu4.AppendMenuItem(MF_STRING, 411, 'Dynamic');
-    _menu4.AppendMenuItem(MF_STRING, 412, 'Custom');
-    _menu4.CheckMenuRadioItem(410, 412, Math.min(Math.max(410 + ppt.col_mode.value - 1, 410), 412));
-    _menu4.AppendTo(m, MF_STRING, 'Colours');
+    menu.newEntry({entryText: 'sep'});
 
-    m.AppendMenuSeparator();
+    menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\fcp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
 
-    m.AppendMenuItem(MF_STRING, 998, 'Open readme...');
+    menu.newEntry({entryText: 'sep'});
 
-    m.AppendMenuSeparator();
+    menu.newEntry({entryText: 'Panel Properties', func: () => {window.ShowProperties();}});
+    menu.newEntry({entryText: 'Configure...', func: () => {window.ShowConfigureV2();}});
 
-    m.AppendMenuItem(MF_STRING, 999, 'Panel Properties');
-    m.AppendMenuItem(MF_STRING, 1000, 'Configure...');
-
-    const idx = m.TrackPopupMenu(x, y);
-    switch (idx) {
-    case 0:
-        break;
-    case 110:
-    case 111:
-        ppt.mode.toggle();
-        on_size();
-        buttons.update();
-        window.Repaint();
-        break;
-    case 112:
-    case 113:
-        ppt.pboMode.toggle();
-        buttons.update();
-        break;
-    case 114:
-        ppt.loveMode.value = 1;
-        buttons.update();
-        break;
-    case 115:
-        ppt.loveMode.value = 2;
-        buttons.update();
-        break;
-    case 116:
-        ppt.loveMode.value = 3;
-        buttons.update();
-        break;
-    case 210:
-        ppt.art.toggle();
-        update_album_art(ppt);
-        on_size();
-        window.Repaint();
-        if (spectrumPanel && ppt.art.enabled) fb.ShowPopupMessage('A Spectrum Analyzer panel is present.\nAlbum art hidden.', window.ScriptInfo.Name);
-        break;
-    case 211:
-        ppt.vol.toggle();
-        buttons.update();
-        window.Repaint();
-        break;
-    case 212:
-        ppt.rating.toggle();
-        window.Repaint();
-        break;
-    case 213:
-        ppt.bar_mode.toggle();
-        window.Repaint();
-        break;
-    case 214:
-        ppt.roundBars.toggle();
-        window.Repaint();
-        break;
-    case 215:
-        ppt.db.toggle();
-        window.Repaint();
-        break;
-    case 216:
-        ppt.nxt.toggle();
-        window.Repaint();
-        break;
-    case 310:
-        ppt.bgShow.toggle();
-        buttons.update();
-		update_background_art(ppt);
-        window.Repaint();
-        refresh_wf_panel(js_wf_name);
-        break;
-    case 311:
-        ppt.bgBlur.toggle();
-        update_background_art(ppt);
-        window.Repaint();
-        refresh_wf_panel(js_wf_name);
-        break;
-    case 312:
-        ppt.overlay.toggle();
-        window.Repaint();
-        refresh_wf_panel(js_wf_name);
-        break;
-    case 313:
-    case 314:
-        ppt.bgMode.toggle();
-        if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties();
-        update_background_art(ppt);
-        window.Repaint();
-        refresh_wf_panel(js_wf_name);
-        break;
-    case 410:
-        ppt.col_mode.value = 1;
-        on_colours_changed();
-        window.Repaint();
-        if (!ppt.mode.enabled) refresh_wf_panel(js_wf_name);
-        break;
-    case 411:
-        ppt.col_mode.value = 2;
-        on_colours_changed();
-        window.Repaint();
-        if (!ppt.mode.enabled) refresh_wf_panel(js_wf_name);
-        break;
-    case 412:
-        ppt.col_mode.value = 3;
-        on_colours_changed();
-        window.ShowProperties();
-        window.Repaint();
-        if (!ppt.mode.enabled) refresh_wf_panel(js_wf_name);
-        break;
-    case 998:
-        let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\fcp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' };
-        fb.ShowPopupMessage(readme, window.ScriptInfo.Name);
-        readme = null;
-        break;
-    case 999:
-        window.ShowProperties();
-        break;
-    case 1000:
-        window.ShowConfigureV2();
-        break;
-    default:
-        c.ExecuteByID(idx - 1);
-        break;
-    }
-    return true;
-}
-
-function vol2pos(v) {
-    return (Math.pow(10, v / 50) - 0.01) / 0.99;
-}
-
-function pos2vol(pos) {
-    return 50 * Math.log(0.99 * pos + 0.01) / Math.LN10;
-}
-
-/**
- * Updates the information about the next upcoming track.
- * Prioritizes tracks in the playback queue.
- */
-function updateNextTrackInfo() {
-    var nextTrack = null;
-    // Use GetPlaybackQueueHandles to get a FbMetadbHandleList directly
-    var queueHandles = plman.GetPlaybackQueueHandles();
-
-    // 1. Check for tracks in the playback queue first
-    if (queueHandles.Count > 0) {
-        // The first item in the queueHandles list is the highest priority next track
-        nextTrack = queueHandles[0];
-        // console.log("Next track from queue (from updateNextTrackInfo):", nextTrack ? fb.TitleFormat("%title%").EvalWithMetadb(nextTrack) : "N/A"); // For debugging
-    } else {
-        // 2. If no queue, check the next track in the current playlist
-        var currentPlaylistIndex = plman.PlayingPlaylist;
-        // Ensure a valid playlist is currently playing and it has items
-        if (currentPlaylistIndex !== -1 && plman.PlaylistItemCount(currentPlaylistIndex) > 0) {
-            var playingItemLocation = plman.GetPlayingItemLocation();
-            if (playingItemLocation.IsValid) {
-                var currentIndex = playingItemLocation.PlaylistItemIndex;
-                var playlistLength = plman.PlaylistItemCount(currentPlaylistIndex);
-
-                // Check if there's a next track in the playlist
-                if (currentIndex < playlistLength - 1) {
-                    // Get all items in the current playlist and then access the next one by index
-                    var playlistItems = plman.GetPlaylistItems(currentPlaylistIndex);
-                    if (playlistItems && playlistItems.Count > currentIndex + 1) {
-                        nextTrack = playlistItems[currentIndex + 1];
-                        // console.log("Next track from playlist (from updateNextTrackInfo):", nextTrack ? fb.TitleFormat("%title%").EvalWithMetadb(nextTrack) : "N/A"); // For debugging
-                    }
-                }
-            }
-        }
-    }
-
-    // Format the track information for display
-    if (nextTrack) {
-        // Use TitleFormat to get artist and title reliably
-        var tf = fb.TitleFormat("%artist% - %title%");
-        nextTrackInfo = "Next: " + tf.EvalWithMetadb(nextTrack);
-    } else {
-        nextTrackInfo = "No next track.";
-    }
-
-    window.Repaint(); // Request a repaint to update the display
-}
-
-function on_playback_queue_changed() {
-    // Add a small delay to ensure foobar2000 has fully processed the queue change
-    window.SetTimeout(function() {
-        updateNextTrackInfo();
-    }, 50); // 50ms delay
-}
-
-// Add selected tracks to the queue in a random order (append to queue, do not flush)
-function queueSelectedTracksRandomizedAppend() {
-    const activePlaylistIndex = plman.ActivePlaylist;
-    const selectedHandles = plman.GetPlaylistSelectedItems(activePlaylistIndex);
-
-    if (!selectedHandles || selectedHandles.Count === 0) {
-        fb.ShowPopupMessage("No tracks selected. Please select one or more tracks in your playlist.");
-        return;
-    }
-
-    // Fisher-Yates shuffle
-    for (let i = selectedHandles.Count - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        const temp = selectedHandles[i];
-        selectedHandles[i] = selectedHandles[j];
-        selectedHandles[j] = temp;
-    }
-
-    // Get all items in the playlist
-    const playlistItems = plman.GetPlaylistItems(activePlaylistIndex);
-
-    // Add shuffled tracks to the queue (append)
-    for (let i = 0; i < selectedHandles.Count; i++) {
-        const idx = playlistItems.Find(selectedHandles[i]);
-        if (idx !== -1) {
-            plman.AddPlaylistItemToPlaybackQueue(activePlaylistIndex, idx);
-        }
-    }
-    // fb.ShowPopupMessage("Selected tracks appended to the queue in random order.");
+    return menu.btn_up(x, y);
 }
