@@ -25,10 +25,8 @@ Refer to the wiki's [script descriptions](https://github.com/Choya5011/Poobar/wi
 ## Assets
 ### Fonts  
 Standard already on Windows 11: [Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts)  
-Optional (For Biography): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)  
-Lyrics (optional): UD Digi Kyokasho (NP-B)
 Used in Biography & Library Tree (required): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)  
-Optional (Lyrics): UD Digi Kyokasho (NP-B)
+Lyrics (optional): UD Digi Kyokasho (NP-B)
 
 ### Components & Packages (included)
 **Components**  
