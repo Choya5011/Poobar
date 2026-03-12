@@ -2984,10 +2984,11 @@ oBrowser = function (name) {
         const tp_menu = menu.newMenu('Transparency');
         menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
         menu.newEntry({menuName: tp_menu, entryText: 'sep'});
-        menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.transparency = !ppt.transparency; window.SetProperty('_DISPLAY: Enable transparent background', ppt.transparency); brw.repaint(); if (ppt.transparency) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'transparency readme file not found' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.showwallpaper = false; window.SetProperty("_DISPLAY: Show Wallpaper", ppt.showwallpaper); ppt.transparency = !ppt.transparency; window.SetProperty('_DISPLAY: Enable transparent background', ppt.transparency); brw.repaint(); if (ppt.transparency) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'transparency readme file not found' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency ? MF_CHECKED : MF_STRING});
 
-        const tp_flag = ppt.transparency ? MF_GRAYED : MF_STRING
-        const bg_menu = menu.newMenu('Background Wallpaper', 'main', tp_flag);
+        const bg_menu = menu.newMenu('Background', 'main', ppt.transparency ? MF_GRAYED : MF_STRING);
+        menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
+        menu.newEntry({menuName: bg_menu, entryText: 'sep'});
         menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.showwallpaper = !ppt.showwallpaper; window.SetProperty("_DISPLAY: Show Wallpaper", ppt.showwallpaper); g_wallpaperImg = setWallpaperImg(); brw.repaint();}, flags: () => ppt.showwallpaper ? MF_CHECKED : MF_STRING});
         menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.wallpaperblurred = !ppt.wallpaperblurred; window.SetProperty("_DISPLAY: Wallpaper Blurred", ppt.wallpaperblurred); g_wallpaperImg = setWallpaperImg(); brw.repaint();}, flags: () => ppt.wallpaperblurred ? MF_CHECKED : MF_STRING});
         const wallpaperalpha = ppt.wallpaperalpha === 150 ? true : false;
