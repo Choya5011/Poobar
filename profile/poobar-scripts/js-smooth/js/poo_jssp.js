@@ -1,19 +1,13 @@
 var need_repaint = false;
 
-let ppt = {
+ppt = {
 	tf_artist: fb.TitleFormat("%artist%"),
 	tf_albumartist: fb.TitleFormat("%album artist%"),
-	tf_groupkey: fb.TitleFormat(window.GetProperty("_PROPERTY: tf_groupkey", "$if2(%album artist%,$if(%length%,'?',%title%)) ^^ $if2(%album%,$if(%length%,'?',%path%)) ^^ %discnumber% ## [%artist%] ^^ %title% ^^ [%genre%] ^^ $year(%date%)")),
-	tf_track: fb.TitleFormat("%tracknumber% ^^ [%length%] ^^ $if2(%rating%,0) ^^ %mood%"),
+	tf_groupkey: fb.TitleFormat(window.GetProperty("_PROPERTY: tf_groupkey", "$if2(%album artist%,$if(%length%,'?',%title%)) ^^ $if2(%album%,$if(%length%,'?',%path%)) ^^ %discnumber% ## [%artist%] ^^ %title% ^^ [%genre%] ^^ [%date%]")),
+	tf_track: fb.TitleFormat("%tracknumber% ^^ [%length%] ^^ $if2(%rating%,0) ^^ $if2(%feedback%,0)"),
 	tf_path: fb.TitleFormat("$directory_path(%path%)\\"),
 	tf_crc: fb.TitleFormat("$crc32(%path%)"),
 	tf_time_remaining: fb.TitleFormat("$if(%length%,-%playback_time_remaining%,'ON AIR')"),
-	tf_bitrate: fb.TitleFormat("%bitrate%"),
-	tf_lfm_playcount: fb.TitleFormat("%lfm_playcount%"),
-	tf_playcount: fb.TitleFormat("%play_count%"),
-	tf_loved: fb.TitleFormat("%lfm_loved%"),
-	tf_LOVED: fb.TitleFormat("%feedback%"),
-	tf_disc: fb.TitleFormat("$ifgreater(%totaldiscs%,1,Disc %discnumber%/%totaldiscs%$if2($if(%disctitle%, - %discsubtitle%,),),)"),
 	defaultRowHeight: window.GetProperty("_PROPERTY: Row Height", 35),
 	doubleRowPixelAdds: 3,
 	rowHeight: window.GetProperty("_PROPERTY: Row Height", 35),
@@ -22,32 +16,62 @@ let ppt = {
 	refreshRate: 40,
 	extraRowsNumber: window.GetProperty("_PROPERTY: Number of Extra Rows per Group", 0),
 	minimumRowsNumberPerGroup: window.GetProperty("_PROPERTY: Number minimum of Rows per Group", 0),
-	groupHeaderRowsNumber: window.GetProperty("_PROPERTY: Number of Rows for Group Header", 3),
+	groupHeaderRowsNumber: window.GetProperty("_PROPERTY: Number of Rows for Group Header", 2),
 	showHeaderBar: window.GetProperty("_DISPLAY: Show Top Bar", true),
 	defaultHeaderBarHeight: 25,
 	headerBarHeight: 25,
-	autocollapse: window.GetProperty("_PROPERTY: Autocollapse groups", true),
+	autocollapse: window.GetProperty("_PROPERTY: Autocollapse groups", false),
 	enableFullScrollEffectOnFocusChange: false,
-	//enableCustomColors: window.GetProperty("_PROPERTY: Custom Colors", false),
-	col_mode : window.GetProperty('_PROPERTY: Color Mode (1,2,3)', 1),
+	enableCustomColors: window.GetProperty("_PROPERTY: Custom Colors", false),
 	showgroupheaders: window.GetProperty("_DISPLAY: Show Group Headers", true),
 	showwallpaper: window.GetProperty("_DISPLAY: Show Wallpaper", false),
 	wallpaperalpha: 150,
 	wallpaperblurred: window.GetProperty("_DISPLAY: Wallpaper Blurred", true),
 	wallpaperblurvalue: 1.05,
 	wallpapermode: window.GetProperty("_SYSTEM: Wallpaper Mode", 0),
-	wallpaperpath: window.GetProperty("_PROPERTY: Default Wallpaper Path", "path\\to\\custom\\image"),
+	wallpaperpath: window.GetProperty("_PROPERTY: Default Wallpaper Path", ".\\user-components\\foo_uie_jsplitter\\samples\\js-smooth\\images\\default.png"),
 	extra_font_size: window.GetProperty("_SYSTEM: Extra font size value", 0),
 	showFilterBox: window.GetProperty("_PROPERTY: Enable Playlist Filterbox in Top Bar", true),
 	doubleRowText: window.GetProperty("_PROPERTY: Double Row Text Info", true),
 	showArtistAlways: window.GetProperty("_DISPLAY: Show Artist in Track Row", true),
-	showRating: window.GetProperty("_DISPLAY: Show Rating in Track Row", false),
-	showPlaycount: window.GetProperty("_DISPLAY: Show Playcount in Track Row", false),
-	playcountMode:  window.GetProperty("_PROPERTY: Switch Playcount mode last.fm/foo_playcount", 0),
-	likeToggle: window.GetProperty("_DISPLAY: Show Liked/LOVED in Track Row", true),
-	showMood: window.GetProperty("_DISPLAY: Show Mood in Track Row", true),
-	enableTouchControl: window.GetProperty("_PROPERTY: Touch control", true)
+	showRating: window.GetProperty("_DISPLAY: Show Rating in Track Row", false), // poo
+	// showMood: window.GetProperty("_DISPLAY: Show Mood in Track Row", true),
+	enableTouchControl: window.GetProperty("_PROPERTY: Touch control", true),
+
+	// poo
+    col_mode: window.GetProperty('_PROPERTY: Color Mode (1,2,3)', 1),
+    transparency: window.GetProperty('_DISPLAY: Enable transparent background', false),
+    love: window.GetProperty("_DISPLAY: Show Liked status in Track Row", false),
+    playcount: window.GetProperty("_DISPLAY: Show Playcount in Track Row", false),
+	//tf_bitrate: fb.TitleFormat("%bitrate%"),
+	//tf_lfm_playcount: fb.TitleFormat("%lfm_playcount%"),
+	tf_playcount: fb.TitleFormat("%play_count%"),
+	tf_loved: fb.TitleFormat("%lfm_loved%"),
+	tf_LOVED: fb.TitleFormat("%feedback%"),
+	tf_disc: fb.TitleFormat("$ifgreater(%totaldiscs%,1,Disc %discnumber%/%totaldiscs%$if2($if(%disctitle%, - %discsubtitle%,),),)"),
 };
+
+/*=======================================================
+ * poo
+=======================================================*/
+
+var chars = {
+    play: '\uf5b0',
+    pause: '\ue769',
+    stop: '\ue71a',
+    heart: '\ueb51',
+    heartFill: '\ueb52',
+    refresh: '\ue72c',
+    ChevronRight: '\ue76c'
+};
+
+let queue = [];
+function on_playback_queue_changed() {
+    queue = plman.GetPlaybackQueueContents();
+    //console.log("Queue updated:", queue.length);
+    window.Repaint();
+}
+/*=======================================================*/
 
 cTouch = {
 	down: false,
@@ -137,7 +161,7 @@ cover = {
 };
 
 images = {
-	path: fb.ProfilePath + "poobar-scripts\\js-smooth\\images\\",
+	path: fb.ProfilePath + "poobar-scripts\\js-smooth\\images\\", // poo
 	glass_reflect: null,
 	loading_angle: 0,
 	loading_draw: null,
@@ -177,29 +201,6 @@ dragndrop = {
 	clicked: false,
 	moved: false
 };
-
-/*
-===================================================================================================
-Custom section. Fonts are originally defined in the get_font function (line ~3814)
-===================================================================================================
- */
-
-var chars = {
-    play: '\uf5b0',
-    pause: '\ue769',
-    stop: '\ue71a',
-    heart: '\ueb51',
-    heartFill: '\ueb52',
-    refresh: '\ue72c',
-    ChevronRight: '\ue76c'
-};
-
-let queue = [];
-function on_playback_queue_changed() {
-    queue = plman.GetPlaybackQueueContents();
-    //console.log("Queue updated:", queue.length);
-    window.Repaint();
-}
 
 /*
 ===================================================================================================
@@ -1380,7 +1381,7 @@ oScrollbar = function (themed) {
 	};
 };
 
-oGroup = function (index, start, handle, groupkey, total_time_length) {
+oGroup = function (index, start, handle, groupkey) {
 	this.index = index;
 	this.start = start;
 	this.count = 1;
@@ -1395,8 +1396,6 @@ oGroup = function (index, start, handle, groupkey, total_time_length) {
 	this.load_requested = 0;
 	this.save_requested = false;
 	this.collapsed = ppt.autocollapse;
-	//this.total_group_duration_txt = total_time_length; // initialize empty
-	this.total_group_duration_txt = utils.FormatDuration(total_time_length);
 
 	this.finalize = function (count, tracks) {
 		this.tra = tracks.slice(0);
@@ -1945,7 +1944,7 @@ oBrowser = function (name) {
 								};
 							};
 							if (g_selected) {
-								var group_color_txt_normal = (ppt.col_mode === 3 ? g_color_selected_txt : g_color_normal_bg);
+								var group_color_txt_normal = (ppt.col_mode === (2 || 3)) ? g_color_selected_txt : g_color_normal_bg;
 								var group_color_txt_fader = blendColors(group_color_txt_normal, g_color_selected_bg, 0.25);
 								gr.FillSolidRect(ax, ay - ((ghrh - 1) * ah), aw, ah * ghrh - 1, g_color_selected_bg & 0xb0ffffff);
 							} else {
@@ -2008,14 +2007,15 @@ oBrowser = function (name) {
 							};
 							gr.GdiDrawText(arr_g[0].toUpperCase(), g_font_group1, group_color_txt_fader, ax + text_left_margin + 5, ay - ((ghrh - 1) * ah) + Math.round(ah * 1 / 3) - 2, aw - text_left_margin - cColumns.dateWidth - 10, Math.round(ah * 2 / 3), DT_LEFT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
 							gr.GdiDrawText(album_name, g_font_group2, group_color_txt_normal, ax + text_left_margin + 25, ay - ((ghrh - 2) * ah), aw - text_left_margin - cColumns.genreWidth - 30, Math.round(ah * 2 / 3), DT_LEFT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
-							if (nowplaying_group) {
+							if (nowplaying_group) { // poo
 							    //gr.GdiDrawText(">", g_font_group2, group_color_txt_normal, ax + text_left_margin + 5, ay - ((ghrh - 2) * ah), 20, Math.round(ah * 2 / 3), DT_LEFT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
 								gr.GdiDrawText(chars.ChevronRight, g_font_fluent_small, group_color_txt_normal, ax + text_left_margin + 5, ay - ((ghrh - 2) * ah), 20, Math.round(ah * 2 / 3), DT_LEFT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
 							};
-
-                            // custom disc section start //
-							// fetch first track in group for displaying disc
-                        	var groupFirstTrack = null;
+							/** poo
+							 * disc section start
+							 * fetch first track in group for displaying disc
+                            ============================================*/
+                            var groupFirstTrack = null;
                             for (var j = 0; j < this.rows.length; j++) {
                             	if (this.rows[j].albumId === this.rows[i].albumId) {
                             		groupFirstTrack = this.rows[j].metadb;
@@ -2023,13 +2023,13 @@ oBrowser = function (name) {
                             	}
                             }
 
-							if (groupFirstTrack) {
+                            if (groupFirstTrack) {
                             	var discText = ppt.tf_disc.EvalWithMetadb(groupFirstTrack);
                             	if (discText.length > 0) {
                             		gr.GdiDrawText(discText, g_font_group2, group_color_txt_fader, ax + text_left_margin + 25, ay - ((ghrh - 2.5) * ah), aw - text_left_margin - cColumns.genreWidth - 50, Math.round(ah * 2 / 3), DT_LEFT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
                             	}
                             }
-                            // custom disc section end //
+                            /*============================================*/
 						};
 						break;
 					case 0: // track row
@@ -2051,7 +2051,7 @@ oBrowser = function (name) {
 							// selected track bg
 							var t_selected = (plman.IsPlaylistItemSelected(g_active_playlist, this.rows[i].playlistTrackId));
 							if (t_selected) {
-								track_color_txt = (ppt.col_mode === 3 ? g_color_selected_txt : g_color_normal_bg);
+								track_color_txt = (ppt.col_mode === (2 || 3)) ? g_color_selected_txt : g_color_normal_bg;
 								track_artist_color_text = blendColors(track_color_txt, g_color_selected_bg, 0.25);
 								track_color_rating = blendColors(track_color_txt, g_color_selected_bg, 0.2);
 								gr.FillSolidRect(ax, ay, aw, ah, g_color_selected_bg & 0xb0ffffff);
@@ -2163,11 +2163,11 @@ oBrowser = function (name) {
 										};
 										gr.GdiDrawText(track_time_part, g_font, track_color_txt, tx + tw - cColumns.track_time_part - 5, ay_1, cColumns.track_time_part, ah_1, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
 
-										// bitrate
-										//const track_bitrate = ppt.tf_bitrate.EvalWithMetadb(this.rows[i].metadb);
+										// bitrate | poo
+                                        //const track_bitrate = ppt.tf_bitrate.EvalWithMetadb(this.rows[i].metadb);
                                         //gr.GdiDrawText(track_bitrate + " kbps", g_font, track_artist_color_text, tx + tw - cColumns.track_time_part - (cColumns.track_time_part * 0.15), ay_2, cColumns.track_time_part * 1.1, ah_2, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
 
-                                        // pulsing play icon | comment: ah = ppt.rowHeight
+                                        // pulsing play icon | comment: ah = ppt.rowHeight | poo
                                         if (g_seconds == 0 || g_seconds / 2 == Math.floor(g_seconds / 2)) {
                                             gr.DrawString(chars.play, g_font_fluent, g_color_normal_txt, ax + ppt.rowHeight * -0.09, ay + ppt.rowHeight * 0.24, ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX);
                                         } else {
@@ -2175,44 +2175,47 @@ oBrowser = function (name) {
                                         }
 
 										// rating Stars
-										const ratingOffset = Math.round(tw / 57.05);
 										if (ppt.showRating && track_type != 3) {
 											if (g_font_guifx_found) {
-												gr.DrawString("b".repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + ratingOffset, ah_1, lc_stringformat);
-												gr.DrawString("b".repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + ratingOffset, ah_1, lc_stringformat);
+												gr.DrawString("b".repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
+												gr.DrawString("b".repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
 											} else if (g_font_wingdings2_found) {
-												gr.DrawString(String.fromCharCode(234).repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + ratingOffset, ah_1, lc_stringformat);
-												gr.DrawString(String.fromCharCode(234).repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + ratingOffset, ah_1, lc_stringformat);
+												gr.DrawString(String.fromCharCode(234).repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
+												gr.DrawString(String.fromCharCode(234).repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
 											} else {
-												gr.DrawString(String.fromCharCode(0x25CF).repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + ratingOffset, ah_1, lc_stringformat);
-												gr.DrawString(String.fromCharCode(0x25CF).repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + ratingOffset, ah_1, lc_stringformat);
+												gr.DrawString(String.fromCharCode(0x25CF).repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
+												gr.DrawString(String.fromCharCode(0x25CF).repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
 											};
 										};
 
-                                        // last.fm playcount playing tracks | comment: ah = ppt.rowHeight
+										/** poo
+										 * playcount | comment: ah = ppt.rowHeight
+										*/
                                         let pc_box_width = 0;
                                         let heartOffset = 0;
-										if (ppt.showPlaycount) {
-										    heartOffset = (tw < 1800) ? 0 : Math.max(35, Math.min(50, Math.round(tw / 38.03)));
+                                        if (ppt.playcount) {
+                                            heartOffset = (tw < 1800) ? 0 : Math.max(35, Math.min(50, Math.round(tw / 38.03)));
 
-										    pc_box_width = 25; // adjust to fit "9999"
-										    const clampMin = (tw < 1212) ? 16 : 14;
-										    const pc_offset = Math.max(18, Math.min(32, Math.round(tw / 57.05))); // offset from rating stars
-										    const refreshOffset = Math.max(clampMin, Math.min(20, Math.round(tw / 81.5)));
+                                            pc_box_width = 25; // adjust to fit "9999"
+                                            const clampMin = (tw < 1212) ? 16 : 14;
+                                            const pc_offset = Math.max(18, Math.min(32, Math.round(tw / 57.05))); // offset from rating stars
+                                            const refreshOffset = Math.max(clampMin, Math.min(20, Math.round(tw / 81.5)));
 
-										    const playcount = (ppt.playcountMode == 0) ? ppt.tf_lfm_playcount.EvalWithMetadb(this.rows[i].metadb) : ppt.tf_playcount.EvalWithMetadb(this.rows[i].metadb);
-										    const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
-										    //console.log(tx, tw, pc_x, refreshOffset, pc_offset, heartOffset);
+                                            const playcount = ppt.tf_playcount.EvalWithMetadb(this.rows[i].metadb);
+                                            const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
+                                            //console.log(tx, tw, pc_x, refreshOffset, pc_offset, heartOffset);
 
                                             gr.GdiDrawText(playcount || "0", g_font, track_artist_color_text, pc_x, ay + (ah * 0.27), pc_box_width, ah_1, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_NOPREFIX);
                                             gr.GdiDrawText(chars.refresh, g_font_fluent_xs, track_artist_color_text, pc_x + refreshOffset, ay + (ah * 0.27) + 0.68, pc_box_width, ah_1, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_NOPREFIX);
                                         };
 
-                                        // draw playing last.fm or LOVED(tag) like status
-                                        if (ppt.likeToggle) {
+                                        /** poo
+                                         * like status
+                                        */
+                                        if (ppt.love) {
                                             const lovedTagValue = ppt.tf_loved.EvalWithMetadb(this.rows[i].metadb) || ppt.tf_LOVED.EvalWithMetadb(this.rows[i].metadb);
                                             const pc_offset = Math.max(18, Math.min(32, Math.round(tw / 57.05)));
-										    const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
+                                            const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
                                             const heart_x = pc_x - pc_box_width - pc_offset - heartOffset - 16;
 
                                             if (lovedTagValue == 1) { gr.DrawString(chars.heartFill, g_font_fluent_small, g_color_normal_txt, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); } //else { gr.DrawString(chars.heart, g_font_fluent_small, track_artist_color_text, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); }
@@ -2225,8 +2228,10 @@ oBrowser = function (name) {
 										var tx = ax + cColumns.track_num_part;
 										var tw = aw - cColumns.track_num_part;
 
-										// custom queue section start //
-										let queue_num = null;
+										/*=====================================================
+										 * queue section | poo
+										=====================================================*/
+                                        let queue_num = null;
 
                                         for (let q = 0; q < queue.length; q++) {
                                             //console.log(`Checking queue item ${q}: PlaylistIndex=${queue[q].PlaylistIndex}, PlaylistItemIndex=${queue[q].PlaylistItemIndex}`); // debug
@@ -2255,54 +2260,57 @@ oBrowser = function (name) {
                                         } else {
                                             gr.GdiDrawText(track_num_part, g_font, track_color_txt, ax + 10, ay_1, cColumns.track_num_part, ah_1, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
                                         };
-                                        // custom queue section end //
+                                         /*=====================================================*/
 
-										//gr.GdiDrawText(track_num_part, g_font, track_color_txt, ax + 10, ay_1, cColumns.track_num_part, ah_1, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX); // replaced by custom queue section
+										//gr.GdiDrawText(track_num_part, g_font, track_color_txt, ax + 10, ay_1, cColumns.track_num_part, ah_1, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX); // replaced by queue sections
 										gr.GdiDrawText(track_artist_part, g_font, track_artist_color_text, tx + 10, ay_2, tw - cColumns.track_time_part - 15, ah_2, DT_LEFT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
 										gr.GdiDrawText(track_title_part, g_font, track_color_txt, tx + 10, ay_1, tw - cColumns.track_time_part - 15 - (cColumns.track_rating_part + 10), ah_1, DT_LEFT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
 										gr.GdiDrawText(track_time_part, g_font, track_color_txt, tx + tw - cColumns.track_time_part - 5, ay_1, cColumns.track_time_part, ah_1, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
-										// bitrate
+										// bitrate | poo
 										//const track_bitrate = ppt.tf_bitrate.EvalWithMetadb(this.rows[i].metadb);
                                         //gr.GdiDrawText(track_bitrate + " kbps", g_font, track_artist_color_text, tx + tw - cColumns.track_time_part - (cColumns.track_time_part * 0.15), ay_2, cColumns.track_time_part * 1.1, ah_2, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
 
 										// rating Stars
-										const ratingOffset = Math.round(tw / 57.05);
 										if (ppt.showRating && track_type != 3) {
 											if (g_font_guifx_found) {
-												gr.DrawString("b".repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
-												gr.DrawString("b".repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
+												gr.DrawString("b".repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
+												gr.DrawString("b".repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
 											} else if (g_font_wingdings2_found) {
-												gr.DrawString(String.fromCharCode(234).repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
-												gr.DrawString(String.fromCharCode(234).repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
+												gr.DrawString(String.fromCharCode(234).repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
+												gr.DrawString(String.fromCharCode(234).repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
 											} else {
-												gr.DrawString(String.fromCharCode(0x25CF).repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
-												gr.DrawString(String.fromCharCode(0x25CF).repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + ratingOffset), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
+												gr.DrawString(String.fromCharCode(0x25CF).repeat(5), g_font_rating, track_color_txt & 0x15ffffff, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
+												gr.DrawString(String.fromCharCode(0x25CF).repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay_1, cColumns.track_rating_part + 10, ah_1, lc_stringformat);
 											};
 										};
 
-                                        // last.fm playcount not playing tracks | comment: ah = ppt.rowHeight
+                                        /** poo
+                                         * playcount not playing tracks | comment: ah = ppt.rowHeight
+                                        */
                                         let pc_box_width = 0;
                                         let heartOffset = 0;
-										if (ppt.showPlaycount) {
-										    heartOffset = (tw < 1800) ? 0 : Math.max(35, Math.min(50, Math.round(tw / 38.03)));
-										    pc_box_width = 25; // adjust to fit "9999"
-										    const clampMin = (tw < 1212) ? 16 : 14;
-										    const pc_offset = Math.max(18, Math.min(32, Math.round(tw / 57.05))); // offset from rating stars
-										    const refreshOffset = Math.max(clampMin, Math.min(20, Math.round(tw / 81.5)));
+                                        if (ppt.playcount) {
+                                            heartOffset = (tw < 1800) ? 0 : Math.max(35, Math.min(50, Math.round(tw / 38.03)));
+                                            pc_box_width = 25; // adjust to fit "9999"
+                                            const clampMin = (tw < 1212) ? 16 : 14;
+                                            const pc_offset = Math.max(18, Math.min(32, Math.round(tw / 57.05))); // offset from rating stars
+                                            const refreshOffset = Math.max(clampMin, Math.min(20, Math.round(tw / 81.5)));
 
-										    const playcount = (ppt.playcountMode == 0) ? ppt.tf_lfm_playcount.EvalWithMetadb(this.rows[i].metadb) : ppt.tf_playcount.EvalWithMetadb(this.rows[i].metadb);
-										    const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
-										    //console.log(tx, tw, pc_x, refreshOffset, pc_offset, heartOffset);
+                                            const playcount = ppt.tf_playcount.EvalWithMetadb(this.rows[i].metadb);
+                                            const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
+                                            //console.log(tx, tw, pc_x, refreshOffset, pc_offset, heartOffset);
 
                                             gr.GdiDrawText(playcount || "0", g_font, track_artist_color_text, pc_x, ay + (ah * 0.27), pc_box_width, ah_1, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_NOPREFIX);
                                             gr.GdiDrawText(chars.refresh, g_font_fluent_xs, track_artist_color_text, pc_x + refreshOffset, ay + (ah * 0.27) + 0.68, pc_box_width, ah_1, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_NOPREFIX);
                                         };
 
-                                        // draw not playing last.fm or LOVED(tag) like status
-                                        if (ppt.likeToggle) {
+                                        /** poo
+                                         * like status
+                                        */
+                                        if (ppt.love) {
                                             const lovedTagValue = ppt.tf_loved.EvalWithMetadb(this.rows[i].metadb) || ppt.tf_LOVED.EvalWithMetadb(this.rows[i].metadb);
                                             const pc_offset = Math.max(18, Math.min(32, Math.round(tw / 57.05)));
-										    const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
+                                            const pc_x = tx + tw - cColumns.track_time_part - pc_box_width - (cColumns.track_rating_part + pc_offset) - Math.round(tw / 28.52);
                                             const heart_x = pc_x - pc_box_width - pc_offset - heartOffset - 16;
 
                                             if (lovedTagValue == 1) { gr.DrawString(chars.heartFill, g_font_fluent_small, g_color_normal_txt, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); } //else { gr.DrawString(chars.heart, g_font_fluent_small, track_artist_color_text, heart_x, ay + (ah * 0.27), ah, ah, DT_CENTER | DT_VCENTER | DT_NOPREFIX); }
@@ -2349,13 +2357,11 @@ oBrowser = function (name) {
 											gr.GdiDrawText(track_title_part, g_font, track_color_txt, tx + cColumns.track_artist_part + 10, ay, tw - cColumns.track_artist_part - cColumns.track_time_part - 15 - (cColumns.track_rating_part + 10), ah, DT_LEFT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
 										};
 										gr.GdiDrawText(track_time_part, g_font, track_color_txt, tx + tw - cColumns.track_time_part - 5, ay, cColumns.track_time_part, ah, DT_RIGHT | DT_VCENTER | DT_CALCRECT | DT_END_ELLIPSIS | DT_NOPREFIX);
-
-                                        if (g_seconds == 0 || g_seconds / 2 == Math.floor(g_seconds / 2)) {
-                                            gr.DrawString(chars.play, g_font_fluent, g_color_normal_txt, ax - 6, ay + 9, ppt.rowHeight, ppt.rowHeight, DT_CENTER | DT_VCENTER | DT_NOPREFIX);
-                                        } else {
-                                            gr.DrawString(chars.play, g_font_fluent_small, g_color_normal_txt, ax - 8, ay + 11, ppt.rowHeight, ppt.rowHeight, DT_CENTER | DT_VCENTER | DT_NOPREFIX);
-                                        }
-
+										if (g_seconds == 0 || g_seconds / 2 == Math.floor(g_seconds / 2)) {
+											gr.DrawImage(images.play_on.Resize(ppt.rowHeight, ppt.rowHeight, 2), ax + 5, ay, ppt.rowHeight, ppt.rowHeight, 0, 0, ppt.rowHeight, ppt.rowHeight, 0, 255);
+										} else {
+											gr.DrawImage(images.play_off.Resize(ppt.rowHeight, ppt.rowHeight, 2), ax + 5, ay, ppt.rowHeight, ppt.rowHeight, 0, 0, ppt.rowHeight, ppt.rowHeight, 0, 255);
+										};
 										// rating Stars
 										if (ppt.showRating && track_type != 3) {
 											if (g_font_guifx_found) {
@@ -2369,7 +2375,6 @@ oBrowser = function (name) {
 												gr.DrawString(String.fromCharCode(0x25CF).repeat(track_rating_part), g_font_rating, track_color_rating, tx + tw - cColumns.track_time_part - (cColumns.track_rating_part + 10), ay, cColumns.track_rating_part + 10, ah, lc_stringformat);
 											};
 										};
-
 									} else { // default track
 										cColumns.track_num_part = gr.CalcTextWidth(track_num_part, g_font) + 10;
 										cColumns.track_artist_part = track_artist_part.length > 0 ? gr.CalcTextWidth(track_artist_part, g_font) + 0 : 0;
@@ -2918,7 +2923,7 @@ oBrowser = function (name) {
 					try {
 						fso.DeleteFile(CACHE_FOLDER + crc);
 					} catch (e) {
-						console.log("Spider Monkey Panel Error: Image cache [" + crc + "] can't be deleted on disk, file in use, try later or reload panel.");
+						console.log("JSplitter Error: Image cache [" + crc + "] can't be deleted on disk, file in use, try later or reload panel.");
 					};
 				};
 				this.groups[albumIndex].tid = -1;
@@ -2948,197 +2953,64 @@ oBrowser = function (name) {
 		return true;
 	};
 
-	this.settings_context_menu = function (x, y) {
-		var _menu = window.CreatePopupMenu();
-		var _menu1 = window.CreatePopupMenu();
-		var _submenu1 = window.CreatePopupMenu();
-		var _submenu11 = window.CreatePopupMenu();
-		var _menu2 = window.CreatePopupMenu();
-		var _menu3 = window.CreatePopupMenu();
-		var _menu4 = window.CreatePopupMenu();
-		var idx;
+	this.settings_context_menu = function (x, y) { // poo
+	    // temp flags till script is updated
+        const MF_STRING = 0x00000000;
+        const MF_GRAYED = 0x00000001;
+        const MF_CHECKED = 0x8;
 
-		_menu.AppendMenuItem((fb.IsPlaying ? MF_STRING : MF_GRAYED | MF_DISABLED), 900, "Show Now Playing");
-		_menu.AppendMenuSeparator();
-		_menu.AppendMenuItem(MF_STRING, 910, "Header Bar");
-		_menu.CheckMenuItem(910, ppt.showHeaderBar);
-		_menu.AppendMenuItem(MF_STRING, 912, "Double Track Line");
-		_menu.CheckMenuItem(912, ppt.doubleRowText);
+        let menu = new _menu();
 
-		_menu.AppendMenuSeparator();
-		_menu1.AppendMenuItem((!ppt.doubleRowText ? (!ppt.showgroupheaders ? MF_GRAYED | MF_DISABLED : MF_STRING) : MF_GRAYED | MF_DISABLED), 111, "Artist");
-		_menu1.CheckMenuItem(111, ppt.showArtistAlways);
-		//_menu1.AppendMenuItem(MF_STRING, 112, "Mood");
-		//_menu1.CheckMenuItem(112, ppt.showMood);
-		_menu1.AppendMenuItem(MF_STRING, 113, "Rating");
-		_menu1.CheckMenuItem(113, ppt.showRating);
+        const np_menu = menu.newMenu('Now playing', 'main', MF_STRING, {type: 'nowplaying'});
 
-		_menu1.AppendMenuItem(MF_STRING, 114, "Show Like Status");
-        _menu1.CheckMenuItem(114, ppt.likeToggle);
+        menu.newEntry({entryText: 'sep'});
 
-		_submenu1.AppendMenuItem(MF_STRING, 115, "Toggle");
-        _submenu1.CheckMenuItem(115, ppt.showPlaycount);
-        _submenu1.AppendMenuSeparator();
-        _submenu1.AppendMenuItem(MF_STRING, 116, "Last.fm sync");
-        _submenu1.AppendMenuItem(MF_STRING, 117, "foo_playcount");
-        let playcountModeChecked = Math.max(0, Math.min(1, ppt.playcountMode)); // clamp
-        _submenu1.CheckMenuRadioItem(116, 117, playcountModeChecked + 116);
-        _submenu1.AppendTo(_menu1, MF_STRING, "Playcount Mode");
+        menu.newEntry({entryText: 'Header Bar', func: () => {ppt.showHeaderBar = !ppt.showHeaderBar; window.SetProperty("_DISPLAY: Show Top Bar", ppt.showHeaderBar); get_metrics(); brw.repaint();}, flags: () => ppt.showHeaderBar ? MF_CHECKED : MF_STRING});
+        menu.newEntry({entryText: 'Double Track Line', func: () => {ppt.doubleRowText = !ppt.doubleRowText; window.SetProperty("_PROPERTY: Double Row Text Info", ppt.doubleRowText); get_metrics(); brw.repaint();}, flags: () => ppt.doubleRowText ? MF_CHECKED : MF_STRING});
 
-		_menu1.AppendTo(_menu, MF_STRING, "Extra Track Infos");
+        menu.newEntry({entryText: 'sep'});
 
-		_menu2.AppendMenuItem(MF_STRING, 200, "Enable");
-		_menu2.CheckMenuItem(200, ppt.showwallpaper);
-		_menu2.AppendMenuItem(MF_STRING, 220, "Blur");
-		_menu2.CheckMenuItem(220, ppt.wallpaperblurred);
-		_menu2.AppendMenuSeparator();
-		_menu2.AppendMenuItem(MF_STRING, 210, "Playing Album Cover");
-		_menu2.AppendMenuItem(MF_STRING, 211, "Default");
-		_menu2.CheckMenuRadioItem(210, 211, ppt.wallpapermode + 210);
+        const eti_menu = menu.newMenu('Extra Track Infos');
+        menu.newEntry({menuName: eti_menu, entryText: 'Artist', func: () => {ppt.showArtistAlways = !ppt.showArtistAlways; window.SetProperty("_DISPLAY: Show Artist in Track Row", ppt.showArtistAlways); get_metrics(); brw.repaint();}, flags: () => ppt.showArtistAlways ? (!ppt.doubleRowText ? (!ppt.showgroupheaders ? MF_GRAYED : MF_CHECKED) : MF_GRAYED) : (!ppt.doubleRowText ? (!ppt.showgroupheaders ? MF_GRAYED : MF_STRING) : MF_GRAYED)});
+        menu.newEntry({menuName: eti_menu, entryText: 'Rating', func: () => {ppt.showRating = !ppt.showRating; window.SetProperty("_DISPLAY: Show Rating in Track Row", ppt.showRating); get_metrics(); brw.repaint();}, flags: () => ppt.showRating ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: eti_menu, entryText: 'Like Status', func: () => {ppt.love = !ppt.love; window.SetProperty("_DISPLAY: Show Liked status in Track Row", ppt.love); get_metrics(); brw.repaint();}, flags: () => ppt.love ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: eti_menu, entryText: 'Playcount', func: () => {if (utils.CheckComponent('foo_playcount', true)) {ppt.playcount = !ppt.playcount; window.SetProperty("_DISPLAY: Show Playcount in Track Row", ppt.playcount); get_metrics(); brw.repaint();} else {fb.ShowPopupMessage("missing component: foo_playcount", window.ScriptInfo.Name);}}, flags: () => ppt.playcount ? MF_CHECKED : MF_STRING});
 
-		_menu2.AppendTo(_menu, MF_STRING, "Background Wallpaper");
+        //menu.newEntry({menuName: eti_menu, entryText: 'Artist', func: () => {}, flags: () => });
+        //utils.CheckComponent(name, true)
 
-		_menu3.AppendMenuItem(MF_STRING, 300, "System");
-		_menu3.AppendMenuItem(MF_STRING, 310, "Dynamic");
-		_menu3.AppendMenuItem(MF_STRING, 320, "Custom");
-		_menu3.CheckMenuRadioItem(300, 320, [300, 310, 320][Math.min(Math.max(ppt.col_mode - 1, 0), 2)]);
-		_menu3.AppendTo(_menu, MF_STRING, "Colours");
+        menu.newEntry({entryText: 'sep'});
 
-		_menu4.AppendMenuItem((!ppt.autocollapse ? MF_STRING : MF_GRAYED | MF_DISABLED), 400, "Enable");
-		_menu4.CheckMenuItem(400, ppt.showgroupheaders);
-		_menu4.AppendMenuItem((ppt.showgroupheaders ? MF_STRING : MF_GRAYED | MF_DISABLED), 410, "Autocollapse");
-		_menu4.CheckMenuItem(410, ppt.autocollapse);
-		_menu4.AppendMenuSeparator();
-		_menu4.AppendMenuItem((ppt.showgroupheaders && !ppt.autocollapse ? MF_STRING : MF_GRAYED | MF_DISABLED), 420, "Collapse All");
-		_menu4.AppendMenuItem((ppt.showgroupheaders && !ppt.autocollapse ? MF_STRING : MF_GRAYED | MF_DISABLED), 430, "Expand All");
+        const tp_menu = menu.newMenu('Transparency');
+        menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
+        menu.newEntry({menuName: tp_menu, entryText: 'sep'});
+        menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.transparency = !ppt.transparency; window.SetProperty('_DISPLAY: Enable transparent background', ppt.transparency); brw.repaint(); if (ppt.transparency) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'transparency readme file not found' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency ? MF_CHECKED : MF_STRING});
 
-		_menu4.AppendTo(_menu, MF_STRING, "Group Headers");
+        const tp_flag = ppt.transparency ? MF_GRAYED : MF_STRING
+        const bg_menu = menu.newMenu('Background Wallpaper', 'main', tp_flag);
+        menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.showwallpaper = !ppt.showwallpaper; window.SetProperty("_DISPLAY: Show Wallpaper", ppt.showwallpaper); g_wallpaperImg = setWallpaperImg(); brw.repaint();}, flags: () => ppt.showwallpaper ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.wallpaperblurred = !ppt.wallpaperblurred; window.SetProperty("_DISPLAY: Wallpaper Blurred", ppt.wallpaperblurred); g_wallpaperImg = setWallpaperImg(); brw.repaint();}, flags: () => ppt.wallpaperblurred ? MF_CHECKED : MF_STRING});
+        const wallpaperalpha = ppt.wallpaperalpha === 150 ? true : false;
+        menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.wallpaperalpha = 150 - ppt.wallpaperalpha; brw.repaint();}, flags: () => wallpaperalpha ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: bg_menu, entryText: 'sep'});
+        const wallpapermode = ppt.wallpapermode === 0 ? false : true;
+        menu.newCheckMenu(bg_menu, 'Playing album cover', 'Default', () => !wallpapermode ? 0 : 1);
+        menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.wallpapermode = 0; window.SetProperty("_SYSTEM: Wallpaper Mode", ppt.wallpapermode); g_wallpaperImg = setWallpaperImg(); brw.repaint();}});
+        menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.wallpapermode = 1; window.SetProperty("_SYSTEM: Wallpaper Mode", ppt.wallpapermode); g_wallpaperImg = setWallpaperImg(); brw.repaint();}});
 
-		_menu.AppendMenuSeparator();
-		_menu.AppendMenuItem(MF_STRING, 991, "Panel Properties");
-		_menu.AppendMenuItem(MF_STRING, 992, "Configure...");
+        const col_menu = menu.newMenu('Colours');
+        menu.newEntry({menuName: col_menu, entryText: 'System', func: () => {ppt.col_mode = 1; window.SetProperty("_PROPERTY: Color Mode (1,2,3)", ppt.col_mode); on_colours_changed();}, flags: () => ppt.col_mode === 1 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: col_menu, entryText: 'Dynamic', func: () => {ppt.col_mode = 2; window.SetProperty("_PROPERTY: Color Mode (1,2,3)", ppt.col_mode); on_colours_changed();}, flags: () => ppt.col_mode === 2 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode = 3; window.SetProperty("_PROPERTY: Color Mode (1,2,3)", ppt.col_mode); on_colours_changed(); window.ShowProperties();}, flags: () => ppt.col_mode === 3 ? MF_CHECKED : MF_STRING});
 
-		idx = _menu.TrackPopupMenu(x, y);
+	    menu.newEntry({entryText: 'sep'});
+        menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\js-smooth\\readmes\\jssp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
+        menu.newEntry({entryText: 'sep'});
 
-		switch (true) {
-		case (idx == 111):
-			ppt.showArtistAlways = !ppt.showArtistAlways;
-			window.SetProperty("_DISPLAY: Show Artist in Track Row", ppt.showArtistAlways);
-			get_metrics();
-			brw.repaint();
-			break;
-		case (idx == 112):
-			ppt.showMood = !ppt.showMood;
-			window.SetProperty("_DISPLAY: Show Mood in Track Row", ppt.showMood);
-			get_metrics();
-			brw.repaint();
-			break;
-		case (idx == 113):
-			ppt.showRating = !ppt.showRating;
-			window.SetProperty("_DISPLAY: Show Rating in Track Row", ppt.showRating);
-			get_metrics();
-			brw.repaint();
-			break;
-		case (idx == 114):
-            ppt.likeToggle = !ppt.likeToggle;
-            window.SetProperty("_DISPLAY: Show Liked/LOVED in Track Row", ppt.likeToggle);
-            get_metrics();
-            brw.repaint();
-            break;
-		case (idx == 115):
-            ppt.showPlaycount = !ppt.showPlaycount;
-            window.SetProperty("_DISPLAY: Show Playcount in Track Row", ppt.showPlaycount);
-            get_metrics();
-            brw.repaint();
-            break;
-        case (idx == 116):
-        case (idx == 117):
-            ppt.playcountMode
-            ppt.playcountMode = idx - 116;
-            window.SetProperty("_PROPERTY: Switch Playcount mode last.fm/foo_playcount", ppt.playcountMode);
-            get_metrics();
-            brw.repaint();
-            break;
-		case (idx == 200):
-			ppt.showwallpaper = !ppt.showwallpaper;
-			window.SetProperty("_DISPLAY: Show Wallpaper", ppt.showwallpaper);
-			g_wallpaperImg = setWallpaperImg();
-			brw.repaint();
-			break;
-		case (idx == 210):
-		case (idx == 211):
-			ppt.wallpapermode = idx - 210;
-			window.SetProperty("_SYSTEM: Wallpaper Mode", ppt.wallpapermode);
-			g_wallpaperImg = setWallpaperImg();
-			brw.repaint();
-			break;
-		case (idx == 220):
-			ppt.wallpaperblurred = !ppt.wallpaperblurred;
-			window.SetProperty("_DISPLAY: Wallpaper Blurred", ppt.wallpaperblurred);
-			g_wallpaperImg = setWallpaperImg();
-			brw.repaint();
-			break;
-	    case (idx == 300):
-	        ppt.col_mode = 1;
-	        window.SetProperty("_PROPERTY: Color Mode (1,2,3)", 1);
-	        on_colours_changed();
-	        break;
-	    case (idx == 310):
-	        ppt.col_mode = 2;
-	        window.SetProperty("_PROPERTY: Color Mode (1,2,3)", 2);
-	        on_colours_changed();
-	        break;
-	    case (idx == 320):
-	        ppt.col_mode = 3;
-	        window.SetProperty("_PROPERTY: Color Mode (1,2,3)", 3);
-	        on_colours_changed();
-	        window.ShowProperties();
-	        break;
-		case (idx == 400):
-			ppt.showgroupheaders = !ppt.showgroupheaders;
-			window.SetProperty("_DISPLAY: Show Group Headers", ppt.showgroupheaders);
-			if (!ppt.showgroupheaders)
-				brw.collapseAll(false);
-			get_metrics();
-			brw.repaint();
-			break;
-		case (idx == 410):
-			ppt.autocollapse = !ppt.autocollapse;
-			window.SetProperty("_PROPERTY: Autocollapse groups", ppt.autocollapse);
-			brw.populate(false);
-			brw.showFocusedItem();
-			break;
-		case (idx == 420):
-			brw.collapseAll(true);
-			brw.showFocusedItem();
-			break;
-		case (idx == 430):
-			brw.collapseAll(false);
-			brw.showFocusedItem();
-			break;
-		case (idx == 900):
-			brw.showNowPlaying();
-			break;
-		case (idx == 910):
-			ppt.showHeaderBar = !ppt.showHeaderBar;
-			window.SetProperty("_DISPLAY: Show Top Bar", ppt.showHeaderBar);
-			get_metrics();
-			brw.repaint();
-			break;
-		case (idx == 912):
-			ppt.doubleRowText = !ppt.doubleRowText;
-			window.SetProperty("_PROPERTY: Double Row Text Info", ppt.doubleRowText);
-			get_metrics();
-			brw.repaint();
-			break;
-		case (idx == 991):
-			window.ShowProperties();
-			break;
-		case (idx == 992):
-			window.ShowConfigure();
-			break;
-		};
-		return true;
+        menu.newEntry({entryText: 'Panel Properties', func: () => {window.ShowProperties();}});
+        menu.newEntry({entryText: 'Configure...', func: () => {window.ShowConfigureV2();}});
+
+        return menu.btn_up(x, y);
 	};
 
 	this.incrementalSearch = function () {
@@ -3293,7 +3165,7 @@ var g_font_headers = null;
 var g_font_group1 = null;
 var g_font_group2 = null;
 var g_font_rating = null;
-var g_font_mood = null;
+// var g_font_mood = null;
 var g_font_guifx_found = utils.CheckFont("guifx v2 transports");
 var g_font_wingdings2_found = utils.CheckFont("wingdings 2");
 
@@ -3322,10 +3194,10 @@ var g_focus_album_id = -1;
 var g_populate_opt = 1;
 // color vars
 var g_color_normal_bg = 0;
-//var g_color_selected_bg = 0; declared in poo_col.js
+//var g_color_selected_bg = 0; // declared in poo_col.js
 var g_color_normal_txt = 0;
 var g_color_selected_txt = 0;
-//var g_color_highlight = 0; declared in poo_col.js
+//var g_color_highlight = 0; // declared in poo_col.js
 var g_syscolor_window_bg = 0;
 var g_syscolor_highlight = 0;
 var g_syscolor_button_bg = 0;
@@ -3406,7 +3278,8 @@ function on_paint(gr) {
 			gr.GdiDrawBitmap(g_wallpaperImg, 0, 0, ww, wh, 0, 0, g_wallpaperImg.Width, g_wallpaperImg.Height);
 			gr.FillSolidRect(0, 0, ww, wh, g_color_normal_bg & RGBA(255, 255, 255, ppt.wallpaperalpha));
 		} else {
-			gr.FillSolidRect(0, 0, ww, wh, g_color_normal_bg);
+    	    const bg_col = ppt.transparency ? RGBA(0,0,0,0) : g_color_normal_bg
+    	    gr.FillSolidRect(0, 0, ww, wh, bg_col);
 		};
 	};
 
@@ -3802,7 +3675,7 @@ function get_font() {
 		g_fsize = default_font.Size;
 		g_fstyle = default_font.Style;
 	} catch (e) {
-		console.log("Spider Monkey Panel Error: Unable to use the default font. Using Arial font instead.");
+		console.log("JSplitter Error: Unable to use the default font. Using Arial font instead.");
 		g_fname = "arial";
 		g_fsize = 12;
 		g_fstyle = 0;
@@ -3812,40 +3685,40 @@ function get_font() {
 	// adjust font size if extra zoom activated
 	g_fsize += ppt.extra_font_size;
 	g_font = gdi.Font(g_fname, g_fsize, 0);
-	g_font_small = gdi.Font(g_fname, g_fsize - 2, 0); // for plays
 	g_font_bold = gdi.Font(g_fname, g_fsize, 1);
 	g_font_box = gdi.Font(g_fname, g_fsize - 2, 1);
-
-    // custom section start //
-	// === Segoe Fluent Icons setup ===
-    g_font_fluent = gdi.Font("Segoe Fluent Icons", g_fsize * 1.8, 0); // Font size adjusts with rowHeight
-    g_font_fluent_small = gdi.Font("Segoe Fluent Icons", g_fsize * 1.5, 0);
-    g_font_fluent_xs = gdi.Font("Segoe Fluent Icons", g_fsize * 0.95, 0)
-    g_font_fluent_queue = gdi.Font("Segoe Fluent Icons", g_fsize * 2.2, 0);
-    g_font_queue_idx = gdi.Font("Segoe UI", g_fsize * 1.4, 1);
-    // custom section end //
 
 	g_zoom_percent = Math.floor(g_fsize / 12 * 100);
 
 	g_font_group1 = gdi.Font(g_fname, (g_fsize * 160 / 100), 1);
 	g_font_group2 = gdi.Font(g_fname, (g_fsize * 140 / 100), 0);
 
+	/*===================================================
+	 * poo
+    ===================================================*/
+    g_font_fluent = gdi.Font("Segoe Fluent Icons", g_fsize * 1.8, 0); // Font size adjusts with rowHeight
+    g_font_fluent_small = gdi.Font("Segoe Fluent Icons", g_fsize * 1.5, 0);
+    g_font_fluent_xs = gdi.Font("Segoe Fluent Icons", g_fsize * 0.95, 0)
+    g_font_fluent_queue = gdi.Font("Segoe Fluent Icons", g_fsize * 2.2, 0);
+    g_font_queue_idx = gdi.Font("Segoe UI", g_fsize * 1.4, 1);
+    /*===================================================*/
+
 	//g_font_guifx_found = false;
 	//g_font_wingdings2_found = false;
 
 	if (g_font_guifx_found) {
 		g_font_rating = gdi.Font("guifx v2 transports", Math.round(g_fsize * 130 / 100), 0);
-		g_font_mood = gdi.Font("guifx v2 transports", Math.round(g_fsize * 130 / 100), 0);
+		// g_font_mood = gdi.Font("guifx v2 transports", Math.round(g_fsize * 130 / 100), 0);
 	} else if (g_font_wingdings2_found) {
 		g_font_rating = gdi.Font("wingdings 2", Math.round(g_fsize * 130 / 100), 0);
-		g_font_mood = gdi.Font("wingdings 2", Math.round(g_fsize * 200 / 100), 0);
+		// g_font_mood = gdi.Font("wingdings 2", Math.round(g_fsize * 200 / 100), 0);
 	} else {
 		g_font_rating = gdi.Font("arial", Math.round(g_fsize * 170 / 100), 0);
-		g_font_mood = gdi.Font("arial", Math.round(g_fsize * 120 / 100), 0);
+		// g_font_mood = gdi.Font("arial", Math.round(g_fsize * 120 / 100), 0);
 	};
 };
 
-function get_colors() {
+function get_colors() { // poo
 	let arr;
 	let nowPlayingColours = [];
 	if (ppt.col_mode === 2) nowPlayingColours = GetNowPlayingColours();
@@ -4511,10 +4384,10 @@ function on_playback_new_track(metadb) {
 	g_radio_title = "loading live tag ...";
 	g_radio_artist = "";
 
+	if (ppt.col_mode === 2) on_colours_changed(); // poo
+
 	g_wallpaperImg = setWallpaperImg();
 	brw.repaint();
-
-	on_colours_changed();
 };
 
 function on_playback_starting(cmd, is_paused) {};

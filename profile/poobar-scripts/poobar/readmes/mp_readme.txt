@@ -1,6 +1,13 @@
 UI panel that controls panel placement within a JSplitter.
 This short readme contains instructions on items that are not fully self-explanatory.
 
+Unified Background:
+------------------
+This settings makes it so the background is drawn over the whole main panel & sets any panels within it to support pseudotransparency.
+To make this setting work properly with the other panels it still requires going into the child panels' configuration appearance tab and ticking 'Use pseudo-transparency'.
+As well as enabling the 'Enable Transparency' property.
+Unified background renders all below instructions invalid.
+
 Background (miniplayer tabs only):
 ----------
 Disable the background if a solid color is desired, for solid colors see the color modes.

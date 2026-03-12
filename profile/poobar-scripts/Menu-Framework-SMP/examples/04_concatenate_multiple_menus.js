@@ -11,12 +11,12 @@ var menuThree = new _anotherMenu();
 // And adds another menu using the framework
 var menuFour = new _menu();
 menuFour.newEntry({entryText: 'Bye', func: () => {console.log('Bye');}});
-menuFour.newEntry({entryText: 'sep'});
+menuFour.newSeparator();
 menuFour.newEntry({entryText: 'Bye 2', func: () => {console.log('Bye 2');}});
 
 // Note that mixing manual and entire framework objs has a limitation. Manual entries are always added at the end unless attached to a submenu
 // Because using AppendMenuItem directly on the menus, add them to the end of the list. But you can append items to an existing submenu instead.
-// i.e. otherObj = [menuTwo, menuThree, menuFour] is equivalent to [menuFour, menuTwo, menuThree] in any case, since menuTwo and menutThree, 
+// i.e. otherObj = [menuTwo, menuThree, menuFour] is equivalent to [menuFour, menuTwo, menuThree] in any case, since menuTwo and menutThree,
 // being manual menus are always called after the rest
 var otherObj = ['sep', 'sep', menuFour, 'sep', 'sep', menuTwo, menuThree];
 

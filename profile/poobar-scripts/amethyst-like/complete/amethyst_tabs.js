@@ -45,7 +45,7 @@ let chara = {
 
 initTabs();
 updateTabSize();
-update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+update_art(ppt);
 get_colours(ppt.col_mode.value, true);
 
 let { default_font, default_font_hover, fluent_font, fluent_font_hover } = get_font();
@@ -258,7 +258,7 @@ function on_mouse_rbtn_up(x, y) {
 //    case 90:
 //    case 91:
 //        ppt.orientation.toggle();
-//        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+//        update_art(ppt);
 //        on_size();
 //        window.Repaint();
 //        break;
@@ -266,18 +266,18 @@ function on_mouse_rbtn_up(x, y) {
         ppt.bgShow.toggle();
         ppt.col_mode.value = 1;
         get_colours(ppt.col_mode.value, true);
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_art(ppt);
         window.Repaint();
         break;
     case 111:
         ppt.bgBlur.toggle();
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_art(ppt);
         window.Repaint();
         break;
     case 112:
     case 113:
         ppt.bgMode.toggle();
-        update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+        update_art(ppt);
         window.Repaint();
         break;
     case 210:
@@ -326,7 +326,7 @@ function on_colours_changed() {
 function on_playback_new_track() {
     on_colours_changed();
     //get_colours(ppt.col_mode.value, true);
-    update_album_art(ppt.bgShow.enabled, ppt.bgMode.enabled, ppt.bgBlur.enabled, ppt.bgPath.value);
+    update_art(ppt);
 }
 
 function get_font() {

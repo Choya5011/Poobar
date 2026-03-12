@@ -1,13 +1,3 @@
-﻿'use strict';
-
-window.DefinePanel("JS Smooth Playlist", { author : "Br3tt aka Falstaff", features : { drag_n_drop : true }});
-window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
-include(fb.ComponentPath + "samples\\js-smooth\\js\\JScommon.js");
-include(fb.ComponentPath + "samples\\js-smooth\\js\\JSinputbox.js");
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
-include(fb.ProfilePath + "poobar-scripts\\js-smooth\\js\\poo_jssp.js");
-
-/*
 [Features]
  * Groups (collapse or expand, add extra lines, ...)
  * True Smooth Scrolling
@@ -34,4 +24,3 @@ include(fb.ProfilePath + "poobar-scripts\\js-smooth\\js\\poo_jssp.js");
  * F3 key to show now playing track
  * F5 key to refresh covers
  * ... etc
-*/

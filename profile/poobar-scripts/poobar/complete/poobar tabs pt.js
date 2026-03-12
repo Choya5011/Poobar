@@ -27,6 +27,8 @@ let ppt = {
     bgMode : new _p('_DISPLAY: Wallpaper Mode', false),
     col_mode : new _p('_PROPERTY: Color Mode (1,2,3)', 1),
     borders : new _p('_PROPERTY: Show tab separators', true),
+    hover : new _p('_PROPERTY: Color hover', true),
+    selected : new _p('_PROPERTY: Color selected', true),
     overlay : new _p('_DISPLAY: Show tab shadow/overlay', true),
     orientation : new _p('_DISPLAY: Tab Orientation', false),
     fontMode : new _p ('_DISPLAY: Switch  Icon or Text Font', false),
@@ -172,25 +174,28 @@ function on_mouse_rbtn_up(x, y) {
 
     menu.newEntry({entryText: 'sep'});
 
-    let or_menu = menu.newMenu('Orientation');
+    const or_menu = menu.newMenu('Orientation');
     menu.newCheckMenu(or_menu, 'Horizontal', 'Vertical', () => !ppt.orientation.enabled ? 0 : 1);
     menu.newEntry({menuName: or_menu, entryText: 'Horizontal', func: () => {ppt.orientation.enabled = false; update_art(ppt, true); on_size(); window.Repaint();}});
     menu.newEntry({menuName: or_menu, entryText: 'Vertical', func: () => {ppt.orientation.enabled = true; update_art(ppt, true); on_size(); window.Repaint();}});
 
-    let show_menu = menu.newMenu('Show...');
+    const show_menu = menu.newMenu('Show...');
     menu.newEntry({menuName: show_menu, entryText: 'Separators', func: () => {ppt.borders.toggle(); window.Repaint();}, flags: () => ppt.borders.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: show_menu, entryText: 'Selected highlight', func: () => {ppt.selected.toggle(); window.Repaint();}, flags: () => ppt.selected.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: show_menu, entryText: 'Hover highlight', func: () => {ppt.hover.toggle(); window.Repaint();}, flags: () => ppt.hover.enabled ? MF_CHECKED : MF_STRING});
+
 
     menu.newEntry({entryText: 'sep'});
 
 //    let tp_menu = menu.newMenu('Transparency');
 //    menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
 //    menu.newEntry({menuName: tp_menu, entryText: 'sep'});
-//    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.transparency.toggle(); window.Repaint(); if (ppt.transparency.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'transparency readme file not found' }; fb.ShowPopupMessage(tp_readme, 'Transparency'); tp_readme = null;} }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
+//    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.transparency.toggle(); window.Repaint(); if (ppt.transparency.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
 //
 //    const tp_flag = ppt.transparency.enabled ? MF_GRAYED : MF_STRING
 //    let bg_menu = menu.newMenu('Background', 'main', tp_flag);
 
-    let bg_menu = menu.newMenu('Background');
+    const bg_menu = menu.newMenu('Background');
     menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
     menu.newEntry({menuName: bg_menu, entryText: 'sep'});
     menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
@@ -201,12 +206,12 @@ function on_mouse_rbtn_up(x, y) {
     menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt, true); window.Repaint();}});
     menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt, true); refresh_pt_panel(); window.Repaint();}});
 
-    let col_menu = menu.newMenu('Colours');
+    const col_menu = menu.newMenu('Colours');
     menu.newEntry({menuName: col_menu, entryText: 'System', func: () => {ppt.col_mode.value = 1; get_colours(ppt.col_mode.value, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
     menu.newEntry({menuName: col_menu, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; get_colours(ppt.col_mode.value, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
     menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; get_colours(ppt.col_mode.value, true); refresh_pt_panel(); window.ShowProperties(); window.Repaint();}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
 
-    let font_menu = menu.newMenu('Font');
+    const font_menu = menu.newMenu('Font');
     menu.newCheckMenu(font_menu, 'Segoe Fluent Icons', 'System', () => !ppt.fontMode.enabled ? 0 : 1);
     menu.newEntry({menuName: font_menu, entryText: 'Segoe Fluent Icons', func: () => {ppt.fontMode.enabled = false; window.Repaint();}});
     menu.newEntry({menuName: font_menu, entryText: 'System', func: () => {ppt.fontMode.enabled = true; window.Repaint();}});
