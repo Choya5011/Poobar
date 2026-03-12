@@ -11,22 +11,24 @@ Responds to window size & seamlessly snaps to Windows 11 snap layouts.
 [Gallery](https://github.com/Choya5011/Poobar/wiki)
 
 ## Modularity
-This repository provides a basic JSplitter/SMP customization guide for foobar2000, as well as a showcase of JSplitter’s capabilities. It includes some basic scripts and component recommendations to help achieve these customizations.
+This repository provides a basic JSplitter customization guide for foobar2000, as well as a showcase of JSplitter’s capabilities.  
+It includes some basic scripts and component recommendations to help achieve these customizations.
 
-* All panel scripts can easily be used individually for other themes
-* The main panel script is the blueprint for the layout & controls panel placement within the main JSplitter
-    * Can be used to easily make other themes responsive with some modding
-    * Panels can be swapped out if the same title is kept or if the script is modified
-    * It currently comes with three pre-configured transforming layouts.
-* Panels within the tab panel are not hardcoded, they can easily be edited.
+* All panel scripts can easily be used individually for other themes.
+* Panels within the tab panel are hot-swappable like a normal tabstack.
+* The main panel script is the blueprint for the layout & controls panel placement within the main JSplitter.
+    * Panels can be swapped out if instructions are followed.
+    * Can be used to easily make other themes responsive with some modding.
+    * Currently there are three pre-configured transforming layout  main panel scripts.
 
+The themes main scripts are mostly JSplitter based and not SMP compatible.  
 Refer to the wiki's [script descriptions](https://github.com/Choya5011/Poobar/wiki/Poobar#script-descriptions) for further info
 
 ## Assets
 ### Fonts  
-Standard already on Windows 11: [Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts)  
-Used in Biography & Library Tree (required): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf)  
-Lyrics (optional): UD Digi Kyokasho (NP-B)
+Standard already on Windows 11 (required): [Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts) | [download](https://aka.ms/SegoeFluentIcons)  
+Used in Biography & Library Tree (required): [Fontawesome](https://github.com/FortAwesome/Font-Awesome/blob/4.x/fonts/fontawesome-webfont.ttf) | [download](https://github.com/FortAwesome/Font-Awesome/raw/4.x/fonts/fontawesome-webfont.ttf)  
+Lyrics (optional): [UD Digi Kyokasho (NP-B)](https://learn.microsoft.com/en-us/typography/font-list/ud-digi-kyokasho)
 
 ### Components & Packages (included)
 **Components**  
@@ -56,7 +58,7 @@ Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 
 4. Start Foobar & pick ```Columns UI``` if prompted.
 
 **Notes**  
-The theme comes with three main presets and their stripped counterparts. After setup the theme is set to the ```split``` preset. To swap to another refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Swapping-Layouts) section.  
+The theme comes with three main presets and their stripped lite counterparts. After setup the theme is set to the ```split``` preset. To swap to another refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Swapping-Layouts) section.  
 
 **Useful To Know**  
 Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Useful-to-know) for further info. Such as customization or for troubleshooting.
