@@ -17,7 +17,7 @@ include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_global.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab_basic.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 

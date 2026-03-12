@@ -4,12 +4,11 @@ window.DefineScript('Poobar Main Panel', {author:'Choya', options:{grab_focus:fa
 window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
-include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_global.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab_basic.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_mp_helpers.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
 let ppt = {
@@ -30,30 +29,128 @@ let ppt = {
     bgPath : new _p('_TAB_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
 };
 
-let ww = 0;
-let wh = 0;
+let ww, wh = 0;
 let psH, psV;
 let cpH = _scale(ppt.cpH.value); // Control Panel Height in Horizontal orientation
 let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
 let paintRect = false;
-let delay = 150;
 
 update_art(ppt);
 get_colours(ppt.col_mode.value, true);
+
+// _layout usage instruction found at: fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js'
+const panelNames = ['Fluent Control Panel', '', '', 'Smooth Browser'];
+let layout = new _layout(panelNames, 150, ppt.unified_bg.enabled);
+
+layout.horizontal({
+    func: () => {
+        if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (layout.p.p4) layout.p.p4.Hidden = true;
+        if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
+        if (layout.p.p1) { layout.p.p1.Move(0, wh - cpH, ww, cpH); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+        if (layout.p.p2) { layout.p.p2.Move(ww * psH, 0, ww - ww * psH, wh - cpH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
+    },
+    debouncefunc: () => {
+        if (layout.p.p3) { layout.p.p3.Move(0, 0, ww * psH, wh - cpH); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
+    }
+});
+
+layout.halfscreen({
+    func: () => {
+        if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (layout.p.p4) layout.p.p4.Hidden = true;
+        if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
+        if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+        if (layout.p.p2) { const remainingH = wh - cpV - ((wh - cpV) * psV); layout.p.p2.Move(0, (wh - cpV) * psV, ww, remainingH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
+    },
+    debouncefunc: () => {
+        if (layout.p.p3) { layout.p.p3.Move(0, 0, ww * 0.5, (wh - cpV) * psV); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
+        if (layout.p.p4) { layout.p.p4.Move(ww * 0.5, 0, ww * 0.5, (wh - cpV) * psV); layout.p.p4.ShowCaption = false; layout.p.p4.Locked = true; layout.p.p4.Hidden = false; }
+    }
+});
+
+layout.normalvertical({
+    func: () => {
+        if (layout.p.p4) layout.p.p4.Hidden = true;
+        if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
+        if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+        if (layout.p.p2) { const remainingH = wh - cpV - ((wh - cpV) * psV); layout.p.p2.Move(0, (wh - cpV) * psV, ww, remainingH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
+    },
+    debouncefunc: () => {
+        if (layout.p.p3) { layout.p.p3.Move(0, 0, ww * 0.7, (wh - cpV) * psV); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
+        if (layout.p.p4) { layout.p.p4.Move(ww * 0.7, 0, ww - ww * 0.7, (wh - cpV) * psV); layout.p.p4.ShowCaption = false; layout.p.p4.Locked = true; layout.p.p4.Hidden = false; }
+    }
+});
+
+layout.narrowvertical({
+    func: () => {
+        if (layout.p.p4) layout.p.p4.Hidden = true;
+        if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
+        if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+        if (layout.p.p2) { const remainingH = wh - cpV - ((wh - cpV) * psV); layout.p.p2.Move(0, (wh - cpV) * psV, ww, remainingH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
+    },
+    debouncefunc: () => {
+        if (layout.p.p3) { layout.p.p3.Move(0, 0, ww, (wh - cpV) * psV); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
+    }
+});
+
+layout.miniplayer({
+    func: () => {
+        if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (layout.p.p2) layout.p.p2.Hidden = true;
+        if (layout.p.p4) layout.p.p4.Hidden = true;
+        if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true;
+        if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+    },
+    debouncefunc: () => {
+        exInitTabs([1, 3]);
+        updateTabSize(ppt, true);
+        let panelW = ppt.orientation.enabled ? ww - TAB_W : ww;
+        let panelH = ppt.orientation.enabled ? wh - cpV : wh - cpV - TAB_H;
+        let switchH = ppt.orientation.enabled ? 0 : TAB_H;
+        let switchW = ppt.orientation.enabled ? TAB_W : 0;
+        try {
+            for (let i = 0; i < tabs.length; i++) {
+                const p = window.GetPanelByIndex(tabs[i].index);
+                if (p) {
+                    p.Move(switchW, switchH, panelW, panelH, true);
+                    p.ShowCaption = false;
+                    p.Locked = true;
+                    p.Hidden = false;
+                }
+            }
+        } catch (e) { /* Ignore expected errors, logged by previous GetPanelByIndex within poo_mp_tabs.js */ }
+    }
+});
+
+layout.miniplayer_2({
+    func: () => {
+        exInitTabs([3]);
+        try {
+            for (let i = 0; i < tabs.length; i++) {
+                const p = window.GetPanelByIndex(tabs[i].index);
+                if (p) {
+                    p.Hidden = true;
+                }
+            }
+        } catch (e) { /* Ignore expected errors, logged by previous GetPanelByIndex within poo_mp_tabs.js */ }
+        if (layout.p.p1) { layout.p.p1.Move(0, 0, ww, wh); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+    }
+});
 
 function on_size(width, height) {
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
 
-    // tabStack/playlistView placement ratio in horizontal orientation (.5 splitscreen)
+    // layout.p.p3/layout.p.p2 placement ratio in horizontal orientation (.5 splitscreen)
     psH = (wh <= scaler.s730 && ww > scaler.s800 && ppt.hPanelScale.value >= 0.5) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value;
-    // (tabStack & smoothBrowser)/playlistView placement ratio in vertical orientation
+    // (layout.p.p3 & layout.p.p4)/layout.p.p2 placement ratio in vertical orientation
     psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value;
 
-    const layout = getLayoutType(ww, wh, scaler);
-
-    updateLayout(layout, ww, wh, scaler);
+    layout.update();
 }
 
 /*
@@ -61,149 +158,8 @@ function on_size(width, height) {
  * if foobar is closed while in miniplayer mode, it can cause update issues when opened again
 */
 window.SetTimeout(function() {
-    ww = window.Width;
-    wh = window.Height;
-    if (!ww || !wh) return;
-    const layout = getLayoutType(ww, wh, scaler);
-    updateLayout(layout, ww, wh, scaler);
+    layout.update();
 }, 180);
-
-/* ==================================================
- * Main Layout code
-================================================== */
-
-// using GetPanel instead of GetPanelByIndex to make layout editing more flexible
-let fluentControlPanel, playlistView, tabStack, smoothBrowser;
-try { fluentControlPanel = window.GetPanel('Fluent Control Panel'); } catch (e) { fluentControlPanel = null; }
-try { playlistView = window.GetPanel(''); } catch (e) { playlistView = null; } // Segoe Fluent Icons MusicNote, unicode: ec4f
-try { tabStack = window.GetPanel(''); } catch (e) { tabStack = null; } // Segoe Fluent Icons MapLayers, unicode: e81e
-try { smoothBrowser = window.GetPanel('Smooth Browser') } catch (e) { smoothBrowser = null; }
-
-/* instruct comment
- * Function that decides layout depending on main JSplitter dimensions
- * 6 states
- * To make custom layout add desired panels in CUI layout editor & set panel objects (see vars above)
- * Adjust PanelObject Members/Methods (see JSplitter PanelObject docs)
- * Debounce panels that are heavier to resize. See debounced blocks below func.
- * Debouncing is optional, but eliminates stutter when manually resizing. See tabstack as example.
- * Debounce is only of relevance for manual resizing smoothness, using win 11 snap layouts is always smooth.
-*/
-function updateLayout(layout, ww, wh, scaler) {
-    if (ww >= scaler.s300) { // stop updating at 300 ww or 100 wh to prevent control panel clipping, ideally constrain window size with a component like UIWizard
-        if (layout === 'horizontal')  { // Block 1: Horizontal view
-            paintRect = true;
-            if (tabStack) tabStack.Hidden = true;
-            if (smoothBrowser) smoothBrowser.Hidden = true;
-            if (ppt.unified_bg.enabled) fluentControlPanel.Hidden = true; playlistView.Hidden = true;
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpH, ww, cpH); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            if (playlistView) { playlistView.Move(ww * psH, 0, ww - ww * psH, wh - cpH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
-            debouncedHorizontalView();
-        } else if (layout === 'halfscreen') { // Block 2: Half screen view
-            paintRect = true;
-            if (tabStack) tabStack.Hidden = true;
-            if (smoothBrowser) smoothBrowser.Hidden = true;
-            if (ppt.unified_bg.enabled) fluentControlPanel.Hidden = true; playlistView.Hidden = true;
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            if (playlistView) { const remainingH = wh - cpV - ((wh - cpV) * psV); playlistView.Move(0, (wh - cpV) * psV, ww, remainingH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
-            debouncedHalfScreen();
-        } else if (layout === 'miniplayer') { // Block 3: Mini player view
-            paintRect = false;
-            if (tabStack) tabStack.Hidden = true;
-            if (playlistView) playlistView.Hidden = true;
-            if (smoothBrowser) smoothBrowser.Hidden = true;
-            if (ppt.unified_bg.enabled) fluentControlPanel.Hidden = true;
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            debouncedMiniPlayer();
-        } else if (layout === 'miniplayer_2') { // Block 4: Mini player 2 (Control Panel Only)
-            paintRect = true;
-            exInitTabs([3]);
-            try {
-                for (let i = 0; i < tabs.length; i++) {
-                    const p = window.GetPanelByIndex(tabs[i].index);
-                    if (p) {
-                        p.Hidden = true;
-                    }
-                }
-            } catch (e) { /* Ignore expected errors, logged by previous GetPanelByIndex within poo_mp_tabs.js */ }
-            if (fluentControlPanel) { fluentControlPanel.Move(0, 0, ww, wh); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-        } else if (layout === 'normalvertical') { // Block 5: Normal vertical view
-            paintRect = true;
-            if (smoothBrowser) smoothBrowser.Hidden = true;
-            if (tabStack) tabStack.Hidden = true;
-            if (ppt.unified_bg.enabled) fluentControlPanel.Hidden = true; playlistView.Hidden = true;
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            if (playlistView) { const remainingH = wh - cpV - ((wh - cpV) * psV); playlistView.Move(0, (wh - cpV) * psV, ww, remainingH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
-            debouncedNormalVertical();
-        } else if (layout === 'narrowvertical') { // Block 6: Narrow vertical view
-            paintRect = true;
-            if (smoothBrowser) smoothBrowser.Hidden = true;
-            if (tabStack) tabStack.Hidden = true;
-            if (ppt.unified_bg.enabled) fluentControlPanel.Hidden = true; playlistView.Hidden = true;
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            if (playlistView) { const remainingH = wh - cpV - ((wh - cpV) * psV); playlistView.Move(0, (wh - cpV) * psV, ww, remainingH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
-            debouncedNarrowVertical();
-        }
-        if (ppt.unified_bg.enabled) {
-            fluentControlPanel.SupportPseudoTransparency = true;
-            playlistView.SupportPseudoTransparency = true;
-            tabStack.SupportPseudoTransparency = true;
-            smoothBrowser.SupportPseudoTransparency = true;
-        } else {
-            fluentControlPanel.SupportPseudoTransparency = false;
-            playlistView.SupportPseudoTransparency = false;
-            tabStack.SupportPseudoTransparency = false;
-            smoothBrowser.SupportPseudoTransparency = false;
-        }
-    }
-}
-
-const debouncedHorizontalView = debounce(function() {
-    // Horizontal View
-    if (tabStack) { tabStack.Move(0, 0, ww * psH, wh - cpH); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-}, delay);
-
-const debouncedHalfScreen = debounce(function() {
-    // Half screen view
-    if (tabStack) { tabStack.Move(0, 0, ww * 0.5, (wh - cpV) * psV); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-    if (smoothBrowser) { smoothBrowser.Move(ww * 0.5, 0, ww * 0.5, (wh - cpV) * psV); smoothBrowser.ShowCaption = false; smoothBrowser.Locked = true; smoothBrowser.Hidden = false; }
-}, delay);
-
-const debouncedMiniPlayer = debounce(function() {
-    // Mini Player
-    exInitTabs([1, 3]);
-    updateTabSize(ppt, true);
-
-    let panelW = ppt.orientation.enabled ? ww - TAB_W : ww;
-    let panelH = ppt.orientation.enabled ? wh - cpV : wh - cpV - TAB_H;
-    let switchH = ppt.orientation.enabled ? 0 : TAB_H;
-    let switchW = ppt.orientation.enabled ? TAB_W : 0;
-
-    try {
-        for (let i = 0; i < tabs.length; i++) {
-            const p = window.GetPanelByIndex(tabs[i].index);
-            if (p) {
-                p.Move(switchW, switchH, panelW, panelH, true);
-                p.ShowCaption = false;
-                p.Locked = true;
-                p.Hidden = false;
-            }
-        }
-    } catch (e) { /* Ignore expected errors, logged by previous GetPanelByIndex within poo_mp_tabs.js */ }
-}, delay);
-
-
-const debouncedNormalVertical = debounce(function() {
-    // Normal vertical view
-    if (tabStack) { tabStack.Move(0, 0, ww * 0.7, (wh - cpV) * psV); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-    if (smoothBrowser) { smoothBrowser.Move(ww * 0.7, 0, ww - ww * 0.7, (wh - cpV) * psV); smoothBrowser.ShowCaption = false; smoothBrowser.Locked = true; smoothBrowser.Hidden = false; }
-}, delay);
-
-const debouncedNarrowVertical = debounce(function() {
-    // Narrow vertical view
-    if (tabStack) { tabStack.Move(0, 0, ww, (wh - cpV) * psV); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-}, delay);
-
-/* ================================================== */
 
 function on_paint(gr) {
     if (!paintRect && !ppt.unified_bg.enabled) {

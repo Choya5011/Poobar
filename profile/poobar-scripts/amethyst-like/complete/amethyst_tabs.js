@@ -7,7 +7,7 @@ include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_global.js');
 
 let ww = 0;
 let wh = 0;

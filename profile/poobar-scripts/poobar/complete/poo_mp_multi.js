@@ -7,13 +7,15 @@ include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_global.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab_basic.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_mp_helpers.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js');
+include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
 let ppt = {
 	cpH : new _p ('_PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
 	cpV : new _p ('_PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 120),
+	unified_bg : new _p('_PANEL_BEHAVIOR: Unify background across panels', false),
 
     bgShow : new _p('_TAB_DISPLAY: Show Wallpaper', false),
     bgBlur : new _p('_TAB_DISPLAY: Wallpaper Blurred', false),
@@ -31,109 +33,105 @@ let wh = 0;
 let cpH = _scale(ppt.cpH.value); // Control Panel Height in Horizontal orientation
 let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
 let paintRect = false;
-let delay = 150;
-let layout;
 
 update_art(ppt);
 get_colours(ppt.col_mode.value, true);
 
-function on_size(width, height) {
-    ww = window.Width;
-    wh = window.Height;
-    if (!ww || !wh) return;
+// _layout usage instruction found at: fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js'
+const panelNames = ['Fluent Control Panel', '', '', ''];
+let layout = new _layout(panelNames, 150);
 
-    layout = getLayoutType(ww, wh, scaler);
-
-    updateLayout(layout, ww, wh, scaler);
-}
-
-/*
- * ensure update once with a delay after loading
- * if foobar is closed while in miniplayer mode, it can cause update issues when opened again
-*/
-window.SetTimeout(function() {
-    ww = window.Width;
-    wh = window.Height;
-    if (!ww || !wh) return;
-    const layout = getLayoutType(ww, wh, scaler);
-    updateLayout(layout, ww, wh, scaler);
-}, 180);
-
-/* ==================================================
- * Main Layout code
-================================================== */
-
-// using GetPanel instead of GetPanelByIndex to make layout editing more flexible
-let fluentControlPanel, lyrics, tabStack, playlistView;
-try { fluentControlPanel = window.GetPanel('Fluent Control Panel'); } catch (e) { fluentControlPanel = null; }
-try { lyrics = window.GetPanel(''); } catch (e) { lyrics = null; } // Segoe Fluent Icons MusicNote, unicode: ec4f
-try { tabStack = window.GetPanel(''); } catch (e) { tabStack = null; } // Segoe Fluent Icons MapLayers, unicode: e81e
-try { playlistView = window.GetPanel('') } catch (e) { playlistView = null; }
-
-/* instruct comment
- * Function that decides layout depending on main JSplitter dimensions
- * 6 states
- * To make custom layout add desired panels in CUI layout editor & set panel objects (see vars above)
- * Adjust PanelObject Members/Methods (see JSplitter PanelObject docs)
- * Debounce panels that are heavier to resize. See debounced blocks below func.
- * Debouncing is optional, but eliminates stutter when manually resizing. See tabstack as example.
- * Debounce is only of relevance for manual resizing smoothness, using win 11 snap layouts is always smooth.
-*/
-function updateLayout(layout, ww, wh, scaler) {
-    if (ww >= scaler.s300) { // stop updating at 300 ww or 100 wh to prevent control panel clipping, ideally constrain window size with a component like UIWizard
-        if (layout === 'horizontal')  { // Block 1: Horizontal view
-            paintRect = true;
-            if (lyrics) lyrics.Hidden = true;
-            if (tabStack) tabStack.Hidden = true;
-            if (playlistView) { playlistView.Move(ww * 0.8, 0, ww * 0.2, wh - cpH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpH, ww, cpH); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            debouncedHorizontalView();
-        } else if (layout === 'halfscreen') { // Block 2: Half screen view
-            paintRect = true;
-            if (lyrics) lyrics.Hidden = true;
-            if (tabStack) tabStack.Hidden = true;
-            if (playlistView) playlistView.Hidden = true;
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            if (playlistView) { playlistView.Move(ww * 0.5, 0, ww * 0.5, wh - cpV); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
-            debouncedHalfScreen();
-        } else if (layout === 'miniplayer') { // Block 3: Mini player view
-            paintRect = false;
-            if (lyrics) lyrics.Hidden = true;
-            if (tabStack) tabStack.Hidden = true;
-            if (playlistView) playlistView.Hidden = true;
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            debouncedMiniPlayer();
-        } else if (layout === 'miniplayer_2') { // Block 4: Mini player 2 (Control Panel Only)
-            paintRect = true;
-            exInitTabs([3]);
-            try {
-                for (let i = 0; i < tabs.length; i++) {
-                    const p = window.GetPanelByIndex(tabs[i].index);
-                    if (p) {
-                        p.Hidden = true;
-                    }
-                }
-            } catch (e) { /* Ignore expected errors, logged by previous GetPanelByIndex within poo_mp_tabs.js */ }
-            if (fluentControlPanel) { fluentControlPanel.Move(0, 0, ww, wh); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-        } else if (layout === 'normalvertical') { // Block 5: Normal vertical view
-            paintRect = true;
-            if (lyrics) lyrics.Hidden = true;
-            if (tabStack) tabStack.Hidden = true;
-            if (playlistView) playlistView.Hidden = true;
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            if (playlistView) { playlistView.Move(ww * 0.5, 0, ww - ww * 0.5, wh - cpH); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
-            debouncedNormalVertical();
-        } else if (layout === 'narrowvertical') { // Block 6: Narrow vertical view
-            paintRect = true;
-            if (lyrics) lyrics.Hidden = true;
-            if (tabStack) tabStack.Hidden = true;
-            if (fluentControlPanel) { fluentControlPanel.Move(0, wh - cpV, ww, cpV); fluentControlPanel.ShowCaption = false; fluentControlPanel.Locked = true; fluentControlPanel.Hidden = false; }
-            if (playlistView) { playlistView.Move(0, (wh - cpV) * 0.4, ww, wh - cpV - ((wh - cpV) * 0.4)); playlistView.ShowCaption = false; playlistView.Locked = true; playlistView.Hidden = false; }
-            debouncedNarrowVertical();
-        }
-    } else {
+layout.horizontal({
+    func: () => {
         paintRect = true;
-        initTabs();
+        if (layout.p.p4) layout.p.p4.Hidden = true;
+        if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (layout.p.p2) { layout.p.p2.Move(ww * 0.8, 0, ww * 0.2, wh - cpH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
+        if (layout.p.p1) { layout.p.p1.Move(0, wh - cpH, ww, cpH); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+    },
+    debouncefunc: () => {
+        if (layout.p.p3) { layout.p.p3.Move(ww * 0.2, 0, ww - ww * 0.4, wh - cpH); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
+        if (layout.p.p4) { layout.p.p4.Move(0, 0, ww * 0.2, wh - cpH); layout.p.p4.ShowCaption = false; layout.p.p4.Locked = true; layout.p.p4.SupportPseudoTransparency = true; layout.p.p4.Hidden = false; }
+    }
+});
+
+layout.halfscreen({
+    func: () => {
+        paintRect = true;
+        if (layout.p.p4) layout.p.p4.Hidden = true;
+        if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (layout.p.p2) layout.p.p2.Hidden = true;
+        if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+        if (layout.p.p2) { layout.p.p2.Move(ww * 0.5, 0, ww * 0.5, wh - cpV); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
+    },
+    debouncefunc: () => {
+        if (layout.p.p3) { layout.p.p3.Move(0, 0, ww * 0.5, wh - wh * 0.6); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
+        if (layout.p.p4) { layout.p.p4.Move(0, wh * 0.4, ww * 0.5, wh - cpV - wh * 0.4); layout.p.p4.ShowCaption = false; layout.p.p4.Locked = true; layout.p.p4.SupportPseudoTransparency = true; layout.p.p4.Hidden = false; }
+    }
+});
+
+layout.normalvertical({
+    func: () => {
+        paintRect = true;
+        if (layout.p.p4) layout.p.p4.Hidden = true;
+        if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (layout.p.p2) layout.p.p2.Hidden = true;
+        if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+        if (layout.p.p2) { layout.p.p2.Move(ww * 0.5, 0, ww - ww * 0.5, wh - cpH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
+    },
+    debouncefunc: () => {
+        if (layout.p.p3) { layout.p.p3.Move(0, 0, ww * 0.5, wh - wh * 0.7); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
+        if (layout.p.p4) { layout.p.p4.Move(0, wh * 0.3, ww * 0.5, wh - cpV - wh * 0.3); layout.p.p4.ShowCaption = false; layout.p.p4.Locked = true; layout.p.p4.SupportPseudoTransparency = true; layout.p.p4.Hidden = false; }
+    }
+});
+
+layout.narrowvertical({
+    func: () => {
+        paintRect = true;
+        if (layout.p.p4) layout.p.p4.Hidden = true;
+        if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+        if (layout.p.p2) { layout.p.p2.Move(0, (wh - cpV) * 0.4, ww, wh - cpV - ((wh - cpV) * 0.4)); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
+    },
+    debouncefunc: () => {
+        if (layout.p.p3) { layout.p.p3.Move(0, 0, ww, (wh - cpV) * 0.4); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
+    }
+});
+
+layout.miniplayer({
+    func: () => {
+        paintRect = false;
+        if (layout.p.p4) layout.p.p4.Hidden = true;
+        if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (layout.p.p2) layout.p.p2.Hidden = true;
+        if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+    },
+    debouncefunc: () => {
+        exInitTabs([3]);
+        updateTabSize(ppt, true);
+        let panelW = ppt.orientation.enabled ? ww - TAB_W : ww;
+        let panelH = ppt.orientation.enabled ? wh - cpV : wh - cpV - TAB_H;
+        let switchH = ppt.orientation.enabled ? 0 : TAB_H;
+        let switchW = ppt.orientation.enabled ? TAB_W : 0;
+        try {
+            for (let i = 0; i < tabs.length; i++) {
+                const p = window.GetPanelByIndex(tabs[i].index);
+                if (p) {
+                    p.Move(switchW, switchH, panelW, panelH, true);
+                    p.ShowCaption = false;
+                    p.Locked = true;
+                    p.Hidden = false;
+                }
+            }
+            layout.p.p4.SupportPseudoTransparency = true;
+        } catch (e) { /* Ignore expected errors, logged by previous GetPanelByIndex within poo_mp_tabs.js */ }
+    }
+});
+
+layout.miniplayer_2({
+    func: () => {
+        paintRect = true;
+        exInitTabs([3]);
         try {
             for (let i = 0; i < tabs.length; i++) {
                 const p = window.GetPanelByIndex(tabs[i].index);
@@ -142,57 +140,25 @@ function updateLayout(layout, ww, wh, scaler) {
                 }
             }
         } catch (e) { /* Ignore expected errors, logged by previous GetPanelByIndex within poo_mp_tabs.js */ }
+        if (layout.p.p1) { layout.p.p1.Move(0, 0, ww, wh); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
     }
+});
+
+function on_size(width, height) {
+    ww = window.Width;
+    wh = window.Height;
+    if (!ww || !wh) return;
+
+    layout.update();
 }
 
-const debouncedHorizontalView = debounce(function() {
-    // Horizontal View
-    if (tabStack) { tabStack.Move(ww * 0.2, 0, ww - ww * 0.4, wh - cpH); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-    if (lyrics) { lyrics.Move(0, 0, ww * 0.2, wh - cpH); lyrics.ShowCaption = false; lyrics.Locked = true; lyrics.Hidden = false; }
-}, delay);
-
-const debouncedHalfScreen = debounce(function() {
-    // Half screen view
-    if (tabStack) { tabStack.Move(0, 0, ww * 0.5, wh - wh * 0.6); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-    if (lyrics) { lyrics.Move(0, wh * 0.4, ww * 0.5, wh - cpV - wh * 0.4); lyrics.ShowCaption = false; lyrics.Locked = true; lyrics.Hidden = false; }
-}, delay);
-
-const debouncedMiniPlayer = debounce(function() {
-    // Mini Player
-    exInitTabs([3]);
-    updateTabSize(ppt, true);
-
-    let panelW = ppt.orientation.enabled ? ww - TAB_W : ww;
-    let panelH = ppt.orientation.enabled ? wh - cpV : wh - cpV - TAB_H;
-    let switchH = ppt.orientation.enabled ? 0 : TAB_H;
-    let switchW = ppt.orientation.enabled ? TAB_W : 0;
-
-    try {
-        for (let i = 0; i < tabs.length; i++) {
-            const p = window.GetPanelByIndex(tabs[i].index);
-            if (p) {
-                p.Move(switchW, switchH, panelW, panelH, true);
-                p.ShowCaption = false;
-                p.Locked = true;
-                p.Hidden = false;
-            }
-        }
-    } catch (e) { /* Ignore expected errors, logged by previous GetPanelByIndex within poo_mp_tabs.js */ }
-}, delay);
-
-
-const debouncedNormalVertical = debounce(function() {
-    // Normal vertical view
-    if (tabStack) { tabStack.Move(0, 0, ww * 0.5, wh - wh * 0.7); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-    if (lyrics) { lyrics.Move(0, wh * 0.3, ww * 0.5, wh - cpV - wh * 0.3); lyrics.ShowCaption = false; lyrics.Locked = true; lyrics.Hidden = false; }
-}, delay);
-
-const debouncedNarrowVertical = debounce(function() {
-    // Narrow vertical view
-    if (tabStack) { tabStack.Move(0, 0, ww, (wh - cpV) * 0.4); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
-}, delay);
-
-/* ================================================== */
+/*
+ * ensure update once with a delay after loading
+ * if foobar is closed while in miniplayer mode, it can cause update issues when opened again
+*/
+window.SetTimeout(function() {
+    layout.update();
+}, 180);
 
 function on_paint(gr) {
     if (!paintRect) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
@@ -210,6 +176,17 @@ function on_paint(gr) {
     tab.paint_mp(gr, ppt);
 
     if (paintRect) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
+}
+
+function on_colours_changed() {
+    get_colours(ppt.col_mode.value, true);
+    window.Repaint();
+}
+
+function on_playback_new_track() {
+    get_colours(ppt.col_mode.value, true);
+    update_art(ppt);
+    if (layout.p.p4 && layout.layout() !== 'narrowvertical') { layout.p.p4.Hidden = true; layout.p.p4.Hidden = false; }
 }
 
 function on_mouse_lbtn_up(x, y) {
@@ -256,149 +233,57 @@ function on_mouse_leave() {
 }
 
 function on_mouse_rbtn_up(x, y) {
+    let menu = new _menu();
 
-    let m = window.CreatePopupMenu();
-    let c = fb.CreateContextMenuManager();
+    menu.newEntry({entryText: 'Configure main panel:', flags: MF_GRAYED});
 
-    let _menu1 = window.CreatePopupMenu(); // Orientation menu
-    let _menu2 = window.CreatePopupMenu(); // Show... menu
-    let _menu3 = window.CreatePopupMenu(); // Background Wallpaper menu
-    let _menu4 = window.CreatePopupMenu(); // Colours menu
-    let _menu5 = window.CreatePopupMenu(); // Font Menu
+    menu.newEntry({entryText: 'sep'});
 
-    m.AppendMenuItem(MF_GRAYED, 80, 'Configure main panel:');
-    m.AppendMenuSeparator();
+    const or_menu = menu.newMenu('Orientation');
+    menu.newCheckMenu(or_menu, 'Horizontal', 'Vertical', () => !ppt.orientation.enabled ? 0 : 1);
+    menu.newEntry({menuName: or_menu, entryText: 'Horizontal', func: () => {ppt.orientation.enabled = false; update_art(ppt, true); on_size(); window.Repaint();}});
+    menu.newEntry({menuName: or_menu, entryText: 'Vertical', func: () => {ppt.orientation.enabled = true; update_art(ppt, true); on_size(); window.Repaint();}});
 
-    _menu1.AppendMenuItem(MF_STRING, 90, 'Horizontal');
-    _menu1.AppendMenuItem(MF_STRING, 91, 'Vertical');
-    _menu1.CheckMenuRadioItem(90, 91, ppt.orientation.enabled ? 91 : 90);
-    _menu1.AppendTo(m, MF_STRING, 'Orientation');
-    m.AppendMenuSeparator();
+    const show_menu = menu.newMenu('Show...');
+    menu.newEntry({menuName: show_menu, entryText: 'Separators', func: () => {ppt.borders.toggle(); window.Repaint();}, flags: () => ppt.borders.enabled ? MF_CHECKED : MF_STRING});
 
-    _menu2.AppendMenuItem(MF_STRING, 110, 'Borders');
-    _menu2.CheckMenuItem(110, ppt.borders.enabled);
-    _menu2.AppendTo(m, MF_STRING, 'Show...');
+    menu.newEntry({entryText: 'sep'});
 
-    m.AppendMenuSeparator();
+    const tp_menu = menu.newMenu('Unified Background');
+    menu.newEntry({menuName: tp_menu, entryText: 'Unify child-panel backgrounds', flags: MF_GRAYED});
+    menu.newEntry({menuName: tp_menu, entryText: 'sep'});
+    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.unified_bg.toggle(); window.Repaint(); if (ppt.unified_bg.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.unified_bg.enabled ? MF_CHECKED : MF_STRING});
 
-    _menu3.AppendMenuItem(MF_STRING, 210, 'Enable');
-    _menu3.CheckMenuItem(210, ppt.bgShow.enabled);
-    _menu3.AppendMenuItem(MF_STRING, 211, 'Blur');
-    _menu3.CheckMenuItem(211, ppt.bgBlur.enabled);
-    _menu3.AppendMenuItem(MF_STRING, 212, 'Shadow');
-    _menu3.CheckMenuItem(212, ppt.overlay.enabled);
-    _menu3.AppendMenuSeparator();
-    _menu3.AppendMenuItem(MF_STRING, 213, 'Playing Album Cover');
-    _menu3.AppendMenuItem(MF_STRING, 214, 'Default');
-    _menu3.CheckMenuRadioItem(213, 214, ppt.bgMode.enabled ? 214 : 213);
-    _menu3.AppendTo(m, MF_STRING, 'Background Wallpaper');
+    const bg_menu = menu.newMenu('Background');
+    menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
+    menu.newEntry({menuName: bg_menu, entryText: 'sep'});
+    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); window.Repaint();}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt, true); window.Repaint();}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint();}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'sep'});
+    menu.newCheckMenu(bg_menu, 'Playing album cover', 'Default', () => !ppt.bgMode.enabled ? 0 : 1);
+    menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt, true); window.Repaint();}});
+    menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt, true); window.Repaint();}});
 
-    _menu4.AppendMenuItem(MF_STRING, 310, 'System');
-    _menu4.AppendMenuItem(MF_STRING, 311, 'Dynamic');
-    _menu4.AppendMenuItem(MF_STRING, 312, 'Custom');
-    _menu4.CheckMenuRadioItem(310, 312, Math.min(Math.max(310 + ppt.col_mode.value - 1, 310), 312));
-    _menu4.AppendTo(m, MF_STRING, 'Colours');
+    const col_menu = menu.newMenu('Colours');
+    menu.newEntry({menuName: col_menu, entryText: 'System', func: () => {ppt.col_mode.value = 1; get_colours(ppt.col_mode.value, true); window.Repaint();}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: col_menu, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; get_colours(ppt.col_mode.value, true); window.Repaint();}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; get_colours(ppt.col_mode.value, true); window.ShowProperties(); window.Repaint();}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
 
-    _menu5.AppendMenuItem(MF_STRING, 410, 'Segoe Fluent Icons');
-    _menu5.AppendMenuItem(MF_STRING, 411, 'System');
-    _menu5.CheckMenuRadioItem(410, 411, ppt.fontMode.enabled ? 411 : 410);
-    _menu5.AppendTo(m, MF_STRING, 'Font');
+    const font_menu = menu.newMenu('Font');
+    menu.newCheckMenu(font_menu, 'Segoe Fluent Icons', 'System', () => !ppt.fontMode.enabled ? 0 : 1);
+    menu.newEntry({menuName: font_menu, entryText: 'Segoe Fluent Icons', func: () => {ppt.fontMode.enabled = false; window.Repaint();}});
+    menu.newEntry({menuName: font_menu, entryText: 'System', func: () => {ppt.fontMode.enabled = true; window.Repaint();}});
+    //menu.newEntry({menuName: font_menu, entryText: 'Custom', func: () => {}});
 
-    m.AppendMenuSeparator();
+    menu.newEntry({entryText: 'sep'});
 
-    m.AppendMenuItem(MF_STRING, 998, 'Open readme...');
+    menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\ptpt_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
 
-    m.AppendMenuSeparator()
+    menu.newEntry({entryText: 'sep'});
 
-    m.AppendMenuItem(MF_STRING, 999, 'Panel Properties');
-    m.AppendMenuItem(MF_STRING, 1000, 'Configure...');
+    menu.newEntry({entryText: 'Panel Properties', func: () => {window.ShowProperties();}});
+    menu.newEntry({entryText: 'Configure...', func: () => {window.ShowConfigureV2();}});
 
-    const idx = m.TrackPopupMenu(x, y);
-    switch (idx) {
-    case 0:
-        break;
-    case 90:
-    case 91:
-        ppt.orientation.toggle();
-        update_art(ppt);
-        on_size();
-        window.Repaint();
-        break;
-    case 110:
-        ppt.borders.toggle();
-        window.Repaint();
-        break;
-    case 210:
-        ppt.bgShow.toggle();
-        get_colours(ppt.col_mode.value, true);
-        update_art(ppt);
-        window.Repaint();
-        break;
-    case 211:
-        ppt.bgBlur.toggle();
-        update_art(ppt);
-        window.Repaint();
-        break;
-    case 212:
-        ppt.overlay.toggle();
-        window.Repaint();
-        break;
-    case 213:
-    case 214:
-        ppt.bgMode.toggle();
-        if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties();
-        update_art(ppt);
-        window.Repaint();
-        break;
-    case 310:
-        ppt.col_mode.value = 1;
-        get_colours(ppt.col_mode.value, true);
-        if (lyrics && layout !== 'narrowvertical') { lyrics.Hidden = true; lyrics.Hidden = false; }
-        window.Repaint();
-        break;
-    case 311:
-        ppt.col_mode.value = 2;
-        get_colours(ppt.col_mode.value, true);
-        if (lyrics && layout !== 'narrowvertical') { lyrics.Hidden = true; lyrics.Hidden = false; }
-        window.Repaint();
-        break;
-    case 312:
-        ppt.col_mode.value = 3;
-        get_colours(ppt.col_mode.value, true);
-        if (lyrics && layout !== 'narrowvertical') { lyrics.Hidden = true; lyrics.Hidden = false; }
-        window.ShowProperties();
-        window.Repaint();
-        break;
-    case 410:
-    case 411:
-        ppt.fontMode.toggle();
-        window.Repaint();
-        break;
-    case 998:
-        let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\mp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' };
-        fb.ShowPopupMessage(readme, window.ScriptInfo.Name);
-        readme = null;
-        break;
-    case 999:
-        window.ShowProperties();
-        break;
-    case 1000:
-        window.ShowConfigureV2();
-        break;
-    default:
-        c.ExecuteByID(idx - 1);
-        break;
-    }
-    return true;
-}
-
-function on_colours_changed() {
-    get_colours(ppt.col_mode.value, true);
-    window.Repaint();
-}
-
-function on_playback_new_track() {
-    get_colours(ppt.col_mode.value, true);
-    update_art(ppt);
-    if (lyrics && layout !== 'narrowvertical') { lyrics.Hidden = true; lyrics.Hidden = false; }
+    return menu.btn_up(x, y);
 }

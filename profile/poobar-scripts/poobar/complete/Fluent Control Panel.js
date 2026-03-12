@@ -1,7 +1,7 @@
 ﻿'use strict';
 
 // This script is a modified version of Fluent Control Panel version 0.9 by eurekagliese
-window.DefineScript('Fluent Control Panel', {author:'eurekagliese & Choya', options:{grab_focus:false}});
+window.DefineScript('Fluent Control Panel', {author:'eurekagliese / Choya', options:{grab_focus:false}});
 window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
@@ -11,7 +11,7 @@ include(fb.ComponentPath + 'samples\\complete\\js\\rating.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\volume.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\global_vars.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_global.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
 let ppt = {
@@ -279,7 +279,7 @@ function on_paint(gr) {
     } else if (!ppt.bgShow.enabled) {
         const bg_col = (ppt.transparency.enabled) ? _RGBA(0, 0, 0, 0) : g_backcolour;
         gr.FillSolidRect(0, 0, ww, wh, bg_col);
-        console.log("paint called");
+        //console.log("paint called");
         //gr.FillGradRectV2(0, 0, ww, wh, 240, [0.0, g_backcolour, 1.0, 0x00000000]);
     }
 
@@ -824,8 +824,8 @@ function on_mouse_rbtn_up(x, y) {
     menu.newEntry({menuName: show_menu, entryText: 'dB permanent', func: () => {ppt.db.toggle(); window.Repaint();}, flags: () => ppt.db.enabled ? MF_CHECKED : MF_STRING});
 
     const sbar_menu = menu.newMenu('Bars');
-    menu.newCheckMenu(sbar_menu, 'Normal', 'Waveform', () => ppt.mode.enabled ? 0 : 1);
-    menu.newEntry({menuName: sbar_menu, entryText: 'Normal', func: () => {ppt.mode.enabled = true; on_size(); buttons.update(); window.Repaint();}});
+    menu.newCheckMenu(sbar_menu, 'Seekbar', 'Waveform', () => ppt.mode.enabled ? 0 : 1);
+    menu.newEntry({menuName: sbar_menu, entryText: 'Seekbar', func: () => {ppt.mode.enabled = true; on_size(); buttons.update(); window.Repaint();}});
     menu.newEntry({menuName: sbar_menu, entryText: 'Waveform', func: () => {ppt.mode.enabled = false; on_size(); buttons.update(); window.Repaint();}});
     menu.newEntry({menuName: sbar_menu, entryText: 'sep'});
     menu.newEntry({menuName: sbar_menu, entryText: 'Rounded bars', func: () => {ppt.roundBars.toggle(); window.Repaint();}, flags: () => ppt.roundBars.enabled ? MF_CHECKED : MF_STRING});
