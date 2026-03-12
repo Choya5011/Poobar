@@ -44,6 +44,7 @@ let layout = new _layout(panelNames, 150, ppt.unified_bg.enabled);
 
 layout.horizontal({
     func: () => {
+        paintRect = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
@@ -57,6 +58,7 @@ layout.horizontal({
 
 layout.halfscreen({
     func: () => {
+        paintRect = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
@@ -71,6 +73,7 @@ layout.halfscreen({
 
 layout.normalvertical({
     func: () => {
+        paintRect = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
@@ -85,6 +88,7 @@ layout.normalvertical({
 
 layout.narrowvertical({
     func: () => {
+        paintRect = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
@@ -98,6 +102,7 @@ layout.narrowvertical({
 
 layout.miniplayer({
     func: () => {
+        paintRect = false;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p2) layout.p.p2.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
@@ -127,6 +132,7 @@ layout.miniplayer({
 
 layout.miniplayer_2({
     func: () => {
+        paintRect = true;
         exInitTabs([3]);
         try {
             for (let i = 0; i < tabs.length; i++) {
