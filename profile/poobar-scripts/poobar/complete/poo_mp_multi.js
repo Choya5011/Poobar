@@ -173,7 +173,7 @@ function on_paint(gr) {
         }
     }
 
-    tab.paint_mp(gr, ppt);
+    if (layout.layout() === 'miniplayer') tab.paint_mp(gr, ppt);
 
     if (paintRect) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
 }
@@ -278,7 +278,7 @@ function on_mouse_rbtn_up(x, y) {
 
     menu.newEntry({entryText: 'sep'});
 
-    menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\ptpt_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
+    menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\mp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
 
     menu.newEntry({entryText: 'sep'});
 

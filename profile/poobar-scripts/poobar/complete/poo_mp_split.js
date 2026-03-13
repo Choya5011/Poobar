@@ -168,7 +168,7 @@ window.SetTimeout(function() {
 }, 180);
 
 function on_paint(gr) {
-    if (!paintRect && !ppt.unified_bg.enabled) {
+    if (!paintRect && !ppt.bgShow.enabled) {
         const rX = (ppt.orientation.enabled) ? TAB_W : 0;
         const rY = (ppt.orientation.enabled) ? 0 : TAB_H;
         const rW = (ppt.orientation.enabled) ? ww - TAB_W : ww;
@@ -192,9 +192,9 @@ function on_paint(gr) {
         }
     }
 
-    tab.paint_mp(gr, ppt);
+    if (layout.layout() === 'miniplayer') tab.paint_mp(gr, ppt);
 
-    if (paintRect && !ppt.unified_bg.enabled) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
+    if (paintRect && !ppt.bgShow.enabled) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
 }
 
 function on_colours_changed() {
@@ -271,14 +271,14 @@ function on_mouse_rbtn_up(x, y) {
     const tp_menu = menu.newMenu('Unified Background');
     menu.newEntry({menuName: tp_menu, entryText: 'Unify child-panel backgrounds', flags: MF_GRAYED});
     menu.newEntry({menuName: tp_menu, entryText: 'sep'});
-    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.unified_bg.toggle(); window.Repaint(); if (ppt.unified_bg.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.unified_bg.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.unified_bg.toggle(); window.Repaint(); layout.refresh_pt_panels([layout.p.p4]); if (ppt.unified_bg.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.unified_bg.enabled ? MF_CHECKED : MF_STRING});
 
     const bg_menu = menu.newMenu('Background');
     menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
     menu.newEntry({menuName: bg_menu, entryText: 'sep'});
-    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); window.Repaint();}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt, true); window.Repaint();}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint();}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); if (ppt.unified_bg.enabled) paintRect = false; window.Repaint(); layout.refresh_pt_panels([layout.p.p4]);}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt, true); window.Repaint(); layout.refresh_pt_panels([layout.p.p4]);}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint(); layout.refresh_pt_panels([layout.p.p4]);}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
     menu.newEntry({menuName: bg_menu, entryText: 'sep'});
     menu.newCheckMenu(bg_menu, 'Playing album cover', 'Default', () => !ppt.bgMode.enabled ? 0 : 1);
     menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt, true); window.Repaint();}});
@@ -297,7 +297,7 @@ function on_mouse_rbtn_up(x, y) {
 
     menu.newEntry({entryText: 'sep'});
 
-    menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\ptpt_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
+    menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\mp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
 
     menu.newEntry({entryText: 'sep'});
 

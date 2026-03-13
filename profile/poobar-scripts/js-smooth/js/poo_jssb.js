@@ -46,7 +46,7 @@ ppt = {
 	headerBarHeight: 25,
 	enableCustomColors: window.GetProperty("_PROPERTY: Custom Colors", false),
 	showwallpaper: window.GetProperty("_DISPLAY: Show Wallpaper", false),
-	wallpaperalpha: 150,
+	wallpaperalpha: window.GetProperty("_DISPLAY: Wallpaper Overlay Alpha", 150), // poo
 	wallpaperblurred: window.GetProperty("_DISPLAY: Wallpaper Blurred", true),
 	wallpaperblurvalue: 1.05,
 	wallpapermode: window.GetProperty("_SYSTEM: Wallpaper Mode", 0),
@@ -2355,6 +2355,8 @@ oBrowser = function (name) {
 				if (fb.IsPlaying && g_wallpaperImg && ppt.showwallpaper) {
 					gr.GdiDrawBitmap(g_wallpaperImg, 0, 0, ww, brw.y - 1, 0, 0, g_wallpaperImg.Width, brw.y - 1);
 					gr.FillSolidRect(0, 0, ww, brw.y - 1, g_color_normal_bg & RGBA(255, 255, 255, ppt.wallpaperalpha));
+				} else if (ppt.transparency) { // poo
+				    gr.FillSolidRect(0, 0, ww, brw.y - 1, g_color_normal_bg & RGBA(255, 255, 255, ppt.wallpaperalpha));
 				} else {
 					if (g_wallpaperImg && ppt.showwallpaper) {
 						gr.GdiDrawBitmap(g_wallpaperImg, 0, 0, ww, brw.y - 1, 0, 0, g_wallpaperImg.Width, brw.y - 1);
@@ -2644,6 +2646,10 @@ oBrowser = function (name) {
         const MF_GRAYED = 0x00000001;
         const MF_CHECKED = 0x8;
 
+        // translate to booleans
+        const wallpaperalpha = ppt.wallpaperalpha === 150 ? true : false;
+        const wallpapermode = ppt.wallpapermode === 0 ? false : true;
+
 	    let menu = new _menu();
 
 	    const src_menu = menu.newMenu('Source');
@@ -2677,17 +2683,15 @@ oBrowser = function (name) {
 	    const tp_menu = menu.newMenu('Transparency');
         menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
         menu.newEntry({menuName: tp_menu, entryText: 'sep'});
-        menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.showwallpaper = false; window.SetProperty("_DISPLAY: Show Wallpaper", ppt.showwallpaper); ppt.transparency = !ppt.transparency; window.SetProperty('_DISPLAY: Enable transparent background', ppt.transparency); brw.repaint(); if (ppt.transparency) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'transparency readme file not found' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {if (wallpaperalpha) ppt.wallpaperalpha = 150 - ppt.wallpaperalpha; window.SetProperty("_DISPLAY: Wallpaper Overlay Alpha", ppt.wallpaperalpha); ppt.showwallpaper = false; window.SetProperty("_DISPLAY: Show Wallpaper", ppt.showwallpaper); ppt.transparency = !ppt.transparency; window.SetProperty('_DISPLAY: Enable transparent background', ppt.transparency); brw.repaint(); if (ppt.transparency) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'transparency readme file not found' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency ? MF_CHECKED : MF_STRING});
 
         const bg_menu = menu.newMenu('Background', 'main', ppt.transparency ? MF_GRAYED : MF_STRING);
         menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
         menu.newEntry({menuName: bg_menu, entryText: 'sep'});
         menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.showwallpaper = !ppt.showwallpaper; window.SetProperty("_DISPLAY: Show Wallpaper", ppt.showwallpaper); g_wallpaperImg = setWallpaperImg(); brw.repaint();}, flags: () => ppt.showwallpaper ? MF_CHECKED : MF_STRING});
         menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.wallpaperblurred = !ppt.wallpaperblurred; window.SetProperty("_DISPLAY: Wallpaper Blurred", ppt.wallpaperblurred); g_wallpaperImg = setWallpaperImg(); brw.repaint();}, flags: () => ppt.wallpaperblurred ? MF_CHECKED : MF_STRING});
-        const wallpaperalpha = ppt.wallpaperalpha === 150 ? true : false;
-        menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.wallpaperalpha = 150 - ppt.wallpaperalpha; brw.repaint();}, flags: () => wallpaperalpha ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.wallpaperalpha = 150 - ppt.wallpaperalpha; window.SetProperty("_DISPLAY: Wallpaper Overlay Alpha", ppt.wallpaperalpha); brw.repaint();}, flags: () => wallpaperalpha ? MF_CHECKED : MF_STRING});
         menu.newEntry({menuName: bg_menu, entryText: 'sep'});
-        const wallpapermode = ppt.wallpapermode === 0 ? false : true;
         menu.newCheckMenu(bg_menu, 'Playing album cover', 'Default', () => !wallpapermode ? 0 : 1);
         menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.wallpapermode = 0; window.SetProperty("_SYSTEM: Wallpaper Mode", ppt.wallpapermode); g_wallpaperImg = setWallpaperImg(); brw.repaint();}});
         menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.wallpapermode = 1; window.SetProperty("_SYSTEM: Wallpaper Mode", ppt.wallpapermode); g_wallpaperImg = setWallpaperImg(); brw.repaint();}});

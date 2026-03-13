@@ -22,6 +22,7 @@ include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab_basic.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
 let ppt = {
+    transparency : new _p ('_DISPLAY: Enable transparent background', false),
     bgShow : new _p('_DISPLAY: Show Wallpaper', true),
     bgBlur : new _p('_DISPLAY: Wallpaper Blurred', false),
     bgMode : new _p('_DISPLAY: Wallpaper Mode', false),
@@ -75,7 +76,7 @@ function on_size() {
 
 function on_paint(gr) {
     if (aa_img) {
-        if (ppt.bgShow.enabled && !ppt.bgMode.enabled && !ppt.bgBlur.enabled) {
+        if (ppt.bgShow.enabled && !ppt.bgMode.enabled && !ppt.bgBlur.enabled && !ppt.transparency.enabled) {
             _drawImage(gr, aa_img, 0, 0, ww, wh, image.crop);
         } else if (!ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled)) {
             _drawImage(gr, aa_img, 0, 0 + TAB_H, ww, wh - TAB_H, image.crop);
@@ -91,7 +92,7 @@ function on_paint(gr) {
 
     const switchBgW = (ppt.orientation.enabled) ? TAB_W : ww; TAB_H;
     const switchBgH = (ppt.orientation.enabled) ? wh : TAB_H;
-    const overlayColor = setAlpha(g_backcolour, 128); //const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
+    const overlayColor = setAlpha(g_backcolour, 128);
     if (p.Text === '' || p.Name === 'JS Smooth Playlist Manager') { gr.FillSolidRect(0, 0, ww, wh, overlayColor); } else if (p.Name !== 'ESLyric' && ppt.overlay.enabled && (ppt.bgShow.enabled || ppt.bgBlur.enabled)) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); }
 
     if (bg_img && (ppt.bgBlur.enabled || ppt.bgMode.enabled)) {
@@ -184,18 +185,14 @@ function on_mouse_rbtn_up(x, y) {
     menu.newEntry({menuName: show_menu, entryText: 'Selected highlight', func: () => {ppt.selected.toggle(); window.Repaint();}, flags: () => ppt.selected.enabled ? MF_CHECKED : MF_STRING});
     menu.newEntry({menuName: show_menu, entryText: 'Hover highlight', func: () => {ppt.hover.toggle(); window.Repaint();}, flags: () => ppt.hover.enabled ? MF_CHECKED : MF_STRING});
 
-
     menu.newEntry({entryText: 'sep'});
 
-//    let tp_menu = menu.newMenu('Transparency');
-//    menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
-//    menu.newEntry({menuName: tp_menu, entryText: 'sep'});
-//    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.transparency.toggle(); window.Repaint(); if (ppt.transparency.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
-//
-//    const tp_flag = ppt.transparency.enabled ? MF_GRAYED : MF_STRING
-//    let bg_menu = menu.newMenu('Background', 'main', tp_flag);
+    let tp_menu = menu.newMenu('Transparency');
+    menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
+    menu.newEntry({menuName: tp_menu, entryText: 'sep'});
+    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.transparency.toggle(); window.Repaint(); refresh_pt_panel(); if (ppt.transparency.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
 
-    const bg_menu = menu.newMenu('Background');
+    let bg_menu = menu.newMenu('Background', 'main', ppt.transparency.enabled ? MF_GRAYED : MF_STRING);
     menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
     menu.newEntry({menuName: bg_menu, entryText: 'sep'});
     menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});

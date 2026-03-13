@@ -445,7 +445,8 @@ function refresh_wf_panel(panelName) {
     if (!ppt.mode.enabled) {
         let p; try { p = window.GetPanelByIndex(0); } catch (e) { return; }
         if (p.Text === panelName || p.Name === panelName) { p.Hidden = true; p.Hidden = false; }
-        if (p.Name === 'Waveform minibar (mod)') { p.ShowCaption = true; p.ShowCaption = false; }
+        if (p.Name === 'Waveform minibar (mod)') { window.SetTimeout(function() { p.ShowCaption = true; p.ShowCaption = false; }, 0); }
+        //if (p.Name === 'Waveform minibar (mod)') { p.ShowCaption = true; p.ShowCaption = false; }
     }
 }
 

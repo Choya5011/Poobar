@@ -82,6 +82,19 @@ function _layout(panelNames, defaultDelay, unify = false) {
         }
     };
 
+    this.refresh_pt_panels = function(excludePanels) {
+        if (!this.unify) return;
+
+        excludePanels = excludePanels || [];
+
+        for (let key in this.p) {
+            if (this.p[key] && !excludePanels.includes(this.p[key])) {
+                this.p[key].Hidden = true;
+                this.p[key].Hidden = false;
+            }
+        }
+    };
+
     this.horizontal = function(params) {
         let debouncedFunc = params.debouncefunc ? this.debounce(params.debouncefunc, params.delay || this.defaultDelay, false, this) : null;
 
