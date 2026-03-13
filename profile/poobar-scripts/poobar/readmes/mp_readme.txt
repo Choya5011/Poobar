@@ -8,7 +8,7 @@ To make this setting work properly with the other panels it still requires going
 As well as enabling the 'Enable Transparency' property.
 Unified background renders all below instructions invalid.
 
-Background (miniplayer tabs only):
+Background:
 ----------
 Disable the background if a solid color is desired, for solid colors see the color modes.
 The "Shadow" option is a transparent overlay for the background image that uses the color set by the color mode (e.g. system/dynamic/custom).
@@ -17,4 +17,5 @@ Click Apply to save changes after changing path, leaving the default string will
 
 Colors:
 ------
-The tabstack is hidden and paused when resizing the window to reduce resizing stutter, during this short window the background will be a solid color that is also affected by the color mode (e.g. system/dynamic/custom).
+The tabstack is hidden and paused when resizing the window to reduce resizing stutter.
+During this short window the background will be a solid color unless unify is enabled that is also affected by the color mode (e.g. system/dynamic/custom).

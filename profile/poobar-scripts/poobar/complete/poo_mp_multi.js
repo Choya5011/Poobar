@@ -15,7 +15,7 @@ include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.
 let ppt = {
 	cpH : new _p ('_PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
 	cpV : new _p ('_PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 120),
-	unified_bg : new _p('_PANEL_BEHAVIOR: Unify background across panels', false),
+	unify : new _p('_PANEL_BEHAVIOR: Unify background across panels', false),
 
     bgShow : new _p('_TAB_DISPLAY: Show Wallpaper', false),
     bgBlur : new _p('_TAB_DISPLAY: Wallpaper Blurred', false),
@@ -39,15 +39,16 @@ get_colours(ppt.col_mode.value, true);
 
 // _layout usage instruction found at: fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js'
 const panelNames = ['Fluent Control Panel', '', '', ''];
-let layout = new _layout(panelNames, 150);
+let layout = new _layout(panelNames, 150, ppt.unify.enabled);
 
 layout.horizontal({
     func: () => {
         paintRect = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
-        if (layout.p.p2) { layout.p.p2.Move(ww * 0.8, 0, ww * 0.2, wh - cpH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
+        if (ppt.unify.enabled) {layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;}
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpH, ww, cpH); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
+        if (layout.p.p2) { layout.p.p2.Move(ww * 0.8, 0, ww * 0.2, wh - cpH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
     debouncefunc: () => {
         if (layout.p.p3) { layout.p.p3.Move(ww * 0.2, 0, ww - ww * 0.4, wh - cpH); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
@@ -61,6 +62,7 @@ layout.halfscreen({
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p2) layout.p.p2.Hidden = true;
+        if (ppt.unify.enabled) layout.p.p1.Hidden = true;
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
         if (layout.p.p2) { layout.p.p2.Move(ww * 0.5, 0, ww * 0.5, wh - cpV); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
@@ -76,6 +78,7 @@ layout.normalvertical({
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p2) layout.p.p2.Hidden = true;
+        if (ppt.unify.enabled) layout.p.p1.Hidden = true;
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
         if (layout.p.p2) { layout.p.p2.Move(ww * 0.5, 0, ww - ww * 0.5, wh - cpH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
@@ -90,6 +93,7 @@ layout.narrowvertical({
         paintRect = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
+        if (ppt.unify.enabled) {layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;}
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
         if (layout.p.p2) { layout.p.p2.Move(0, (wh - cpV) * 0.4, ww, wh - cpV - ((wh - cpV) * 0.4)); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
@@ -104,6 +108,7 @@ layout.miniplayer({
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p2) layout.p.p2.Hidden = true;
+        if (ppt.unify.enabled) layout.p.p1.Hidden = true;
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
     },
     debouncefunc: () => {
@@ -161,9 +166,9 @@ window.SetTimeout(function() {
 }, 180);
 
 function on_paint(gr) {
-    if (!paintRect) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
+    if (!paintRect && !ppt.bgShow.enabled) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
 
-    if (ppt.bgShow.enabled && bg_img) {
+    if (ppt.bgShow.enabled && bg_img && !ppt.unify.enabled) {
         const bgW = (ppt.orientation.enabled) ? TAB_W : ww;
         const bgH = (ppt.orientation.enabled) ? wh - cpV : TAB_H;
         _drawImage(gr, bg_img, 0, 0, bgW, bgH, image.crop);
@@ -171,11 +176,17 @@ function on_paint(gr) {
             const overlayColor = setAlpha(g_backcolour, 128);
             gr.FillSolidRect(0, 0, bgW, bgH, overlayColor);
         }
+    } else if (ppt.bgShow.enabled && bg_img && ppt.unify.enabled) {
+        _drawImage(gr, bg_img, 0, 0, ww, wh, image.crop);
+        if (ppt.overlay.enabled) {
+            const overlayColor = setAlpha(g_backcolour, 128);
+            gr.FillSolidRect(0, 0, ww, wh, overlayColor);
+        }
     }
 
     if (layout.layout() === 'miniplayer') tab.paint_mp(gr, ppt);
 
-    if (paintRect) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
+    if (paintRect && !ppt.bgShow.enabled) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
 }
 
 function on_colours_changed() {
@@ -252,7 +263,7 @@ function on_mouse_rbtn_up(x, y) {
     const tp_menu = menu.newMenu('Unified Background');
     menu.newEntry({menuName: tp_menu, entryText: 'Unify child-panel backgrounds', flags: MF_GRAYED});
     menu.newEntry({menuName: tp_menu, entryText: 'sep'});
-    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.unified_bg.toggle(); window.Repaint(); if (ppt.unified_bg.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.unified_bg.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.unify.toggle(); window.Repaint(); if (ppt.unify.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.unify.enabled ? MF_CHECKED : MF_STRING});
 
     const bg_menu = menu.newMenu('Background');
     menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});

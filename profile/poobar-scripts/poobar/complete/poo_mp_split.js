@@ -16,7 +16,7 @@ let ppt = {
 	vPanelScale : new _p ('_PANEL_PLACEMENT: Vertical Monitor Panel Division (0-1)', 0.4),
 	cpH : new _p ('_PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
 	cpV : new _p ('_PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 108),
-	unified_bg : new _p('_PANEL_BEHAVIOR: Unify background across panels', false),
+	unify : new _p('_PANEL_BEHAVIOR: Unify background across panels', false),
 
     bgShow : new _p('_TAB_DISPLAY: Show Wallpaper', false),
     bgBlur : new _p('_TAB_DISPLAY: Wallpaper Blurred', false),
@@ -40,14 +40,14 @@ get_colours(ppt.col_mode.value, true);
 
 // _layout usage instruction found at: fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js'
 const panelNames = ['Fluent Control Panel', '', '', 'Smooth Browser'];
-let layout = new _layout(panelNames, 150, ppt.unified_bg.enabled);
+let layout = new _layout(panelNames, 150, ppt.unify.enabled);
 
 layout.horizontal({
     func: () => {
         paintRect = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
-        if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
+        if (ppt.unify.enabled) {layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;}
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpH, ww, cpH); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
         if (layout.p.p2) { layout.p.p2.Move(ww * psH, 0, ww - ww * psH, wh - cpH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
@@ -61,7 +61,7 @@ layout.halfscreen({
         paintRect = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
-        if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
+        if (ppt.unify.enabled) {layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;}
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
         if (layout.p.p2) { const remainingH = wh - cpV - ((wh - cpV) * psV); layout.p.p2.Move(0, (wh - cpV) * psV, ww, remainingH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
@@ -76,7 +76,7 @@ layout.normalvertical({
         paintRect = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
-        if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
+        if (ppt.unify.enabled) {layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;}
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
         if (layout.p.p2) { const remainingH = wh - cpV - ((wh - cpV) * psV); layout.p.p2.Move(0, (wh - cpV) * psV, ww, remainingH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
@@ -91,7 +91,7 @@ layout.narrowvertical({
         paintRect = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
-        if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;
+        if (ppt.unify.enabled) {layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;}
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
         if (layout.p.p2) { const remainingH = wh - cpV - ((wh - cpV) * psV); layout.p.p2.Move(0, (wh - cpV) * psV, ww, remainingH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
@@ -106,7 +106,7 @@ layout.miniplayer({
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p2) layout.p.p2.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
-        if (ppt.unified_bg.enabled) layout.p.p1.Hidden = true;
+        if (ppt.unify.enabled) layout.p.p1.Hidden = true;
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
     },
     debouncefunc: () => {
@@ -176,7 +176,7 @@ function on_paint(gr) {
         gr.FillSolidRect(rX, rY, rW, rH, g_backcolour);
     }
 
-    if (ppt.bgShow.enabled && bg_img && !ppt.unified_bg.enabled) {
+    if (ppt.bgShow.enabled && bg_img && !ppt.unify.enabled) {
         const bgW = (ppt.orientation.enabled) ? TAB_W : ww;
         const bgH = (ppt.orientation.enabled) ? wh : TAB_H;
         _drawImage(gr, bg_img, 0, 0, bgW, bgH, image.crop);
@@ -184,7 +184,7 @@ function on_paint(gr) {
             const overlayColor = setAlpha(g_backcolour, 128);
             gr.FillSolidRect(0, 0, bgW, bgH, overlayColor);
         }
-    } else if (ppt.bgShow.enabled && bg_img && ppt.unified_bg.enabled) {
+    } else if (ppt.bgShow.enabled && bg_img && ppt.unify.enabled) {
         _drawImage(gr, bg_img, 0, 0, ww, wh, image.crop);
         if (ppt.overlay.enabled) {
             const overlayColor = setAlpha(g_backcolour, 128);
@@ -272,12 +272,12 @@ function on_mouse_rbtn_up(x, y) {
     const tp_menu = menu.newMenu('Unified Background');
     menu.newEntry({menuName: tp_menu, entryText: 'Unify child-panel backgrounds', flags: MF_GRAYED});
     menu.newEntry({menuName: tp_menu, entryText: 'sep'});
-    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.unified_bg.toggle(); window.Repaint(); layout.refresh_pt_panels([layout.p.p4]); if (ppt.unified_bg.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.unified_bg.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.unify.toggle(); window.Repaint(); layout.refresh_pt_panels([layout.p.p4]); if (ppt.unify.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.unify.enabled ? MF_CHECKED : MF_STRING});
 
     const bg_menu = menu.newMenu('Background');
     menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
     menu.newEntry({menuName: bg_menu, entryText: 'sep'});
-    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); if (ppt.unified_bg.enabled) paintRect = false; window.Repaint(); layout.refresh_pt_panels([layout.p.p4]);}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); if (ppt.unify.enabled) paintRect = false; window.Repaint(); layout.refresh_pt_panels([layout.p.p4]);}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
     menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt, true); window.Repaint(); layout.refresh_pt_panels([layout.p.p4]);}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
     menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint(); layout.refresh_pt_panels([layout.p.p4]);}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
     menu.newEntry({menuName: bg_menu, entryText: 'sep'});
