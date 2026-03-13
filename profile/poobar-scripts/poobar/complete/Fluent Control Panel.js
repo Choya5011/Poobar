@@ -255,11 +255,14 @@ function on_size() {
             waveformPanel.Hidden = true;
         }
     } else {
-        // rating.x & y are in on_paint
+        /**
+         * rating.x & y are in on_paint
+         * set h/y outside if-statement
+        */
+        waveformH = _scale(32);
+        waveformY = _scale((wh / 2) - (waveformH / 2));
         if (waveformPanel) {
             //waveformH = Math.round(wh / 3);
-            waveformH = _scale(32);
-            waveformY = _scale((wh / 2) - (waveformH / 2));
             if (wh > scaler.s100) { waveformPanel.Move(seekbar.x - _scale(40), waveformY, seekbar.w + _scale(80), waveformH); waveformPanel.SupportPseudoTransparency = true; waveformPanel.ShowCaption = false; waveformPanel.Hidden = false; waveformPanel.Locked = true; refresh_wf_panel(); } else { waveformPanel.Hidden = true; }
         } else if (errFlag_wf) {
             errFlag_wf = false;
