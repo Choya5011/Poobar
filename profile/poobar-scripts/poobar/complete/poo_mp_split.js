@@ -206,6 +206,7 @@ function on_playback_new_track() {
     get_colours(ppt.col_mode.value, true);
     update_art(ppt);
     window.Repaint();
+    if ((layout.layout() !== ('halfscreen' || 'normalvertical' || 'narrowvertical')) && !ppt.bgMode.enabled) { layout.refresh_pt_panels([layout.p.p4]); } else if (!ppt.bgMode.enabled) { layout.refresh_pt_panels(); }
 }
 
 function on_mouse_lbtn_up(x, y) {
