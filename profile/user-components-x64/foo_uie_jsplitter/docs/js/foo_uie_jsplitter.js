@@ -3704,10 +3704,11 @@ function GdiBitmap(arg) {
      * Each entry in the array is an object which contains colour and frequency values.<br>
      * Uses a different method than {@link GdiBitmap#GetColourSchemeJSON GetColourSchemeJSON} for calculating colours (K-means++ with Oklab).<br>
      *
-     * @param {number} max_count
+     * @param {number} max_count 
+     * @param {number} [min_chroma=0.0] minimal chroma value for choosing start cluster pixel
      * @return {string}
      */
-    this.GetColourSchemeJSONV2 = function (max_count) { }; // (string)
+    this.GetColourSchemeJSONV2 = function (max_count, min_chroma) { }; // (string)
 
     /**
      * Note: don't forget to use {@link GdiBitmap#ReleaseGraphics ReleaseGraphics} after work on GdiGraphics is done!
@@ -4007,6 +4008,19 @@ function GdiGraphics() {
      * @param {float} [focus=1.0] Specify where the centred colour will be at its highest intensity. Valid values between 0 and 1.
      */
     this.FillGradRect = function (x, y, w, h, angle, colour1, colour2, focus) { }; // (void) [, focus]
+
+    /**
+     * Fills rect with gradient in arbitrary quantity of stops.
+     * @param {number} x
+     * @param {number} y
+     * @param {number} w
+     * @param {number} h
+     * @param {float} angle
+     * @param {Array} stops Specifies gradient stops in form of [pos0, argb0, ..., posN, argbN]
+     * @example
+     * dgr.FillGradRectV2(10, 10, 200, 100, 0, [0.0, 0xFF0000FF, 0.5, 0xFFFF0000, 1.0, 0xFF000000]);
+     */
+    this.FillGradRectV2 = function (x, y, w, h, angle, stops) { };
 
     /**
      * @param {number} colour

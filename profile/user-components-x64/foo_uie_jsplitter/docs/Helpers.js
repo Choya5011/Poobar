@@ -39,7 +39,7 @@ function RGB(r, g, b) {
  * @param {number} colour
  */
 function toRGB(color) {
-	var a = col - 0xFF000000;
+	var a = color - 0xFF000000;
 	return [a >> 16, a >> 8 & 0xFF, a & 0xFF];
 }
 

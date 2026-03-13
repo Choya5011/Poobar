@@ -19,9 +19,6 @@ class Sprite
 }
 
 let ww = 0, wh = 0;
-let elapsed = 0, worked = 0, frameCounter = 0;
-let fps = 0;
-let font = gdi.Font("Segoe UI", 32, 1);
 
 const fullImage = gdi.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Field.jpg`);
 const gridCountX = 12, gridCountY = 9;
@@ -168,6 +165,10 @@ function BeginClip()
 	}
 }
 
+let worked = 0, frameCounter = 0;
+let fps = 0;
+let font = gdi.Font("Segoe UI", 32, 1);
+
 function on_paint(gr) {
 	let now = performance.now();
 	
@@ -189,13 +190,11 @@ function on_paint(gr) {
 	gr.GdiDrawText(`Mode: ${window.DrawMode == 0 ? "GDI+" : "Direct2D"}`, font, 0xFF000000, 5, 0, ww, 45);
 	
 	worked += performance.now() - now;
-
 	frameCounter++;
-	elapsed += 10;
-	if (elapsed >= 1000)
+	if (frameCounter == 60)
 	{
-		fps = Math.floor(frameCounter / (worked / 1000));
-		elapsed = worked = frameCounter = 0;
+		fps = Math.floor(60 / (worked / 1000));
+		worked = frameCounter = 0;
 	}
-	gr.GdiDrawText(`${fps} FPS`, font, 0xFF000000, 0, 0, ww - 5, 45, DT_RIGHT);	
+	gr.GdiDrawText(`${fps} FPS`, font, 0xFFFFFFFF, 0, 0, ww - 5, 45, DT_RIGHT);
 }

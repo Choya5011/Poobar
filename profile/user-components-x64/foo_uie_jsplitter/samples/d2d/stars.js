@@ -6,10 +6,6 @@ const starCount = 3000;
 include(`${fb.ComponentPath}\\docs\\Flags.js`);
 include(`${fb.ComponentPath}\\docs\\Helpers.js`);
 
-let elapsed = 0, worked = 0, frameCounter = 0;
-let fps = 0;
-let font = gdi.Font("Segoe UI", 32, 1);
-
 class Star 
 {
     constructor() {
@@ -46,7 +42,12 @@ window.SetInterval(() => {
 	
 }, 10);
 
+let worked = 0, frameCounter = 0;
+let fps = 0;
+let font = gdi.Font("Segoe UI", 32, 1);
+
 function on_paint(gr) {
+
 	let now = performance.now();
 	
 	gr.FillSolidRect(0, 0, window.Width, window.Height, 0xFF000000);
@@ -56,13 +57,11 @@ function on_paint(gr) {
 	gr.GdiDrawText(`Stars count: ${starCount}`, font, 0xFFFFFFFF, 5, 40, window.Width, 45);
 	
 	worked += performance.now() - now;
-
 	frameCounter++;
-	elapsed += 10;
-	if (elapsed >= 1000)
+	if (frameCounter == 60)
 	{
-		fps = Math.floor(frameCounter / (worked / 1000));
-		elapsed = worked = frameCounter = 0;
+		fps = Math.floor(60 / (worked / 1000));
+		worked = frameCounter = 0;
 	}
 	gr.GdiDrawText(`${fps} FPS`, font, 0xFFFFFFFF, 0, 0, window.Width - 5, 45, DT_RIGHT);	
 }

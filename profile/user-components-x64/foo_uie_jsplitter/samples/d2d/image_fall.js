@@ -55,11 +55,12 @@ function on_size(width, height) {
 	}
 }
 
-let elapsed = 0, worked = 0, frameCounter = 0;
+let worked = 0, frameCounter = 0;
 let fps = 0;
 let font = gdi.Font("Segoe UI", 32, 1);
 
 function on_paint(gr) {
+	
 	let now = performance.now();
 	
 	gr.FillSolidRect(0, 0, ww, wh, g_backcolour);	
@@ -78,13 +79,11 @@ function on_paint(gr) {
 	gr.GdiDrawText(`Images: ${iconsCount}`, font, 0xFFFFFFFF, 5, 40, ww, 45);
 	
 	worked += performance.now() - now;
-
 	frameCounter++;
-	elapsed += 10;
-	if (elapsed >= 1000)
+	if (frameCounter == 60)
 	{
-		fps = Math.floor(frameCounter / (worked / 1000));
-		elapsed = worked = frameCounter = 0;
+		fps = Math.floor(60 / (worked / 1000));
+		worked = frameCounter = 0;
 	}
 	gr.GdiDrawText(`${fps} FPS`, font, 0xFFFFFFFF, 0, 0, ww - 5, 45, DT_RIGHT);
 }

@@ -88,6 +88,7 @@ function D2DBitmap(arg) {
      * Uses a different method than {@link GdiBitmap#GetColourSchemeJSON GetColourSchemeJSON} for calculating colours (K-means++ with Oklab).<br>
      *
      * @param {number} max_count
+     * @param {number} [min_chroma=0.0] minimal chroma value for choosing start cluster pixel
      * @return {string}
      */
     this.GetColourSchemeJSONV2 = function (max_count) { }; // (string)
@@ -506,8 +507,7 @@ function D2DGraphics() {
     this.FillGradRect = function (x, y, w, h, angle, colour1, colour2, focus) { }; // (void) [, focus]
 
     /**
-     * Note: this may appear buggy depending on rectangle size. The easiest fix is
-     * to adjust the "angle" by a degree or two.
+     * Fills rect with gradient in arbitrary quantity of stops.
      *
      * @param {number} x
      * @param {number} y
