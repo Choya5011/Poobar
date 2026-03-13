@@ -75,37 +75,27 @@ function on_size() {
 }
 
 function on_paint(gr) {
-    if (aa_img) {
-        if (ppt.bgShow.enabled && !ppt.bgMode.enabled && !ppt.bgBlur.enabled && !ppt.transparency.enabled) {
-            _drawImage(gr, aa_img, 0, 0, ww, wh, image.crop);
-        } else if (!ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled)) {
-            _drawImage(gr, aa_img, 0, 0 + TAB_H, ww, wh - TAB_H, image.crop);
-        } else if (ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled)) {
-            _drawImage(gr, aa_img, 0 + TAB_W, 0, ww - TAB_W, wh, image.crop);
-        }
-    } else {
-        const ns_txt_x = (ww - _scale(400)) / 2;
-        const ns_txt_y = wh / 2;
-        const ns_txt_w = _scale(400);
-        const ns_txt_h = _scale(100);
-        gr.FillSolidRect(ns_txt_x, ns_txt_y - _scale(30), ns_txt_w, ns_txt_h, g_backcolour); let name; let font = window.InstanceType ? window.GetFontDUI(0) : window.GetFontCUI(0); if (font) {	name = font.Name; } else {	name = 'Segoe UI'; } gr.GdiDrawText('NO SELECTION', _gdiFont(name, _scale(20), 1), g_textcolour, ns_txt_x, ns_txt_y, ns_txt_w, ns_txt_h, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
-    }
-
     const p = window.GetPanelByIndex(tabs[activeTab].index);
-    if (p.Name === 'ESLyric') gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
-
+    const overlayColor = setAlpha(g_backcolour, 128);
     const switchBgW = (ppt.orientation.enabled) ? TAB_W : ww;
     const switchBgH = (ppt.orientation.enabled) ? wh : TAB_H;
 
-    const overlayColor = setAlpha(g_backcolour, 128);
-    if (p.Text === '' || p.Name === 'JS Smooth Playlist Manager') { gr.FillSolidRect(0, 0, ww, wh, overlayColor); } else if (p.Name !== 'ESLyric' && ppt.overlay.enabled && (ppt.bgShow.enabled || ppt.bgBlur.enabled) && !ppt.transparency.enabled) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); }
-
-    if (bg_img && (ppt.bgBlur.enabled || ppt.bgMode.enabled)) {
-        _drawImage(gr, bg_img, 0, 0, switchBgW, switchBgH, image.crop);
-        if (ppt.overlay.enabled && !ppt.transparency.enabled) gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor);
-    } else if (!ppt.bgShow.enabled) {
-        gr.FillSolidRect(0, 0, switchBgW, switchBgH, g_backcolour);
+    if (aa_img) {
+        if (ppt.bgShow.enabled && !ppt.bgMode.enabled && !ppt.bgBlur.enabled && !ppt.transparency.enabled) {
+            _drawImage(gr, aa_img, 0, 0, ww, wh, image.crop);
+        } else if (!ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled) && p.Name !== 'ESLyric') {
+            _drawImage(gr, aa_img, 0, 0 + TAB_H, ww, wh - TAB_H, image.crop);
+        } else if (ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled) && p.Name !== 'ESLyric') {
+            _drawImage(gr, aa_img, 0 + TAB_W, 0, ww - TAB_W, wh, image.crop);
+        }
+    } else {
+        const ns_txt_x = (ww - _scale(400)) / 2; const ns_txt_y = wh / 2; const ns_txt_w = _scale(400); const ns_txt_h = _scale(100);
+        gr.FillSolidRect(ns_txt_x, ns_txt_y - _scale(30), ns_txt_w, ns_txt_h, g_backcolour); let name; let font = window.InstanceType ? window.GetFontDUI(0) : window.GetFontCUI(0); if (font) {	name = font.Name; } else {	name = 'Segoe UI'; } gr.GdiDrawText('NO SELECTION', _gdiFont(name, _scale(20), 1), g_textcolour, ns_txt_x, ns_txt_y, ns_txt_w, ns_txt_h, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
     }
+
+    if (p.Name === 'ESLyric' && !ppt.transparency.enabled) { gr.FillSolidRect(0, 0, ww, wh, g_backcolour); }
+    if (p.Text === '' || p.Name === 'JS Smooth Playlist Manager' || p.Name === 'ESLyric' && ppt.transparency.enabled) { gr.FillSolidRect(0, 0, ww, wh, overlayColor); } else if (p.Name !== 'ESLyric' && ppt.overlay.enabled && (ppt.bgShow.enabled || ppt.bgBlur.enabled) && !ppt.transparency.enabled) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); }
+    if (bg_img && (ppt.bgBlur.enabled || ppt.bgMode.enabled)) { _drawImage(gr, bg_img, 0, 0, switchBgW, switchBgH, image.crop); if (ppt.overlay.enabled && !ppt.transparency.enabled) gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); } else if (!ppt.bgShow.enabled) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, g_backcolour); }
 
     tab.paint_pt(gr, ppt);
 }
