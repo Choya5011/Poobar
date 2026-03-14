@@ -12,11 +12,11 @@ include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
 let ppt = {
-	hPanelScale : new _p ('_PANEL_PLACEMENT: Horizontal Monitor Panel Division (0-1)', 0.5),
-	vPanelScale : new _p ('_PANEL_PLACEMENT: Vertical Monitor Panel Division (0-1)', 0.4),
-	cpH : new _p ('_PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
-	cpV : new _p ('_PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 108),
-	unify : new _p('_PANEL_BEHAVIOR: Unify background across panels', false),
+	hPanelScale : new _p ('- PANEL_PLACEMENT: Horizontal Monitor Panel Division (0-1)', 0.5),
+	vPanelScale : new _p ('- PANEL_PLACEMENT: Vertical Monitor Panel Division (0-1)', 0.4),
+	cpH : new _p ('- PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
+	cpV : new _p ('- PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 108),
+	unify : new _p('- PANEL_BEHAVIOR: Unify background across panels', false),
 
     bgShow : new _p('_TAB_DISPLAY: Show Wallpaper', false),
     bgBlur : new _p('_TAB_DISPLAY: Wallpaper Blurred', false),
@@ -30,7 +30,6 @@ let ppt = {
 };
 
 let ww, wh = 0;
-let psH, psV;
 let cpH = _scale(ppt.cpH.value); // Control Panel Height in Horizontal orientation
 let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
 let paintRect = false;
@@ -45,6 +44,7 @@ let layout = new _layout(panelNames, 150, ppt.unify.enabled);
 layout.horizontal({
     func: () => {
         paintRect = true;
+        const psH = (wh <= scaler.s730 && ww > scaler.s800 && ppt.hPanelScale.value >= 0.5) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value; // layout.p.p3/layout.p.p2 placement ratio in horizontal orientation (.5 splitscreen)
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (ppt.unify.enabled) {layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;}
@@ -52,6 +52,7 @@ layout.horizontal({
         if (layout.p.p2) { layout.p.p2.Move(ww * psH, 0, ww - ww * psH, wh - cpH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
     debouncefunc: () => {
+        const psH = (wh <= scaler.s730 && ww > scaler.s800 && ppt.hPanelScale.value >= 0.5) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value;
         if (layout.p.p3) { layout.p.p3.Move(0, 0, ww * psH, wh - cpH); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
     }
 });
@@ -59,6 +60,7 @@ layout.horizontal({
 layout.halfscreen({
     func: () => {
         paintRect = true;
+        const psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value; // (layout.p.p3 & layout.p.p4)/layout.p.p2 placement ratio in vertical orientation
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (ppt.unify.enabled) {layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;}
@@ -66,6 +68,7 @@ layout.halfscreen({
         if (layout.p.p2) { const remainingH = wh - cpV - ((wh - cpV) * psV); layout.p.p2.Move(0, (wh - cpV) * psV, ww, remainingH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
     debouncefunc: () => {
+        const psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value;
         if (layout.p.p3) { layout.p.p3.Move(0, 0, ww * 0.5, (wh - cpV) * psV); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
         if (layout.p.p4) { layout.p.p4.Move(ww * 0.5, 0, ww * 0.5, (wh - cpV) * psV); layout.p.p4.ShowCaption = false; layout.p.p4.Locked = true; layout.p.p4.Hidden = false; }
     }
@@ -74,6 +77,7 @@ layout.halfscreen({
 layout.normalvertical({
     func: () => {
         paintRect = true;
+        const psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (ppt.unify.enabled) {layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;}
@@ -81,6 +85,7 @@ layout.normalvertical({
         if (layout.p.p2) { const remainingH = wh - cpV - ((wh - cpV) * psV); layout.p.p2.Move(0, (wh - cpV) * psV, ww, remainingH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
     debouncefunc: () => {
+        const psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value;
         if (layout.p.p3) { layout.p.p3.Move(0, 0, ww * 0.7, (wh - cpV) * psV); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
         if (layout.p.p4) { layout.p.p4.Move(ww * 0.7, 0, ww - ww * 0.7, (wh - cpV) * psV); layout.p.p4.ShowCaption = false; layout.p.p4.Locked = true; layout.p.p4.Hidden = false; }
     }
@@ -89,6 +94,7 @@ layout.normalvertical({
 layout.narrowvertical({
     func: () => {
         paintRect = true;
+        const psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (ppt.unify.enabled) {layout.p.p1.Hidden = true; layout.p.p2.Hidden = true;}
@@ -96,6 +102,7 @@ layout.narrowvertical({
         if (layout.p.p2) { const remainingH = wh - cpV - ((wh - cpV) * psV); layout.p.p2.Move(0, (wh - cpV) * psV, ww, remainingH); layout.p.p2.ShowCaption = false; layout.p.p2.Locked = true; layout.p.p2.Hidden = false; }
     },
     debouncefunc: () => {
+        const psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value;
         if (layout.p.p3) { layout.p.p3.Move(0, 0, ww, (wh - cpV) * psV); layout.p.p3.ShowCaption = false; layout.p.p3.Locked = true; layout.p.p3.Hidden = false; }
     }
 });
@@ -151,11 +158,6 @@ function on_size(width, height) {
     wh = window.Height;
     if (!ww || !wh) return;
 
-    // layout.p.p3/layout.p.p2 placement ratio in horizontal orientation (.5 splitscreen)
-    psH = (wh <= scaler.s730 && ww > scaler.s800 && ppt.hPanelScale.value >= 0.5) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value;
-    // (layout.p.p3 & layout.p.p4)/layout.p.p2 placement ratio in vertical orientation
-    psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value;
-
     layout.update();
 }
 
@@ -192,7 +194,7 @@ function on_paint(gr) {
         }
     }
 
-    if (layout.layout() === 'miniplayer') tab.paint_mp(gr, ppt);
+    if (layout.layout() === 'miniplayer' && ww >= scaler.s300) tab.paint_mp(gr, ppt);
 
     if (paintRect && !ppt.bgShow.enabled) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
 }

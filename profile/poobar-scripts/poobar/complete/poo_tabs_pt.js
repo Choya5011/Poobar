@@ -22,24 +22,31 @@ include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab_basic.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
 let ppt = {
-    transparency : new _p ('_DISPLAY: Enable transparent background', false),
-    bgShow : new _p('_DISPLAY: Show Wallpaper', true),
-    bgBlur : new _p('_DISPLAY: Wallpaper Blurred', false),
-    bgMode : new _p('_DISPLAY: Wallpaper Mode', false),
-    col_mode : new _p('_PROPERTY: Color Mode (1,2,3)', 1),
-    borders : new _p('_PROPERTY: Show tab separators', true),
-    hover : new _p('_PROPERTY: Color hover', true),
-    selected : new _p('_PROPERTY: Color selected', true),
-    overlay : new _p('_DISPLAY: Show tab shadow/overlay', true),
-    orientation : new _p('_DISPLAY: Tab Orientation', false),
-    fontMode : new _p ('_DISPLAY: Switch  Icon or Text Font', false),
-    bgPath : new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
+    transparency: new _p ('- PANEL_TRANSPARENCY: Enable transparent background', false),
+    tp_overlay: new _p('- PANEL_TRANSPARENCY: Hide panel background overlay', false),
+    aa: new _p ('- PANEL_TRANSPARENCY: Hide Album Art', false),
+    bgShow: new _p('_DISPLAY: Show Wallpaper', true),
+    bgBlur: new _p('_DISPLAY: Wallpaper Blurred', false),
+    bgMode: new _p('_DISPLAY: Wallpaper Mode', false),
+    col_mode: new _p('_PROPERTY: Color Mode (1,2,3)', 1),
+    borders: new _p('_PROPERTY: Show tab separators', true),
+    hover: new _p('_PROPERTY: Color hover', true),
+    selected: new _p('_PROPERTY: Color selected', true),
+    overlay: new _p('_DISPLAY: Show tab overlay', true),
+    orientation: new _p('_DISPLAY: Tab Orientation', false),
+    fontMode: new _p ('_DISPLAY: Switch  Icon or Text Font', false),
+    bgPath: new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image")
 };
 
 // arr of panels that require pseudo transparency
 let ptArr = window.GetProperty("_PROPERTY: Pseudo Transparent Panels (delimiter: ',')", ",,").split(",");
 
 let ww, wh = 0;
+
+const tabStr = {
+    lyric: 'ESLyric',
+    plm: '' || 'JS Smooth Playlist Manager'
+}
 
 initTabs();
 updateTabSize(ppt);
@@ -75,29 +82,44 @@ function on_size() {
 }
 
 function on_paint(gr) {
-    const p = window.GetPanelByIndex(tabs[activeTab].index);
     const overlayColor = setAlpha(g_backcolour, 128);
     const switchBgW = (ppt.orientation.enabled) ? TAB_W : ww;
     const switchBgH = (ppt.orientation.enabled) ? wh : TAB_H;
 
     if (aa_img) {
-        if (ppt.bgShow.enabled && !ppt.bgMode.enabled && !ppt.bgBlur.enabled && !ppt.transparency.enabled) {
-            _drawImage(gr, aa_img, 0, 0, ww, wh, image.crop);
-        } else if (!ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled) && p.Name !== 'ESLyric') {
-            _drawImage(gr, aa_img, 0, 0 + TAB_H, ww, wh - TAB_H, image.crop);
-        } else if (ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled) && p.Name !== 'ESLyric') {
-            _drawImage(gr, aa_img, 0 + TAB_W, 0, ww - TAB_W, wh, image.crop);
+        if (!ppt.aa.enabled) {
+            if (ppt.bgShow.enabled && !ppt.bgMode.enabled && !ppt.bgBlur.enabled && !ppt.transparency.enabled) {
+                _drawImage(gr, aa_img, 0, 0, ww, wh, image.crop);
+            } else if (!ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled) && active_str(tabStr.lyric, activeTab, '!=')) {
+                _drawImage(gr, aa_img, 0, 0 + TAB_H, ww, wh - TAB_H, image.crop);
+            } else if (ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled) && active_str(tabStr.lyric, activeTab, '!=')) {
+                _drawImage(gr, aa_img, 0 + TAB_W, 0, ww - TAB_W, wh, image.crop);
+            }
         }
     } else {
         const ns_txt_x = (ww - _scale(400)) / 2; const ns_txt_y = wh / 2; const ns_txt_w = _scale(400); const ns_txt_h = _scale(100);
-        gr.FillSolidRect(ns_txt_x, ns_txt_y - _scale(30), ns_txt_w, ns_txt_h, g_backcolour); let name; let font = window.InstanceType ? window.GetFontDUI(0) : window.GetFontCUI(0); if (font) {	name = font.Name; } else {	name = 'Segoe UI'; } gr.GdiDrawText('NO SELECTION', _gdiFont(name, _scale(20), 1), g_textcolour, ns_txt_x, ns_txt_y, ns_txt_w, ns_txt_h, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
+        gr.FillSolidRect(ns_txt_x, ns_txt_y - _scale(30), ns_txt_w, ns_txt_h, g_backcolour); let name; let font = window.InstanceType ? window.GetFontDUI(0) : window.GetFontCUI(0); if (font) { name = font.Name; } else {	name = 'Segoe UI'; } gr.GdiDrawText('NO SELECTION', _gdiFont(name, _scale(20), 1), g_textcolour, ns_txt_x, ns_txt_y, ns_txt_w, ns_txt_h, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
     }
 
-    if (p.Name === 'ESLyric' && !ppt.transparency.enabled) { gr.FillSolidRect(0, 0, ww, wh, g_backcolour); }
-    if (p.Text === '' || p.Name === 'JS Smooth Playlist Manager' || p.Name === 'ESLyric' && ppt.transparency.enabled) { gr.FillSolidRect(0, 0, ww, wh, overlayColor); } else if (p.Name !== 'ESLyric' && ppt.overlay.enabled && (ppt.bgShow.enabled || ppt.bgBlur.enabled) && !ppt.transparency.enabled) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); }
+    if (active_str(tabStr.lyric, activeTab) && !ppt.transparency.enabled) { gr.FillSolidRect(0, 0, ww, wh, g_backcolour); }
+    if ((active_str(tabStr.plm, activeTab) || active_str(tabStr.lyric, activeTab) && ppt.transparency.enabled) && !ppt.tp_overlay.enabled) { gr.FillSolidRect(0, 0, ww, wh, overlayColor); } else if (active_str(tabStr.lyric, activeTab, '!=') && ppt.overlay.enabled && (ppt.bgShow.enabled || ppt.bgBlur.enabled) && !ppt.transparency.enabled) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); }
     if (bg_img && (ppt.bgBlur.enabled || ppt.bgMode.enabled)) { _drawImage(gr, bg_img, 0, 0, switchBgW, switchBgH, image.crop); if (ppt.overlay.enabled && !ppt.transparency.enabled) gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); } else if (!ppt.bgShow.enabled) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, g_backcolour); }
 
     tab.paint_pt(gr, ppt);
+}
+
+function active_str(str, activeTab, mode = '==') {
+    const p = window.GetPanelByIndex(tabs[activeTab].index); if (!p) return false;
+    const match = (p.Text === str || p.Name === str);
+    return mode === '==' ? match : !match;
+}
+
+function refresh_pt_panel() {
+    const p = window.GetPanelByIndex(tabs[activeTab].index);
+    if (ptArr.includes(p.Text)) {
+        p.Hidden = true;
+        p.Hidden = false;
+    }
 }
 
 function on_colours_changed() {
@@ -109,15 +131,6 @@ function on_playback_new_track() {
     get_colours(ppt.col_mode.value, true);
     update_art(ppt, true);
     refresh_pt_panel();
-}
-
-function refresh_pt_panel() {
-    const p = window.GetPanelByIndex(tabs[activeTab].index);
-    if (ptArr.includes(p.Text)) {
-        p.Hidden = true;
-        p.Hidden = false;
-    }
-    //if (p.Name === 'ESLyric') { update_album_art_pt(true); } else { update_art(ppt, true); }
 }
 
 function on_mouse_lbtn_up(x, y) {
@@ -186,6 +199,8 @@ function on_mouse_rbtn_up(x, y) {
     menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
     menu.newEntry({menuName: tp_menu, entryText: 'sep'});
     menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.transparency.toggle(); window.Repaint(); refresh_pt_panel(); if (ppt.transparency.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: tp_menu, entryText: 'Hide Album Art', func: () => { ppt.aa.toggle(); window.Repaint(); refresh_pt_panel(); }, flags: () => ppt.transparency.enabled ? (ppt.aa.enabled ? MF_CHECKED : MF_STRING) : MF_GRAYED});
+    menu.newEntry({menuName: tp_menu, entryText: 'Hide Panel Shadow', func: () => { ppt.tp_overlay.toggle(); window.Repaint(); refresh_pt_panel(); }, flags: () => ppt.transparency.enabled ? (ppt.tp_overlay.enabled ? MF_CHECKED : MF_STRING) : MF_GRAYED});
 
     let bg_menu = menu.newMenu('Background', 'main', ppt.transparency.enabled ? MF_GRAYED : MF_STRING);
     menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});

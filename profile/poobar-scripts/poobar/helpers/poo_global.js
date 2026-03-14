@@ -16,14 +16,13 @@ const scaler = {
     s520: _scale(390),
     s1080: _scale(810),
     s1200: _scale(900),
-    /* Main Panel
+    //Main Panel
     s140: _scale(105),
     s300: _scale(225),
     s320: _scale(240),
     s380: _scale(285),
     s400: _scale(300),
     s730: _scale(547.5)
-    */
 };
 
 const log = {

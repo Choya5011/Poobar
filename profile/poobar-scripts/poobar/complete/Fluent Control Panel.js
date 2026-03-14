@@ -30,7 +30,7 @@ let ppt = {
     bar_mode: new _p('_DISPLAY: Show Bar Core', false),
     roundBars: new _p('_DISPLAY: Show Rounded Bars', true),
     // background
-    transparency: new _p ('_DISPLAY: Enable transparent background', false),
+    transparency: new _p ('- PANEL_TRANSPARENCY: Enable transparent background', false),
     bgShow: new _p('_DISPLAY: Show Wallpaper', false),
     bgBlur: new _p('_DISPLAY: Wallpaper Blurred', false),
     overlay: new _p('_DISPLAY: Show background shadow/overlay', false),

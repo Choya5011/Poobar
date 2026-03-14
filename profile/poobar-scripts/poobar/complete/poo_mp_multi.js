@@ -13,9 +13,9 @@ include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
 let ppt = {
-	cpH : new _p ('_PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
-	cpV : new _p ('_PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 120),
-	unify : new _p('_PANEL_BEHAVIOR: Unify background across panels', false),
+	cpH : new _p ('- PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
+	cpV : new _p ('- PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 120),
+	unify : new _p('- PANEL_BEHAVIOR: Unify background across panels', false),
 
     bgShow : new _p('_TAB_DISPLAY: Show Wallpaper', false),
     bgBlur : new _p('_TAB_DISPLAY: Wallpaper Blurred', false),
