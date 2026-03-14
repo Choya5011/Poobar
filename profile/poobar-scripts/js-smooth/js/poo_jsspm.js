@@ -9,18 +9,20 @@ ppt = {
 	showHeaderBar: window.GetProperty("_DISPLAY: Show Top Bar", true),
 	defaultHeaderBarHeight: 25,
 	headerBarHeight: 25,
-	enableCustomColors: window.GetProperty("_PROPERTY: Custom Colors", false),
-	col_mode : window.GetProperty('_PROPERTY: Color Mode (1,2,3)', 2),
-	bg_alpha : window.GetProperty('_PROPERTY: Background Color Alpha (0-255)', 1),
+	//enableCustomColors: window.GetProperty("_PROPERTY: Custom Colors", false), // poo
 	showwallpaper: window.GetProperty("_DISPLAY: Show Wallpaper", false),
-	wallpaperalpha: 150,
+	wallpaperalpha: window.GetProperty("_DISPLAY: Wallpaper Overlay Alpha", 150), // poo
 	wallpaperblurred: window.GetProperty("_DISPLAY: Wallpaper Blurred", true),
 	wallpaperblurvalue: 1.05,
 	wallpapermode: window.GetProperty("_SYSTEM: Wallpaper Mode", 0),
-	wallpaperpath: window.GetProperty("_PROPERTY: Default Wallpaper Path", ".\\user-components\\foo_spider_monkey_panel\\samples\\js-smooth\\images\\default.png"),
+	wallpaperpath: window.GetProperty("_PROPERTY: Default Wallpaper Path", ".\\user-components\\foo_uie_jsplitter\\samples\\js-smooth\\images\\default.png"),
 	extra_font_size: window.GetProperty("_SYSTEM: Extra font size value", 0),
 	showFilterBox: window.GetProperty("_PROPERTY: Enable Playlist Filterbox in Top Bar", true),
-	enableTouchControl: window.GetProperty("_PROPERTY: Touch control", true)
+	enableTouchControl: window.GetProperty("_PROPERTY: Touch control", true),
+
+	// poo
+    col_mode : window.GetProperty('_PROPERTY: Color Mode (1,2,3)', 1),
+    transparency : window.GetProperty('_DISPLAY: Enable transparent background', false)
 };
 
 cPlaylistManager = {
@@ -71,7 +73,7 @@ cColumns = {
 };
 
 cScrollBar = {
-	enabled: window.GetProperty("_DISPLAY: Show Scrollbar", false),
+	enabled: window.GetProperty("_DISPLAY: Show Scrollbar", true),
 	visible: true,
 	themed: false,
 	defaultWidth: get_system_scrollbar_width(),
@@ -1070,7 +1072,9 @@ oBrowser = function (name) {
 				if (fb.IsPlaying && g_wallpaperImg && ppt.showwallpaper) {
 					gr.GdiDrawBitmap(g_wallpaperImg, 0, 0, ww, brw.y - 1, 0, 0, g_wallpaperImg.Width, brw.y - 1);
 					gr.FillSolidRect(0, 0, ww, brw.y - 1, g_color_normal_bg & RGBA(255, 255, 255, ppt.wallpaperalpha));
-				} else {
+				} else if (ppt.transparency) { // poo
+                    gr.FillSolidRect(0, 0, ww, brw.y - 1, g_color_normal_bg & RGBA(255, 255, 255, ppt.wallpaperalpha));
+                } else {
 					if (g_wallpaperImg && ppt.showwallpaper) {
 						gr.GdiDrawBitmap(g_wallpaperImg, 0, 0, ww, brw.y - 1, 0, 0, g_wallpaperImg.Width, brw.y - 1);
 						gr.FillSolidRect(0, 0, ww, brw.y - 1, g_color_normal_bg & RGBA(255, 255, 255, ppt.wallpaperalpha));
@@ -1574,7 +1578,7 @@ oBrowser = function (name) {
 		case (idx == 250):
 			var total = plman.PlaylistCount;
 			//p.playlistManager.inputboxID = -1;
-			plman.CreateAutoPlaylist(total, "Loved Tracks", "%mood% GREATER 0", "%album artist% | $if(%album%,%date%,'9999') | %album% | %discnumber% | %tracknumber% | %title%", 0);
+			plman.CreateAutoPlaylist(total, "Loved Tracks", "%FEEDBACK% IS 1 OR %2003_LOVED% IS 1 OR %LFM_LOVED% IS 1 OR %SMP_LOVED% IS 1", "%album artist% | $if(%album%,%date%,'9999') | %album% | %discnumber% | %tracknumber% | %title%", 0);
 			plman.MovePlaylist(total, pl_idx);
 			plman.ActivePlaylist = pl_idx;
 			break;
@@ -1583,68 +1587,52 @@ oBrowser = function (name) {
 		return true;
 	};
 
-	this.settings_context_menu = function (x, y) {
-		var _menu = window.CreatePopupMenu();
-		var _menu1 = window.CreatePopupMenu();
-		var _menu2 = window.CreatePopupMenu();
-		var _menu3 = window.CreatePopupMenu();
-		var idx;
+	this.settings_context_menu = function (x, y) { // poo
+        // temp flags till script is updated
+        const MF_STRING = 0x00000000;
+        const MF_GRAYED = 0x00000001;
+        const MF_CHECKED = 0x8;
 
-		_menu.AppendMenuItem(MF_STRING, 910, "Header Bar");
-		_menu.CheckMenuItem(910, ppt.showHeaderBar);
+        // translate to booleans
+        const wallpaperalpha = ppt.wallpaperalpha === 150 ? true : false;
+        const wallpapermode = ppt.wallpapermode === 0 ? false : true;
 
-		_menu2.AppendMenuItem(MF_STRING, 200, "Enable");
-		_menu2.CheckMenuItem(200, ppt.showwallpaper);
-		_menu2.AppendMenuItem(MF_STRING, 220, "Blur");
-		_menu2.CheckMenuItem(220, ppt.wallpaperblurred);
-		_menu2.AppendMenuSeparator();
-		_menu2.AppendMenuItem(MF_STRING, 210, "Playing Album Cover");
-		_menu2.AppendMenuItem(MF_STRING, 211, "Default");
-		_menu2.CheckMenuRadioItem(210, 211, ppt.wallpapermode + 210);
+        let menu = new _menu();
 
-		_menu2.AppendTo(_menu, MF_STRING, "Background Wallpaper");
+        menu.newEntry({entryText: 'Header Bar', func: () => {ppt.showHeaderBar = !ppt.showHeaderBar; window.SetProperty("_DISPLAY: Show Top Bar", ppt.showHeaderBar); get_metrics(); brw.repaint();}, flags: () => ppt.showHeaderBar ? MF_CHECKED : MF_STRING});
 
-		_menu.AppendMenuSeparator();
-		_menu.AppendMenuItem(MF_STRING, 991, "Panel Properties");
-		_menu.AppendMenuItem(MF_STRING, 992, "Configure...");
+        menu.newEntry({entryText: 'sep'});
 
-		idx = _menu.TrackPopupMenu(x, y);
+	    const tp_menu = menu.newMenu('Transparency');
+        menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
+        menu.newEntry({menuName: tp_menu, entryText: 'sep'});
+        menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {if (wallpaperalpha) ppt.wallpaperalpha = 150 - ppt.wallpaperalpha; window.SetProperty("_DISPLAY: Wallpaper Overlay Alpha", ppt.wallpaperalpha); ppt.showwallpaper = false; window.SetProperty("_DISPLAY: Show Wallpaper", ppt.showwallpaper); ppt.transparency = !ppt.transparency; window.SetProperty('_DISPLAY: Enable transparent background', ppt.transparency); brw.repaint(); if (ppt.transparency) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'transparency readme file not found' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency ? MF_CHECKED : MF_STRING});
 
-		switch (true) {
-		case (idx == 200):
-			ppt.showwallpaper = !ppt.showwallpaper;
-			window.SetProperty("_DISPLAY: Show Wallpaper", ppt.showwallpaper);
-			g_wallpaperImg = setWallpaperImg();
-			brw.repaint();
-			break;
-		case (idx == 210):
-		case (idx == 211):
-			ppt.wallpapermode = idx - 210;
-			window.SetProperty("_SYSTEM: Wallpaper Mode", ppt.wallpapermode);
-			g_wallpaperImg = setWallpaperImg();
-			brw.repaint();
-			break;
-		case (idx == 220):
-			ppt.wallpaperblurred = !ppt.wallpaperblurred;
-			window.SetProperty("_DISPLAY: Wallpaper Blurred", ppt.wallpaperblurred);
-			g_wallpaperImg = setWallpaperImg();
-			brw.repaint();
-			break;
-		case (idx == 910):
-			ppt.showHeaderBar = !ppt.showHeaderBar;
-			window.SetProperty("_DISPLAY: Show Top Bar", ppt.showHeaderBar);
-			get_metrics();
-			brw.repaint();
-			break;
-		case (idx == 991):
-			window.ShowProperties();
-			break;
-		case (idx == 992):
-			window.ShowConfigure();
-			break;
-		};
-		return true;
-	};
+        const bg_menu = menu.newMenu('Background', 'main', ppt.transparency ? MF_GRAYED : MF_STRING);
+        menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
+        menu.newEntry({menuName: bg_menu, entryText: 'sep'});
+        menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.showwallpaper = !ppt.showwallpaper; window.SetProperty("_DISPLAY: Show Wallpaper", ppt.showwallpaper); g_wallpaperImg = setWallpaperImg(); brw.repaint();}, flags: () => ppt.showwallpaper ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.wallpaperblurred = !ppt.wallpaperblurred; window.SetProperty("_DISPLAY: Wallpaper Blurred", ppt.wallpaperblurred); g_wallpaperImg = setWallpaperImg(); brw.repaint();}, flags: () => ppt.wallpaperblurred ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.wallpaperalpha = 150 - ppt.wallpaperalpha; window.SetProperty("_DISPLAY: Wallpaper Overlay Alpha", ppt.wallpaperalpha); brw.repaint();}, flags: () => wallpaperalpha ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: bg_menu, entryText: 'sep'});
+        menu.newCheckMenu(bg_menu, 'Playing album cover', 'Default', () => !wallpapermode ? 0 : 1);
+        menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.wallpapermode = 0; window.SetProperty("_SYSTEM: Wallpaper Mode", ppt.wallpapermode); g_wallpaperImg = setWallpaperImg(); brw.repaint();}});
+        menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.wallpapermode = 1; window.SetProperty("_SYSTEM: Wallpaper Mode", ppt.wallpapermode); g_wallpaperImg = setWallpaperImg(); brw.repaint();}});
+
+        const col_menu = menu.newMenu('Colours');
+        menu.newEntry({menuName: col_menu, entryText: 'System', func: () => {ppt.col_mode = 1; window.SetProperty("_PROPERTY: Color Mode (1,2,3)", ppt.col_mode); on_colours_changed();}, flags: () => ppt.col_mode === 1 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: col_menu, entryText: 'Dynamic', func: () => {ppt.col_mode = 2; window.SetProperty("_PROPERTY: Color Mode (1,2,3)", ppt.col_mode); on_colours_changed();}, flags: () => ppt.col_mode === 2 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode = 3; window.SetProperty("_PROPERTY: Color Mode (1,2,3)", ppt.col_mode); on_colours_changed(); window.ShowProperties();}, flags: () => ppt.col_mode === 3 ? MF_CHECKED : MF_STRING});
+
+        menu.newEntry({entryText: 'sep'});
+        menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\js-smooth\\readmes\\jsspm_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
+        menu.newEntry({entryText: 'sep'});
+
+        menu.newEntry({entryText: 'Panel Properties', func: () => {window.ShowProperties();}});
+        menu.newEntry({entryText: 'Configure...', func: () => {window.ShowConfigureV2();}});
+
+        return menu.btn_up(x, y);
+    };
 };
 
 /*
@@ -1668,7 +1656,7 @@ var g_font_headers = null;
 var g_font_group1 = null;
 var g_font_group2 = null;
 var g_font_rating = null;
-var g_font_mood = null;
+// var g_font_mood = null;
 var g_font_guifx_found = utils.CheckFont("guifx v2 transports");
 var g_font_wingdings2_found = utils.CheckFont("wingdings 2");
 
@@ -1691,10 +1679,10 @@ var g_focus_album_id = -1;
 var g_populate_opt = 1;
 // color vars
 var g_color_normal_bg = 0;
-//var g_color_selected_bg = 0; declared in poo_col.js
+//var g_color_selected_bg = 0; // poo
 var g_color_normal_txt = 0;
 var g_color_selected_txt = 0;
-//var g_color_highlight = 0; declared in poo_col.js
+//var g_color_highlight = 0; // poo
 var g_syscolor_window_bg = 0;
 var g_syscolor_highlight = 0;
 var g_syscolor_button_bg = 0;
@@ -1765,7 +1753,7 @@ function on_paint(gr) {
 			gr.GdiDrawBitmap(g_wallpaperImg, 0, 0, ww, wh, 0, 0, g_wallpaperImg.Width, g_wallpaperImg.Height);
 			gr.FillSolidRect(0, 0, ww, wh, g_color_normal_bg & RGBA(255, 255, 255, ppt.wallpaperalpha));
 		} else {
-			gr.FillSolidRect(0, 0, ww, wh, g_color_normal_bg);
+			if (!ppt.transparency) gr.FillSolidRect(0, 0, ww, wh, g_color_normal_bg); // poo
 		};
 	};
 
@@ -1807,7 +1795,7 @@ function on_mouse_lbtn_down(x, y) {
 				timers.mouseDown = window.SetTimeout(function () {
 						window.ClearTimeout(timers.mouseDown);
 						timers.mouseDown = false;
-						if (Math.abs(cTouch.y_start - m_y) > 015) {
+						if (Math.abs(cTouch.y_start - m_y) > 15) {
 							cTouch.down = true;
 						} else {
 							brw.on_mouse("down", x, y);
@@ -1839,7 +1827,7 @@ function on_mouse_lbtn_up(x, y) {
 	if (timers.mouseDown) {
 		window.ClearTimeout(timers.mouseDown);
 		timers.mouseDown = false;
-		if (Math.abs(cTouch.y_start - m_y) <= 030) {
+		if (Math.abs(cTouch.y_start - m_y) <= 30) {
 			brw.on_mouse("down", x, y);
 		};
 	};
@@ -1850,9 +1838,9 @@ function on_mouse_lbtn_up(x, y) {
 		cTouch.y_end = y;
 		cTouch.scroll_delta = scroll - scroll_;
 		//cTouch.y_delta = cTouch.y_start - cTouch.y_end;
-		if (Math.abs(cTouch.scroll_delta) > 030) {
+		if (Math.abs(cTouch.scroll_delta) > 30) {
 			cTouch.multiplier = ((1000 - cTouch.t1.Time) / 20);
-			cTouch.delta = Math.round((cTouch.scroll_delta) / 030);
+			cTouch.delta = Math.round((cTouch.scroll_delta) / 30);
 			if (cTouch.multiplier < 1)
 				cTouch.multiplier = 1;
 			if (cTouch.timer)
@@ -1909,7 +1897,7 @@ function on_mouse_move(x, y) {
 		if (x < brw.w) {
 			scroll -= cTouch.y_move;
 			cTouch.scroll_delta = scroll - scroll_;
-			if (Math.abs(cTouch.scroll_delta) < 030)
+			if (Math.abs(cTouch.scroll_delta) < 30)
 				cTouch.y_start = cTouch.y_current;
 			cTouch.y_prev = cTouch.y_current;
 		};
@@ -2092,7 +2080,7 @@ function get_font() {
 		g_fsize = default_font.Size;
 		g_fstyle = default_font.Style;
 	} catch (e) {
-		console.log("Spider Monkey Panel Error: Unable to use the default font. Using Arial font instead.");
+		console.log("JSplitter Error: Unable to use the default font. Using Arial font instead.");
 		g_fname = "arial";
 		g_fsize = 12;
 		g_fstyle = 0;
@@ -2115,17 +2103,17 @@ function get_font() {
 
 	if (g_font_guifx_found) {
 		g_font_rating = gdi.Font("guifx v2 transports", Math.round(g_fsize * 140 / 100), 0);
-		g_font_mood = gdi.Font("guifx v2 transports", Math.round(g_fsize * 130 / 100), 0);
+		// g_font_mood = gdi.Font("guifx v2 transports", Math.round(g_fsize * 130 / 100), 0);
 	} else if (g_font_wingdings2_found) {
 		g_font_rating = gdi.Font("wingdings 2", Math.round(g_fsize * 140 / 100), 0);
-		g_font_mood = gdi.Font("wingdings 2", Math.round(g_fsize * 200 / 100), 0);
+		// g_font_mood = gdi.Font("wingdings 2", Math.round(g_fsize * 200 / 100), 0);
 	} else {
 		g_font_rating = gdi.Font("arial", Math.round(g_fsize * 200 / 100), 0);
-		g_font_mood = gdi.Font("arial", Math.round(g_fsize * 140 / 100), 0);
+		// g_font_mood = gdi.Font("arial", Math.round(g_fsize * 140 / 100), 0);
 	};
 };
 
-function get_colors() {
+function get_colors() { // poo
 	let arr;
 	let nowPlayingColours = [];
 	if (ppt.col_mode === 2) nowPlayingColours = GetNowPlayingColours();
@@ -2136,16 +2124,16 @@ function get_colors() {
 	g_syscolor_button_bg = utils.GetSysColour(COLOR_BTNFACE);
 	g_syscolor_button_txt = utils.GetSysColour(COLOR_BTNTEXT);
 
-	arr = window.GetProperty("CUSTOM COLOR TEXT NORMAL", "180-180-180-255").split("-");
-	g_color_normal_txt = RGBA(arr[0], arr[1], arr[2], arr[3]);
-	arr = window.GetProperty("CUSTOM COLOR TEXT SELECTED", "000-000-000-255").split("-");
-	g_color_selected_txt = RGBA(arr[0], arr[1], arr[2], arr[3]);
+	arr = window.GetProperty("CUSTOM COLOR TEXT NORMAL", "180-180-180").split("-");
+	g_color_normal_txt = RGB(arr[0], arr[1], arr[2]);
+	arr = window.GetProperty("CUSTOM COLOR TEXT SELECTED", "000-000-000").split("-");
+	g_color_selected_txt = RGB(arr[0], arr[1], arr[2]);
 	arr = window.GetProperty("CUSTOM COLOR BACKGROUND NORMAL", "025-025-035").split("-");
-	g_color_normal_bg = RGBA(arr[0], arr[1], arr[2], arr[3]);
-	arr = window.GetProperty("CUSTOM COLOR BACKGROUND SELECTED", "015-177-255-255").split("-");
-	g_color_selected_bg = RGBA(arr[0], arr[1], arr[2], arr[3]);
-	arr = window.GetProperty("CUSTOM COLOR HIGHLIGHT", "255-175-050-255").split("-");
-	g_color_highlight = RGBA(arr[0], arr[1], arr[2], arr[3]);
+	g_color_normal_bg = RGB(arr[0], arr[1], arr[2]);
+	arr = window.GetProperty("CUSTOM COLOR BACKGROUND SELECTED", "015-177-255").split("-");
+	g_color_selected_bg = RGB(arr[0], arr[1], arr[2]);
+	arr = window.GetProperty("CUSTOM COLOR HIGHLIGHT", "255-175-050").split("-");
+	g_color_highlight = RGB(arr[0], arr[1], arr[2]);
 
 	// get custom colors from window ppt first
 	if (ppt.col_mode !== 3) {
@@ -2158,10 +2146,9 @@ function get_colors() {
                 g_color_selected_bg = window.GetColourCUI(ColorTypeCUI.selection_background);
                 g_color_highlight = window.GetColourCUI(ColorTypeCUI.active_item_frame);
 		    } else if (ppt.col_mode === 2) {
-		        bgAlpha = window.GetProperty('_PROPERTY: Background Color Alpha (0-255)');
-                g_color_normal_txt = nowPlayingColours[1]; //bgAlpha < 128 ? RGB(255, 255, 255) : nowPlayingColours[1];
+                g_color_normal_txt = nowPlayingColours[1];
                 g_color_selected_txt = nowPlayingColours[3];
-                g_color_normal_bg = setAlpha(nowPlayingColours[0], bgAlpha);
+                g_color_normal_bg = nowPlayingColours[0];
                 g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
                 g_color_highlight = setAlpha(nowPlayingColours[2], 200);
                 //g_color_highlight = nowPlayingColours[2];
@@ -2174,10 +2161,9 @@ function get_colors() {
                 g_color_selected_bg = g_color_selected_txt;
                 g_color_highlight = window.GetColourDUI(ColorTypeDUI.highlight);
 		    } else if (ppt.col_mode === 2) {
-		        bgAlpha = window.GetProperty('_PROPERTY: Background Color Alpha (0-255)');
-		        g_color_normal_txt = nowPlayingColours[1]; //bgAlpha < 128 ? RGB(255, 255, 255) : nowPlayingColours[1];
+		        g_color_normal_txt = nowPlayingColours[1];
                 g_color_selected_txt = nowPlayingColours[3];
-                g_color_normal_bg = setAlpha(nowPlayingColours[0], bgAlpha);
+                g_color_normal_bg = nowPlayingColours[0];
                 g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
                 g_color_highlight = setAlpha(nowPlayingColours[2], 200);
                 //g_color_highlight = nowPlayingColours[2];
@@ -2453,8 +2439,8 @@ function on_playback_stop(reason) {
 };
 
 function on_playback_new_track(metadb) {
-    get_colors();
 	g_metadb = metadb;
+	if (ppt.col_mode === 2) on_colours_changed(); // poo
 	g_wallpaperImg = setWallpaperImg();
 	brw.repaint();
 };
