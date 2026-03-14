@@ -54,7 +54,7 @@ Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 
 1. Install Foobar as a standard installation.
 2. Download Poobar as before.
 3. Extract the contents of the 'profile' folder into Foobar's root folder. This is typically located at:
-   - ```C:\Users\\[Username]\AppData\Roaming\foobar2000-v2```
+   - ```C:\Users\[Username]\AppData\Roaming\foobar2000-v2```
 4. Start Foobar & pick ```Columns UI``` if prompted.
 
 **Notes**  
