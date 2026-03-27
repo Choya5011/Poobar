@@ -1,7 +1,7 @@
 var need_repaint = false;
 
 images = {
-	path: fb.ProfilePath + "poobar-scripts\\js-smooth\\images\\", // poo
+	path: fb.ProfilePath + "poobar-scripts\\js-smooth (poo_mod)\\images\\", // poo
 	glass_reflect: null,
 	loading_angle: 0,
 	loading_draw: null,
@@ -2658,6 +2658,10 @@ oBrowser = function (name) {
 	    menu.newEntry({menuName: src_menu, entryText: 'Playlist', func: () => {ppt.sourceMode = 1; window.SetProperty("_PROPERTY: Source Mode", ppt.sourceMode); window.Reload(); }, flags: () => ppt.sourceMode === 1 ? MF_CHECKED : MF_STRING});
 	    menu.newEntry({entryText: 'sep'});
 
+	    const show_menu = menu.newMenu('Show...');
+        menu.newEntry({menuName: show_menu, entryText: 'Scrollbar', func: () => { cScrollBar.enabled = !cScrollBar.enabled; window.SetProperty("_DISPLAY: Show Scrollbar", cScrollBar.enabled); window.Reload(); }, flags: () => cScrollBar.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({entryText: 'sep'});
+
 	    menu.newEntry({entryText: 'Cursor follows Focus', func: () => {ppt.followFocusChange = !ppt.followFocusChange; window.SetProperty("_PROPERTY: Follow focus change", ppt.followFocusChange);}, flags: () => ppt.sourceMode === 1 ? (ppt.followFocusChange ? MF_CHECKED : MF_STRING) : MF_GRAYED});
 	    menu.newEntry({entryText: 'sep'});
 
@@ -2704,7 +2708,7 @@ oBrowser = function (name) {
         menu.newEntry({entryText: 'sep'});
         menu.newEntry({entryText: 'Reload Library', func: () => {brw.populate(true);}});
         menu.newEntry({entryText: 'sep'});
-        menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\js-smooth\\readmes\\jssb_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
+        menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\js-smooth (poo_mod)\\readmes\\jssb_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
         menu.newEntry({entryText: 'sep'});
 
         menu.newEntry({entryText: 'Panel Properties', func: () => {window.ShowProperties();}});

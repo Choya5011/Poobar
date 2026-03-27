@@ -2,30 +2,17 @@
  * Color related functions
  */
 
-/**
+/*======================================================
  * JSP3 Helpers by marc 2003
  * Slight modification done to GetNowPlayingColours
- */
+======================================================*/
 
-function getRed(colour) {
-	return ((colour >> 16) & 0xff);
-}
-
-function getGreen(colour) {
-	return ((colour >> 8) & 0xff);
-}
-
-function getBlue(colour) {
-	return (colour & 0xff);
-}
-
-function RGB(r, g, b) {
-	return (0xff000000 | (r << 16) | (g << 8) | (b));
-}
-
-function setAlpha(colour, a) {
-	return ((colour & 0x00ffffff) | (a << 24));
-}
+function getRed(colour) { return ((colour >> 16) & 0xff); }
+function getGreen(colour) { return ((colour >> 8) & 0xff); }
+function getBlue(colour) { return (colour & 0xff); }
+function RGB(r, g, b) { return (0xff000000 | (r << 16) | (g << 8) | (b)); }
+function setAlpha(colour, a) { return ((colour & 0x00ffffff) | (a << 24)); }
+function getAlpha(colour) { return ((colour >>> 24) & 0xff); }
 
 // Lunminance and DetermineTextColour are based on code from the foobar2000 SDK.
 function Luminance(colour) {
@@ -42,13 +29,24 @@ function DetermineTextColour(background) {
 	return RGB(255, 255, 255);
 }
 
+function intToRGBA(colour) { return [getRed(colour), getGreen(colour), getBlue(colour), getAlpha(colour)]; } // poo helper
+
+function isGrayWhiteBlack([r, g, b, a], threshold = 8) { // poo helper
+    if (Math.abs(r - g) < threshold && Math.abs(r - b) < threshold && Math.abs(g - b) < threshold) {
+        if (r > 245 && g > 245 && b > 245) return true; // White
+        if (r < 10 && g < 10 && b < 10) return true;    // Black
+        return true; // Gray
+    }
+    return false;
+}
+
 function GetNowPlayingColours() {
  	const metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
 
  	if (metadb) {
- 		var img = utils.GetAlbumArtV2(metadb, 0, false); // 3rd arg is want_stub - we don't
+ 		var img = utils.GetAlbumArtV2(metadb, 0, false); // 3rd arg is want_stub - we don't want that
  		if (img) {
- 			var extracted_colours = img.GetColourScheme(10).map(function (item) {
+ 			var extracted_colours = img.GetColourScheme(6).map(function (item) {
                 return {
                     colour: item,
                     luminance: Luminance(item),
@@ -58,8 +56,7 @@ function GetNowPlayingColours() {
             img = null;
 
             let background_colour = extracted_colours[0].colour;
- 			// Find least gray/white/black color
-            for (let item of extracted_colours) {
+            for (let item of extracted_colours) { // Find least gray/white/black color
               let rgba = intToRGBA(item.colour);
               if (!isGrayWhiteBlack(rgba)) {
                 background_colour = item.colour;
@@ -96,33 +93,12 @@ function GetNowPlayingColours() {
  	}
  	return [window.GetColourCUI(ColourTypeCUI.background), window.GetColourCUI(ColourTypeCUI.text), window.GetColourCUI(ColourTypeCUI.inactive_selection_background), window.GetColourCUI(ColourTypeCUI.selection_text)];
 }
-////////////////////////////////////////////////////////////////////////////
 
-function intToRGBA(colour) {
-  return [
-    getRed(colour),
-    getGreen(colour),
-    getBlue(colour),
-    (colour >>> 24) & 0xff  // extract alpha (unsigned)
-  ];
-}
-
-function isGrayWhiteBlack([r, g, b, a], threshold = 8) {
-    if (
-        Math.abs(r - g) < threshold &&
-        Math.abs(r - b) < threshold &&
-        Math.abs(g - b) < threshold
-    ) {
-        if (r > 245 && g > 245 && b > 245) return true; // White
-        if (r < 10 && g < 10 && b < 10) return true;    // Black
-        return true; // Gray
-    }
-    return false;
-}
+/*======================================================*/
 
 /**
  * Colours
- */
+*/
 const ColourTypeCUI = {
     text: 0,
     selection_text: 1,

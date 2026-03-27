@@ -1,30 +1,19 @@
 ﻿'use strict';
 
-/**
-  * poo_pt_tabs.js is specifically meant for the poobar theme
-  * use poo_tabs.js for custom themes unless psuedo transparency is desired for specific panels.
-  * this script handles 2 images depending on background settings.
-  * 1 image is used as the album art thumb, this requires a blank JSplitter panel with only: 'window.Repaint();' as well as all pseudo transparency settings enabled. This blank JSplitter will be the artwork view.
-  * this makes it so the tab script handles the album art instead of a separate album art script or Artwork view panel
-  * which also allows the artwork to seamlessly span across the whole panel and tabs when not blurred, poo_tabs.js can not.
-  * it also does custom background for ESLyric panels (requires pseudo transparency settings on ESLyric to be enabled)
-  * thus it is not recommended to use this script for custom themes as it could cause some very minor background processes that can not be seen in normal tab scenarios.
-*/
-
 window.DefineScript('Pseudo Transparency Poobar Tabs', {author:'Choya', options:{grab_focus:false}});
 window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_art.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_global.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab_basic.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
 let ppt = {
     transparency: new _p ('- PANEL_TRANSPARENCY: Enable transparent background', false),
     tp_overlay: new _p('- PANEL_TRANSPARENCY: Hide panel background overlay', false),
-    aa: new _p ('- PANEL_TRANSPARENCY: Hide Album Art', false),
+    tp_aa: new _p ('- PANEL_TRANSPARENCY: Hide Album Art', false),
     bgShow: new _p('_DISPLAY: Show Wallpaper', true),
     bgBlur: new _p('_DISPLAY: Wallpaper Blurred', false),
     bgMode: new _p('_DISPLAY: Wallpaper Mode', false),
@@ -39,13 +28,14 @@ let ppt = {
 };
 
 // arr of panels that require pseudo transparency
-let ptArr = window.GetProperty("_PROPERTY: Pseudo Transparent Panels (delimiter: ',')", ",,").split(",");
+let ptArr = window.GetProperty("_PROPERTY: Pseudo Transparent Panels (delimiter: ',')", "").split(",");
 
 let ww, wh = 0;
 
 const tabStr = {
     lyric: 'ESLyric',
-    plm: '' || 'JS Smooth Playlist Manager'
+    plm: '' || 'JS Smooth Playlist Manager',
+    spec: 'Spectrum Analyzer'
 }
 
 initTabs();
@@ -86,14 +76,14 @@ function on_paint(gr) {
     const switchBgW = (ppt.orientation.enabled) ? TAB_W : ww;
     const switchBgH = (ppt.orientation.enabled) ? wh : TAB_H;
 
-    if (aa_img) {
-        if (!ppt.aa.enabled) {
+    if (art.a) {
+        if (!ppt.tp_aa.enabled || !active_str(tabStr.plm, activeTab)) {
             if (ppt.bgShow.enabled && !ppt.bgMode.enabled && !ppt.bgBlur.enabled && !ppt.transparency.enabled) {
-                _drawImage(gr, aa_img, 0, 0, ww, wh, image.crop);
+                _drawImage(gr, art.a, 0, 0, ww, wh, image.crop);
             } else if (!ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled) && active_str(tabStr.lyric, activeTab, '!=')) {
-                _drawImage(gr, aa_img, 0, 0 + TAB_H, ww, wh - TAB_H, image.crop);
+                _drawImage(gr, art.a, 0, 0 + TAB_H, ww, wh - TAB_H, image.crop);
             } else if (ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled) && active_str(tabStr.lyric, activeTab, '!=')) {
-                _drawImage(gr, aa_img, 0 + TAB_W, 0, ww - TAB_W, wh, image.crop);
+                _drawImage(gr, art.a, 0 + TAB_W, 0, ww - TAB_W, wh, image.crop);
             }
         }
     } else {
@@ -103,7 +93,7 @@ function on_paint(gr) {
 
     if (active_str(tabStr.lyric, activeTab) && !ppt.transparency.enabled) { gr.FillSolidRect(0, 0, ww, wh, g_backcolour); }
     if ((active_str(tabStr.plm, activeTab) || active_str(tabStr.lyric, activeTab) && ppt.transparency.enabled) && !ppt.tp_overlay.enabled) { gr.FillSolidRect(0, 0, ww, wh, overlayColor); } else if (active_str(tabStr.lyric, activeTab, '!=') && ppt.overlay.enabled && (ppt.bgShow.enabled || ppt.bgBlur.enabled) && !ppt.transparency.enabled) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); }
-    if (bg_img && (ppt.bgBlur.enabled || ppt.bgMode.enabled)) { _drawImage(gr, bg_img, 0, 0, switchBgW, switchBgH, image.crop); if (ppt.overlay.enabled && !ppt.transparency.enabled) gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); } else if (!ppt.bgShow.enabled) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, g_backcolour); }
+    if (art.bg && (ppt.bgBlur.enabled || ppt.bgMode.enabled)) { _drawImage(gr, art.bg, 0, 0, switchBgW, switchBgH, image.crop); if (ppt.overlay.enabled && !ppt.transparency.enabled) gr.FillSolidRect(0, 0, switchBgW, switchBgH, overlayColor); } else if (!ppt.bgShow.enabled) { gr.FillSolidRect(0, 0, switchBgW, switchBgH, g_backcolour); }
 
     tab.paint_pt(gr, ppt);
 }
@@ -117,8 +107,11 @@ function active_str(str, activeTab, mode = '==') {
 function refresh_pt_panel() {
     const p = window.GetPanelByIndex(tabs[activeTab].index);
     if (ptArr.includes(p.Text)) {
-        p.Hidden = true;
-        p.Hidden = false;
+        if (p.Name == tabStr.spec) {
+            p.ShowCaption = true; p.ShowCaption = false;
+        } else {
+            p.Hidden = true; p.Hidden = false;
+        }
     }
 }
 
@@ -199,7 +192,7 @@ function on_mouse_rbtn_up(x, y) {
     menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
     menu.newEntry({menuName: tp_menu, entryText: 'sep'});
     menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.transparency.toggle(); window.Repaint(); refresh_pt_panel(); if (ppt.transparency.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: tp_menu, entryText: 'Hide Album Art', func: () => { ppt.aa.toggle(); window.Repaint(); refresh_pt_panel(); }, flags: () => ppt.transparency.enabled ? (ppt.aa.enabled ? MF_CHECKED : MF_STRING) : MF_GRAYED});
+    menu.newEntry({menuName: tp_menu, entryText: 'Hide Album Art', func: () => { ppt.tp_aa.toggle(); window.Repaint(); refresh_pt_panel(); }, flags: () => ppt.transparency.enabled ? (ppt.tp_aa.enabled ? MF_CHECKED : MF_STRING) : MF_GRAYED});
     menu.newEntry({menuName: tp_menu, entryText: 'Hide Panel Shadow', func: () => { ppt.tp_overlay.toggle(); window.Repaint(); refresh_pt_panel(); }, flags: () => ppt.transparency.enabled ? (ppt.tp_overlay.enabled ? MF_CHECKED : MF_STRING) : MF_GRAYED});
 
     let bg_menu = menu.newMenu('Background', 'main', ppt.transparency.enabled ? MF_GRAYED : MF_STRING);

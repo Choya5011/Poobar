@@ -1,11 +1,11 @@
 ﻿'use strict';
-//11/03/26
+//10/03/26
 
 /* exported _createSubMenuEditEntries */
 
 include('menu_xxx.js');
 /* global _menu:readable, MF_GRAYED:readable, MF_STRING:readable */
-include('helpers_xxx_basic_js.js');
+include('helpers_xxx_basic_js');
 /* global clone:readable */
 // helpers_xxx_prototypes_smp.js
 /* window.FullPanelName:readable */

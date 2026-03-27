@@ -1282,6 +1282,27 @@ const D2DCompileFlags = {
 };
 
 /**
+ * Composition mode flags for {@link D2DGraphics#DrawEffect DrawEffect}
+ * @memberof module:Flags
+ * @default
+ */
+const CompositeMode = {
+    SourceOver: 0,
+    DestinationOver: 1,
+    SourceIn: 2,
+    DestinationIn: 3,
+    SourceOut: 4,
+    DestinationOut: 5,
+    SourceAtop: 6,
+    DestinationAtop: 7,
+    Xor: 8,
+    Plus: 9,
+    SourceCopy: 10,
+    BoundedSourceCopy: 11,
+    MaskInvert: 12
+};
+
+/**
  * SupportColourFlagCUI = {
  *     text: 0x0,
  *     selection_text: 0x2,

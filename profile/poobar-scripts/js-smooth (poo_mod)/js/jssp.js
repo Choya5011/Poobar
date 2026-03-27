@@ -161,7 +161,7 @@ cover = {
 };
 
 images = {
-	path: fb.ProfilePath + "poobar-scripts\\js-smooth\\images\\", // poo
+	path: fb.ProfilePath + "poobar-scripts\\js-smooth (poo_mod)\\images\\", // poo
 	glass_reflect: null,
 	loading_angle: 0,
 	loading_draw: null,
@@ -2971,8 +2971,10 @@ oBrowser = function (name) {
 
         menu.newEntry({entryText: 'sep'});
 
-        menu.newEntry({entryText: 'Header Bar', func: () => {ppt.showHeaderBar = !ppt.showHeaderBar; window.SetProperty("_DISPLAY: Show Top Bar", ppt.showHeaderBar); get_metrics(); brw.repaint();}, flags: () => ppt.showHeaderBar ? MF_CHECKED : MF_STRING});
-        menu.newEntry({entryText: 'Double Track Line', func: () => {ppt.doubleRowText = !ppt.doubleRowText; window.SetProperty("_PROPERTY: Double Row Text Info", ppt.doubleRowText); get_metrics(); brw.repaint();}, flags: () => ppt.doubleRowText ? MF_CHECKED : MF_STRING});
+        const show_menu = menu.newMenu('Show...');
+        menu.newEntry({menuName: show_menu, entryText: 'Scrollbar', func: () => { cScrollBar.enabled = !cScrollBar.enabled; window.SetProperty("_DISPLAY: Show Scrollbar", cScrollBar.enabled); window.Reload(); }, flags: () => cScrollBar.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: show_menu, entryText: 'Header Bar', func: () => {ppt.showHeaderBar = !ppt.showHeaderBar; window.SetProperty("_DISPLAY: Show Top Bar", ppt.showHeaderBar); get_metrics(); brw.repaint();}, flags: () => ppt.showHeaderBar ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: show_menu, entryText: 'Double Track Line', func: () => {ppt.doubleRowText = !ppt.doubleRowText; window.SetProperty("_PROPERTY: Double Row Text Info", ppt.doubleRowText); get_metrics(); brw.repaint();}, flags: () => ppt.doubleRowText ? MF_CHECKED : MF_STRING});
 
         menu.newEntry({entryText: 'sep'});
 
@@ -3009,7 +3011,7 @@ oBrowser = function (name) {
         menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode = 3; window.SetProperty("_PROPERTY: Color Mode (1,2,3)", ppt.col_mode); on_colours_changed(); window.ShowProperties();}, flags: () => ppt.col_mode === 3 ? MF_CHECKED : MF_STRING});
 
 	    menu.newEntry({entryText: 'sep'});
-        menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\js-smooth\\readmes\\jssp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
+        menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\js-smooth (poo_mod)\\readmes\\jssp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
         menu.newEntry({entryText: 'sep'});
 
         menu.newEntry({entryText: 'Panel Properties', func: () => {window.ShowProperties();}});

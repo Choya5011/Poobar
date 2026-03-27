@@ -4,10 +4,10 @@ window.DefineScript('Poobar Main Panel', {author:'Choya', options:{grab_focus:fa
 window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_art.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_global.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab_basic.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
@@ -178,16 +178,16 @@ function on_paint(gr) {
         gr.FillSolidRect(rX, rY, rW, rH, g_backcolour);
     }
 
-    if (ppt.bgShow.enabled && bg_img && !ppt.unify.enabled) {
+    if (ppt.bgShow.enabled && art.bg && !ppt.unify.enabled) {
         const bgW = (ppt.orientation.enabled) ? TAB_W : ww;
         const bgH = (ppt.orientation.enabled) ? wh : TAB_H;
-        _drawImage(gr, bg_img, 0, 0, bgW, bgH, image.crop);
+        _drawImage(gr, art.bg, 0, 0, bgW, bgH, image.crop);
         if (ppt.overlay.enabled) {
             const overlayColor = setAlpha(g_backcolour, 128);
             gr.FillSolidRect(0, 0, bgW, bgH, overlayColor);
         }
-    } else if (ppt.bgShow.enabled && bg_img && ppt.unify.enabled) {
-        _drawImage(gr, bg_img, 0, 0, ww, wh, image.crop);
+    } else if (ppt.bgShow.enabled && art.bg && ppt.unify.enabled) {
+        _drawImage(gr, art.bg, 0, 0, ww, wh, image.crop);
         if (ppt.overlay.enabled) {
             const overlayColor = setAlpha(g_backcolour, 128);
             gr.FillSolidRect(0, 0, ww, wh, overlayColor);

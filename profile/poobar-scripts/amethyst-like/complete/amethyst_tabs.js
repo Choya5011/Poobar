@@ -5,7 +5,7 @@ window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', fa
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_art.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_global.js');
 
@@ -32,6 +32,7 @@ let TAB_W, TAB_H;
 let isExpanded = false;
 
 let tabStack; try { tabStack = window.GetPanel('poobar tabs'); } catch (e) { tabStack = null; }
+let menu; try { menu = window.GetPanel('menu'); } catch (e) { menu = null; }
 
 const SF_CENTER = 0x00000001;
 const SF_VCENTER = 0x00000004;
@@ -73,7 +74,7 @@ function initTabs() {
         }
         if (!p) break;  // Also stop if null/undefined
 
-        if (p.Text === 'poobar tabs' || p.Name === 'poobar tabs') continue;
+        if (p.Text === 'poobar tabs' || p.Text === 'menu') continue;
 
         tabs.push({ index: i, name: p.Text || ('Panel ' + (i + 1)) });
     }
@@ -107,9 +108,11 @@ function on_size() {
         }
     }
     if (isExpanded) {
-        if (tabStack) { tabStack.Move(TAB_W, 0, expandSize, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
+        if (tabStack) { tabStack.Move(TAB_W, _scale(20), expandSize, wh); tabStack.ShowCaption = false; tabStack.Locked = true; tabStack.Hidden = false; }
+        if (menu) { menu.Move(TAB_W, 0, expandSize, _scale(20)); menu.ShowCaption = false; menu.Locked = true; menu.Hidden = false; }
     } else {
-        tabStack.Hidden = true;
+        if (tabStack) tabStack.Hidden = true;
+        if (menu) menu.Hidden = true;
     }
 
     buttons.update();

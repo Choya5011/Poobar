@@ -9,7 +9,7 @@ include(fb.ComponentPath + 'samples\\complete\\js\\panel.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\seekbar.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\rating.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\volume.js');
-include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_aa.js');
+include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_art.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_col.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_global.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
@@ -39,7 +39,7 @@ let ppt = {
 };
 
 let panel = new _panel();
-let seekbar = new _seekbar(0, 0, 0, 0);
+let seekbar = new _seekbar(0, 0, 0, 0); const bar_h = _scale(4);
 let buttons = new _buttons();
 let rating = new _rating(0, 0, 14, 0); // x, y, size, colour
 let volume = new _volume(0, 0, 100, 40);
@@ -47,8 +47,6 @@ let volume = new _volume(0, 0, 100, 40);
 let g_hot = false;
 let seekbar_hover = false;
 let volume_hover = false;
-let errFlag_lv = true;
-let errFlag_wf = true;
 let dbShow = false;
 let dbHideDelay = 300;
 let isLoved = '';
@@ -64,7 +62,12 @@ const SF_CENTER = 0x00000001;
 const SF_VCENTER = 0x00000004;
 const SF_CENTER_VCENTER = SF_CENTER | SF_VCENTER;
 
-const tfoVar = {
+let err = { // bad practice lol
+    lv: true,
+    wf: true
+}
+
+const info = {
     art_x: 0,
     art_y: 0,
     art_size: 0,
@@ -76,7 +79,15 @@ const tfoVar = {
 let colours = {
     white: _RGB(255, 255, 255),
     red: _RGB(255, 0, 0),
-    seekbar_background: _RGBA(128, 128, 128, 128)
+    seekbar_background: _RGBA(128, 128, 128, 128),
+    seek: {
+        bar: null,
+        core: null
+    },
+    vol: {
+        bar: null,
+        core: null
+    }
 };
 
 let tfo = {
@@ -88,7 +99,7 @@ let tfo = {
     lfm_loved: fb.TitleFormat('$if2(%lfm_loved%,0)')
 };
 
-let chara = {
+const chara = {
     heart_on: '\ueb52',
     heart_off: '\ueb51',
     heart_break: '\ue00C',
@@ -117,28 +128,35 @@ let chara = {
 	repeat_one: '\ue8ed',
 	repeat_off: '\uf5e7',
 	shuffle: '\ue8b1',
-	shuffle: '\ue8b1',
 	random: '\ue9ce',
 	album: '\ue93c',
 	folder: '\ued25'
 };
 
-const pbo_chars = [chara.repeat_off, chara.repeat_all, chara.repeat_one, chara.random, chara.shuffle, chara.album, chara.folder];
-const pbo_names = ['Default', 'Repeat (playlist)', 'Repeat (track)', 'Random', 'Shuffle (tracks)', 'Shuffle (albums)', 'Shuffle (folders)'];
-
-let waveform = {
-    x: 0, y: 0, w: 0, h: 0, panel,
-    name: 'Not-A-Waveform-Seekbar-SMP',
-    errTitle: 'No waveform panel present (see logs)',
-    log: ': Missing Panel \nNo Waveform panel found: make sure the waveform panel is the topmost panel inside the control panel. See instructions:\n',
-    instruct: 'Preferences -> Display -> Columns UI -> Layout -> JSplitter titled Fluent Control Panel -> Right click -> Insert panel -> Waveform panel of choice'
+const pboStr = {
+    chars: [chara.repeat_off, chara.repeat_all, chara.repeat_one, chara.random, chara.shuffle, chara.album, chara.folder],
+    names: ['Default', 'Repeat (playlist)', 'Repeat (track)', 'Random', 'Shuffle (tracks)', 'Shuffle (albums)', 'Shuffle (folders)']
 }
-let spectrum = { x: 0, y: 0, w: 0, h: 0, panel }
-try { waveform.panel = window.GetPanelByIndex(0); if (waveform.panel.Name === 'JSplitter') { waveform.panel.Text = waveform.name; } else if (waveform.panel.Name !== 'Waveform minibar (mod)') { waveform.panel = null; }  } catch (e) { waveform.panel = null; }
-try { spectrum.panel = window.GetPanel('Spectrum Analyzer'); } catch (e) { spectrum.panel = null; }
+
+let child = { // panels
+    wf: { // waveform
+        x: 0, y: 0, w: 0, h: 0, panel,
+        name: 'Not-A-Waveform-Seekbar-SMP',
+        errTitle: 'No waveform panel present (see logs)',
+        log: ': Missing Panel \nNo Waveform panel found: make sure the waveform panel is the topmost panel inside the control panel. See instructions:\n',
+        instruct: 'Preferences -> Display -> Columns UI -> Layout -> JSplitter titled Fluent Control Panel -> Right click -> Insert panel -> Waveform panel of choice'
+    },
+    spec: { // spectrum analyzer
+        x: 0, y: 0, w: 0, h: 0, panel
+    }
+}
+
+try { child.wf.panel = window.GetPanelByIndex(0); if (child.wf.panel.Name === 'JSplitter') { child.wf.panel.Text = child.wf.name; } else if (child.wf.panel.Name !== 'Waveform minibar (mod)') { child.wf.panel = null; }  } catch (e) { child.wf.panel = null; }
+try { child.spec.panel = window.GetPanel('Spectrum Analyzer'); } catch (e) { child.spec.panel = null; }
 
 // Initial updates
 get_colours(ppt.col_mode.value);
+colours.seek.bar = getBarColor(false); colours.seek.core = getCoreColor(false); colours.vol.bar = getBarColor(false); colours.vol.core = getCoreColor(false); // #
 update_art(ppt);
 updateNextTrackInfo();
 
@@ -148,9 +166,9 @@ buttons.update = () => {
 
     // Middle section button vars
     const x = ((ww - (bs * 7)) / 2);
-    const y = ppt.mode.enabled ? seekbar.y - _scale(36) : _scale(4);
+    const y = (wh <= scaler.s100) ? _scale(4) : (ppt.mode.enabled ? seekbar.y - _scale(36) : _scale(4));
     const pbo = plman.PlaybackOrder;
-    const pboText = (ppt.pboMode.enabled) ? '' : 'Playback Order: ' + pbo_names[pbo];
+    const pboText = (ppt.pboMode.enabled) ? '' : 'Playback Order: ' + pboStr.names[pbo];
 
     // Right section button vars
     let xx, yy, vol_x, vol_y;
@@ -194,7 +212,7 @@ buttons.update = () => {
     // Middle section buttons
     const loveModeValue = ppt.loveMode.value || 1;
     if (!_cc('foo_lastfm_playcount_sync') || loveModeValue == 1) { // FEEDBACK mode
-        errFlag_lv = true;
+        err.lv = true;
         let lv = tfo.lov.Eval();
         buttons.buttons.love = new _button(x, y, bs, bs, { normal : lv == 1 ? _chrToImg(chara.heart_on, g_textcolour, fluent_font) : _chrToImg(chara.heart_off, g_textcolour, fluent_font), hover : lv == 1 ? _chrToImg(chara.heart_break, g_textcolour, fluent_font_hover) : _chrToImg(chara.heart_on, g_textcolour, fluent_font_hover) }, () => { let selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { let tags = {}; tags['FEEDBACK'] = isLoved ? '' : '1'; selected_items.UpdateFileInfoFromJSON(JSON.stringify(tags)); isLoved = !isLoved; } }, '');
     } else if (loveModeValue == 2) { // Last.fm mode
@@ -208,8 +226,8 @@ buttons.update = () => {
         fb.ShowPopupMessage("Invalid love mode value, setting to FEEDBACK tag mode", window.ScriptInfo.Name);
         ppt.loveMode.value = 1;
     }
-    if ((loveModeValue == 2 || loveModeValue == 3) && !_cc('foo_lastfm_playcount_sync') && errFlag_lv) {
-        errFlag_lv = false;
+    if ((loveModeValue == 2 || loveModeValue == 3) && !_cc('foo_lastfm_playcount_sync') && err.lv) {
+        err.lv = false;
         ppt.loveMode.value = 1;
         fb.ShowPopupMessage("Missing 'foo_lastfm_playcount_sync'.\nSwitched to FEEDBACK tag mode.", window.ScriptInfo.Name);
     }
@@ -217,7 +235,7 @@ buttons.update = () => {
     buttons.buttons.previous = new _button(x + (bs * 2), y, bs, bs, {normal : _chrToImg(chara.prev, g_textcolour, fluent_font), hover : _chrToImg(chara.prev, g_textcolour_hl, fluent_font_hover)}, () => { plman.PlaybackOrder !== 3 ? fb.Prev() : fb.Next(); }, '');
     buttons.buttons.play = new _button(x + (bs * 3), y, bs, bs, {normal : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour, fluent_font) : _chrToImg(chara.pause, g_textcolour, fluent_font), hover : !fb.IsPlaying || fb.IsPaused ? _chrToImg(chara.play, g_textcolour_hl, fluent_font_hover) : _chrToImg(chara.pause, g_textcolour_hl, fluent_font_hover)}, () => { fb.PlayOrPause(); }, !fb.IsPlaying || fb.IsPaused ? '' : '');
     buttons.buttons.next = new _button(x + (bs * 4), y, bs, bs, {normal : _chrToImg(chara.next, g_textcolour, fluent_font), hover : _chrToImg(chara.next, g_textcolour_hl, fluent_font_hover)}, () => { fb.Next(); }, '');
-	buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pbo_chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pbo_chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { if (ppt.pboMode.enabled) { _pbo(x + (bs * 3.41), y); } else { plman.PlaybackOrder = (pbo >= pbo_chars.length - 1) ? 0 : pbo + 1; } }, pboText );
+	buttons.buttons.pbo = new _button(x + (bs * 5), y, bs, bs, {normal: _chrToImg(pboStr.chars[pbo], g_textcolour, fluent_font), hover: _chrToImg(pboStr.chars[pbo], g_textcolour_hl, fluent_font_hover) }, () => { if (ppt.pboMode.enabled) { _pbo(x + (bs * 3.41), y); } else { plman.PlaybackOrder = (pbo >= pboStr.chars.length - 1) ? 0 : pbo + 1; } }, pboText );
     buttons.buttons.add_queue = new _button(bx + (bs * 6), y, bs, bs, {normal : _chrToImg(chara.add_queue, g_textcolour, fluent_font), hover : _chrToImg(chara.add_queue, g_textcolour_hl, fluent_font_hover)}, () => { const selected_items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist); if (selected_items && selected_items.Count !== 0) { fb.RunContextCommandWithMetadb("Add to playback queue", selected_items); } }, '');
 
     // Right section buttons
@@ -232,8 +250,7 @@ function on_size() {
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
-
-    console.log(ww);
+    //console.log(log.dimensions());
 
     bx = ((ww - (bs * 7)) / 2);
     by = seekbar.y - _scale(36);
@@ -243,58 +260,51 @@ function on_size() {
 //        cy = Math.round((wh - bs) / 2);
 //    }
 
-    if (ww >= scaler.s1200) {
-        seekbar.x = Math.round(ww * 0.22);
-    } else if (ww <= scaler.s520 && wh) {
-        seekbar.x = Math.round(ww * 0.18);
-    } else if (ww > scaler.s520 && ww < scaler.s1200) {
-        seekbar.x = Math.round(ww * 0.3);
-    }
+    if (ww >= scaler.s1200) { seekbar.x = Math.round(ww * 0.22); } else if (ww <= scaler.s520 && wh) { seekbar.x = Math.round(ww * 0.18); } else if (ww > scaler.s520 && ww < scaler.s1200) { seekbar.x = Math.round(ww * 0.3); }
     seekbar.w = ww - seekbar.x * 2;
-    seekbar.h = _scale(14);
+    seekbar.h = _scale(14); // temporarily using bar_h for height cause adjusting seekbar.h causes seeking issues.
     seekbar.y = wh * 0.6;
+    seekbar.arc = bar_h / 2;
 
-    volume.x = (ww > scaler.s800) ? ww - (bs * 4) : ww - (bs * 2.5);
+    volume.x = (ww > scaler.s800) ? ww - (bs * 4) : ww - (bs * 2.3);
     volume.y = (ww > scaler.s520) ? seekbar.y + _scale(12) : wh - _scale(10);
-    volume.h =  _scale(4);
-    volume.w = _scale(74);
+    volume.h =  bar_h;
+    console.log(volume.w);
+    volume.w =  ww > scaler.s800 ? _scale(75): _scale(75) * 0.86;
+    volume.arc = volume.h / 2;
 
-    if (spectrum.panel && ww > scaler.s800 && wh > scaler.s80) { spectrum.w = Math.min(seekbar.x - _scale(46), wh); spectrum.h = wh; spectrum.panel.Move(spectrum.x, spectrum.y , spectrum.w, spectrum.h); spectrum.panel.SupportPseudoTransparency = false; spectrum.panel.ShowCaption = false; spectrum.panel.Hidden = false; spectrum.panel.Locked = true; } else if (spectrum.panel) { spectrum.panel.Hidden = true; }
+    // radial
+    if (child.spec.panel && ww > scaler.s800 && wh > scaler.s80) { child.spec.w = Math.min(seekbar.x - _scale(46), wh); child.spec.h = wh; child.spec.panel.Move(child.spec.x, child.spec.y , child.spec.w, child.spec.h); child.spec.panel.SupportPseudoTransparency = false; child.spec.panel.ShowCaption = false; child.spec.panel.Hidden = false; child.spec.panel.Locked = true; } else if (child.spec.panel) { child.spec.panel.Hidden = true; }
 
-    if (ppt.art.enabled && thumb_img && ww > scaler.s800 && wh > scaler.s80 && !spectrum.panel) {
-        tfoVar.art_size = Math.min(seekbar.x - _scale(46), wh * 0.86);
-        tfoVar.art_x = wh * 0.06;
-        tfoVar.art_y = wh * 0.5 - tfoVar.art_size / 2;
-        tfoVar.tfo_x = tfoVar.art_y + tfoVar.art_size + 10;
+    if (ppt.art.enabled && art.thumb && ww > scaler.s800 && wh > scaler.s80 && !child.spec.panel) {
+        info.art_size = Math.min(seekbar.x - _scale(60), wh * 0.9);
+        info.art_x = wh * 0.05;
+        info.art_y = wh * 0.5 - info.art_size / 2;
+        info.tfo_x = info.art_y + info.art_size + 10;
     } else {
-        tfoVar.tfo_x = (spectrum.panel && ww > scaler.s800 && wh > scaler.s80) ? spectrum.w + _scale(12) : _scale(12)
+        info.tfo_x = (child.spec.panel && ww > scaler.s800 && wh > scaler.s80) ? child.spec.w + _scale(12) : _scale(12)
     }
 
     if (ppt.mode.enabled) {
         if (ppt.rating.enabled) { rating.x = bx - (bs * 3); rating.y = seekbar.y - _scale(24); }
-        tfoVar.title_w = ww > scaler.s800 ? seekbar.x - _scale(140) : seekbar.x - _scale(40);
-        tfoVar.artist_w = ww > scaler.s800 ? seekbar.x - _scale(170) : seekbar.x - _scale(50);
-        if (waveform.panel) {
-            waveform.panel.Hidden = true;
+        info.title_w = ww > scaler.s800 ? seekbar.x - _scale(140) : seekbar.x - _scale(40);
+        info.artist_w = ww > scaler.s800 ? seekbar.x - _scale(170) : seekbar.x - _scale(50);
+        if (child.wf.panel) {
+            child.wf.panel.Hidden = true;
         }
-    } else {
-        /**
-         * rating.x & y are in on_paint
-         * set h/y outside if-statement
-        */
-        if (ppt.rating.enabled) { rating.y = wh * 0.75; rating.x = tfoVar.tfo_x - _scale(2); }
-        tfoVar.title_w = ww > scaler.s800 ? seekbar.x - _scale(160) : seekbar.x - _scale(40);
-        tfoVar.artist_w = ww > scaler.s800 ? seekbar.x - _scale(170) : seekbar.x - _scale(50);
-        waveform.w = seekbar.w + _scale(80);
-        waveform.h = _scale(32);
-        waveform.x = seekbar.x - _scale(40);
-        waveform.y = _scale((wh / 2) - (waveform.h / 2));
-        if (waveform.panel) {
-            //waveform.h = Math.round(wh / 3);
-            if (wh > scaler.s100) { waveform.panel.Move(waveform.x, waveform.y, waveform.w, waveform.h); waveform.panel.SupportPseudoTransparency = true; waveform.panel.ShowCaption = false; waveform.panel.Hidden = false; waveform.panel.Locked = true; refresh_wf_panel(); } else { waveform.panel.Hidden = true; }
-        } else if (errFlag_wf) {
-            errFlag_wf = false;
-            console.log(window.ScriptInfo.Name + waveform.log + waveform.instruct);
+    } else { // waveform
+        if (ppt.rating.enabled) { rating.y = wh * 0.75; rating.x = info.tfo_x - _scale(2); }
+        info.title_w = ww > scaler.s800 ? seekbar.x - _scale(160) : seekbar.x - _scale(40);
+        info.artist_w = ww > scaler.s800 ? seekbar.x - _scale(170) : seekbar.x - _scale(50);
+        child.wf.w = seekbar.w + _scale(80);
+        child.wf.h = _scale(32); //child.wf.h = Math.round(wh / 3);
+        child.wf.x = seekbar.x - _scale(40);
+        child.wf.y = _scale((wh / 2) - (child.wf.h / 2));
+        if (child.wf.panel) {
+            if (wh > scaler.s100) { child.wf.panel.Move(child.wf.x, child.wf.y, child.wf.w, child.wf.h); child.wf.panel.SupportPseudoTransparency = true; child.wf.panel.ShowCaption = false; child.wf.panel.Hidden = false; child.wf.panel.Locked = true; refresh_wf_panel(); } else { child.wf.panel.Hidden = true; }
+        } else if (err.wf) {
+            err.wf = false;
+            console.log(window.ScriptInfo.Name + child.wf.log + child.wf.instruct);
         }
     }
 
@@ -302,8 +312,8 @@ function on_size() {
 }
 
 function on_paint(gr) {
-    if (ppt.bgShow.enabled && bg_img) {
-        _drawImage(gr, bg_img, 0, 0, ww, wh, image.crop);
+    if (ppt.bgShow.enabled && art.bg) {
+        _drawImage(gr, art.bg, 0, 0, ww, wh, image.crop);
         if (ppt.overlay.enabled) { const overlayColor = setAlpha(g_backcolour, 128); gr.FillSolidRect(0, 0, ww, wh, overlayColor); }
     } else if (!ppt.bgShow.enabled) {
         const bg_col = (ppt.transparency.enabled) ? _RGBA(0, 0, 0, 0) : g_backcolour;
@@ -314,34 +324,36 @@ function on_paint(gr) {
 
     buttons.paint(gr);
 
+    const vol_pos = volume.pos();
     gr.SetSmoothingMode(2);
-    let bar_h = _scale(4);
-    let radius = bar_h / 2;
-    //seekbar_bg
-    if (ppt.mode.enabled) {
+    if (wh >= scaler.s80) { // bar backgrounds
         if (ppt.roundBars.enabled) {
-            gr.FillRoundRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, radius, radius, colours.seekbar_background);
+            if (ppt.mode.enabled) gr.FillRoundRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, seekbar.arc, seekbar.arc, colours.seekbar_background);
+            if (wh >= scaler.s130) gr.FillRoundRect(volume.x, volume.y, volume.w, volume.h, volume.arc, volume.arc, colours.seekbar_background);
         } else {
-            gr.FillSolidRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, colours.seekbar_background);
+            if (ppt.mode.enabled) gr.FillSolidRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, colours.seekbar_background);
+            if (wh >= scaler.s130) gr.FillSolidRect(volume.x, volume.y, volume.w, volume.h, colours.seekbar_background);
         }
-    } else if (!waveform.panel && wh > scaler.s100) {
-        gr.FillRoundRect(seekbar.x, waveform.y, seekbar.w, waveform.h, 10, 10, colours.red);
-        gr.GdiDrawText(waveform.errTitle, panel.fonts.title, colours.white, seekbar.x, waveform.y, seekbar.w, waveform.h, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
-        gr.GdiDrawText(waveform.instruct, panel.fonts.normal, colours.white, seekbar.x, waveform.y + 18, seekbar.w, waveform.h, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
+    }
+    if (!ppt.mode.enabled && !child.wf.panel && wh > scaler.s100) {
+        gr.FillRoundRect(seekbar.x, child.wf.y, seekbar.w, child.wf.h, 10, 10, colours.red);
+        gr.GdiDrawText(child.wf.errTitle, panel.fonts.title, colours.white, seekbar.x, child.wf.y, seekbar.w, child.wf.h, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
+        gr.GdiDrawText(child.wf.instruct, panel.fonts.normal, colours.white, seekbar.x, child.wf.y + 18, seekbar.w, child.wf.h, SF_CENTER_VCENTER | DT_END_ELLIPSIS);
     }
 
     if (fb.IsPlaying) {
-        if (ppt.art.enabled && thumb_img && ww > scaler.s800 && wh > scaler.s80 && !spectrum.panel) {
-            _drawImage(gr, thumb_img, tfoVar.art_x, tfoVar.art_y, tfoVar.art_size, tfoVar.art_size, image.crop_top);
+        if (ppt.art.enabled && art.thumb && ww > scaler.s800 && wh > scaler.s80 && !child.spec.panel) {
+            _drawImage(gr, art.thumb, info.art_x, info.art_y, info.art_size, info.art_size, image.crop_top);
+            //if (!ppt.bgShow.enabled && wh >= scaler.s140) gr.DrawRoundRect(info.art_x - 1, info.art_y - 1, info.art_size + 2, info.art_size + 2, 14, 14, wh * 0.03, g_backcolour);
         }
 
         // Track information
-        if (ppt.mode.enabled && ww > scaler.s600 && wh >= scaler.s80) {
-    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, tfoVar.tfo_x, wh * 0.3, tfoVar.title_w, 0, LEFT | DT_END_ELLIPSIS);
-    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, tfoVar.tfo_x, wh * 0.6, tfoVar.artist_w, 0, LEFT | DT_END_ELLIPSIS);
+        if (ppt.mode.enabled && ww > scaler.s600 && wh >= scaler.s80 && wh <= scaler.s180) {
+    		gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, info.tfo_x, wh * 0.3, info.title_w, 0, LEFT | DT_END_ELLIPSIS);
+    		gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour, info.tfo_x, wh * 0.6, info.artist_w, 0, LEFT | DT_END_ELLIPSIS);
         } else if (!ppt.mode.enabled && ww > scaler.s600 && wh >= scaler.s80) {
-            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, tfoVar.tfo_x, wh * 0.1, tfoVar.title_w, _scale(18), LEFT | DT_END_ELLIPSIS);
-            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  tfoVar.tfo_x, wh * 0.43, tfoVar.artist_w, _scale(18), LEFT | DT_END_ELLIPSIS);
+            gr.GdiDrawText(tfo.title.Eval(), panel.fonts.title, g_textcolour, info.tfo_x, wh * 0.1, info.title_w, _scale(18), LEFT | DT_END_ELLIPSIS);
+            gr.GdiDrawText(tfo.artist.Eval(), panel.fonts.normal, g_textcolour,  info.tfo_x, wh * 0.43, info.artist_w, _scale(18), LEFT | DT_END_ELLIPSIS);
         }
 
         if (ppt.rating.enabled && wh >= scaler.s80 && ((!ppt.mode.enabled && ww > scaler.s800) || (ppt.mode.enabled && ww > scaler.s1200))) {
@@ -356,7 +368,7 @@ function on_paint(gr) {
         if (((plman.PlaybackOrder === 0 || plman.PlaybackOrder === 1) && ppt.nxt.enabled) || queueHandles.Count > 0) {
             const text_w = ww / 2;
             const text_x = (ww - text_w) / 2;
-            if (ppt.mode.enabled && ww >= scaler.s600) {
+            if (ppt.mode.enabled && ww >= scaler.s600 && wh > scaler.s100) {
                 gr.GdiDrawText(nextTrackInfo, panel.fonts.normal, g_textcolour, text_x, seekbar.y + _scale(16), text_w, _scale(18), SF_CENTER_VCENTER | DT_END_ELLIPSIS);
                 //gr.DrawRect(text_x, seekbar.y + 18, text_w, _scale(18), 1, colours.red); //debugging border
             } else if (ww >= scaler.s600 && wh > scaler.s100) {
@@ -369,31 +381,28 @@ function on_paint(gr) {
         }
 
         // seekbar
-        if (fb.PlaybackLength > 0) {
+        if (fb.PlaybackLength > 0 && wh >= scaler.s80) {
             const pos = seekbar.pos();
             if (ppt.mode.enabled) {
                 //progress_bar
-                let barColor = getBarColor(seekbar_hover);
-                let coreColor = getCoreColor(seekbar_hover);
-
                 if (ppt.roundBars.enabled && pos >= bar_h) {
                     if (ppt.bar_mode.enabled) {
-                        gr.FillRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, radius, radius, coreColor); //bar core
-                        gr.DrawRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, radius, radius, _scale(2), g_textcolour); //bar outline
+                        gr.FillRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, seekbar.arc, seekbar.arc, colours.seek.core); //bar core
+                        gr.DrawRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, seekbar.arc, seekbar.arc, _scale(2), g_textcolour); //bar outline
                     } else {
-                        gr.FillRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, radius, radius, barColor); // normal bar
+                        gr.FillRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, seekbar.arc, seekbar.arc, colours.seek.bar); // normal bar
                     }
                 } else {
                     if (ppt.bar_mode.enabled) {
-                        gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), coreColor); //bar core
+                        gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), colours.seek.core); //bar core
                         gr.DrawRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), _scale(2), g_textcolour); //bar outline
                     } else {
-                        gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), barColor); //normal bar
+                        gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), colours.seek.bar); //normal bar
                     }
                 }
 
                 gr.FillEllipse(seekbar.x + pos - 4, seekbar.y, _scale(12), _scale(12), g_textcolour); //knob
-                if (ppt.bar_mode.enabled) gr.FillEllipse(seekbar.x + pos - 1.5, seekbar.y + 2.5, _scale(8), _scale(8), coreColor); //knob core
+                if (ppt.bar_mode.enabled) gr.FillEllipse(seekbar.x + pos - 1.5, seekbar.y + 2.5, _scale(8), _scale(8), colours.seek.core); //knob core
     			gr.GdiDrawText(tfo.playback_time.Eval(), panel.fonts.normal, g_textcolour, seekbar.x - _scale(45), seekbar.y + _scale(5), _scale(45), 0, RIGHT);
     			gr.GdiDrawText(tfo.length.Eval(), panel.fonts.normal, g_textcolour, seekbar.x + seekbar.w + _scale(6), seekbar.y + _scale(5), _scale(45), 0, LEFT);
             } else {
@@ -411,27 +420,19 @@ function on_paint(gr) {
         }
 
         if (ppt.vol.enabled && ((ww > scaler.s520 && wh > scaler.s80) || (ww < scaler.s520 && wh > scaler.s130))) {
-            let vol_pos = volume.pos();
-            let barColor = getBarColor(volume_hover);
-            let coreColor = getCoreColor(volume_hover);
-            let volumeWidth = ww > scaler.s800 ? volume.w : volume.w.value * 0.8;
-
-            if (ppt.roundBars.enabled && vol_pos >= volume.h && ww > scaler.s800) { // s800 check cause of unfound stripe bug likely related to volume icon
-                let vol_radius = volume.h / 2;
-                gr.FillRoundRect(volume.x, volume.y, volumeWidth, volume.h, vol_radius, vol_radius, colours.seekbar_background);
+            if (ppt.roundBars.enabled && vol_pos >= volume.h) { // s800 check cause of unfound stripe bug likely related to volume icon
                 if (ppt.bar_mode.enabled) {
-                    gr.FillRoundRect(volume.x, volume.y, vol_pos, volume.h, vol_radius, vol_radius, coreColor);
-                    gr.DrawRoundRect(volume.x, volume.y, vol_pos, volume.h, vol_radius, vol_radius, _scale(2), g_textcolour);
+                    gr.FillRoundRect(volume.x, volume.y, vol_pos, volume.h, volume.arc, volume.arc, colours.vol.core);
+                    gr.DrawRoundRect(volume.x, volume.y, vol_pos, volume.h, volume.arc, volume.arc, _scale(2), g_textcolour);
                 } else {
-                    gr.FillRoundRect(volume.x, volume.y, vol_pos, volume.h, vol_radius, vol_radius, barColor);
+                    gr.FillRoundRect(volume.x, volume.y, vol_pos, volume.h, volume.arc, volume.arc, colours.vol.bar);
                 }
             } else {
-                gr.FillSolidRect(volume.x, volume.y, volumeWidth, volume.h, colours.seekbar_background);
                 if (ppt.bar_mode.enabled) {
-                    gr.FillSolidRect(volume.x, volume.y, vol_pos, volume.h, coreColor);
+                    gr.FillSolidRect(volume.x, volume.y, vol_pos, volume.h, colours.vol.core);
                     gr.DrawRect(volume.x, volume.y, vol_pos, volume.h, _scale(2), g_textcolour);
                 } else {
-                    gr.FillSolidRect(volume.x, volume.y, vol_pos, volume.h, barColor);
+                    gr.FillSolidRect(volume.x, volume.y, vol_pos, volume.h, colours.vol.bar);
                 }
             }
             var dbFont = gdi.Font(panel.fonts.normal.Name, 12);
@@ -445,6 +446,7 @@ function getBarColor(isHover) {
 }
 
 function getCoreColor(isHover) {
+    if (!ppt.bar_mode.enabled) return;
     return isHover ? g_textcolour_hl : g_backcolour;
 }
 
@@ -475,6 +477,7 @@ function on_metadb_changed() {
 
 function on_playback_new_track() {
     get_colours(ppt.col_mode.value);
+    colours.seek.bar = getBarColor(seekbar_hover); colours.seek.core = getCoreColor(seekbar_hover); colours.vol.bar = getBarColor(volume_hover); colours.vol.core = getCoreColor(volume_hover); // #
     updateNextTrackInfo(); // When a new track starts, the "next" track might change.
     update_art(ppt);
     refresh_wf_panel();
@@ -522,11 +525,11 @@ function on_playback_starting() {
 
 function _pbo(x, y) {
 	var menu	= window.CreatePopupMenu();
-	for (var i = 0; i < pbo_names.length; i++) {
-		menu.AppendMenuItem(MF_STRING, i + 1, pbo_names[i]);
+	for (var i = 0; i < pboStr.names.length; i++) {
+		menu.AppendMenuItem(MF_STRING, i + 1, pboStr.names[i]);
 	}
 
-	menu.CheckMenuRadioItem(1, pbo_names.length + 1, plman.PlaybackOrder + 1);
+	menu.CheckMenuRadioItem(1, pboStr.names.length + 1, plman.PlaybackOrder + 1);
 
 	var idx	= menu.TrackPopupMenu(x, y);
 
@@ -723,16 +726,20 @@ function on_mouse_move(x, y) {
         isHoveringSeekbar = (x >= seekbar.x && x <= seekbar.x + seekbar.w && y >= seekbar.y && y <= seekbar.y + seekbar.h);
     } else {
         const buffer = 1;
-        isHoveringSeekbar = (x >= seekbar.x - buffer && x <= seekbar.x + seekbar.w + buffer && y >= waveform.y - buffer && y <= waveform.y + waveform.h + buffer);
+        isHoveringSeekbar = (x >= seekbar.x - buffer && x <= seekbar.x + seekbar.w + buffer && y >= child.wf.y - buffer && y <= child.wf.y + child.wf.h + buffer);
     }
     if (isHoveringSeekbar !== seekbar_hover) {
         seekbar_hover = isHoveringSeekbar;
+        colours.seek.bar = getBarColor(seekbar_hover);
+        colours.seek.core = getCoreColor(seekbar_hover);
         window.Repaint();
     }
 
     let isHoveringVolume = (x >= volume.x && x <= volume.x + volume.w && y >= volume.y && y <= volume.y + volume.h);
     if (isHoveringVolume !== volume_hover) {
         volume_hover = isHoveringVolume;
+        colours.vol.bar = getBarColor(volume_hover);
+        colours.vol.core = getCoreColor(volume_hover);
         window.Repaint();
     }
 
@@ -759,22 +766,17 @@ function on_mouse_lbtn_down(x, y) {
 }
 
 function on_mouse_lbtn_up(x, y) {
-    if (
-      [buttons, seekbar, rating, volume].some((el) => {
-        if (el === rating) {
-          return el.lbtn_up(x, y) && ratingHover;
-        }
-        return el.lbtn_up(x, y);
-      })
-    ) {
+    if ([buttons, seekbar, rating, volume].some((el) => { if (el === rating) { return el.lbtn_up(x, y) && ratingHover; } return el.lbtn_up(x, y); })) {
       return;
     }
 
     fb.RunMainMenuCommand('View/Show now playing in playlist');
     // search artist in library
-    if (x < _scale(200) && x > _scale(12) && y < _scale(72) && y > _scale(12) && ppt.art.enabled && ww > scaler.s800) {
+    if (x >= info.art_x && x < info.art_x + info.art_size && y >= info.art_y && y < info.art_y + info.art_size && ppt.art.enabled && ww > scaler.s800) {
         fb.ShowLibrarySearchUI(tfo.artist.Eval());
-    } return;
+    }
+
+    return;
 }
 
 function on_mouse_lbtn_dblclk(x, y) {
@@ -829,24 +831,25 @@ function on_mouse_rbtn_up(x, y) {
 
     let menu = new _menu();
 
-    const np_menu = menu.newMenu('Now playing', 'main', MF_STRING, {type: 'nowplaying'});
+    const np_menu = menu.newMenu('Selection...', 'main', MF_STRING, {type: 'nowplaying'});
 
     menu.newEntry({entryText: 'sep'});
 
     const show_menu = menu.newMenu('Show...');
-    menu.newEntry({menuName: show_menu, entryText: 'Album art', func: () => {ppt.art.toggle(); update_art(ppt); on_size(); window.Repaint(); if (spectrum.panel && ppt.art.enabled) fb.ShowPopupMessage('A Spectrum Analyzer panel is present.\nAlbum art hidden.', window.ScriptInfo.Name);}, flags: () => ppt.art.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: show_menu, entryText: 'Album art', func: () => {ppt.art.toggle(); update_art(ppt); on_size(); window.Repaint(); if (child.spec.panel && ppt.art.enabled) fb.ShowPopupMessage('A Spectrum Analyzer panel is present.\nAlbum art hidden.', window.ScriptInfo.Name);}, flags: () => ppt.art.enabled ? MF_CHECKED : MF_STRING});
     menu.newEntry({menuName: show_menu, entryText: 'Next track', func: () => {ppt.nxt.toggle(); window.Repaint();}, flags: () => ppt.nxt.enabled ? MF_CHECKED : MF_STRING});
     menu.newEntry({menuName: show_menu, entryText: 'Rating', func: () => {ppt.rating.toggle(); window.Repaint();}, flags: () => ppt.rating.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: show_menu, entryText: 'Volume slider', func: () => {ppt.vol.toggle(); buttons.update(); window.Repaint();}, flags: () => ppt.vol.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: show_menu, entryText: 'dB permanent', func: () => {ppt.db.toggle(); window.Repaint();}, flags: () => ppt.db.enabled ? MF_CHECKED : MF_STRING});
 
     const sbar_menu = menu.newMenu('Bars');
     menu.newCheckMenu(sbar_menu, 'Seekbar', 'Waveform', () => ppt.mode.enabled ? 0 : 1);
     menu.newEntry({menuName: sbar_menu, entryText: 'Seekbar', func: () => {ppt.mode.enabled = true; on_size(); buttons.update(); window.Repaint();}});
     menu.newEntry({menuName: sbar_menu, entryText: 'Waveform', func: () => {ppt.mode.enabled = false; on_size(); buttons.update(); window.Repaint();}});
     menu.newEntry({menuName: sbar_menu, entryText: 'sep'});
+    menu.newEntry({menuName: sbar_menu, entryText: 'Volume slider', func: () => {ppt.vol.toggle(); buttons.update(); window.Repaint();}, flags: () => ppt.vol.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: sbar_menu, entryText: 'perma dB', func: () => {ppt.db.toggle(); window.Repaint();}, flags: () => ppt.db.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: sbar_menu, entryText: 'sep'});
     menu.newEntry({menuName: sbar_menu, entryText: 'Rounded bars', func: () => {ppt.roundBars.toggle(); window.Repaint();}, flags: () => ppt.roundBars.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: sbar_menu, entryText: 'Bar cores', func: () => {ppt.bar_mode.toggle(); window.Repaint();}, flags: () => ppt.bar_mode.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: sbar_menu, entryText: 'Bar cores', func: () => {ppt.bar_mode.toggle(); /*#*/ if (ppt.bar_mode.enabled) { colours.seek.bar = getBarColor(false); colours.seek.core = getCoreColor(false); colours.vol.bar = getBarColor(false); colours.vol.core = getCoreColor(false); } /*#*/ window.Repaint();}, flags: () => ppt.bar_mode.enabled ? MF_CHECKED : MF_STRING});
 
     const but_menu = menu.newMenu('Buttons');
     const sub_but_2 = menu.newMenu('PBO Button', but_menu);
@@ -863,23 +866,23 @@ function on_mouse_rbtn_up(x, y) {
     const tp_menu = menu.newMenu('Transparency');
     menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
     menu.newEntry({menuName: tp_menu, entryText: 'sep'});
-    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.bgShow.enabled = false; ppt.transparency.toggle(); window.Repaint(); refresh_wf_panel(waveform.name); if (ppt.transparency.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.bgShow.enabled = false; ppt.transparency.toggle(); window.Repaint(); refresh_wf_panel(child.wf.name); if (ppt.transparency.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
 
     const bg_menu = menu.newMenu('Background', 'main', ppt.transparency.enabled ? MF_GRAYED : MF_STRING);
     menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
     menu.newEntry({menuName: bg_menu, entryText: 'sep'});
-    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); buttons.update(); update_art(ppt); window.Repaint(); refresh_wf_panel(waveform.name);}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt); window.Repaint(); refresh_wf_panel(waveform.name);}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint(); refresh_wf_panel(waveform.name);}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); buttons.update(); update_art(ppt); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
     menu.newEntry({menuName: bg_menu, entryText: 'sep'});
     menu.newCheckMenu(bg_menu, 'Playing album cover', 'Default', () => !ppt.bgMode.enabled ? 0 : 1);
-    menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt); window.Repaint(); refresh_wf_panel(waveform.name);}});
-    menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (!/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt); window.Repaint(); refresh_wf_panel(waveform.name);}});
+    menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt); window.Repaint(); refresh_wf_panel(child.wf.name);}});
+    menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (!/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt); window.Repaint(); refresh_wf_panel(child.wf.name);}});
 
     const col_menu = menu.newMenu('Colours');
-    menu.newEntry({menuName: col_menu, entryText: 'System', func: () => {ppt.col_mode.value = 1; on_colours_changed(); window.Repaint(); refresh_wf_panel(waveform.name);}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: col_menu, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; on_colours_changed(); window.Repaint(); refresh_wf_panel(waveform.name);}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; on_colours_changed(); window.Repaint(); refresh_wf_panel(waveform.name);}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: col_menu, entryText: 'System', func: () => {ppt.col_mode.value = 1; on_colours_changed(); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: col_menu, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; on_colours_changed(); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
+    menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; on_colours_changed(); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
 
     menu.newEntry({entryText: 'sep'});
 

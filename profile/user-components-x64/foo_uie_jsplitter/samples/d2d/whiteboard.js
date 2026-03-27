@@ -24,19 +24,18 @@ function on_size(width, height) {
 	wh = height;
 	if(ww <= 0) return;
 	
-	memBmp = gdi.CreateImage(ww, wh);
-	memg = memBmp.GetGraphics();
+	memBmp = gdi.CreateImage(ww, wh);	
 }
 
 function on_paint(gr) {
-
+	gr.SetSmoothingMode(2);
 	gr.DrawImage(memBmp, 0, 0, memBmp.Width, memBmp.Height, 0, 0, memBmp.Width, memBmp.Height);
 
 	gr.GdiDrawText("Tips:\n   Press 1 to 5 to switch color, Right button to erase\n   Scroll to change pen size\n   R to clear whiteboard", font, 0xFF000000, 10, 10, ww, 200);
 
 	if (showGettingStart)
 	{
-		gr.GdiDrawText("Draw something...", fontStart, 0xFFDAA520, 0, 0, ww, wh, DT_CENTER | DT_VCENTER);
+		gr.GdiDrawText("Draw something...", fontStart, 0xFFDAA520, 0, 0, ww, wh, DT_CENTER | DT_VCENTER | DT_CALCRECT);
 	}
 
 	drawCursor(gr, cursorPoint);
@@ -56,6 +55,7 @@ function drawPen(x, y)
 	let diffY = y - lastPoint.y;
 
 	memg = memBmp.GetGraphics();
+	// memg.SetSmoothingMode(2);
 	
 	let len = Math.sqrt(diffX * diffX + diffY * diffY);
 	let seg = 1.0 / len;
@@ -167,7 +167,7 @@ function on_mouse_lbtn_up(x, y, mask)
 
 function on_mouse_wheel(step)
 {
-	penSize += step * 2;
+	penSize += step * 4;
 
 	if (penSize > 100) penSize = 100;
 	if (penSize < 1) penSize = 1;

@@ -382,6 +382,18 @@ function D2DGraphics() {
     this.CalcTextWidth = function (str, font, use_exact) { }; // (uint)
 
     /**
+     * @param {D2DEffect} img
+     * @param {number} dstX
+     * @param {number} dstY
+     * @param {number} srcX
+     * @param {number} srcY
+     * @param {number} srcW
+     * @param {number} srcH
+     * @param {CompositeMode=} [compositionMode=CompositeMode.SourceOver] See {@link module:Flags.CompositeMode CompositeMode}
+     */
+    this.DrawEffect = function (effect, dstX, dstY, srcX, srcY, srcW, srcH, compositionMode) { };
+
+    /**
      * @param {number} x
      * @param {number} y
      * @param {number} w

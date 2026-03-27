@@ -196,5 +196,5 @@ function on_paint(gr) {
 		fps = Math.floor(60 / (worked / 1000));
 		worked = frameCounter = 0;
 	}
-	gr.GdiDrawText(`${fps} FPS`, font, 0xFFFFFFFF, 0, 0, ww - 5, 45, DT_RIGHT);
+	gr.GdiDrawText(`${fps} FPS`, font, 0XFF000000, 0, 0, ww - 5, 45, DT_RIGHT);
 }
