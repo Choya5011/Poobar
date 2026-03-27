@@ -11,7 +11,7 @@ Responds to window size & seamlessly snaps to Windows 11 snap layouts.
 [Gallery](https://github.com/Choya5011/Poobar/wiki)
 
 ## Modularity
-This repository provides a basic JSplitter customization guide for foobar2000, as well as a showcase of JSplitter’s capabilities.  
+This repository provides a basic JSplitter customization guide for foobar2000, as well as a showcase of JSplitter’s splitter capabilities.  
 It includes some basic scripts and component recommendations to help achieve these customizations.
 
 * All panel scripts can easily be used individually for other themes.
@@ -58,7 +58,7 @@ Install fonts if not yet on system. Segoe Fluent Icons is already on Windows 11 
 4. Start Foobar & pick ```Columns UI``` if prompted.
 
 **Notes**  
-The theme comes with three main presets and their stripped lite counterparts. After setup the theme is set to the ```split``` preset. To swap to another refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Swapping-Layouts) section.  
+The theme comes with three main presets and their stripped lite counterparts. To swap to layouts refer to this [wiki](https://github.com/Choya5011/Poobar/wiki/Swapping-Layouts) section.  
 
 **Useful To Know**  
 Refer to the [wiki](https://github.com/Choya5011/Poobar/wiki/Useful-to-know) for further info. Such as customization or for troubleshooting.
@@ -68,5 +68,5 @@ Credits to the original authors of any modified scripts as well as any included 
 Original author names are present in modified scripts & most item links are present in this readme at [Assets](#assets).
 
 Themes in this repo are inspired by:
-* Classic Poobar: [Eureka Theme](https://www.reddit.com/r/foobar2000/comments/1mhdyy5/comment/n6ve749/)
+* Classic Poobar: [Eureka Theme](https://www.reddit.com/r/foobar2000/comments/1mhdyy5/display_the_next_track_and_add_tracks_to_queue_in/)
 * Amethyst-like: [Amethyst](https://github.com/Geoxor/amethyst)
