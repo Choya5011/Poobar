@@ -39,7 +39,7 @@ let ppt = {
 };
 
 let panel = new _panel();
-let seekbar = new _seekbar(0, 0, 0, 0); const bar_h = _scale(4);
+let seekbar = new _seekbar(0, 0, 0, 0);
 let buttons = new _buttons();
 let rating = new _rating(0, 0, 14, 0); // x, y, size, colour
 let volume = new _volume(0, 0, 100, 40);
@@ -47,6 +47,7 @@ let volume = new _volume(0, 0, 100, 40);
 let g_hot = false;
 let seekbar_hover = false;
 let volume_hover = false;
+let vol_pos = volume.pos();
 let dbShow = false;
 let dbHideDelay = 300;
 let isLoved = '';
@@ -55,6 +56,8 @@ let ratingHover = false;
 let ww, wh = 0;
 const bs = _scale(32);
 let bx, by, cx, cy = 0;
+const bar_h = _scale(4); // temporarily using bar_h for height, adjusting seekbar.h causes mouse issues
+const dbFont = gdi.Font(panel.fonts.normal.Name, 12);
 
 let nextTrackInfo = "No next track."; // Stores the text to display
 let isPlaying = false; // To track playback state
@@ -250,7 +253,7 @@ function on_size() {
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
-    //console.log(log.dimensions());
+    console.log(log.dimensions());
 
     bx = ((ww - (bs * 7)) / 2);
     by = seekbar.y - _scale(36);
@@ -262,7 +265,7 @@ function on_size() {
 
     if (ww >= scaler.s1200) { seekbar.x = Math.round(ww * 0.22); } else if (ww <= scaler.s520 && wh) { seekbar.x = Math.round(ww * 0.18); } else if (ww > scaler.s520 && ww < scaler.s1200) { seekbar.x = Math.round(ww * 0.3); }
     seekbar.w = ww - seekbar.x * 2;
-    seekbar.h = _scale(14); // temporarily using bar_h for height cause adjusting seekbar.h causes seeking issues.
+    seekbar.h = _scale(14);
     seekbar.y = wh * 0.6;
     seekbar.arc = bar_h / 2;
 
@@ -323,16 +326,15 @@ function on_paint(gr) {
     }
 
     buttons.paint(gr);
-
-    const vol_pos = volume.pos();
     gr.SetSmoothingMode(2);
+
     if (wh >= scaler.s80) { // bar backgrounds
         if (ppt.roundBars.enabled) {
             if (ppt.mode.enabled) gr.FillRoundRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, seekbar.arc, seekbar.arc, colours.seekbar_background);
-            if (wh >= scaler.s130) gr.FillRoundRect(volume.x, volume.y, volume.w, volume.h, volume.arc, volume.arc, colours.seekbar_background);
+            if (!(ww <= scaler.s520 && wh <= scaler.s130) || (ww > scaler.s520 && wh < scaler.s80)) gr.FillRoundRect(volume.x, volume.y, volume.w, volume.h, volume.arc, volume.arc, colours.seekbar_background); // button condition
         } else {
             if (ppt.mode.enabled) gr.FillSolidRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, colours.seekbar_background);
-            if (wh >= scaler.s130) gr.FillSolidRect(volume.x, volume.y, volume.w, volume.h, colours.seekbar_background);
+            if (!(ww <= scaler.s520 && wh <= scaler.s130) || (ww > scaler.s520 && wh < scaler.s80)) gr.FillSolidRect(volume.x, volume.y, volume.w, volume.h, colours.seekbar_background);
         }
     }
     if (!ppt.mode.enabled && !child.wf.panel && wh > scaler.s100) {
@@ -420,7 +422,7 @@ function on_paint(gr) {
         }
 
         if (ppt.vol.enabled && ((ww > scaler.s520 && wh > scaler.s80) || (ww < scaler.s520 && wh > scaler.s130))) {
-            if (ppt.roundBars.enabled && vol_pos >= volume.h) { // s800 check cause of unfound stripe bug likely related to volume icon
+            if (ppt.roundBars.enabled && vol_pos >= volume.h) {
                 if (ppt.bar_mode.enabled) {
                     gr.FillRoundRect(volume.x, volume.y, vol_pos, volume.h, volume.arc, volume.arc, colours.vol.core);
                     gr.DrawRoundRect(volume.x, volume.y, vol_pos, volume.h, volume.arc, volume.arc, _scale(2), g_textcolour);
@@ -435,7 +437,6 @@ function on_paint(gr) {
                     gr.FillSolidRect(volume.x, volume.y, vol_pos, volume.h, colours.vol.bar);
                 }
             }
-            var dbFont = gdi.Font(panel.fonts.normal.Name, 12);
             if (ww > scaler.s800 && (ppt.db.enabled || volume_hover || dbShow)) gr.GdiDrawText(fb.Volume.toFixed(2) + ' dB', dbFont, g_textcolour, _scale(8), volume.y + _scale(2), volume.x + _scale(106), 0, RIGHT);
         }
     }
@@ -559,6 +560,7 @@ function on_colours_changed() {
 function on_volume_change() {
     buttons.update();
     volume.volume_change();
+    vol_pos = volume.pos();
     window.Repaint();
 }
 

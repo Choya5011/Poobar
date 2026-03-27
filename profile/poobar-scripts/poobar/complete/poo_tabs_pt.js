@@ -77,7 +77,7 @@ function on_paint(gr) {
     const switchBgH = (ppt.orientation.enabled) ? wh : TAB_H;
 
     if (art.a) {
-        if (!ppt.tp_aa.enabled || !active_str(tabStr.plm, activeTab)) {
+        if (!ppt.tp_aa.enabled || (!active_str(tabStr.plm, activeTab) && !active_str(tabStr.spec, activeTab))) {
             if (ppt.bgShow.enabled && !ppt.bgMode.enabled && !ppt.bgBlur.enabled && !ppt.transparency.enabled) {
                 _drawImage(gr, art.a, 0, 0, ww, wh, image.crop);
             } else if (!ppt.orientation.enabled && (!ppt.bgShow.enabled || ppt.bgBlur.enabled || (ppt.bgShow.enabled && !ppt.bgMode.enabled) || ppt.bgMode.enabled) && active_str(tabStr.lyric, activeTab, '!=')) {
