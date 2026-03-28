@@ -46,7 +46,7 @@ function GetNowPlayingColours() {
  	if (metadb) {
  		var img = utils.GetAlbumArtV2(metadb, 0, false); // 3rd arg is want_stub - we don't want that
  		if (img) {
- 			var extracted_colours = img.GetColourScheme(6).map(function (item) {
+ 			var extracted_colours = img.GetColourScheme(10).map(function (item) {
                 return {
                     colour: item,
                     luminance: Luminance(item),
