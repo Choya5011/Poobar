@@ -1,4 +1,5 @@
 ﻿'use strict';
+//24/04/26
 
 class PanelProperty {
 	constructor(name, default_value) {
@@ -21,7 +22,8 @@ class PanelProperty {
 }
 
 class PanelProperties {
-	constructor() { // this.name_list = {}; debug
+	constructor() {
+		this.name_list = {}; // debug
 	}
 
 	// Methods
@@ -29,7 +31,8 @@ class PanelProperties {
 	init(type, properties, thisArg) {
 		switch (type) {
 			case 'auto':
-				properties.forEach(v => { // this.validate(v); debug
+				properties.forEach(v => { 
+					this.validate(v); // debug
 					this.add(v);
 				});
 				break;
@@ -42,24 +45,24 @@ class PanelProperties {
 	validate(item) {
 
 		if (!$.isArray(item) || item.length !== 3 || typeof item[2] !== 'string') {
-			throw ('invalid property: requires array: [string, any, string]');
+			throw new Error('invalid property: requires array: [string, any, string]');
 		}
 
 		if (item[2] === 'add') {
-			throw ('property_id: ' + item[2] + '\nThis id is reserved');
+			throw new Error('property_id: ' + item[2] + '\nThis id is reserved');
 		}
 
 		if (this[item[2]] != null || this[item[2] + '_internal'] != null) {
-			throw ('property_id: ' + item[2] + '\nThis id is already occupied');
+			throw new Error('property_id: ' + item[2] + '\nThis id is already occupied');
 		}
 
 		if (this.name_list[item[0]] != null) {
-			throw ('property_name: ' + item[0] + '\nThis name is already occupied');
+			throw new Error('property_name: ' + item[0] + '\nThis name is already occupied');
 		}
 	}
 
 	add(item) {
-		// this.name_list[item[0]] = 1; debug
+		this.name_list[item[0]] = 1; // debug
 		this[item[2] + '_internal'] = new PanelProperty(item[0], item[1]);
 
 		Object.defineProperty(this, item[2], {
@@ -450,7 +453,11 @@ if (ppt.get('Update Properties', true)) { // ~22.7.22
 	if (ppt.summary == '128,228,0') ppt.summary = '128,228,27';
 	const oldProperties = ['Stub Path: Front [No Title Format Except %profile%]', 'Stub Path: Back [No Title Format Except %profile%]', 'Stub Path: Disc [No Title Format Except %profile%]', 'Stub Path: Icon [No Title Format Except %profile%]', 'Stub Path: Artist [No Title Format Except %profile%]'];
 	const props = ['panelFrontStub', 'panelBackStub', 'panelDiscStub', 'panelIconStub', 'panelArtStub'];
-	oldProperties.forEach((v, i) => {const value = window.GetProperty(v); if (value) ppt[props[i]] = value; window.SetProperty(v, null);});
+	oldProperties.forEach((v, i) => {
+		const value = window.GetProperty(v); 
+		if (value) ppt[props[i]] = value; 
+		window.SetProperty(v, null);
+	});
 	window.SetProperty('Lock Rev', null);
 	ppt.set('Update Properties', false);
 }

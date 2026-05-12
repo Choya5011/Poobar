@@ -1,7 +1,7 @@
 ﻿'use strict';
-//26/01/26
+//19/04/26
 
-/* exported compareObjects, compareKeys, isJSON, roughSizeOfObject, deepAssign, BiMap, isFunction, $args, isPromise, matchCase, capitalizePartial, capitalizeAll, _p, _bt, _qCond, _ascii, _asciify, isArrayStrings, isArrayNumbers, isArrayEqual, zeroOrVal, emptyOrVal, isInt, isFloat, cyclicOffset, range, round, isUUID, isBoolean, regExBool, cartesian, isArray, _ps, isGetter, isSetter, isReal */
+/* exported compareObjects, compareKeys, isJSON, roughSizeOfObject, deepAssign, BiMap, isFunction, $args, isPromise, matchCase, capitalizePartial, capitalizeAll, _p, _bt, _qCond, _ascii, _asciify, isArrayStrings, isArrayNumbers, isArrayEqual, zeroOrVal, emptyOrVal, isInt, isFloat, cyclicOffset, range, round, isUUID, isBoolean, regExBool, cartesian, isArray, _ps, isGetter, isSetter, isReal, isIntInf, isFloatInf */
 
 include('helpers_xxx_basic_js.js');
 /* global require:readable, strNumCollator:readable */
@@ -38,9 +38,9 @@ function compareObjects(a, b, enforcePropertiesOrder = false, cyclic = false) {
 
 				return a 				// a is Non-zero and Non-NaN
 					? a === b 			// a is 0, -0 or NaN
-					: !Number.isNaN(a)	// a is 0 or -O
-						? 1 / a === 1 / b	// 1/0 !== 1/-0 because Infinity !== -Infinity
-						: true; 		// NaN, the only Number not equal to itself!
+					: Number.isNaN(a)	// a is 0 or -O
+						? true	// 1/0 !== 1/-0 because Infinity !== -Infinity
+						: 1 / a === 1 / b; 		// NaN, the only Number not equal to itself!
 			}
 			case '[object RegExp]': {
 				return a.source == b.source
@@ -216,7 +216,7 @@ function roughSizeOfObject(object) {
 
 // deepAssign()(x,y)
 // https://stackoverflow.com/a/48579540
-function deepAssign(options = { nonEnum: false, symbols: false, descriptors: false, proto: false }) {
+function deepAssign({ nonEnum = false, symbols = false, descriptors = false, proto = false } = {}) {
 	return function deepAssignWithOptions(target, ...sources) {
 		sources.forEach((source) => {
 			if (!isDeepObject(source) || !isDeepObject(target)) { return; }
@@ -224,13 +224,13 @@ function deepAssign(options = { nonEnum: false, symbols: false, descriptors: fal
 			function copyProperty(property) {
 				const descriptor = Object.getOwnPropertyDescriptor(source, property);
 				//default: omit non-enumerable properties
-				if (descriptor.enumerable || options.nonEnum) {
+				if (descriptor.enumerable || nonEnum) {
 					// Copy in-depth first
 					if (isDeepObject(source[property]) && isDeepObject(target[property])) {
-						descriptor.value = deepAssign(options)(target[property], source[property]);
+						descriptor.value = deepAssign({ nonEnum, symbols, descriptors, proto })(target[property], source[property]);
 					}
 					//default: omit descriptors
-					if (options.descriptors) {
+					if (descriptors) {
 						Object.defineProperty(target, property, descriptor); // shallow copy descriptor
 					} else {
 						target[property] = descriptor.value; // shallow copy value only
@@ -240,13 +240,13 @@ function deepAssign(options = { nonEnum: false, symbols: false, descriptors: fal
 			// Copy string-keyed properties
 			Object.getOwnPropertyNames(source).forEach(copyProperty);
 			//default: omit symbol-keyed properties
-			if (options.symbols) {
+			if (symbols) {
 				Object.getOwnPropertySymbols(source).forEach(copyProperty);
 			}
 			//default: omit prototype's own properties
-			if (options.proto) {
+			if (proto) {
 				// Copy source prototype's own properties into target prototype's own properties
-				deepAssign(Object.assign({}, options, { proto: false }))( // NOSONAR Prevent deeper copy of the prototype chain
+				deepAssign(Object.assign({}, { nonEnum, symbols, descriptors, proto }, { proto: false }))( // NOSONAR Prevent deeper copy of the prototype chain
 					Object.getPrototypeOf(target),
 					Object.getPrototypeOf(source)
 				);
@@ -258,7 +258,7 @@ function deepAssign(options = { nonEnum: false, symbols: false, descriptors: fal
 
 function toType(a) {
 	// Get fine type (object, array, function, null, error, date ...)
-	return ({}).toString.call(a).match(/([a-z]+)(:?\])/i)[1];
+	return Object.prototype.toString.call(a).match(/([a-z]+)(:?\])/i)[1];
 }
 
 function isFbMetadbHandle(a) {
@@ -402,7 +402,7 @@ Object.defineProperty(Promise, 'serial', {
 			acc$.then(acc => {
 				return (timeout
 					? new Promise((resolve) => { setTimeout(() => resolve(mapper(inputValue, i)), timeout); })
-					: new Promise((resolve) => resolve(mapper(inputValue, i)))
+					: Promise.resolve(mapper(inputValue, i))
 				).then(result => acc.push(result) && acc);
 			});
 		return inputValues.reduce(reducer, Promise.resolve([]));
@@ -461,7 +461,7 @@ if (!String.prototype.replaceLast) {
 if (!String.prototype.replaceAll) {
 	String.prototype.replaceAll = function replaceAll(word, newWord) { // NOSONAR
 		const len = newWord.length;
-		let copy = this;
+		let copy = this; // NOSONAR
 		let prevIdx = copy.indexOf(word);
 		let idx = prevIdx;
 		while (idx !== -1) {
@@ -625,7 +625,7 @@ if (!Array.prototype.rotate) {
 		const unshift = Array.prototype.unshift, splice = Array.prototype.splice;
 		return function (count = 1) {
 			const len = this.length >>> 0;
-			count = count >> 0;
+			count = Math.trunc(count);
 			unshift.apply(this, splice.call(this, count % len, len));
 			return this;
 		};
@@ -690,23 +690,25 @@ function emptyOrVal(e) {
 }
 
 // Fisher-Yates algorithm on multiple arrays at the same time
-Array.shuffle = function () {
-	let last = 0;
-	const argsLength = arguments.length;
-	for (let idx = 0; idx < argsLength; idx++) {
-		if (!Array.isArray(arguments[idx])) { throw new TypeError('Argument is not an array.'); }
-		if (idx === 0) { last = arguments[0].length; }
-		if (last !== arguments[idx].length) { throw new RangeError('Array lengths do not match.'); }
-	}
-	let n;
-	while (last > 0) {
-		n = Math.floor(Math.random() * last--);
-		for (let argsIndex = 0; argsIndex < argsLength; argsIndex++) {
-			arguments[argsIndex].swap(last, n);
+if (!Array.prototype.shuffle) {
+	Array.shuffle = function () {
+		let last = 0;
+		const argsLength = arguments.length;
+		for (let idx = 0; idx < argsLength; idx++) {
+			if (!Array.isArray(arguments[idx])) { throw new TypeError('Argument is not an array.'); }
+			if (idx === 0) { last = arguments[0].length; }
+			if (last !== arguments[idx].length) { throw new RangeError('Array lengths do not match.'); }
 		}
-	}
-	return [...arguments];
-};
+		let n;
+		while (last > 0) {
+			n = Math.floor(Math.random() * last--);
+			for (let argsIndex = 0; argsIndex < argsLength; argsIndex++) {
+				arguments[argsIndex].swap(last, n);
+			}
+		}
+		return [...arguments];
+	};
+}
 
 if (!Array.prototype.joinEvery) {
 	// Join array and split lines every n elements joined
@@ -793,6 +795,27 @@ if (!Array.prototype.radixSort || !!Array.prototype.radixSortInt) {
 				: bitmask.sortInt.call(this, this, start, end);
 		};
 	}
+}
+
+if (!Array.prototype.at) {
+	Array.prototype.at = function (index) { // NOSONAR
+		index = Math.trunc(index);
+		return this[index < 0 ? this.length + index : index];
+	};
+}
+
+if (!Array.prototype.findLast) {
+	Array.prototype.findLast = function (callbackFn, thisArg) { // NOSONAR
+		if (typeof callbackFn !== 'function') { throw new TypeError('predicate must be a function'); }
+		let i = this.length - 1;
+		let val;
+		while (i >= 0) {
+			val = this[i];
+			if (callbackFn.apply(thisArg || void (0), [val, i, this])) { return val; }
+			i -= 1;
+		}
+		return void (0);
+	};
 }
 
 function cartesian(...args) {
@@ -899,15 +922,23 @@ if (!Set.prototype.differenceSize) {
 */
 
 function isInt(n) {
-	return Number(n) === n && Number.isFinite(n) && n <= Number.MAX_SAFE_INTEGER && n % 1 === 0;
+	return Number(n) === n && Number.isSafeInteger(n) && n % 1 === 0;
+}
+
+function isIntInf(n) {
+	return Number(n) === n && (!Number.isFinite(n) || Number.isSafeInteger(n) && n % 1 === 0);
 }
 
 function isFloat(n) {
-	return Number(n) === n && Number.isFinite(n) && n % 1 !== 0;
+	return Number(n) === n && n < Number.MAX_SAFE_INTEGER && n > Number.MIN_SAFE_INTEGER && n % 1 !== 0;
+}
+
+function isFloatInf(n) {
+	return Number(n) === n && (!Number.isFinite(n) || n < Number.MAX_SAFE_INTEGER && n > Number.MIN_SAFE_INTEGER && n % 1 !== 0);
 }
 
 function isReal(n) {
-	return isFloat(n) || isInt(n);
+	return Number(n) === n && (!Number.isFinite(n) || n < Number.MAX_SAFE_INTEGER && n > Number.MIN_SAFE_INTEGER);
 }
 
 // Adds/subtracts 'offset' to 'reference' considering the values must follow cyclic logic within 'limits' range (both values included)
@@ -945,13 +976,14 @@ function round(floatNum, decimals, eps = 10 ** -14) {
 	);
 }
 
-Math.randomNum = function randomNum(min, max, options = { integer: false, includeMax: false }) {
-	if (options.integer) {
+Math.randomNum = function randomNum(min, max, { integer = false, includeMax = false } = {}) {
+	if (integer) {
 		min = Math.ceil(min);
-		max = Math.floor(max) + (options.includeMax ? 1 : 0);
-		return (Math.random() * (max - min) | 0) + min;
+		max = Math.min(Math.floor(max) + (includeMax ? 1 : 0), Number.MAX_SAFE_INTEGER);
+		return Math.min((Math.trunc(Math.random() * (max - min))) + min, Number.MAX_SAFE_INTEGER);
 	} else {
-		return Math.random() * (max - min + (options.includeMax ? 1 : 0)) + min;
+		max = Math.min(max + (includeMax ? 1 : 0), Number.MAX_SAFE_INTEGER);
+		return Math.min(Math.random() * (max - min) + min, Number.MAX_SAFE_INTEGER);
 	}
 };
 
@@ -973,7 +1005,7 @@ function isUUID(str) {
 
 // From Underscore
 function isBoolean(obj) {
-	return obj === true || obj === false || toString.call(obj) === '[object Boolean]';
+	return obj === true || obj === false || Object.prototype.toString.call(obj) === '[object Boolean]';
 }
 
 const regExBool = /^b[A-Z]\w*/;

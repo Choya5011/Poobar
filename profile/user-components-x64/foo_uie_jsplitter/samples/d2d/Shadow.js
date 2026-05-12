@@ -4,6 +4,7 @@ window.DrawMode = 1;
 
 include(`${fb.ComponentPath}\\docs\\Flags.js`);
 include(`${fb.ComponentPath}\\docs\\Effects.js`);
+include(`${fb.ComponentPath}\\docs\\Matrix.js`);
 
 const img = d2d.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Flowers.jpg`);
 

@@ -1,4 +1,5 @@
 ﻿'use strict';
+//24/04/26
 
 class Panel {
 	constructor() {
@@ -97,7 +98,7 @@ class Panel {
 				break;
 			}
 		}
-	
+
 		for (let i = 0; i < 8; i++) {
 			if (ppt.txtReaderEnable && ppt[`useTxtReader${i}`] && /nowplaying/i.test(utils.SplitFilePath(ppt[`pthTxtReader${i}`])[1])) {
 				this.id.nowplayingSource = true;
@@ -145,7 +146,7 @@ class Panel {
 			x: 0,
 			y: 0,
 			h: 100,
-			style: !ppt.sbarFullHeight ? 2 : 0,
+			style: ppt.sbarFullHeight ? 0 : 2,
 			top_corr: 0
 		}
 
@@ -196,7 +197,7 @@ class Panel {
 
 		this.checkRefreshRates();
 		this.setSummary();
-		this.similarArtistsKey = 'Similar Artists: |\\u00c4hnliche K\\u00fcnstler: |Artistas Similares: |Artistes Similaires: |Artisti Simili: |\\u4f3c\\u3066\\u3044\\u308b\\u30a2\\u30fc\\u30c6\\u30a3\\u30b9\\u30c8: |Podobni Wykonawcy: |Artistas Parecidos: |\\u041f\\u043e\\u0445\\u043e\\u0436\\u0438\\u0435 \\u0438\\u0441\\u043f\\u043e\\u043b\\u043d\\u0438\\u0442\\u0435\\u043b\\u0438: |Liknande Artister: |Benzer Sanat\\u00e7\\u0131lar: |\\u76f8\\u4f3c\\u827a\\u672f\\u5bb6: '; this.d = parseFloat(this.q('0000029142')); this.lfm = this.q($.s);
+		this.similarArtistsKey = 'Similar Artists: |\\u00c4hnliche K\\u00fcnstler: |Artistas Similares: |Artistes Similaires: |Artisti Simili: |\\u4f3c\\u3066\\u3044\\u308b\\u30a2\\u30fc\\u30c6\\u30a3\\u30b9\\u30c8: |Podobni Wykonawcy: |Artistas Parecidos: |\\u041f\\u043e\\u0445\\u043e\\u0436\\u0438\\u0435 \\u0438\\u0441\\u043f\\u043e\\u043b\\u043d\\u0438\\u0442\\u0435\\u043b\\u0438: |Liknande Artister: |Benzer Sanat\\u00e7\\u0131lar: |\\u76f8\\u4f3c\\u827a\\u672f\\u5bb6: '; this.d = Number.parseFloat(this.q('0000029142')); this.lfm = this.q($.s);
 		this.topAlbumsKey = 'Top Albums: |Top-Alben: |\\u00c1lbumes M\\u00e1s Escuchados: |Top Albums: |Album Pi\\u00f9 Ascoltati: |\\u4eba\\u6c17\\u30a2\\u30eb\\u30d0\\u30e0: |Najpopularniejsze Albumy: |\\u00c1lbuns Principais: |\\u041f\\u043e\\u043f\\u0443\\u043b\\u044f\\u0440\\u043d\\u044b\\u0435 \\u0430\\u043b\\u044c\\u0431\\u043e\\u043c\\u044b: |Toppalbum: |En Sevilen Alb\\u00fcmler: |\\u6700\\u4f73\\u4e13\\u8f91: ';
 
 		if (!this.style.free || !$.isArray(this.style.free)) {
@@ -207,7 +208,7 @@ class Panel {
 		} else {
 			let valid = true;
 			this.style.free.forEach(v => {
-				if (!$.objHasOwnProperty(v, 'name') || isNaN(v.imL) || isNaN(v.imR) || isNaN(v.imT) || isNaN(v.imB) || isNaN(v.txL) || isNaN(v.txR) || isNaN(v.txT) || isNaN(v.txB)) valid = false;
+				if (!$.objHasOwnProperty(v, 'name') || Number.isNaN(v.imL) || Number.isNaN(v.imR) || Number.isNaN(v.imT) || Number.isNaN(v.imB) || Number.isNaN(v.txL) || Number.isNaN(v.txR) || Number.isNaN(v.txT) || Number.isNaN(v.txB)) valid = false;
 			});
 			if (!valid) {
 				ppt.set('SYSTEM.Freestyle Custom BackUp', ppt.styleFree);
@@ -216,7 +217,7 @@ class Panel {
 				fb.ShowPopupMessage('Unable to load custom styles.\n\nThe save location was corrupt. Custom styles have been reset.\n\nThe original should be backed up to "SYSTEM.Freestyle Custom BackUp" in panel properties.', 'Biography');
 			}
 		}
-		if (!this.style.overlay || !$.objHasOwnProperty(this.style.overlay, 'name') || isNaN(this.style.overlay.imL) || isNaN(this.style.overlay.imR) || isNaN(this.style.overlay.imT) || isNaN(this.style.overlay.imB) || isNaN(this.style.overlay.txL) || isNaN(this.style.overlay.txR) || isNaN(this.style.overlay.txT) || isNaN(this.style.overlay.txB)) {
+		if (!this.style.overlay || !$.objHasOwnProperty(this.style.overlay, 'name') || Number.isNaN(this.style.overlay.imL) || Number.isNaN(this.style.overlay.imR) || Number.isNaN(this.style.overlay.imT) || Number.isNaN(this.style.overlay.imB) || Number.isNaN(this.style.overlay.txL) || Number.isNaN(this.style.overlay.txR) || Number.isNaN(this.style.overlay.txT) || Number.isNaN(this.style.overlay.txB)) {
 			ppt.set('SYSTEM.Overlay BackUp', ppt.styleOverlay);
 
 			this.style.overlay = {
@@ -241,13 +242,11 @@ class Panel {
 	// Methods
 
 	albumsSame() {
-		if (this.id.lookUp && this.alb.ix && this.alb.list.length && JSON.stringify(this.alb.init) === JSON.stringify(this.alb.list)) return true;
-		return false;
+		return !!(this.id.lookUp && this.alb.ix && this.alb.list.length && JSON.stringify(this.alb.init) === JSON.stringify(this.alb.list));
 	}
 
 	artistsSame() {
-		if (this.id.lookUp && this.art.ix && this.art.list.length && JSON.stringify(this.art.init) === JSON.stringify(this.art.list)) return true;
-		return false;
+		return !!(this.id.lookUp && this.art.ix && this.art.list.length && JSON.stringify(this.art.init) === JSON.stringify(this.art.list));
 	}
 
 	block() {
@@ -295,18 +294,18 @@ class Panel {
 		if (this.id.focus || !fb.IsPlaying) this.callServer(false, this.id.focus, 'bio_lookUpItem', 0);
 		else if ($.server) this.callServer(false, this.id.focus, '', 1);
 	}
-	
+
 	checkRefreshRates() {
 		[
-			{key: 'focusLoadRate', descr: 'Panel Focus Load Refresh Rate', min: 200, max: 3000, oldDef: 250, newDef: 250},
-			{key: 'focusServerRate', descr: 'Panel Focus Server Refresh Rate', min: 1500, max: 15000, oldDef: 5000, newDef: 5000},
-			{key: 'lookUpServerRate', descr: 'Panel Lookup Refresh Rate', min: 1500, max: 15000, oldDef: 1500, newDef: 1500}
+			{ key: 'focusLoadRate', descr: 'Panel Focus Load Refresh Rate', min: 200, max: 3000, oldDef: 250, newDef: 250 },
+			{ key: 'focusServerRate', descr: 'Panel Focus Server Refresh Rate', min: 1500, max: 15000, oldDef: 5000, newDef: 5000 },
+			{ key: 'lookUpServerRate', descr: 'Panel Lookup Refresh Rate', min: 1500, max: 15000, oldDef: 1500, newDef: 1500 }
 		].forEach((rate) => {
 			const name = `${rate.descr} ${rate.min}-${rate.max} msec (Max)`;
 			const value = ppt.get(name, null);
-			if (value === null) {throw ('property_name: ' + name + '\nPanel\'s rate property name does not match range checked');}
+			if (value === null) { throw new Error('property_name: ' + name + '\nPanel\'s rate property name does not match range checked'); }
 			else {
-				if (ppt[rate.key] === rate.oldDef && ppt[rate.key] !== rate.newDef) {ppt[rate.key] = rate.newDef;}
+				if (ppt[rate.key] === rate.oldDef && ppt[rate.key] !== rate.newDef) { ppt[rate.key] = rate.newDef; }
 				ppt[rate.key] = $.clamp(ppt[rate.key], rate.min, rate.max);
 				if (ppt[rate.key] !== Number(value)) {
 					ppt.set(name, ppt[rate.key]);
@@ -340,7 +339,7 @@ class Panel {
 	changeView(x, y, menu) {
 		if (!menu && (this.zoom() || vk.k('alt') || x < 0 || y < 0 || x > this.w || y > this.h || but.Dn)) return false;
 		if (!menu && !ppt.dblClickToggle && this.isTouchEvent(x, y)) return false;
-		if (!menu && !ppt.img_only && (txt.scrollbar_type().onSbar && !txt.lyricsDisplayed())  || but.trace('heading', x, y) || but.trace('lookUp', x, y)) return false;
+		if (!menu && !ppt.img_only && (txt.scrollbar_type().onSbar && !txt.lyricsDisplayed()) || but.trace('heading', x, y) || but.trace('lookUp', x, y)) return false;
 		return true;
 	}
 
@@ -350,7 +349,7 @@ class Panel {
 		if (Date.now() - this.id.loadTimestamp > 1500) { // delay needed for correct sizing on init; ignored by click (sets loadTimestamp = 0); 
 			switch (item) {
 				case 'stndArtist':
-					!this.id.lookUp ? txt.getText(true) : txt.getItem(true, this.art.ix, this.alb.ix);
+					this.id.lookUp ? txt.getItem(true, this.art.ix, this.alb.ix) : txt.getText(true);
 					img.getImages();
 					break;
 				case 'stndAlbum':
@@ -365,7 +364,7 @@ class Panel {
 			but.refresh(true);
 			txt.getScrollPos();
 			txt.paint();
-		}	
+		}
 	}
 
 	cleanPth(pth, item, type, artist, album, bio) {
@@ -399,9 +398,9 @@ class Panel {
 		const dotPathRegEx = /([/\\]).((?:foobar2000|fb2k)[^/\\]*|cache|local)([/\\])/g;
 		const bDotPath = dotPathRegEx.test(pth);
 		// Regorxxx ->
-		pth = type != 'lyr' ? 
-			pth.replace(/[/|:]/g, '-').replace(/\*/g, 'x').replace(/"/g, "''").replace(/[<>]/g, '_').replace(/\?/g, '').replace(/\\\./g, '\\_').replace(/\.+\\/, '\\').replace(/\s*\\\s*/g, '\\') :
-			pth.replace(/[/|:*"<>?]/g, '_');
+		pth = type == 'lyr' ?
+			pth.replace(/[/|:*"<>?]/g, '_') :
+			pth.replace(/[/|:]/g, '-').replace(/\*/g, 'x').replace(/"/g, "''").replace(/[<>]/g, '_').replace(/\?/g, '').replace(/\\\./g, '\\_').replace(/\.+\\/, '\\').replace(/\s*\\\s*/g, '\\');
 		if (c_pos < 3 && c_pos != -1) pth = $.replaceAt(pth, c_pos, ':');
 		// Regorxxx <- Dots on paths not working (.local, .cache, .foobar2000* or .fb2k* work now)
 		if (bDotPath) { // Allow some special folders with dots
@@ -432,7 +431,7 @@ class Panel {
 		const item = this.getItem();
 		switch (item) {
 			case 'stndArtist':
-				!this.id.lookUp ? txt.getText(this.calc) : txt.getItem(this.calc, this.art.ix, this.alb.ix);
+				this.id.lookUp ? txt.getItem(this.calc, this.art.ix, this.alb.ix) : txt.getText(this.calc);
 				img.getImages();
 				break;
 			case 'stndAlbum':
@@ -466,7 +465,7 @@ class Panel {
 		if (fallback) {
 			try {
 				ns = utils.InputBox(0, prompt, caption, 'My Style', true);
-			} catch(e) {
+			} catch (e) {
 			}
 		}
 		if (!ns) return false;
@@ -490,7 +489,7 @@ class Panel {
 			case 1: {
 				const txt_sp = Math.round((this.w - ppt.textL - this.bor.r) * (1 - ppt.rel_imgs));
 				lines_drawn = Math.max(Math.floor((this.h - ppt.textT - ppt.textB - ui.heading.h) / ui.font.main_h), 0);
-				te_t = !ppt.topAlign ? ppt.textT + (this.h - ppt.textT - ppt.textB - lines_drawn * ui.font.main_h + ui.heading.h) / 2 : ppt.textT + ui.heading.h;
+				te_t = ppt.topAlign ? ppt.textT + ui.heading.h : ppt.textT + (this.h - ppt.textT - ppt.textB - lines_drawn * ui.font.main_h + ui.heading.h) / 2;
 				this.im.l = (txt_sp + this.style.gap + (ppt.sbarShow ? ui.sbar.sp + 10 : 0)) / this.w;
 				this.tx.r = (this.w - (txt_sp + ppt.textR)) / this.w;
 				this.tx.t = (te_t - ui.heading.h - ppt.textT) / this.h;
@@ -522,7 +521,7 @@ class Panel {
 				const txt_sp = Math.round((this.w - this.bor.l - te_r) * (1 - ppt.rel_imgs));
 				imgs = Math.max(this.w - txt_sp - this.bor.l - te_r - this.style.gap, 10);
 				lines_drawn = Math.max(Math.floor((this.h - ppt.textT - ppt.textB - ui.heading.h) / ui.font.main_h), 0);
-				te_t = !ppt.topAlign ? ppt.textT + (this.h - ppt.textT - ppt.textB - lines_drawn * ui.font.main_h + ui.heading.h) / 2 : ppt.textT + ui.heading.h;
+				te_t = ppt.topAlign ? ppt.textT + ui.heading.h : ppt.textT + (this.h - ppt.textT - ppt.textB - lines_drawn * ui.font.main_h + ui.heading.h) / 2;
 				this.im.r = (this.w - this.bor.l - imgs - this.bor.r) / this.w;
 				this.tx.l = (this.bor.l + imgs - ppt.textL + this.style.gap) / this.w;
 				this.tx.t = (te_t - ui.heading.h - ppt.textT) / this.h;
@@ -595,8 +594,8 @@ class Panel {
 					else ppt.revStyle = 0;
 				}
 				this.getStyleNames();
-				if (!ppt.showFilmStrip) txt.refresh(0);
-				else filmStrip.set(ppt.filmStripPos);
+				if (ppt.showFilmStrip) { filmStrip.set(ppt.filmStripPos); }
+				else { txt.refresh(0); }
 			}
 		}
 		const caption = 'Delete Current Style';
@@ -609,12 +608,12 @@ class Panel {
 		let font = ui.font.main;
 		let str = 'POWERED by allmusic, last.fm & Wikipedia.\r\n\r\nShift+middle click to activate / inactivate.';
 		let textHeight2;
-		
+
 		const textHeight1 = Math.round(gr.MeasureString(str, font, 10, 0, this.w - 20, 1000, StringFormat(1, 1)).Height);
 		const version = `  ${window.ScriptInfo.Name}: v${window.ScriptInfo.Version}`;
 		const versionHeight = gr.CalcTextHeight(version, ui.font.small);
 		const txtSp = this.h * 0.37;
-		
+
 		if (textHeight1 > txtSp) {
 			str = str.replace('\r\n\r\n', ' ');
 			textHeight2 = Math.round(gr.MeasureString(str, font, 10, 0, this.w - 20, 1000, StringFormat(1, 1)).Height);
@@ -636,7 +635,7 @@ class Panel {
 		this.logo.w = scale[0];
 		this.logo.h = scale[1];
 		this.logo.x = (this.w - this.logo.w) / 2;
-		this.logo.y =  hAvail - this.logo.h + versionHeight + hAvail * 0.145;
+		this.logo.y = hAvail - this.logo.h + versionHeight + hAvail * 0.145;
 
 		gr.SetInterpolationMode(7);
 		if (this.logo.img) gr.DrawImage(this.logo.img, this.logo.x, this.logo.y, this.logo.w, this.logo.h, 0, 0, this.logo.img.Width, this.logo.img.Height);
@@ -665,10 +664,10 @@ class Panel {
 
 	getList(p_clear, isAlbum) {
 		if (!this.id.lookUp) return;
-		const artist = name.artist(this.id.focus, true) || lg['Artist Unknown'];
-		const albumArtist = (!panel.isRadio(this.id.focus) ? name.albumArtist(this.id.focus, true) : artist) || lg['Artist Unknown'];
+		const artist = name.artist(this.id.focus, true) || lg['Artist Unknown']; // NOSONAR name
+		const albumArtist = (panel.isRadio(this.id.focus) ? artist : name.albumArtist(this.id.focus, true)) || lg['Artist Unknown']; // NOSONAR name
 		const composition = isAlbum ? false : ppt.classicalMusicMode && (txt.rev.loaded.am && !txt.rev.amFallback || txt.rev.loaded.wiki && !txt.rev.wikiFallback);
-		const album = !composition ? name.album(this.id.focus, true) || lg['Album Unknown'] : name.composition(this.id.focus, true) || lg['Composition Unknown'];
+		const album = composition ? name.composition(this.id.focus, true) || lg['Composition Unknown'] : name.album(this.id.focus, true) || lg['Album Unknown']; // NOSONAR name
 		if (this.lock) {
 			this.logArtistHistory(artist);
 			this.logAlbumHistory(albumArtist, album, composition);
@@ -676,9 +675,9 @@ class Panel {
 		}
 
 		let k = 0;
-		const lfmBio = (!panel.isRadio(this.id.focus) ? this.cleanPth(cfg.pth.foLfmBio, this.id.focus) : this.cleanPth(cfg.remap.foLfmBio, this.id.focus, 'remap', artist, '', 1)) + $.clean(artist) + cfg.suffix.foLfmBio + '.txt';
+		const lfmBio = (panel.isRadio(this.id.focus) ? this.cleanPth(cfg.remap.foLfmBio, this.id.focus, 'remap', artist, '', 1) : this.cleanPth(cfg.pth.foLfmBio, this.id.focus)) + $.clean(artist) + cfg.suffix.foLfmBio + '.txt';
 		const lBio = $.open(lfmBio);
-		const lfmSim = (!panel.isRadio(this.id.focus) ? this.cleanPth(cfg.pth.foLfmSim, this.id.focus) : this.cleanPth(cfg.remap.foLfmSim, this.id.focus, 'remap', artist, '', 1)) + $.clean(artist) + ' And Similar Artists.json';
+		const lfmSim = (panel.isRadio(this.id.focus) ? this.cleanPth(cfg.remap.foLfmSim, this.id.focus, 'remap', artist, '', 1) : this.cleanPth(cfg.pth.foLfmSim, this.id.focus)) + $.clean(artist) + ' And Similar Artists.json';
 		const mult_arr = [];
 		let mn = '';
 		let nm = '';
@@ -710,7 +709,7 @@ class Panel {
 						lSim.forEach((v, i, arr) => this.art.list.push({
 							name: newStyle ? v.name : v,
 							field: '',
-							type: i != arr.length - 1 ? 'similar' : 'similarend'
+							type: i == arr.length - 1 ? 'similarend' : 'similar'
 						}));
 					}
 				}
@@ -723,10 +722,10 @@ class Panel {
 						found = true;
 					}
 					if (!found) {
-						this.art.similar.some(v => {
+						found = this.art.similar.some(v => {
 							if (v.name == artist) {
 								sa = $.take(v.similar, cfg.menuSimilarNum);
-								return found = true;
+								return true;
 							}
 						});
 						if (!found) {
@@ -743,7 +742,7 @@ class Panel {
 						sa.forEach((v, i) => this.art.list.push({
 							name: v,
 							field: '',
-							type: i != sa.length - 1 ? 'similar' : 'similarend'
+							type: i == sa.length - 1 ? 'similarend' : 'similar'
 						}));
 					}
 				}
@@ -815,10 +814,10 @@ class Panel {
 			ta = tag.getTag(lBio, this.topAlbumsKey).tag;
 			if (ta.length < 7 && ta) found = true;
 			if (!found) {
-				this.art.topAlbums.some(v => {
+				found = this.art.topAlbums.some(v => {
 					if (v.name == artist) {
 						ta = $.take(v.album, 6);
-						return found = true;
+						return true;
 					}
 				});
 				if (!found) {
@@ -842,7 +841,7 @@ class Panel {
 				ta.forEach((v, i) => this.alb.list.push({
 					artist: artist,
 					album: v,
-					type: i != ta.length - 1 ? 'album' : 'albumend'
+					type: i == ta.length - 1 ? 'albumend' : 'album'
 				}));
 			}
 		} else {
@@ -878,7 +877,7 @@ class Panel {
 		let fo, pth;
 		switch (sw) {
 			case 'bio':
-				if (panel.isRadio(ppt.focus)) stnd = false; else if(stnd === '') stnd = this.stnd(this.art.ix, this.art.list);
+				if (panel.isRadio(ppt.focus)) stnd = false; else if (stnd === '') stnd = this.stnd(this.art.ix, this.art.list);
 				if (server) fo = stnd ? this.cleanPth(cfg.pth[folder], focus, 'server') : this.cleanPth(cfg.remap[folder], focus, 'remap', artist, '', 1);
 				else fo = stnd && !this.lock ? this.cleanPth(cfg.pth[folder], focus) : this.cleanPth(cfg.remap[folder], focus, 'remap', artist, '', 1);
 				pth = fo + cleanArtist + cfg.suffix[folder] + '.txt';
@@ -888,7 +887,7 @@ class Panel {
 					fo: fo,
 					pth: pth
 				};
-				else return [fo, pth, cleanArtist ? true : false, $.file(pth)];
+				else return [fo, pth, !!cleanArtist, $.file(pth)];
 			case 'rev':
 				if (stnd === '') stnd = this.stnd(this.alb.ix, this.alb.list);
 				if (!stnd) cleanAlbumArtist = cleanArtist;
@@ -905,7 +904,7 @@ class Panel {
 					fo: fo,
 					pth: pth
 				};
-				else return [fo, pth, cleanAlbumArtist && cleanAlbum ? true : false, $.file(pth)];
+				else return [fo, pth, !!(cleanAlbumArtist && cleanAlbum), $.file(pth)];
 			case 'track':
 				fo = this.cleanPth(cfg.remap[folder], focus, 'remap', artist, album, 0);
 				pth = fo + cleanArtist + ' - ' + cleanAlbum + cfg.suffix[folder].replace(' Review', '') + '.json';
@@ -913,7 +912,7 @@ class Panel {
 					fo: fo,
 					pth: pth
 				};
-				else return [fo, pth, cleanArtist ? true : false, $.file(pth)];
+				else return [fo, pth, !!cleanArtist, $.file(pth)];
 			case 'cov':
 				fo = this.cleanPth(cfg.pth.foImgCov, focus, 'server');
 				pth = fo + $.clean($.eval(cfg.pth.fnImgCov, focus, true));
@@ -1060,14 +1059,14 @@ class Panel {
 			if (!this.lock && !mArtist) img.artistReset();
 			if (!this.lock) {
 				this.id.lockArt = $.eval(this.art.fields, this.id.focus);
-				this.id.lockAlb = name.albID(this.id.focus, 'full') + (this.style.inclTrackRev ? name.trackID(this.id.focus) : '');
+				this.id.lockAlb = name.albID(this.id.focus, 'full') + (this.style.inclTrackRev ? name.trackID(this.id.focus) : ''); // NOSONAR name
 				this.lockHandle = $.handle(this.id.focus);
 				img.setAlbID();
 				img.cov.folder = this.cleanPth(cfg.albCovFolder, this.id.focus);
 			}
 			if (!bypass) this.lock = this.lock == 0 || menuLock ? 1 : 0;
 			txt.curHeadingID = this.lock ? txt.headingID() : '';
-			if (!this.lock && (ppt.artistView && this.id.lockArt != $.eval(this.art.fields, this.id.focus) || !ppt.artistView && this.id.lockAlb != name.albID(this.id.focus, 'full') + (this.style.inclTrackRev ? name.trackID(this.id.focus) : ''))) {
+			if (!this.lock && (ppt.artistView && this.id.lockArt != $.eval(this.art.fields, this.id.focus) || !ppt.artistView && this.id.lockAlb != name.albID(this.id.focus, 'full') + (this.style.inclTrackRev ? name.trackID(this.id.focus) : ''))) { // NOSONAR name
 				txt.on_playback_new_track(true);
 				img.on_playback_new_track(true);
 			}
@@ -1080,7 +1079,7 @@ class Panel {
 				this.mode(0);
 				break;
 			case this.trace.image:
-				this.mode(!ppt.img_only ? 1 : 2);
+				this.mode(ppt.img_only ? 2 : 1);
 				break;
 			case this.trace.text:
 				this.mode(2);
@@ -1090,8 +1089,11 @@ class Panel {
 	}
 
 	mode(n) {
-		if (!ppt.sameStyle) ppt.artistView ? ppt.bioMode = n : ppt.revMode = n;
-		let calcText = true;
+		if (!ppt.sameStyle) {
+			if (ppt.artistView) { ppt.bioMode = n; }
+			else { ppt.revMode = n; }
+		}
+		let calcText;
 		this.calc = true;
 		filmStrip.logScrollPos();
 		switch (n) {
@@ -1218,7 +1220,7 @@ class Panel {
 			let status = 'ok'
 			try {
 				ns = utils.InputBox(0, prompt, caption, this.style.name[n], true);
-			} catch(e) {
+			} catch (e) {
 				status = 'cancel'
 			}
 			ok_callback(status, ns);
@@ -1258,7 +1260,8 @@ class Panel {
 					obj.txR = 0;
 					obj.txT = 0.632;
 					obj.txB = 0;
-					ppt.style == 4 || ppt.style == 5 ? ppt.styleOverlay = JSON.stringify(this.style.overlay) : ppt.styleFree = JSON.stringify(this.style.free);
+					if (ppt.style == 4 || ppt.style == 5) { ppt.styleOverlay = JSON.stringify(this.style.overlay); }
+					else { ppt.styleFree = JSON.stringify(this.style.free); }
 				}
 				txt.refresh(3);
 			}
@@ -1339,118 +1342,119 @@ class Panel {
 				this.lines_drawn = Math.max(Math.floor((this.h - ppt.textT - ppt.textB - ui.heading.h - this.filmStripSize.t - this.filmStripSize.b) / ui.font.main_h), 0);
 				this.text.l = ppt.textL + this.filmStripSize.l;
 				this.text.r = (ppt.sbarShow ? Math.max(ppt.textR, ui.sbar.sp + sp2) : ppt.textR) + this.filmStripSize.r;
-				this.text.t = !ppt.topAlign ? ppt.textT + (this.h - ppt.textT + this.filmStripSize.t - ppt.textB - this.filmStripSize.b - this.lines_drawn * ui.font.main_h + ui.heading.h) / 2 : ppt.textT + ui.heading.h + this.filmStripSize.t;
+				this.text.t = ppt.topAlign ? ppt.textT + ui.heading.h + this.filmStripSize.t : ppt.textT + (this.h - ppt.textT + this.filmStripSize.t - ppt.textB - this.filmStripSize.b - this.lines_drawn * ui.font.main_h + ui.heading.h) / 2;
 				this.text.w = this.w - this.text.l - this.text.r;
 				this.text.h = this.lines_drawn * ui.font.main_h;
-				this.heading.x = !this.style.fullWidthHeading ? this.text.l : ppt.textL;
-				this.heading.w = !this.style.fullWidthHeading ? this.text.w : this.w - this.heading.x - ppt.textR;
+				this.heading.x = this.style.fullWidthHeading ? ppt.textL : this.text.l;
+				this.heading.w = this.style.fullWidthHeading ? this.w - this.heading.x - ppt.textR : this.text.w;
 				if (ppt.sbarShow) {
-					if (!this.filmStripSize.r) this.sbar.x = this.w - ui.sbar.sp;
-					else this.sbar.x = this.text.l + this.text.w + sp1;
+					if (this.filmStripSize.r) { this.sbar.x = this.text.l + this.text.w + sp1; }
+					else { this.sbar.x = this.w - ui.sbar.sp; }
 					this.sbar.y = (ui.sbar.type < this.sbar.style || this.filmStripSize.t || this.filmStripSize.r || this.filmStripSize.b ? this.text.t : 0) + this.sbar.top_corr;
 					this.sbar.h = (ui.sbar.type < this.sbar.style || this.filmStripSize.t || this.filmStripSize.r || this.filmStripSize.b ? ui.font.main_h * this.lines_drawn + bot_corr : this.h - this.sbar.y) + bot_corr;
 				}
 				this.repaint.x = this.text.l;
 				this.repaint.y = 0;
-				this.repaint.w = this.w - this.repaint.x - this.filmStripSize.r, this.repaint.h = this.h - this.filmStripSize.b;
+				this.repaint.w = this.w - this.repaint.x - this.filmStripSize.r;
+				this.repaint.h = this.h - this.filmStripSize.b;
 				break;
 
 			case ppt.style == 0: { // top
-				$.key.forEach(v => this.img[v] = this.bor[v] + (v != 'b' ? (!ppt.filmStripOverlay ? this.filmStripSize[v] : 0) : 0));
-				let txt_h = Math.round((this.h - this.img.t - ppt.textB - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0)) * (1 - ppt.rel_imgs));
+				$.key.forEach(v => this.img[v] = this.bor[v] + (v == 'b' ? 0 : (ppt.filmStripOverlay ? 0 : this.filmStripSize[v])));
+				let txt_h = Math.round((this.h - this.img.t - ppt.textB - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b)) * (1 - ppt.rel_imgs));
 				this.lines_drawn = Math.max(Math.floor((txt_h - ui.heading.h) / ui.font.main_h), 0);
 				this.text.h = this.lines_drawn * ui.font.main_h;
 				txt_h = this.text.h + this.style.gap;
-				this.style.imgSize = Math.max(this.h - txt_h - this.img.t - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0) - ppt.textB - ui.heading.h, 10);
-				this.text.l = ppt.textL + (!ppt.filmStripOverlay ? this.filmStripSize.l : 0);
-				this.text.r = (ppt.sbarShow ? Math.max(ppt.textR, ui.sbar.sp + sp2) : ppt.textR) + (!ppt.filmStripOverlay ? this.filmStripSize.r : 0);
+				this.style.imgSize = Math.max(this.h - txt_h - this.img.t - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b) - ppt.textB - ui.heading.h, 10);
+				this.text.l = ppt.textL + (ppt.filmStripOverlay ? 0 : this.filmStripSize.l);
+				this.text.r = (ppt.sbarShow ? Math.max(ppt.textR, ui.sbar.sp + sp2) : ppt.textR) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.r);
 				this.text.t = this.img.t + this.style.imgSize + this.style.gap + ui.heading.h;
 				this.text.w = this.w - this.text.l - this.text.r;
-				this.heading.x = (!this.style.fullWidthHeading ? this.text.l : ppt.textL);
-				this.heading.w = !this.style.fullWidthHeading ? this.text.w : this.w - ppt.textL - ppt.textR;
-				if (!this.filmStripSize.r) this.sbar.x = this.w - ui.sbar.sp;
-				else this.sbar.x = this.text.l + this.text.w + sp1;
+				this.heading.x = (this.style.fullWidthHeading ? ppt.textL : this.text.l);
+				this.heading.w = this.style.fullWidthHeading ? this.w - ppt.textL - ppt.textR : this.text.w;
+				if (this.filmStripSize.r) {this.sbar.x = this.text.l + this.text.w + sp1;}
+				else {this.sbar.x = this.w - ui.sbar.sp;}
 				this.sbar.y = (ui.sbar.type < this.sbar.style || ppt.heading || this.filmStripSize.b ? this.text.t : this.img.t + this.style.imgSize) + this.sbar.top_corr;
 				this.sbar.h = (ui.sbar.type < this.sbar.style || this.filmStripSize.b ? ui.font.main_h * this.lines_drawn + bot_corr : this.h - this.sbar.y) + bot_corr;
 				this.repaint.x = this.text.l;
 				this.repaint.y = this.text.t;
-				this.repaint.w = this.w - this.repaint.x - (!ppt.filmStripOverlay ? this.filmStripSize.r : 0);
-				this.repaint.h = this.h - this.repaint.y - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0);
+				this.repaint.w = this.w - this.repaint.x - (ppt.filmStripOverlay ? 0 : this.filmStripSize.r);
+				this.repaint.h = this.h - this.repaint.y - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b);
 				break;
 			}
 			case ppt.style == 1: { // right
-				$.key.forEach(v => this.img[v] = this.bor[v] + (v != 'l' ? (!ppt.filmStripOverlay ? this.filmStripSize[v] : 0) : 0));
-				let txt_sp = Math.round((this.w - ppt.textL - (!ppt.filmStripOverlay ? this.filmStripSize.l : 0) - this.img.r) * (1 - ppt.rel_imgs));
-				let txt_h = this.h - ppt.textT - ppt.textB - (!ppt.filmStripOverlay ? this.filmStripSize.t : 0) - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0);
+				$.key.forEach(v => this.img[v] = this.bor[v] + (v == 'l' ? 0 : (ppt.filmStripOverlay ? 0 : this.filmStripSize[v])));
+				let txt_sp = Math.round((this.w - ppt.textL - (ppt.filmStripOverlay ? 0 : this.filmStripSize.l) - this.img.r) * (1 - ppt.rel_imgs));
+				let txt_h = this.h - ppt.textT - ppt.textB - (ppt.filmStripOverlay ? 0 : this.filmStripSize.t) - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b);
 				this.lines_drawn = Math.max(Math.floor((txt_h - ui.heading.h) / ui.font.main_h), 0);
-				this.style.imgSize = Math.max(this.w - txt_sp - this.img.r - ppt.textL - (!ppt.filmStripOverlay ? this.filmStripSize.l : 0) - this.style.gap, 10);
+				this.style.imgSize = Math.max(this.w - txt_sp - this.img.r - ppt.textL - (ppt.filmStripOverlay ? 0 : this.filmStripSize.l) - this.style.gap, 10);
 				if (ppt.sbarShow) txt_sp -= (ui.sbar.sp + sp1);
-				this.text.l = ppt.textL + (!ppt.filmStripOverlay ? (!ppt.filmStripOverlay ? this.filmStripSize.l : 0) : 0);
-				this.text.r = ppt.sbarShow ? Math.max(ppt.textR + (!ppt.filmStripOverlay ? this.filmStripSize.r : 0), ui.sbar.sp + sp1) : ppt.textR + (!ppt.filmStripOverlay ? this.filmStripSize.r : 0);
-				this.text.t = !ppt.topAlign ? ppt.textT + (this.h - ppt.textT - ppt.textB + (!ppt.filmStripOverlay ? this.filmStripSize.t: 0) - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0) - this.lines_drawn * ui.font.main_h + ui.heading.h) / 2 : ppt.textT + ui.heading.h + (!ppt.filmStripOverlay ? this.filmStripSize.t : 0);
+				this.text.l = ppt.textL + (ppt.filmStripOverlay ? 0 : (ppt.filmStripOverlay ? 0 : this.filmStripSize.l));
+				this.text.r = ppt.sbarShow ? Math.max(ppt.textR + (ppt.filmStripOverlay ? 0 : this.filmStripSize.r), ui.sbar.sp + sp1) : ppt.textR + (ppt.filmStripOverlay ? 0 : this.filmStripSize.r);
+				this.text.t = ppt.topAlign ? ppt.textT + ui.heading.h + (ppt.filmStripOverlay ? 0 : this.filmStripSize.t) : ppt.textT + (this.h - ppt.textT - ppt.textB + (ppt.filmStripOverlay ? 0 : this.filmStripSize.t) - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b) - this.lines_drawn * ui.font.main_h + ui.heading.h) / 2;
 				this.text.w = txt_sp;
 				this.text.h = this.lines_drawn * ui.font.main_h;
-				this.heading.x = !this.style.fullWidthHeading ? this.text.l : ppt.textL;
-				this.heading.w = !this.style.fullWidthHeading ? this.text.w : this.w - this.heading.x - this.bor.r;
+				this.heading.x = this.style.fullWidthHeading ? ppt.textL : this.text.l;
+				this.heading.w = this.style.fullWidthHeading ? this.w - this.heading.x - this.bor.r : this.text.w;
 				if (this.style.fullWidthHeading) this.img.t = this.text.t;
-				this.img.l = ppt.textL + txt_sp + (!ppt.filmStripOverlay ? this.filmStripSize.l : 0) + this.style.gap + (ppt.sbarShow ? ui.sbar.sp + sp1 : 0);
+				this.img.l = ppt.textL + txt_sp + (ppt.filmStripOverlay ? 0 : this.filmStripSize.l) + this.style.gap + (ppt.sbarShow ? ui.sbar.sp + sp1 : 0);
 				this.sbar.x = this.text.l + this.text.w + sp1;
 				this.sbar.y = (ui.sbar.type < this.sbar.style || ppt.heading || this.filmStripSize.t || this.filmStripSize.b ? this.text.t : 0) + this.sbar.top_corr;
 				this.sbar.h = ui.sbar.type < this.sbar.style || this.filmStripSize.t || this.filmStripSize.b ? ui.font.main_h * this.lines_drawn + bot_corr * 2 : this.h - this.sbar.y + bot_corr;
 				this.repaint.x = this.text.l;
 				this.repaint.y = this.text.t;
 				this.repaint.w = this.img.l - this.repaint.x - this.style.gap;
-				this.repaint.h = this.h - this.repaint.y - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0);
+				this.repaint.h = this.h - this.repaint.y - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b);
 				break;
 			}
 
 			case ppt.style == 2: { // bottom
-				$.key.forEach(v => this.img[v] = this.bor[v] + (v != 't' && v != 'b' ? (!ppt.filmStripOverlay ? this.filmStripSize[v] : 0) : 0));
-				let txt_h = Math.round((this.h - ppt.textT - this.img.b - (!ppt.filmStripOverlay ? this.filmStripSize.t : 0) - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0)) * (1 - ppt.rel_imgs));
+				$.key.forEach(v => this.img[v] = this.bor[v] + (v != 't' && v != 'b' ? (ppt.filmStripOverlay ? 0 : this.filmStripSize[v]) : 0));
+				let txt_h = Math.round((this.h - ppt.textT - this.img.b - (ppt.filmStripOverlay ? 0 : this.filmStripSize.t) - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b)) * (1 - ppt.rel_imgs));
 				this.lines_drawn = Math.max(Math.floor((txt_h - ui.heading.h) / ui.font.main_h), 0);
 				this.text.h = this.lines_drawn * ui.font.main_h;
 				txt_h = this.text.h + this.style.gap;
-				this.style.imgSize = Math.max(this.h - txt_h - ppt.textT - this.img.b - (!ppt.filmStripOverlay ? this.filmStripSize.t : 0) - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0) - ui.heading.h, 10);
-				this.img.t = this.h - this.bor.b - this.style.imgSize - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0);
-				this.text.l = ppt.textL + (!ppt.filmStripOverlay ? this.filmStripSize.l : 0);
-				this.text.r = (ppt.sbarShow ? Math.max(ppt.textR, ui.sbar.sp + sp2) : ppt.textR) + (!ppt.filmStripOverlay ? this.filmStripSize.r : 0);
+				this.style.imgSize = Math.max(this.h - txt_h - ppt.textT - this.img.b - (ppt.filmStripOverlay ? 0 : this.filmStripSize.t) - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b) - ui.heading.h, 10);
+				this.img.t = this.h - this.bor.b - this.style.imgSize - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b);
+				this.text.l = ppt.textL + (ppt.filmStripOverlay ? 0 : this.filmStripSize.l);
+				this.text.r = (ppt.sbarShow ? Math.max(ppt.textR, ui.sbar.sp + sp2) : ppt.textR) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.r);
 				this.text.t = this.img.t - txt_h;
 				this.text.w = this.w - this.text.l - this.text.r;
-				this.heading.x = (!this.style.fullWidthHeading ? this.text.l : ppt.textL);
-				this.heading.w = !this.style.fullWidthHeading ? this.text.w : this.w - ppt.textL - ppt.textR;
-				if (!this.filmStripSize.r) this.sbar.x = this.w - ui.sbar.sp;
-				else this.sbar.x = this.text.l + this.text.w + sp1;
+				this.heading.x = (this.style.fullWidthHeading ? ppt.textL : this.text.l);
+				this.heading.w = this.style.fullWidthHeading ? this.w - ppt.textL - ppt.textR : this.text.w;
+				if (this.filmStripSize.r) { this.sbar.x = this.text.l + this.text.w + sp1; }
+				else { this.sbar.x = this.w - ui.sbar.sp; }
 				this.sbar.y = (ui.sbar.type < this.sbar.style || ppt.heading ? this.text.t : 0) + this.sbar.top_corr;
 				this.sbar.h = ui.sbar.type < this.sbar.style ? ui.font.main_h * this.lines_drawn + bot_corr * 2 : this.img.t - this.sbar.y + bot_corr;
 				this.repaint.x = this.text.l;
 				this.repaint.y = this.text.t;
-				this.repaint.w = this.w - this.repaint.x - (!ppt.filmStripOverlay ? this.filmStripSize.r : 0);
+				this.repaint.w = this.w - this.repaint.x - (ppt.filmStripOverlay ? 0 : this.filmStripSize.r);
 				this.repaint.h = this.img.t - this.repaint.y;
 				break;
 			}
 
 			case ppt.style == 3: { // left
-				$.key.forEach(v => this.img[v] = this.bor[v] + (v != 'r' ? (!ppt.filmStripOverlay ? this.filmStripSize[v] : 0) : 0));
-				this.text.r = (ppt.sbarShow ? Math.max(ppt.textR, ui.sbar.sp + sp2) : ppt.textR) + (!ppt.filmStripOverlay ? this.filmStripSize.r : 0);
+				$.key.forEach(v => this.img[v] = this.bor[v] + (v == 'r' ? 0 : (ppt.filmStripOverlay ? 0 : this.filmStripSize[v])));
+				this.text.r = (ppt.sbarShow ? Math.max(ppt.textR, ui.sbar.sp + sp2) : ppt.textR) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.r);
 				const txt_sp = Math.round((this.w - this.img.l - this.text.r) * (1 - ppt.rel_imgs));
-				let txt_h = this.h - ppt.textT - ppt.textB - (!ppt.filmStripOverlay ? this.filmStripSize.t : 0) - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0);
+				let txt_h = this.h - ppt.textT - ppt.textB - (ppt.filmStripOverlay ? 0 : this.filmStripSize.t) - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b);
 				this.lines_drawn = Math.max(Math.floor((txt_h - ui.heading.h) / ui.font.main_h), 0);
 				this.style.imgSize = Math.max(this.w - txt_sp - this.img.l - this.text.r - this.style.gap, 10);
 				this.text.l = this.img.l + this.style.imgSize + this.style.gap;
-				this.text.t = !ppt.topAlign ? ppt.textT + (this.h - ppt.textT - ppt.textB + (!ppt.filmStripOverlay ? this.filmStripSize.t : 0) - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0) - this.lines_drawn * ui.font.main_h + ui.heading.h) / 2 : ppt.textT + ui.heading.h + (!ppt.filmStripOverlay ? this.filmStripSize.t : 0);
+				this.text.t = ppt.topAlign ? ppt.textT + ui.heading.h + (ppt.filmStripOverlay ? 0 : this.filmStripSize.t) : ppt.textT + (this.h - ppt.textT - ppt.textB + (ppt.filmStripOverlay ? 0 : this.filmStripSize.t) - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b) - this.lines_drawn * ui.font.main_h + ui.heading.h) / 2;
 				this.text.w = txt_sp;
 				this.text.h = this.lines_drawn * ui.font.main_h;
-				this.heading.x = !this.style.fullWidthHeading ? this.text.l : this.bor.l;
-				this.heading.w = !this.style.fullWidthHeading ? this.text.w : this.w - this.heading.x - ppt.textR;
+				this.heading.x = this.style.fullWidthHeading ? this.bor.l : this.text.l;
+				this.heading.w = this.style.fullWidthHeading ? this.w - this.heading.x - ppt.textR : this.text.w;
 				if (this.style.fullWidthHeading) this.img.t = this.text.t;
-				if (!this.filmStripSize.r) this.sbar.x = this.w - ui.sbar.sp;
-				else this.sbar.x = this.text.l + this.text.w + sp1;
+				if (this.filmStripSize.r) { this.sbar.x = this.text.l + this.text.w + sp1; }
+				else { this.sbar.x = this.w - ui.sbar.sp; }
 				this.sbar.y = (ui.sbar.type < this.sbar.style || ppt.heading || this.filmStripSize.t || this.filmStripSize.b ? this.text.t : 0) + this.sbar.top_corr;
 				this.sbar.h = ui.sbar.type < this.sbar.style || this.filmStripSize.t || this.filmStripSize.b ? ui.font.main_h * this.lines_drawn + bot_corr * 2 : this.h - this.sbar.y + bot_corr;
 				this.repaint.x = this.text.l;
 				this.repaint.y = this.text.t;
-				this.repaint.w = this.w - this.repaint.x - (!ppt.filmStripOverlay ? this.filmStripSize.r : 0);
-				this.repaint.h = this.h - this.repaint.y - (!ppt.filmStripOverlay ? this.filmStripSize.b : 0);
+				this.repaint.w = this.w - this.repaint.x - (ppt.filmStripOverlay ? 0 : this.filmStripSize.r);
+				this.repaint.h = this.h - this.repaint.y - (ppt.filmStripOverlay ? 0 : this.filmStripSize.b);
 				break;
 			}
 
@@ -1467,14 +1471,14 @@ class Panel {
 					this.tx.t = $.clamp(obj.txT, 0, 1);
 					this.tx.b = $.clamp(obj.txB, 0, 1);
 				}
-				const imL = Math.round(this.im.l * this.w) + (!ppt.filmStripOverlay ? this.filmStripSize.l : 0);
-				const imR = Math.round(this.im.r * this.w) + (!ppt.filmStripOverlay ? this.filmStripSize.r : 0);
-				const imT = Math.round(this.im.t * this.h) + (!ppt.filmStripOverlay ? this.filmStripSize.t : 0);
-				const imB = Math.round(this.im.b * this.h) + (!ppt.filmStripOverlay ? this.filmStripSize.b : 0);
-				const txL = ppt.style == 4 ? 0 : Math.round(this.tx.l * this.w) + (!ppt.filmStripOverlay ? this.filmStripSize.l : 0);
-				const txR = ppt.style == 4 ? 0 : Math.round(this.tx.r * this.w) + (!ppt.filmStripOverlay ? this.filmStripSize.r : 0);
-				const txT = ppt.style == 4 ? 0 : Math.round(this.tx.t * this.h) + (!ppt.filmStripOverlay ? this.filmStripSize.t : 0);
-				const txB = ppt.style == 4 ? 0 : Math.round(this.tx.b * this.h) + (!ppt.filmStripOverlay ? this.filmStripSize.b : 0);
+				const imL = Math.round(this.im.l * this.w) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.l);
+				const imR = Math.round(this.im.r * this.w) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.r);
+				const imT = Math.round(this.im.t * this.h) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.t);
+				const imB = Math.round(this.im.b * this.h) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.b);
+				const txL = ppt.style == 4 ? 0 : Math.round(this.tx.l * this.w) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.l);
+				const txR = ppt.style == 4 ? 0 : Math.round(this.tx.r * this.w) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.r);
+				const txT = ppt.style == 4 ? 0 : Math.round(this.tx.t * this.h) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.t);
+				const txB = ppt.style == 4 ? 0 : Math.round(this.tx.b * this.h) + (ppt.filmStripOverlay ? 0 : this.filmStripSize.b);
 				this.ibox.l = Math.max(imL, 0);
 				this.ibox.t = Math.max(imT, 0);
 				this.ibox.w = this.w - imL - imR;
@@ -1499,8 +1503,8 @@ class Panel {
 				this.text.t = txT + ui.heading.h + t_t;
 				this.text.w = this.w - this.text.l - this.text.r;
 				this.text.h = this.lines_drawn * ui.font.main_h;
-				this.heading.x = !this.style.fullWidthHeading ? this.text.l : ppt.style == 4 ? ppt.textL : Math.min(this.img.l, this.text.l, (!ppt.filmStripOverlay ? this.filmStripSize.l : 0) ? filmStrip.x : this.w);
-				this.heading.w = !this.style.fullWidthHeading ? this.text.w : ppt.style == 4 ? this.w - this.heading.x * 2 : this.w - this.heading.x - Math.min(this.img.r, this.text.r, (!ppt.filmStripOverlay ? this.filmStripSize.r : 0) ? this.w - filmStrip.x - filmStrip.w : this.w);
+				this.heading.x = this.style.fullWidthHeading ? ppt.style == 4 ? ppt.textL : Math.min(this.img.l, this.text.l, (ppt.filmStripOverlay ? 0 : this.filmStripSize.l) ? filmStrip.x : this.w) : this.text.l;
+				this.heading.w = this.style.fullWidthHeading ? ppt.style == 4 ? this.w - this.heading.x * 2 : this.w - this.heading.x - Math.min(this.img.r, this.text.r, (ppt.filmStripOverlay ? 0 : this.filmStripSize.r) ? this.w - filmStrip.x - filmStrip.w : this.w) : this.text.w;
 				this.tbox.l = Math.max(txL, 0);
 				this.tbox.t = Math.max(txT, 0);
 				this.tbox.w = this.w - Math.max(txL, 0) - Math.max(txR, 0);
@@ -1565,14 +1569,20 @@ class Panel {
 	}
 
 	tfBio(n, artist, focus) {
-		n = n.replace(/((\$if|\$and|\$or|\$not|\$xor)(|\d)\(|\[)[^$%]*%bio_artist%/gi, '$&#@!%path%#@!').replace(/%bio_artist%/gi, $.tfEscape(artist)).replace(/%bio_album%/gi, cfg.tf.album).replace(/%bio_title%/gi, cfg.tf.title);
+		n = n.replace(/((\$if|\$and|\$or|\$not|\$xor)(\d|)\(|\[)[^$%]*%bio_artist%/gi, '$&#@!%path%#@!')
+			.replace(/%bio_artist%/gi, $.tfEscape(artist))
+			.replace(/%bio_album%/gi, cfg.tf.album)
+			.replace(/%bio_title%/gi, cfg.tf.title);
 		n = $.eval(n, focus);
 		n = n.replace(/#@!.*?#@!/g, '');
 		return n;
 	}
 
 	tfRev(n, albumArtist, album, focus) {
-		n = n.replace(/((\$if|\$and|\$or|\$not|\$xor)(|\d)\(|\[)[^$%]*(%bio_albumartist%|%bio_album%)/gi, '$&#@!%path%#@!').replace(/%bio_albumartist%/gi, $.tfEscape(albumArtist)).replace(/%bio_album%/gi, $.tfEscape(album)).replace(/%bio_title%/gi, cfg.tf.title);
+		n = n.replace(/((\$if|\$and|\$or|\$not|\$xor)(\d|)\(|\[)[^$%]*(%bio_albumartist%|%bio_album%)/gi, '$&#@!%path%#@!')
+			.replace(/%bio_albumartist%/gi, $.tfEscape(albumArtist))
+			.replace(/%bio_album%/gi, $.tfEscape(album))
+			.replace(/%bio_title%/gi, cfg.tf.title);
 		n = $.eval(n, focus);
 		n = n.replace(/#@!.*?#@!/g, '');
 		return n;
@@ -1583,7 +1593,7 @@ class Panel {
 	}
 
 	uniqAlbum(artist) {
-		const flags = [];
+		const flags = {};
 		let result = [];
 		artist.forEach(v => {
 			const name = v.artist.toLowerCase() + ' - ' + v.album.toLowerCase();
@@ -1591,7 +1601,7 @@ class Panel {
 			result.push(v);
 			flags[name] = true;
 		});
-		return result = result.filter(v => v.type != 'label');
+		return result.filter(v => v.type != 'label');
 	}
 
 	uniqArtist(artist) {
@@ -1610,17 +1620,17 @@ class Panel {
 			case ppt.artistView:
 				this.id.curArtist = this.id.artist;
 				this.id.artist = $.eval(this.art.fields, this.id.focus);
-				if (!this.id.lookUp) return true;
-				else return this.id.artist != this.id.curArtist || !this.art.list.length || !this.art.ix;
+				if (this.id.lookUp) { return this.id.artist != this.id.curArtist || !this.art.list.length || !this.art.ix; }
+				else { return true; }
 			case !ppt.artistView:
 				this.id.curAlb = this.id.alb;
-				this.id.alb = name.albID(this.id.focus, 'simple');
+				this.id.alb = name.albID(this.id.focus, 'simple'); // NOSONAR name
 				if (this.style.inclTrackRev) {
 					this.id.curTr = this.id.tr;
-					this.id.tr = name.trackID(this.id.focus);
+					this.id.tr = name.trackID(this.id.focus); // NOSONAR name
 				} else this.id.curTr = this.id.tr = '';
-				if (!this.id.lookUp) return true;
-				else return this.id.alb != this.id.curAlb || this.id.tr != this.id.curTr || !this.alb.list.length || !this.alb.ix;
+				if (this.id.lookUp) { return this.id.alb != this.id.curAlb || this.id.tr != this.id.curTr || !this.alb.list.length || !this.alb.ix; }
+				else { return true; }
 		}
 	}
 

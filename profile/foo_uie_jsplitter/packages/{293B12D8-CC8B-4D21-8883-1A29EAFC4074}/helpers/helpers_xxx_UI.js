@@ -1,12 +1,15 @@
-﻿'use strict';
-//27/02/26
+'use strict';
+//23/04/26
 
-/* exported colorBlind, colorbrewer, LEFT, RIGHT, CENTRE, DT_CENTER, SF_CENTRE, LM, TM, nextId, _tt, blendColors, lightenColor, darkenColor, tintColor, opaqueColor, invert, _gdiFont, removeIdFromStr, _textWidth, popup, applyAsMask, applyMask, getRed, getBlue, getGreen, getAlpha */
+/* exported colorBlind, colorbrewer, LEFT, RIGHT, CENTRE, DT_CENTER, SF_CENTRE, LM, TM, nextId, _tt, blendColors, lightenColor, darkenColor, tintColor, opaqueColor, invert, _gdiFont, removeIdFromStr, _textWidth, _textHeight, _textLines, _textLinesWrap, popup, applyAsMask, applyMask, getRed, getBlue, getGreen, getAlpha, applyEffectAsMask, applyEffect, applyEffectAsMaskEffect */
 
 include(fb.ComponentPath + 'docs\\Flags.js');
-/* global DT_VCENTER:readable, DT_NOPREFIX:readable, DT_CALCRECT:readable, DT_END_ELLIPSIS:readable, DT_RIGHT:readable, DT_CENTER:readable */
+/* global DT_VCENTER:readable, DT_NOPREFIX:readable, DT_CALCRECT:readable, DT_END_ELLIPSIS:readable, DT_RIGHT:readable, DT_CENTER:readable, TTDT_INITIAL:readable */
 include('helpers_xxx.js');
 /* global globFonts:readable, globSettings:readable, doOnce:readable, globSettings:readable */
+/* global _isFile:readable */
+if (window.Parent === 'foo_uie_jsplitter' && _isFile(fb.ComponentPath + '\\docs\\Effects.js')) { include(fb.ComponentPath + '\\docs\\Effects.js'); }
+/* global Effects:readable */
 include('helpers_xxx_UI_chars.js');
 include('callbacks_xxx.js');
 include('helpers_xxx_prototypes.js');
@@ -292,7 +295,7 @@ function _tt(value, font = globFonts.tooltip.name, fontSize = _scale(globFonts.t
 		if (!globSettings.bTooltip) { return true; }
 		if (utils.CheckFont(this.font.name)) { this.SetFont(this.font.name, this.font.size); } // Workaround for missing fonts
 		this.SetMaxWidth(this.width);
-		this.oldDelay = this.tooltip.GetDelayTime(3); //TTDT_INITIAL
+		this.oldDelay = this.tooltip.GetDelayTime(TTDT_INITIAL);
 		this.tooltip.Text = this.text;
 		if (timerId) { clearTimeout(timerId); }
 		timerId = null;
@@ -330,12 +333,12 @@ function RGB(r, g, b) {
 }
 
 function toRGB(color) { // returns an array like [192, 0, 0]
-	const a = color - 0xFF000000;
+	const a = color | 0xFF000000;
 	return [clampRGB((a >> 16) & 0xff), clampRGB((a >> 8) & 0xFF), clampRGB(a & 0xFF)];
 }
 
 function toRGBA(color) { // returns an array like [192, 0, 0, 25]
-	const a = color - 0xFF000000;
+	const a = color | 0xFF000000;
 	return [clampRGB((a >> 16) & 0xff), clampRGB((a >> 8) & 0xFF), clampRGB(a & 0xFF), clampRGB((a >> 24) & 0xff)];
 }
 
@@ -343,7 +346,7 @@ function blendColors(color1, color2, f, bUseAlpha = false) {
 	f = Math.max(Math.min(f, 1), 0);
 	// When factor is 0, result is 100% color1, when factor is 1, result is 100% color2.
 	const [c1, c2] = [toRGBA(color1), toRGBA(color2)];
-	return (bUseAlpha ? RGBA : RGB)(...c1.map((_, i) => clampRGB(Math.round(c1[i] + f* (c2[i] - c1[i])))));
+	return (bUseAlpha ? RGBA : RGB)(...c1.map((_, i) => clampRGB(Math.round(c1[i] + f * (c2[i] - c1[i])))));
 }
 
 function getAlpha(color) {
@@ -431,7 +434,23 @@ function _gdiFont(name, size, style) {
 }
 
 function _textWidth(value, font) {
-	return _gr.CalcTextWidth(value, font);
+	try { return _gr ? _gr.CalcTextWidth(value, font) : 0; }
+	catch (e) { return 0; } // eslint-disable-line no-unused-vars
+}
+
+function _textHeight(value, font) {
+	try { return _gr ? _gr.CalcTextHeight(value, font) : 0; }
+	catch (e) { return 0; } // eslint-disable-line no-unused-vars
+}
+
+function _textLines(value, font, maxWidth) {
+	try { return _gr ? (_gr.EstimateLineWrap(value, font, maxWidth).length / 2 - 1) || 1 : 1; }
+	catch (e) { return 1; } // eslint-disable-line no-unused-vars
+}
+
+function _textLinesWrap(value, font, maxWidth) {
+	try { return _gr ? _gr.EstimateLineWrap(value, font, maxWidth) : []; }
+	catch (e) { return []; } // eslint-disable-line no-unused-vars
 }
 
 /*
@@ -443,16 +462,15 @@ function _textWidth(value, font) {
  *
  * @function
  * @name applyAsMask
- * @param {GdiBitmap} img - Img to manipulate
- * @param {(img:GdiBitmap, gr:GdiGraphics, w:number, h:number) => void} applyCallback - Img manipulation logic. Width and height are from original img. To maintain D2D compatibility, don't use img rotation without releasing img gr first (when doing so, return true)
- * @param {(mask:GdiBitmap, gr:GdiGraphics, w:number, h:number) => void} maskCallback - Mask drawing. Width and height are from original img. The mask is prefilled with black by default (i.e. applies over all img). To maintain D2D compatibility, don't use mask rotation without releasing mask gr first (when doing so, return true)
+ * @param {GdiBitmap|D2DBitmap} img - Img to manipulate
+ * @param {(img:GdiBitmap|D2DBitmap, gr:GdiGraphics|D2DGraphics, w:number, h:number) => void} applyCallback - Img manipulation logic. Width and height are from original img. To maintain D2D compatibility, don't use img rotation without releasing img gr first (when doing so, return true)
+ * @param {(mask:GdiBitmap|D2DBitmap, gr:GdiGraphics|D2DGraphics, w:number, h:number) => void} maskCallback - Mask drawing. Width and height are from original img. The mask is prefilled with black by default (i.e. applies over all img). To maintain D2D compatibility, don't use mask rotation without releasing mask gr first (when doing so, return true)
  * @param {boolean} bInvertMask - If true, prefills mask with white.
- * @returns {GdiBitmap}
+ * @returns {GdiBitmap|D2DBitmap}
  */
 function applyAsMask(img, applyCallback, maskCallback, bInvertMask) {
 	const clone = img.Clone(0, 0, img.Width, img.Height);
-	const cloneGr = clone.GetGraphics();
-	if (!applyCallback(clone, cloneGr, clone.Width, clone.Height)) { clone.ReleaseGraphics(cloneGr); }
+	applyManipulation(clone, applyCallback);
 	applyMask(clone, maskCallback, bInvertMask);
 	const imgGr = img.GetGraphics();
 	imgGr.DrawImage(clone, 0, 0, img.Width, img.Height, 0, 0, img.Width, img.Height);
@@ -465,10 +483,10 @@ function applyAsMask(img, applyCallback, maskCallback, bInvertMask) {
  *
  * @function
  * @name applyMask
- * @param {GdiBitmap} img - Img to manipulate
- * @param {(mask:GdiBitmap, gr:GdiGraphics, w:number, h:number) => boolean} maskCallback - Mask drawing. Width and height are from original img. The mask is prefilled with black by default (i.e. applies over all img). To maintain D2D compatibility, don't use mask rotation without releasing mask gr first (when doing so, return true)
+ * @param {GdiBitmap|D2DBitmap} img - Img to manipulate
+ * @param {(mask:GdiBitmap|D2DBitmap, gr:GdiGraphics|D2DGraphics, w:number, h:number) => Boolean} maskCallback - Mask drawing. Width and height are from original img. The mask is prefilled with black by default (i.e. applies over all img). To maintain D2D compatibility, don't use mask rotation without releasing mask gr first (when doing so, return true)
  * @param {boolean} bInvertMask -  If true, prefills mask with white.
- * @returns {GdiBitmap}
+ * @returns {GdiBitmap|D2DBitmap}
  */
 function applyMask(img, maskCallback, bInvertMask) {
 	const mask = gdi.CreateImage(img.Width, img.Height);
@@ -476,5 +494,93 @@ function applyMask(img, maskCallback, bInvertMask) {
 	maskGr.FillSolidRect(0, 0, img.Width, img.Height, bInvertMask ? 0xFFFFFFFF : 0xFF000000);
 	if (!maskCallback(mask, maskGr, img.Width, img.Height)) { mask.ReleaseGraphics(maskGr); }
 	img.ApplyMask(mask);
+	return img;
+};
+
+/**
+ * Applies manipulations to image (applyCallback)
+ *
+ * @function
+ * @name applyManipulation
+ * @param {GdiBitmap|D2DBitmap} img - Img to manipulate
+ * @param {(img:GdiBitmap|D2DBitmap, gr:GdiGraphics|D2DGraphics, w:number, h:number) => Boolean} applyCallback - Img manipulation logic. Width and height are from original img. To maintain D2D compatibility, don't use img rotation without releasing img gr first (when doing so, return true)
+ * @returns {GdiBitmap|D2DBitmap}
+ */
+function applyManipulation(img, applyCallback) {
+	const imgGr = img.GetGraphics();
+	if (!applyCallback(img, imgGr, img.Width, img.Height)) { img.ReleaseGraphics(imgGr); }
+	return img;
+};
+
+/**
+ * Applies D2D effects to image (applyCallback) on a region defined by 'maskCallback' (use white color to skip processing)
+ *
+ * @function
+ * @name applyAsMask
+ * @param {D2DBitmap} img - Img to manipulate
+ * @param {(img:D2DBitmap, w:number, h:number) => void} applyCallback - Img manipulation logic. Width and height are from original img. Don't use img rotation or stack blur without releasing img gr first (when doing so, return true)
+ * @param {(mask:D2DBitmap, gr:D2DGraphics, w:number, h:number) => void} maskCallback - Mask drawing. Width and height are from original img. The mask is prefilled with black by default (i.e. applies over all img). Don't use mask rotation or stack blur without releasing mask gr first (when doing so, return true)
+ * @param {boolean} bInvertMask - If true, prefills mask with white.
+ * @returns {GdiBitmap|D2DBitmap}
+ */
+function applyEffectAsMask(img, effectCallback, maskCallback, bInvertMask) {
+	const clone = d2d.CreateImage(img.Width, img.Height);
+	applyEffect(img, effectCallback, clone);
+	applyMask(clone, maskCallback, bInvertMask);
+	const imgGr = img.GetGraphics();
+	imgGr.DrawImage(clone, 0, 0, img.Width, img.Height, 0, 0, img.Width, img.Height);
+	img.ReleaseGraphics(imgGr);
+	return img;
+};
+
+/**
+ * Applies D2D effects to image/effect (effectCallback) on a region defined by 'maskCallback' (use black color to skip processing)
+ *
+ * @function
+ * @name applyEffectAsMaskEffect
+ * @param {D2DBitmap|{Width: number, Height: number}} img - Img to manipulate and/or retrieve size to create a mask
+ * @param {D2DEffect} source - Effect source for chaining. If not provided, the img is used for composition
+ * @param {(img:D2DBitmap, source:D2DEffect) => D2DEffect} effectCallback - Effect manipulation logic. Width and height are from original img. Don't use img rotation or stack blur without releasing img gr first (when doing so, return true)
+ * @param {(mask:D2DBitmap, gr:D2DGraphics, w:number, h:number) => Boolean} maskCallback - Mask drawing. Width and height are from original img. The mask is prefilled with black by default (i.e. applies over all img). Don't use mask rotation or stack blur without releasing mask gr first (when doing so, return true)
+ * @param {boolean} bInvertMask - If true, prefills mask with white.
+ * @returns {D2DEffect}
+ */
+function applyEffectAsMaskEffect(img, source, effectCallback, maskCallback, bInvertMask) {
+	const effect = effectCallback(img, source);
+	const mask = gdi.CreateImage(img.Width, img.Height);
+	const maskGr = mask.GetGraphics();
+	maskGr.FillSolidRect(0, 0, img.Width, img.Height, bInvertMask ? 0xFFFFFFFF : 0xFF000000);
+	if (!maskCallback(mask, maskGr, img.Width, img.Height)) { mask.ReleaseGraphics(maskGr); }
+	const effectMask = d2d.Effect(Effects.LuminanceToAlpha.ID);
+	effectMask.SetInput(0, mask);
+	const maskedEffect = d2d.Effect(Effects.AlphaMask.ID);
+	maskedEffect.SetInputEffect(0, effect);
+	maskedEffect.SetInputEffect(1, effectMask);
+	const out = d2d.Effect(Effects.Composite.ID);
+	if (source) { out.SetInputEffect(0, source); }
+	else { out.SetInputEffect(0, img); }
+	out.SetInputEffect(1, maskedEffect);
+	return out;
+};
+
+/**
+ * Applies D2D effects to image (effectCallback)
+ *
+ * @function
+ * @name applyEffect
+ * @param {D2DBitmap} img - Img source to apply effects
+ * @param {(img:D2DBitmap, gr:D2DGraphics, w:number, h:number) => void} effectCallback - Img manipulation logic. Width and height are from original img. To maintain D2D compatibility, don't use img rotation without releasing img gr first (when doing so, return true)
+ * @param {D2DBitmap?} imgDest - Img destination to draw over. If not specified, an empty image based on input size is used. Set to null to draw over input.
+ * @param {number?} composite - [=0] Composition mode flags for {@link D2DGraphics#DrawEffect DrawEffect}
+ * @returns {D2DBitmap}
+ */
+function applyEffect(img, effectCallback, imgDest = d2d.CreateImage(img.Width, img.Height), composite = 0) {
+	const effect = effectCallback(img, img.Width, img.Height);
+	if (effect) {
+		const imgGr = (imgDest || img).GetGraphics();
+		imgGr.DrawEffect(effect, 0, 0, 0, 0, img.Width, img.Height, composite);
+		(imgDest || img).ReleaseGraphics(imgGr);
+		return (imgDest || img);
+	}
 	return img;
 };

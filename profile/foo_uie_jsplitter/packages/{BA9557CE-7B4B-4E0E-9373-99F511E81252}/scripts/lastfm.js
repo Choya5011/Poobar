@@ -1,16 +1,17 @@
 ﻿'use strict';
+//24/04/26
 
 class DldLastfmBio {
 	constructor(state_callback) {
-		this.artist;
+		this.artist; // NOSONAR init
 		this.con = '';
 		this.counts = ['', ''];
-		this.fo_bio;
+		this.fo_bio; // NOSONAR init
 		this.func = null;
 		this.itemDate = '';
 		this.itemValue = ['', '', ''];
 		this.pop = '';
-		this.pth_bio;
+		this.pth_bio; // NOSONAR init
 		this.ready_callback = state_callback;
 		this.retry = false;
 		this.scrobbles = ['', ''];
@@ -45,7 +46,7 @@ class DldLastfmBio {
 		this.pth_bio = p_pth_bio;
 		this.func = null;
 		this.xmlhttp = XMLHttpRequest(cfg.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
-		const URL = this.searchBio == 3 ? 'https://' + server.lfm.server + '/music/' + encodeURIComponent(this.artist) + '/' + encodeURIComponent(this.itemValue[0]) : this.searchBio == 2 ? 'https://www.last.fm/music/' + encodeURIComponent(this.artist) + '/+albums' : 'https://' + (!this.retry ? server.lfm.server : 'www.last.fm') + '/music/' + encodeURIComponent(this.artist) + (this.searchBio ? '/+wiki' : '');
+		const URL = this.searchBio == 3 ? 'https://' + server.lfm.server + '/music/' + encodeURIComponent(this.artist) + '/' + encodeURIComponent(this.itemValue[0]) : this.searchBio == 2 ? 'https://www.last.fm/music/' + encodeURIComponent(this.artist) + '/+albums' : 'https://' + (this.retry ? 'www.last.fm' : server.lfm.server) + '/music/' + encodeURIComponent(this.artist) + (this.searchBio ? '/+wiki' : '');
 		this.func = this.analyse;
 		if (ppt.multiServer && !force && server.urlDone(md5.hashStr(this.artist + this.pth_bio + URL))) return;
 		this.xmlhttp.open('GET', URL);
@@ -113,12 +114,12 @@ class DldLastfmBio {
 					this.topTracks = this.topTracks.length ? topTracks[cfg.lang.ix] + this.topTracks.join('\u200b, ') : '';
 					this.tags = this.tags.length ? 'Top Tags: ' + this.tags.join('\u200b, ') : '';
 					if (this.itemValue[1].length) {
-						r1.forEach((v, i) => itemName[1] = itemName[1].replace(RegExp(v, 'i'), r2[i]));
+						r1.forEach((v, i) => itemName[1] = itemName[1].replace(new RegExp(v, 'i'), r2[i]));
 						this.pop = '\r\n\r\n' + itemName[1] + ': ' + this.itemValue[1];
 					}
 					if (this.itemValue[0].length) {
 						if (!this.itemValue[1].length) {
-							r1.forEach((v, i) => itemName[0] = itemName[0].replace(RegExp(v, 'i'), r2[i]));
+							r1.forEach((v, i) => itemName[0] = itemName[0].replace(new RegExp(v, 'i'), r2[i]));
 						}
 						this.pop += (this.itemValue[1].length ? '; ' : '\r\n\r\n') + $.titlecase(itemName[0]) + ': ' + this.itemValue[0];
 					}
@@ -219,7 +220,7 @@ class DldArtImages {
 		allFiles = utils.Glob(imgFolder + '*');
 		let imNo = 0;
 		allFiles.forEach(v => {
-			if (name.isLfmImg(fso.GetFileName(v), p_dl_ar)) {
+			if (name.isLfmImg(fso.GetFileName(v), p_dl_ar)) { // NOSONAR name
 				imNo++;
 				if (cfg.photoLimit) imgExisting.push({
 					p: v,
@@ -231,7 +232,7 @@ class DldArtImages {
 		if (cfg.photoLimit) imgExisting.sort((a, b) => a.m - b.m);
 		const newImgNo = cfg.photoNum - imNo
 		if (newImgNo > 0) return [newImgNo, 0, allFiles];
-		else if (!cfg.photoAutoAdd) {
+		else if (cfg.photoAutoAdd) { return [5, cfg.photoAutoAdd, allFiles, imgExisting]; } else {
 			if (cfg.photoLimit) {
 				const remove = imgExisting.length - cfg.photoLimit;
 				if (remove > 0) {
@@ -243,14 +244,14 @@ class DldArtImages {
 				}
 			}
 			return [0, cfg.photoAutoAdd, allFiles];
-		} else return [5, cfg.photoAutoAdd, allFiles, imgExisting];
+		}
 	}
 
 	run(dl_ar, force, art, p_stndBio, p_supCache) {
 		if (!utils.DownloadFileAsync && !$.file(`${cfg.storageFolder}foo_lastfm_img.vbs`)) return; // Regorxxx <- Use utils.DownloadFileAsync if available ->
 		let img_folder = p_stndBio && !panel.isRadio(art.focus) ? panel.cleanPth(cfg.pth.foImgArt, art.focus, 'server') : panel.cleanPth(cfg.remap.foImgArt, art.focus, 'remap', dl_ar, '', 1);
 		if (p_supCache && !$.folder(img_folder)) img_folder = panel.cleanPth(cfg.sup.foImgArt, art.focus, 'remap', dl_ar, '', 1);
-		const getNo = this.img_exp(dl_ar, img_folder, !force ? server.exp : 0);
+		const getNo = this.img_exp(dl_ar, img_folder, force ? 0 : server.exp);
 		if (!getNo[0]) return;
 		const lfm_art = new LfmArtImg(() => lfm_art.onStateChange());
 		lfm_art.search(dl_ar, img_folder, getNo[0], getNo[1], getNo[2], getNo[3], force);
@@ -259,13 +260,13 @@ class DldArtImages {
 
 class LfmArtImg {
 	constructor(state_callback) {
-		this.allFiles;
-		this.autoAdd;
-		this.dl_ar;
+		this.allFiles; // NOSONAR init
+		this.autoAdd; // NOSONAR init
+		this.dl_ar; // NOSONAR init
 		this.func = null;
-		this.getNo;
-		this.imgExisting;
-		this.img_folder;
+		this.getNo; // NOSONAR init
+		this.imgExisting; // NOSONAR init
+		this.img_folder; // NOSONAR init
 		this.ready_callback = state_callback;
 		this.retry = false;
 		this.timer = null;
@@ -291,7 +292,7 @@ class LfmArtImg {
 		this.imgExisting = p_imgExisting;
 		this.func = null;
 		this.xmlhttp = XMLHttpRequest(cfg.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
-		const URL = 'https://' + (!this.retry ? server.lfm.server : 'www.last.fm') + '/music/' + encodeURIComponent(this.dl_ar) + '/+images';
+		const URL = 'https://' + (this.retry ? 'www.last.fm' : server.lfm.server) + '/music/' + encodeURIComponent(this.dl_ar) + '/+images';
 		this.func = this.analyse;
 		if (ppt.multiServer && !force && server.urlDone(md5.hashStr(this.dl_ar + this.getNo + this.autoAdd + this.img_folder + URL))) return;
 		this.xmlhttp.open('GET', URL);
@@ -392,17 +393,17 @@ class LfmArtImg {
 
 class LfmAlbum {
 	constructor(state_callback) {
-		this.albumArtist;
-		this.albm;
-		this.album;
-		this.fo;
+		this.albumArtist; // NOSONAR init
+		this.albm; // NOSONAR init
+		this.album; // NOSONAR init
+		this.fo; // NOSONAR init
 		this.func = null;
 		this.getStats = true;
-		this.pth;
+		this.pth; // NOSONAR init
 		this.ready_callback = state_callback;
 		this.retry = false;
-		this.rev;
-		this.rev_img;
+		this.rev; // NOSONAR init
+		this.rev_img; // NOSONAR init
 		this.stats = '';
 		this.tags = [];
 		this.timer = null;
@@ -460,17 +461,17 @@ class LfmAlbum {
 	analyse() {
 		if (!this.getStats && this.rev) {
 			let wiki = $.jsonParse(this.xmlhttp.responseText, '', 'get', 'album.wiki.content');
-			if (!wiki) {
-				if (server.langFallback && !this.retry) {
-					this.retry = true;
-					return this.search(this.albumArtist, this.album, this.rev, this.fo, this.pth);
-				}
-				if (!this.stats.length) { return cfg.showConsoleMessagesNotFound ? $.trace('last.fm album review: ' + this.album + ' / ' + this.albumArtist + ': not found', true) : void(0); } // Regorxxx <- Tweak logging ->
-			} else {
+			if (wiki) {
 				wiki = wiki.replace(/<[^>]+>/ig, '');
 				const f = wiki.indexOf(' Read more on Last.fm');
 				if (f != -1) wiki = wiki.slice(0, f);
 				wiki = wiki.replace(/\n/g, '\r\n').replace(/(\r\n)(\r\n)+/g, '\r\n\r\n').trim();
+			} else {
+				if (server.langFallback && !this.retry) {
+					this.retry = true;
+					return this.search(this.albumArtist, this.album, this.rev, this.fo, this.pth);
+				}
+				if (!this.stats.length) { return cfg.showConsoleMessagesNotFound ? $.trace('last.fm album review: ' + this.album + ' / ' + this.albumArtist + ': not found', true) : void (0); } // Regorxxx <- Tweak logging ->
 			}
 			wiki = wiki ? wiki + this.tags + this.stats : this.tags + this.stats;
 			wiki = wiki.trim();
@@ -493,21 +494,21 @@ class LfmAlbum {
 			let tr = '';
 			$.htmlParse(div.getElementsByTagName('li'), 'className', 'tag', v => this.tags.push($.titlecase(v.innerText.trim()).replace(/\bAor\b/g, 'AOR').replace(/\bDj\b/g, 'DJ').replace(/\bFc\b/g, 'FC').replace(/\bIdm\b/g, 'IDM').replace(/\bNwobhm\b/g, 'NWOBHM').replace(/\bR&b\b/g, 'R&B').replace(/\bRnb\b/g, 'RnB').replace(/\bUsa\b/g, 'USA').replace(/\bUs\b/g, 'US').replace(/\bUk\b/g, 'UK')));
 			$.htmlParse(div.getElementsByTagName('dt'), 'className', 'catalogue-metadata-heading', v => {
-				if (!j) length_n = v.innerText.trim();
-				else rd_n = $.titlecase(v.innerText.trim());
+				if (j) {rd_n = $.titlecase(v.innerText.trim());}
+				else {length_n = v.innerText.trim();}
 				if (j == 1) return true;
 				j++;
 			});
 			j = 0;
 			$.htmlParse(div.getElementsByTagName('dd'), 'className', 'catalogue-metadata-description', v => {
-				if (!j) {
+				if (j) {
+					rd = v.innerText.trim();
+					return true;
+				}
+				else {
 					const trck = v.innerText.split(',');
 					if (trck[0] && !/\d\d\d\d/.test(trck[0])) tr = trck[0].trim().replace(/\b1 tracks/, '1 track');
 					if (trck[1]) length = trck[1].trim();
-				}
-				else {
-					rd = v.innerText.trim();
-					return true;
 				}
 				j++;
 			});
@@ -518,7 +519,7 @@ class LfmAlbum {
 			});
 			j = 0;
 			$.htmlParse(div.getElementsByTagName('abbr'), 'className', 'intabbr js-abbreviated-counter', v => {
-				counts[j] = j != 2 ? $.titlecase(v.innerText.trim()) + ' \u200b| ' + v.title.trim() : $.titlecase(v.innerText.trim());
+				counts[j] = j == 2 ? $.titlecase(v.innerText.trim()) : $.titlecase(v.innerText.trim()) + ' \u200b| ' + v.title.trim();
 				j++
 			});
 			doc.close();
@@ -544,12 +545,12 @@ class LfmAlbum {
 					this.retry = true;
 					return this.search(this.albumArtist, this.album, this.rev, this.fo, this.pth, this.albm);
 				}
-				return cfg.showConsoleMessagesNotFound ? $.trace('last.fm album cover: ' + this.album + ' / ' + this.albumArtist + ': not found', true) : void(0); // Regorxxx <- Tweak logging ->
+				return cfg.showConsoleMessagesNotFound ? $.trace('last.fm album cover: ' + this.album + ' / ' + this.albumArtist + ': not found', true) : void (0); // Regorxxx <- Tweak logging ->
 			}
 			let link = data[cfg.imgRevHQ || !this.rev_img ? 4 : 3]['#text'];
 			if (link && (cfg.imgRevHQ || !this.rev_img)) {
 				const linkSplit = link.split('/');
-				linkSplit.splice(linkSplit.length - 2, 1);
+				linkSplit.splice(- 2, 1);
 				link = linkSplit.join('/');
 			}
 			if (!link) {
@@ -558,7 +559,7 @@ class LfmAlbum {
 					this.retry = true;
 					return this.search(this.albumArtist, this.album, this.rev, this.fo, this.pth, this.albm);
 				}
-				return cfg.showConsoleMessagesNotFound ? $.trace('last.fm album cover: ' + this.album + ' / ' + this.albumArtist + ': not found', true) : void(0); // Regorxxx <- Tweak logging ->
+				return cfg.showConsoleMessagesNotFound ? $.trace('last.fm album cover: ' + this.album + ' / ' + this.albumArtist + ': not found', true) : void (0); // Regorxxx <- Tweak logging ->
 			}
 			timer.decelerating(true);
 			$.buildPth(this.fo);
@@ -573,15 +574,15 @@ class LfmAlbum {
 class LfmTrack {
 	constructor(state_callback) {
 		this.album = [];
-		this.artist;
-		this.fo;
+		this.artist; // NOSONAR init
+		this.fo; // NOSONAR init
 		this.force = false;
 		this.func = null;
 		this.getIDs = true;
 		this.getStats = true;
 		this.length = '';
 		this.lfm_done = false;
-		this.pth;
+		this.pth; // NOSONAR init
 		this.ready_callback = state_callback;
 		this.releases = '';
 		this.retry = false;
@@ -592,7 +593,7 @@ class LfmTrack {
 			ids: {}
 		};
 		this.timer = null;
-		this.track;
+		this.track; // NOSONAR init
 		this.wiki = '';
 		this.xmlhttp = null;
 	}
@@ -600,15 +601,17 @@ class LfmTrack {
 	onStateChange() {
 		if (this.xmlhttp != null && this.func != null)
 			if (this.xmlhttp.readyState == 4) {
-				clearTimeout(this.timer);
-				this.timer = null;
+				if (this.timer) {
+					clearTimeout(this.timer);
+					this.timer = null;
+				}
 				if (this.xmlhttp.status == 200) this.func();
 				else {
 					if (this.getStats) {
 						this.getStats = false;
 						return this.search(this.artist, this.track, this.fo, this.pth, this.force);
 					}
-					if (this.lfm_done) this.revSave(this.releases || this.stats.length ? false : true);
+					if (this.lfm_done) this.revSave(!(this.releases || this.stats.length));
 				}
 			}
 	}
@@ -620,19 +623,7 @@ class LfmTrack {
 		this.fo = p_fo;
 		this.pth = p_pth;
 		this.force = p_force;
-		if (!this.lfm_done) {
-			if (!this.getStats) {
-				URL = server.url.lfm;
-				if (!server.lfm.def_EN && !this.retry) URL += '&lang=' + cfg.language.toLowerCase();
-				URL += '&method=track.getInfo&artist=' + encodeURIComponent(this.artist) + '&track=' + encodeURIComponent(this.track) + '&autocorrect=' + server.auto_corr;
-			} else {
-				this.text = $.jsonParse(this.pth, false, 'file-utf8'); // Regorxxx <- Force UTF-8 ->
-				if (!this.text) this.text = {
-					ids: {}
-				}
-				URL = 'https://' + server.lfm.server + '/music/' + encodeURIComponent(this.artist) + '/_/' + encodeURIComponent(this.track);
-			}
-		} else {
+		if (this.lfm_done) {
 			if (this.text[this.track] && this.text[this.track].wiki && !this.force) {
 				this.wiki = this.text[this.track].wiki;
 				if (this.text[this.track].s) this.src = this.text[this.track].s;
@@ -644,6 +635,18 @@ class LfmTrack {
 				this.getIDs = false;
 				URL = server.url.lfm_sf + this.text.ids[server.tidy(this.track)];
 			} else return this.revSave();
+		} else {
+			if (this.getStats) {
+				this.text = $.jsonParse(this.pth, false, 'file-utf8'); // Regorxxx <- Force UTF-8 ->
+				if (!this.text) this.text = {
+					ids: {}
+				}
+				URL = 'https://' + server.lfm.server + '/music/' + encodeURIComponent(this.artist) + '/_/' + encodeURIComponent(this.track);
+			} else {
+				URL = server.url.lfm;
+				if (!server.lfm.def_EN && !this.retry) URL += '&lang=' + cfg.language.toLowerCase();
+				URL += '&method=track.getInfo&artist=' + encodeURIComponent(this.artist) + '&track=' + encodeURIComponent(this.track) + '&autocorrect=' + server.auto_corr;
+			}
 		}
 		this.func = null;
 		this.xmlhttp = XMLHttpRequest(cfg.useUtilsLastfm); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
@@ -668,32 +671,42 @@ class LfmTrack {
 	}
 
 	analyse() {
-		if (!this.lfm_done) {
-			if (!this.getStats) {
-				this.wiki = $.jsonParse(this.xmlhttp.responseText, '', 'get', 'track.wiki.content');
-				if (this.wiki) {
-					this.wiki = this.wiki.replace(/<[^>]+>/ig, '');
-					const f = this.wiki.indexOf(' Read more on Last.fm');
-					if (f != -1) this.wiki = this.wiki.slice(0, f);
-					this.wiki = this.wiki.replace(/\n/g, '\r\n').replace(/(\r\n)(\r\n)+/g, '\r\n\r\n').replace(/\[edit\]\s*$/i, '').trim();
-				}
-				const tags = $.jsonParse(this.xmlhttp.responseText, [], 'get', 'track.toptags.tag');
-				this.tags = tags.map( v => $.titlecase(v.name));
-				this.tags.length = Math.min(5, this.tags.length);
-				this.length = this.convertDuration($.jsonParse(this.xmlhttp.responseText, '', 'get', 'track.duration'));
-				if (!this.wiki) {
-					if (server.langFallback && !this.retry) {
-						this.retry = true;
-						return this.search(this.artist, this.track, this.fo, this.pth, this.force);
-					}
-					if (!this.lfm_done && (cfg.language == 'EN' || server.langFallback)) {
-						this.lfm_done = true;
-						return this.search(this.artist, this.track, this.fo, this.pth, this.force);
-					}
-					if (!this.releases && !this.stats.length) return this.revSave(true);
-				} else this.src = 1;
-				this.revSave();
+		if (this.lfm_done) {
+			doc.open();
+			const div = doc.createElement('div');
+			div.innerHTML = this.xmlhttp.responseText;
+			if (this.getIDs) {
+				this.text.ids = {}
+				$.htmlParse(div.getElementsByTagName('li'), false, false, v => {
+					const a = v.getElementsByTagName('a');
+					if (a.length && a[0].href && a[0].href.includes('/facts/')) this.text.ids[server.tidy(a[0].innerText)] = a[0].href.replace('about:/', '');
+				});
+				this.text.ids['ids_update'] = Date.now();
+				doc.close();
+				this.getIDs = false;
+				this.search(this.artist, this.track, this.fo, this.pth, this.force);
 			} else {
+				let j = 0;
+				div.innerHTML = this.xmlhttp.responseText;
+				$.htmlParse(div.getElementsByTagName('div'), 'className', 'inner', v => {
+					let tx = v.innerText;
+					if (tx && tx.includes(' >>')) tx = tx.split(' >>')[0];
+					if (tx) {
+						if (j) {this.wiki += '\r\n\r\n' + tx;}
+						else {this.wiki = tx;}
+						j++;
+					}
+				});
+				this.wiki = this.wiki.trim();
+				doc.close();
+				if (this.wiki) {this.src = 2;} 
+				else {
+					if (!this.releases && !this.stats.length) return this.revSave(true);
+				}
+				this.revSave();
+			}
+		} else {
+			if (this.getStats) {
 				doc.open();
 				const counts = ['', ''];
 				const div = doc.createElement('div');
@@ -733,11 +746,11 @@ class LfmTrack {
 				doc.close();
 				if (from && this.album.length) {
 					this.album = [...new Set(this.album)].join('\u200b, ');
-					
+
 					this.releases += from + '\u200b: ' + this.album;
 				}
 				if (feat) {
-					const rel = feat != '1' ? 'releases' : 'release';
+					const rel = feat == '1' ? 'release' : 'releases';
 					feat = ` \u200band ${feat} other ${rel}`;
 					this.releases += feat;
 				}
@@ -745,39 +758,31 @@ class LfmTrack {
 				if (scrobbles[1].length && counts[1].length || scrobbles[0].length && counts[0].length) this.stats += ('Last.fm: ' + (counts[1].length ? scrobbles[1] + ' ' + counts[1] + '; ' : '') + (counts[0].length ? scrobbles[0] + ' ' + counts[0] : ''));
 				this.getStats = false;
 				return this.search(this.artist, this.track, this.fo, this.pth, this.force);
-			}
-		} else {
-			doc.open();
-			const div = doc.createElement('div');
-			div.innerHTML = this.xmlhttp.responseText;
-			if (!this.getIDs) {
-				let j = 0;
-				div.innerHTML = this.xmlhttp.responseText;
-				$.htmlParse(div.getElementsByTagName('div'), 'className', 'inner', v => {
-					let tx = v.innerText;
-					if (tx && tx.includes(' >>')) tx = tx.split(' >>')[0];
-					if (tx) {
-						if (!j) this.wiki = tx;
-						else this.wiki += '\r\n\r\n' + tx;
-						j++;
-					}
-				});
-				this.wiki = this.wiki.trim();
-				doc.close();
-				if (!this.wiki) {
-					if (!this.releases && !this.stats.length) return this.revSave(true);
-				} else this.src = 2;
-				this.revSave();
 			} else {
-				this.text.ids = {}
-				$.htmlParse(div.getElementsByTagName('li'), false, false, v => {
-					const a = v.getElementsByTagName('a');
-					if (a.length && a[0].href && a[0].href.includes('/facts/')) this.text.ids[server.tidy(a[0].innerText)] = a[0].href.replace('about:/', '');
-				});
-				this.text.ids['ids_update'] = Date.now();
-				doc.close();
-				this.getIDs = false;
-				this.search(this.artist, this.track, this.fo, this.pth, this.force);
+				this.wiki = $.jsonParse(this.xmlhttp.responseText, '', 'get', 'track.wiki.content');
+				if (this.wiki) {
+					this.wiki = this.wiki.replace(/<[^>]+>/ig, '');
+					const f = this.wiki.indexOf(' Read more on Last.fm');
+					if (f != -1) this.wiki = this.wiki.slice(0, f);
+					this.wiki = this.wiki.replace(/\n/g, '\r\n').replace(/(\r\n)(\r\n)+/g, '\r\n\r\n').replace(/\[edit\]\s*$/i, '').trim();
+				}
+				const tags = $.jsonParse(this.xmlhttp.responseText, [], 'get', 'track.toptags.tag');
+				this.tags = tags.map(v => $.titlecase(v.name));
+				this.tags.length = Math.min(5, this.tags.length);
+				this.length = this.convertDuration($.jsonParse(this.xmlhttp.responseText, '', 'get', 'track.duration'));
+				if (this.wiki) {this.src = 1;} 
+				else {
+					if (server.langFallback && !this.retry) {
+						this.retry = true;
+						return this.search(this.artist, this.track, this.fo, this.pth, this.force);
+					}
+					if (!this.lfm_done && (cfg.language == 'EN' || server.langFallback)) {
+						this.lfm_done = true;
+						return this.search(this.artist, this.track, this.fo, this.pth, this.force);
+					}
+					if (!this.releases && !this.stats.length) return this.revSave(true);
+				}
+				this.revSave();
 			}
 		}
 	}
@@ -788,9 +793,9 @@ class LfmTrack {
 		const convert = (x, sec) => {
 			return x || sec ? (x < 10 && sec ? `0${x}` : sec ? `${x}` : `${x}:`) : '';
 		}
-		return convert(parseInt(duration / (60*60))) +
-		convert(parseInt(duration / 60 % 60)) +
-		convert(duration % 60, true)
+		return convert(Number.parseInt(duration / (60 * 60))) +
+			convert(Number.parseInt(duration / 60 % 60)) +
+			convert(duration % 60, true)
 	}
 
 	revSave(ret) {
@@ -823,14 +828,14 @@ class LfmTrack {
 
 class LfmSimilarArtists {
 	constructor(state_callback, on_search_done_callback) {
-		this.artist;
-		this.done;
-		this.fn_sim;
+		this.artist; // NOSONAR init
+		this.done; // NOSONAR init
+		this.fn_sim; // NOSONAR init
 		this.func = null;
-		this.handles;
-		this.lmt;
+		this.handles; // NOSONAR init
+		this.lmt;// NOSONAR init 
 		this.on_search_done_callback = on_search_done_callback;
-		this.pth_sim;
+		this.pth_sim; // NOSONAR init
 		this.ready_callback = state_callback;
 		this.retry = false;
 		this.xmlhttp = null;
@@ -919,7 +924,7 @@ class LfmSimilarArtists {
 
 class LfmTopAlbums {
 	constructor(state_callback, on_search_done_callback) {
-		this.artist;
+		this.artist; // NOSONAR init
 		this.func = null;
 		this.on_search_done_callback = on_search_done_callback;
 		this.ready_callback = state_callback;
@@ -981,8 +986,10 @@ class DldLastfmGenresWhitelist {
 	onStateChange() {
 		if (this.xmlhttp != null && this.func != null)
 			if (this.xmlhttp.readyState == 4) {
-				clearTimeout(this.timer);
-				this.timer = null;
+				if (this.timer) {
+					clearTimeout(this.timer);
+					this.timer = null;
+				}
 				if (this.xmlhttp.status == 200) this.func();
 				else $.trace('unable to update last.fm genres whitelist' + ' Status error: ' + this.xmlhttp.status, true);
 			}
@@ -1011,9 +1018,9 @@ class DldLastfmGenresWhitelist {
 		div.innerHTML = this.xmlhttp.responseText;
 		const a = div.getElementsByTagName('a');
 		let genres = [];
-		for (let i = 0; i < a.length; i++) {
-			if (a[i].href.includes('/genre/')) {
-				genres.push(a[i].innerText.trim());
+		for (const element of a) {
+			if (element.href.includes('/genre/')) {
+				genres.push(element.innerText.trim());
 			}
 		}
 

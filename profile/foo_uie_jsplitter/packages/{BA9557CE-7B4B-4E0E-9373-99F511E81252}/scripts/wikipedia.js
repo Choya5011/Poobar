@@ -1,18 +1,19 @@
 ﻿'use strict';
+//24/04/2026
 
 class DldWikipedia {
 	constructor(state_callback) {
 		this.alias = '';
 		this.alwaysCheckArtistInWiki = true;
-		this.album;
+		this.album; // NOSONAR init
 		this.ar_mbid = '';
 		this.aridType = 0;
-		this.artist;
+		this.artist; // NOSONAR init
 		this.artistValidated = false;
 		this.fallBackDone = false;
-		this.fo;
+		this.fo; // NOSONAR init
 		this.focus = false;
-		this.force;
+		this.force; // NOSONAR init
 		this.func = null;
 		this.genres = [];
 		this.init = true;
@@ -21,9 +22,9 @@ class DldWikipedia {
 		this.lookUpComp = false;
 		this.name = '';
 		this.offset = 0;
-		this.pth;		
+		this.pth; // NOSONAR init
 		this.ready_callback = state_callback;
-		this.recording;
+		this.recording; // NOSONAR init
 		this.related_artist = '';
 		this.releases = 0;
 		this.rg_mbid = '';
@@ -32,8 +33,8 @@ class DldWikipedia {
 		this.site = cfg.language.toLowerCase();
 		this.tagChecked = false;
 		this.timer = null;
-		this.title;
-		this.type;
+		this.title; // NOSONAR init
+		this.type; // NOSONAR init
 		this.user_mbid = false
 		this.wiki = '';
 		this.wikidata = '';
@@ -58,8 +59,10 @@ class DldWikipedia {
 	onStateChange() {
 		if (this.xmlhttp != null && this.func != null)
 			if (this.xmlhttp.readyState == 4) {
-				clearTimeout(this.timer);
-				this.timer = null;
+				if (this.timer) {
+					clearTimeout(this.timer);
+					this.timer = null;
+				}
 				if (this.xmlhttp.status == 200) this.func();
 				else {
 					this.save();
@@ -107,7 +110,7 @@ class DldWikipedia {
 
 		this.func = null;
 		this.xmlhttp = XMLHttpRequest(cfg.useUtilsWiki); // Regorxxx <- Http Requests when utils.HTTPRequestAsync is available ->
-		
+
 		switch (this.searchItem) {
 			case 0:
 				if (this.ar_mbid) return this.search(1);
@@ -142,7 +145,7 @@ class DldWikipedia {
 				let params = '';
 				if (this.type == 1 || this.type == 3) params = ' AND arid:' + this.ar_mbid + ' AND ' + (this.type == 1 ? '(primarytype:Album OR primarytype:EP)' : 'primarytype:Single');
 				const type = this.type == 2 || this.type == 4 ? 'work' : 'release-group';
-				URL = server.url.mb + type + '?query='+ encodeURIComponent($.regexEscape(this.title.toLowerCase()) + params) + '&fmt=json';
+				URL = server.url.mb + type + '?query=' + encodeURIComponent($.regexEscape(this.title.toLowerCase()) + params) + '&fmt=json';
 				break;
 			}
 			case 3:
@@ -185,14 +188,14 @@ class DldWikipedia {
 			case 0: // getArtistMbid
 				switch (this.aridType) {
 					case 0: case 1: { // recording or release-group match
-						const data = $.jsonParse(this.xmlhttp.responseText, [], 'get', !this.aridType ? 'recordings' : 'release-groups');
+						const data = $.jsonParse(this.xmlhttp.responseText, [], 'get', this.aridType ? 'release-groups' : 'recordings');
 						if (!data.length) {
 							this.aridType = !this.aridType && this.album ? 1 : 2;
 							return this.search(0);
 						}
 						const list = [];
 						data.forEach(v => {
-							const i = server.match(this.artist, !this.aridType ? this.recording : this.album, [{artist: this.artist, title: v.title}], this.type != 2 ? (!this.aridType ? 'song' : 'album') : 'composition', true, 80);
+							const i = server.match(this.artist, this.aridType ? this.album : this.recording, [{ artist: this.artist, title: v.title }], this.type == 2 ? 'composition' : (this.aridType ? 'album' : 'song'), true, 80);
 							if (i != -1) list.push(v);
 						});
 						const artist = $.strip(this.artist);
@@ -204,7 +207,7 @@ class DldWikipedia {
 									return true;
 								}
 							});
-						});	
+						});
 						list.some(v => {
 							if (this.ar_mbid) return true;
 							v['artist-credit'].some(w => {
@@ -254,20 +257,20 @@ class DldWikipedia {
 								if (v.aliases) {
 									v.aliases.forEach(w => {
 										if (artist == $.strip(w.name)) {
-											aliases.push({name: w.name, id: v.id});
+											aliases.push({ name: w.name, id: v.id });
 										}
 									});
 								}
-							});	
+							});
 							if (aliases.length == 1 || this.type == 2) {
 								server.artistMbid[this.artist] = this.ar_mbid = aliases[0].id;
 								this.alias = aliases[0].name;
 							}
-							
+
 						}
 						if (!this.ar_mbid) {
 							if (this.doFallbackSearch()) return; // type 1-4
-							if (this.type || !$.file(this.pth)) return $.trace('wikipedia: ' + this.artist + (items.length > 1 || aliases.length > 1 ? ': unable to disambiguate multiple artists of same name: discriminators' + (!this.lookUpArt ? ', album name or track title, not matched' : ' N/A for menu look ups') : ': name not matched at musicbrainz'), true); // type 0 only
+							if (this.type || !$.file(this.pth)) return $.trace('wikipedia: ' + this.artist + (items.length > 1 || aliases.length > 1 ? ': unable to disambiguate multiple artists of same name: discriminators' + (this.lookUpArt ? ' N/A for menu look ups' : ', album name or track title, not matched') : ': name not matched at musicbrainz'), true); // type 0 only
 						}
 						return this.search(1);
 					}
@@ -276,13 +279,13 @@ class DldWikipedia {
 			case 1: { // extractMbArtistLinks
 				let data;
 				data = $.jsonParse(this.xmlhttp.responseText, []);
-				this.related_artist = data.name != this.artist ? data.name : ''; // name could differ if related_artist or tag mbid; needed for direct en wikipedia validation
+				this.related_artist = data.name == this.artist ? '' : data.name; // name could differ if related_artist or tag mbid; needed for direct en wikipedia validation
 				if (!this.type) {
 					this.genres = data['genres'].filter(v => v.count > 0).sort((a, b) => b.count - a.count);
 					$.take(this.genres, 5);
 					this.genres = this.genres.map(v => $.titlecase(v.name));
 				}
-				
+
 				let countryCode = '';
 				['area.iso-3166-1-codes.0', 'area.iso-3166-2-codes.0', 'begin-area.iso-3166-1-codes.0', 'begin-area.iso-3166-2-codes.0'].some(v => countryCode = $.jsonParse(this.xmlhttp.responseText, '', 'get', v));
 				this.saveCountryCode(countryCode, this.force);
@@ -297,14 +300,16 @@ class DldWikipedia {
 				});
 				if (wikidataCount == 1) {
 					data.some(v => {
-						if (v.type == 'wikidata') { 
-							return this.wikidata = v.url.resource;
+						if (v.type == 'wikidata') {
+							this.wikidata = v.url.resource;
+							return this.wikidata;
 						}
 					});
 				} else if (wikidataCount > 1) {
 					data.some(v => {
-							if (v.type == 'wikidata' && (!v['source-credit'] || $.strip(v['source-credit']).includes($.strip(this.artist)))) {
-							return this.wikidata = v.url.resource;
+						if (v.type == 'wikidata' && (!v['source-credit'] || $.strip(v['source-credit']).includes($.strip(this.artist)))) {
+							this.wikidata = v.url.resource;
+							return this.wikidata;
 						}
 					});
 				}
@@ -314,12 +319,15 @@ class DldWikipedia {
 					code: this.wikidata
 				}
 				if (this.wikidata) {
-					return this.search(!this.type ? 4 : 2);
+					return this.search(this.type ? 2 : 4);
 				}
 				let wikidata = '';
 				if (!this.type && cfg.language == 'EN') {
 					data.some(v => {
-						if (v.type == 'wikipedia' && v.url.resource && v.url.resource.includes('//en.') && !v.url.resource.includes(`disambiguation`)) return wikidata = v.url.resource;
+						if (v.type == 'wikipedia' && v.url.resource && v.url.resource.includes('//en.') && !v.url.resource.includes(`disambiguation`)) {
+							wikidata = v.url.resource
+							return wikidata;
+						};
 					});
 					this.wikititle = wikidata.split('/').pop();
 					if (this.wikititle) {
@@ -336,7 +344,7 @@ class DldWikipedia {
 				const filteredList = []; // check work disambiguation
 				const ar = $.strip(this.related_artist || this.artist);
 				data.forEach(v => {
-					list.push({artist: this.artist, date: Date.parse(v['first-release-date']) || 0, rg_mbid: v.id, title: v.title, type: v['primary-type']});
+					list.push({ artist: this.artist, date: Date.parse(v['first-release-date']) || 0, rg_mbid: v.id, title: v.title, type: v['primary-type'] });
 					if (this.type == 2 || this.type == 4) {
 						const name = v.relations;
 						let disamb = '';
@@ -345,7 +353,7 @@ class DldWikipedia {
 							nm = name[0].artist.name || '';
 							disamb = name[0].artist.disambiguation || '';
 						}
-						if (levenshtein.get($.strip(nm), ar) > 0.8 || levenshtein.get($.strip(disamb), ar) > 0.8) filteredList.push({artist: this.artist, date: Date.parse(v['first-release-date']) || 0, rg_mbid: v.id, title: v.title});
+						if (levenshtein.get($.strip(nm), ar) > 0.8 || levenshtein.get($.strip(disamb), ar) > 0.8) filteredList.push({ artist: this.artist, date: Date.parse(v['first-release-date']) || 0, rg_mbid: v.id, title: v.title });
 					}
 				});
 				$.sort(list, 'date', 'num');
@@ -390,7 +398,7 @@ class DldWikipedia {
 					if (v.type == 'wikidata') {
 						const newId = v.url.resource.split('/').pop();
 						const curId = this.wikidata.replace('Q', '');
-						if (!this.wikidata || parseInt(newId.replace('Q', '')) < parseInt(curId)) this.wikidata = newId;
+						if (!this.wikidata || Number.parseInt(newId.replace('Q', '')) < Number.parseInt(curId)) this.wikidata = newId;
 					}
 				});
 				this.wikidata = this.wikidata.split('/').pop();
@@ -401,7 +409,10 @@ class DldWikipedia {
 				this.wikititle = '';
 				if (cfg.language == 'EN') {
 					data.some(v => {
-						if (v.type == 'wikipedia' && v.url.resource && v.url.resource.includes('//en.') && !v.url.resource.includes(`disambiguation`)) return this.wikidata = v.url.resource;
+						if (v.type == 'wikipedia' && v.url.resource && v.url.resource.includes('//en.') && !v.url.resource.includes(`disambiguation`)) {
+							this.wikidata = v.url.resource;
+							return this.wikidata;
+						}
 					});
 					this.wikititle = this.wikidata.split('/').pop();
 					if (this.wikititle) {
@@ -421,7 +432,7 @@ class DldWikipedia {
 				this.save();
 				break;
 			}
-			case 4:	{ // parseWikidata
+			case 4: { // parseWikidata
 				const data = $.jsonParse(this.xmlhttp.responseText, {});
 				if (this.alwaysCheckArtistInWiki && this.type || !this.artistValidated && (this.type == 2 || this.type == 4 || this.fallBackDone)) this.artistValidated = this.wikidataArtist ? this.xmlhttp.responseText.includes(`${this.wikidataArtist}`) : false;
 				const wikititles = server.getObjKeyValue(data, 'title');
@@ -458,11 +469,11 @@ class DldWikipedia {
 				this.save();
 				break;
 			}
-			case 5:	{ // parseWikipediaResponse
+			case 5: { // parseWikipediaResponse
 				const data = $.jsonParse(this.xmlhttp.responseText, {});
 				this.wiki = server.getObjKeyValue(data, 'extract')[0] || '';
 				const needArtistCheck = this.alwaysCheckArtistInWiki && this.type || this.type == 2 || this.type == 4 || this.fallBackDone;
-				
+
 				if (!this.artistValidated && needArtistCheck) {
 					this.artistValidated = this.includesArtist(this.wiki);
 				}
@@ -484,7 +495,7 @@ class DldWikipedia {
 				if (!this.offset) this.releases = $.jsonParse(this.xmlhttp.responseText, 0, 'get', 'work-count');
 				let list = [];
 				response.forEach(v => {
-					list.push({artist: this.artist, rg_mbid: v.id, title: v.title});
+					list.push({ artist: this.artist, rg_mbid: v.id, title: v.title });
 				});
 				const i = server.match(this.artist, this.title, list, ['', 'review', 'composition', 'song', 'song'][this.type], true);
 				if (i == -1) {
@@ -493,7 +504,7 @@ class DldWikipedia {
 						return this.search(6);
 					} else {
 						if (this.doFallbackSearch()) return;
-						return cfg.showConsoleMessagesNotFound ? $.trace('wikipedia: ' + this.name + ': not found', true) : void(0);  // Regorxxx <- Tweak logging ->
+						return cfg.showConsoleMessagesNotFound ? $.trace('wikipedia: ' + this.name + ': not found', true) : void (0);  // Regorxxx <- Tweak logging ->
 					}
 				}
 				this.rg_mbid = list[i].rg_mbid;
@@ -510,8 +521,8 @@ class DldWikipedia {
 				data.forEach(v => {
 					const snippet = this.tidy(v.snippet);
 					const titlesnippet = this.tidy(v.titlesnippet);
-					if (this.includesArtist(snippet) && RegExp(disambig, 'i').test(snippet)) list.push({artist: this.artist, id: v.title, title: titlesnippet});
-					if (!this.wikidataFirst && RegExp(disambig, 'i').test(snippet))  {
+					if (this.includesArtist(snippet) && new RegExp(disambig, 'i').test(snippet)) list.push({ artist: this.artist, id: v.title, title: titlesnippet });
+					if (!this.wikidataFirst && new RegExp(disambig, 'i').test(snippet)) {
 						this.wikidataFirst = v.title;
 					}
 				});
@@ -527,12 +538,12 @@ class DldWikipedia {
 				this.save();
 				break;
 			}
-			case 8: {			
+			case 8: {
 				const json = $.jsonParse(this.xmlhttp.responseText, {}, 'get', 'query.pages');
 				const key = Object.keys(json);
-				if (!key.length) {this.save(); break;}
+				if (!key.length) { this.save(); break; }
 				let source = infobox.cleanText($.getProp(json, `${key[0]}.revisions.0.slots.main.*`, ''), this.site);
-				if (!source || /#REDIRECT/i.test(source)) {this.save(); break;}
+				if (!source || /#REDIRECT/i.test(source)) { this.save(); break; }
 				this.info = infobox.getValues(this.type, source, this.site);
 				this.save();
 				break;
@@ -573,19 +584,19 @@ class DldWikipedia {
 			.substring(0, next ? next.start : undefined)
 			.trim();
 
-		const sections = [{title: '', content}];
+		const sections = [{ title: '', content }];
 		headings.forEach((v, i) => {
 			next = headings[i + 1];
 			content = source
 				.substring(v.end, next ? next.start : undefined)
 				.trim();
-				if (content.length > 150 && !RegExp(disallowed, 'i').test(v.title)) sections.push({title: v.title + '\r\n\r\n', content});
+			if (content.length > 150 && !new RegExp(disallowed, 'i').test(v.title)) sections.push({ title: v.title + '\r\n\r\n', content });
 		});
-		
+
 		let text = '';
-		sections.forEach(v=> {
-			text += (text ? '\r\n\r\n' : '') + v.title + this.tidyWiki(v.content, this.site == 'en'); 
-		}) 
+		sections.forEach(v => {
+			text += (text ? '\r\n\r\n' : '') + v.title + this.tidyWiki(v.content, this.site == 'en');
+		})
 
 		this.wiki = text;
 	}
@@ -640,7 +651,7 @@ class DldWikipedia {
 		if (this.artist == 'Various Artists') arr.push('compilation');
 		return arr.some(v => {
 			const w = $.regexEscape(v);
-			return w && RegExp(`\\b${w}([\\s.,;:!?'"]|$)`, 'i').test(text);
+			return w && new RegExp(`\\b${w}([\\s.,;:!?'"]|$)`, 'i').test(text);
 		}); // handle trailing accented etc
 	}
 
@@ -672,7 +683,7 @@ class DldWikipedia {
 		if (this.type == 1) {
 			this.wiki = txt.add([this.info.released], this.wiki);
 		}
-		
+
 		if (this.type > 0 && this.type < 3) {
 			this.wiki = txt.add([this.info.length], this.wiki);
 		}
@@ -685,7 +696,7 @@ class DldWikipedia {
 			}
 			if (this.fo) {
 				$.buildPth(this.fo);
-				
+
 				this.wiki = txt.add([`Wikipedia language: ${this.site.toUpperCase()}`], this.wiki);
 				$.save(this.pth, this.wiki, true);
 				server.res();
@@ -735,47 +746,47 @@ class DldWikipedia {
 		const tidyFullStop = /([^A-Z.\s])\.([^a-z\s\d.'"\u201d,;/)[\]])/g;
 		if (en) n = n.replace(tidyFullStop, '$1.\r\n\r\n$2').replace(/t\.\r\n\r\nA.T.u./g, 't.A.T.u.');
 		else n = n.replace(tidyFullStop, '$1. $2');
-		return n.trim();		
+		return n.trim();
 	}
 }
 
 class Infobox {
 	constructor() {
-		this.date = new Intl.DateTimeFormat('en-GB', {year: 'numeric', month: 'long', day: 'numeric'});
-		this.mm_yyyy = new Intl.DateTimeFormat('en-GB', {year: 'numeric', month: 'long'});
+		this.date = new Intl.DateTimeFormat('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+		this.mm_yyyy = new Intl.DateTimeFormat('en-GB', { year: 'numeric', month: 'long' });
 		this.months = '(January|February|March|April|May|June|July|August|September|October|November|December)'
-		this.yyyy = new Intl.DateTimeFormat('en-GB', {year: 'numeric'});
+		this.yyyy = new Intl.DateTimeFormat('en-GB', { year: 'numeric' });
 	}
 
 	checkDateFormat(date) {
-			return date.replace(RegExp(`(${this.months})\\s+(\\d+),?\\s+((19|20)\\d{2})`, 'g'), '$3 $1 $4');
+		return date.replace(new RegExp(`(${this.months})\\s+(\\d+),?\\s+((19|20)\\d{2})`, 'g'), '$3 $1 $4');
 	}
 
 	cleanLists(n) {
 		return n.replace(/{{Flat\s?list\|/i, '')
-		.replace(/{{hlist\|/i, '')
-		.replace(/{{plain\s?list\|/i, '')
-		.replace(/{{ubl\|/i, '')
-		.replace(/{{unbulleted\s?list\|/i, '')
-		.replace(/{{flagicon\|([^}]+)}}/gi, '$1, ')
-		.replace(/\s*\*\s*/g, ', ')
-		.replace(/}}}{{/g, '}}, {{')
-		.replace(/{{start\s?date\|/gi, '')
-		.replace(/{{end\s?date\|/gi, '')
-		.replace(/df=yes\|/i, '')
-		.replace(/df=y\|/i, '');
+			.replace(/{{hlist\|/i, '')
+			.replace(/{{plain\s?list\|/i, '')
+			.replace(/{{ubl\|/i, '')
+			.replace(/{{unbulleted\s?list\|/i, '')
+			.replace(/{{flagicon\|([^}]+)}}/gi, '$1, ')
+			.replace(/\s*\*\s*/g, ', ')
+			.replace(/}}}{{/g, '}}, {{')
+			.replace(/{{start\s?date\|/gi, '')
+			.replace(/{{end\s?date\|/gi, '')
+			.replace(/df=yes\|/i, '')
+			.replace(/df=y\|/i, '');
 	}
-	
+
 	cleanStr(n) {
 		n = this.cleanLists(n)
-		.replace(/\]\]\s+\[\[/g, ']], [[')
-		.replace(/\[\[[^\]]+?\|/g, '')
-		.replace(/[[\]]/g, '')
-		.replace(/{{-}}/g, '')
-		.replace(/{{ref\|a}}/g, '')
-		.replace(/{{refn/g, '')
-		.replace(/\(see below\)/g, '')
-		.replace(/[{}]/g, '');
+			.replace(/\]\]\s+\[\[/g, ']], [[')
+			.replace(/\[\[[^\]]+?\|/g, '')
+			.replace(/[[\]]/g, '')
+			.replace(/{{-}}/g, '')
+			.replace(/{{ref\|a}}/g, '')
+			.replace(/{{refn/g, '')
+			.replace(/\(see below\)/g, '')
+			.replace(/[{}]/g, '');
 		return this.tidyPunctuation(n);
 	}
 
@@ -791,7 +802,7 @@ class Infobox {
 
 		const globalDuration1 = /{{Duration\|((\d+:)?\d+:\d+)}}/gi;
 		const globalDuration2 = /{{Duration\|(h=)?(\d+)?\|?m=(\d+)\|s=(\d+)}}/gi;
-		
+
 		if (duration1.test(n)) return {
 			pattern: globalDuration1,
 			replacer: '$1'
@@ -828,12 +839,12 @@ class Infobox {
 		let n = [];
 		let m = this.find(item, list, site);
 		if (!m) return n;
-		
+
 		m.forEach(v => {
 			const f = [];
 			const lc = v.toLowerCase();
 			['composer', 'lyricist', 'producer'].forEach(v => {
-				const ix = RegExp(`[^\\(]${v}`).test(lc) ? lc.indexOf(v) : -1;
+				const ix = new RegExp(`[^\\(]${v}`).test(lc) ? lc.indexOf(v) : -1;
 				if (ix != -1) f.push(ix);
 			});
 			const i = f.length ? Math.min(...f) : -1;
@@ -849,7 +860,7 @@ class Infobox {
 		if (!m) return n;
 		if (site == 'es') m.length = 1;
 		if (site == 'it' && m.length > 1) return m.map(v => $.titlecase(v));
-			
+
 		const instances = this.instancesPattern(m[0]);
 
 		(m[0].match(instances.global) || []).forEach(v => {
@@ -900,13 +911,13 @@ class Infobox {
 			value = value.replace(/\|[^=|]+=($|\}\})/, '');
 		}
 
-		if (/\}\}$/.test(value)) { // handle infobox w/o wrapper
+		if (value.endsWith("}}")) { // handle infobox w/o wrapper
 			const leadingCount = value.split('{').length - 1;
 			const trailingCount = value.split('}').length - 1;
 			if (leadingCount != trailingCount) value = value.replace(/\}\}$/, '');
 		}
 
-		return {[key]: value};
+		return { [key]: value };
 	}
 
 	getLength(item, list) {
@@ -917,15 +928,15 @@ class Infobox {
 		const duration = this.durationPattern(len[0]);
 
 		if (duration) {
-			n  = 
-			this.cleanLists(len[0])
-			.replace(duration.pattern, duration.replacer).replace(/^:/g, '').replace(/([^\d]):/g, '$1')
-			.replace(/\[\[[^\]]+?\|/g, '').replace(/[[\]]/g, '').replace(/[{}]/g, '')
-			.replace(/\|/g, ', ')
-			.replace(/^,/, '')
-			.replace(/,(?=\S)/g, ', ')
-			.replace(/:(\d([^\d]|$))/g, ':0$1').replace(/(^|[^\d])0(\d)(:\d\d$)/g, '$2$3')
-			.trim();
+			n =
+				this.cleanLists(len[0])
+					.replace(duration.pattern, duration.replacer).replace(/^:/g, '').replace(/([^\d]):/g, '$1')
+					.replace(/\[\[[^\]]+?\|/g, '').replace(/[[\]]/g, '').replace(/[{}]/g, '')
+					.replace(/\|/g, ', ')
+					.replace(/^,/, '')
+					.replace(/,(?=\S)/g, ', ')
+					.replace(/:(\d([^\d]|$))/g, ':0$1').replace(/(^|[^\d])0(\d)(:\d\d$)/g, '$2$3')
+					.trim();
 			if (this.isValidLength(n)) return this.tidyPunctuation(n);
 		}
 
@@ -1004,7 +1015,7 @@ class Infobox {
 					return i + 2;
 				}
 				i++;
-			}    
+			}
 		}
 	}
 
@@ -1031,7 +1042,7 @@ class Infobox {
 					if (this.isValidDate(date)) {
 						d2 = ['', this.yyyy.format(date), this.mm_yyyy.format(date), this.date.format(date)][type];
 					}
-					return {date: d1, d: d2}
+					return { date: d1, d: d2 }
 				});
 				d = m[0];
 				dates.forEach((v, i) => {
@@ -1075,7 +1086,7 @@ class Infobox {
 			const bornIn = this.getStr('birth_place', list);
 			const date = this.getLifespan(list);
 			const prefix = date.born ? 'Born In: ' : 'Founded In: ';
-			
+
 			let foundedIn = '';
 			if (bornIn) {
 				o.bornIn = `Born In: ${bornIn}`;
@@ -1085,7 +1096,7 @@ class Infobox {
 				foundedIn = this.getStr('origin', list);
 			}
 			if (foundedIn) foundedIn = prefix + foundedIn;
-			
+
 			o.active = this.getYearsActive('years_active', list);
 			o.active = o.active ? `Years Active: ${o.active.replace(/\u2013/g, ' \u2013 ').replace(/\s{2}/g, '')}` : '';
 			o.end = date.end ? date.end : '';
@@ -1118,17 +1129,17 @@ class Infobox {
 	instancesPattern(n) {
 		const hlc = /{{hlist-comma\s*/i.test(n);
 		return {
-			global: !hlc ? /\[\[[^\]]+\]\]/g : /(\[\[|{{)[^\]}]+(}}|\]\])/g,
-			pattern: !hlc ? /(\[\[)([^\]]+)\]\]/ : /(\[\[|{{)([^\]}]+)(}}|\]\])/
-		}	
+			global: hlc ? /(\[\[|{{)[^\]}]+(}}|\]\])/g : /\[\[[^\]]+\]\]/g,
+			pattern: hlc ? /(\[\[|{{)([^\]}]+)(}}|\]\])/ : /(\[\[)([^\]]+)\]\]/
+		}
 	}
 
 	isValidDate(date) {
-		return !isNaN(date.getTime());
+		return !Number.isNaN(date.getTime());
 	}
-	
+
 	isFullDate(date) {
-		return RegExp(`^\\d+\\s+${this.months}\\s+(19|20)\\d{2}$`, 'i').test(date);
+		return new RegExp(`^\\d+\\s+${this.months}\\s+(19|20)\\d{2}$`, 'i').test(date);
 	}
 
 	isList(n) {
@@ -1141,7 +1152,7 @@ class Infobox {
 
 	keyValue(source) {
 		const list = {}
-		const div = source.replace(/\n/g,'').replace(/(\s*\|[^|=]+=[\s*[{])/g,'\n$1').split('\n');
+		const div = source.replace(/\n/g, '').replace(/(\s*\|[^|=]+=[\s*[{])/g, '\n$1').split('\n');
 		div.forEach(v => {
 			const pair = this.getKeyValuePairs(v, '=');
 			if (pair) Object.assign(list, pair)
@@ -1153,12 +1164,12 @@ class Infobox {
 		const infoBoxStartPattern = /{{\w*box/;
 		const startMatch = source.match(infoBoxStartPattern);
 		if (!startMatch) { // use whole source if no infobox wrapper
-			return {data: source, remainder: null};
+			return { data: source, remainder: null };
 		}
 		const start = source.substring(startMatch.index);
 		const outerIndex = this.getOuterIndex(start);
 		if (!outerIndex) {
-			return {data: source, remainder: null};
+			return { data: source, remainder: null };
 		}
 		const data = start.substring(0, outerIndex);
 		const remainder = source.substring(outerIndex);
@@ -1171,19 +1182,19 @@ class Infobox {
 
 	tidyPunctuation(n) {
 		return n
-		.replace(/;/g, ',')
-		.replace(/^,/, '')
-		.replace(/\|,?/g, ', ')
-		.replace(/, ,?/g, ',')
-		.replace(/,+/g, ', ')
-		.replace(/ , /g, ', ')
-		.replace(/ ?,(?=\S)/g, ', ')
-		.replace(/([^A-Z])\.$/, '$1')
-		.replace(/:,/g, ':')
-		.replace(/(\w)\(/g, '$1 (')
-		.replace(/\)(?=\w)/g, ') ')
-		.replace(/ {2,}/g,' ')
-		.trim()
-		.replace(/,$/, '') || '';
+			.replace(/;/g, ',')
+			.replace(/^,/, '')
+			.replace(/\|,?/g, ', ')
+			.replace(/, ,?/g, ',')
+			.replace(/,+/g, ', ')
+			.replace(/ , /g, ', ')
+			.replace(/ ?,(?=\S)/g, ', ')
+			.replace(/([^A-Z])\.$/, '$1')
+			.replace(/:,/g, ':')
+			.replace(/(\w)\(/g, '$1 (')
+			.replace(/\)(?=\w)/g, ') ')
+			.replace(/ {2,}/g, ' ')
+			.trim()
+			.replace(/,$/, '') || '';
 	}
 }

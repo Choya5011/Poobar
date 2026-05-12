@@ -1,4 +1,5 @@
 ﻿'use strict';
+//24/04/26
 
 class Names {
 	constructor() {
@@ -13,15 +14,17 @@ class Names {
 	}
 
 	albID(focus, n) {
-		if (!this.alb(focus)) return $.eval(cfg.tf.artist + cfg.tf.albumArtist + '%path%', focus);
-		else switch (n) {
-			case 'simple':
-				return $.eval(cfg.tf.artist + cfg.tf.albumArtist + cfg.tf.album, focus);
-			case 'stnd':
-				return $.eval(cfg.tf.albumArtist + cfg.tf.album + '%discnumber%%date%', focus);
-			case 'full':
-				return $.eval(cfg.tf.artist + cfg.tf.albumArtist + cfg.tf.album + '%discnumber%%date%', focus);
+		if (this.alb(focus)) {
+			switch (n) {
+				case 'simple':
+					return $.eval(cfg.tf.artist + cfg.tf.albumArtist + cfg.tf.album, focus);
+				case 'stnd':
+					return $.eval(cfg.tf.albumArtist + cfg.tf.album + '%discnumber%%date%', focus);
+				case 'full':
+					return $.eval(cfg.tf.artist + cfg.tf.albumArtist + cfg.tf.album + '%discnumber%%date%', focus);
+			}
 		}
+		else { return $.eval(cfg.tf.artist + cfg.tf.albumArtist + '%path%', focus); }
 	}
 
 	albm(focus, ignoreLock) {
@@ -41,11 +44,11 @@ class Names {
 	}
 
 	albumClean(n) {
-		return n.replace(/CD(\s*\d|\.0\d)|CD\s*(One|Two|Three)|Dis(c|k)\s*\d|Dis(c|k)\s*(III|II|I|One|Two|Three)\b|(Bonus\s*Track|Collector's|(Digital\s*|Super\s*|)Deluxe|Digital|Expanded|Limited|Platinum|Reissue|Special)\s*(Edition|Version)|(Bonus\s*(CD|Disc))|\d\d\w\w\s*Anniversary\s*(Expanded\s*|Re(-|)master\s*|)(Edition|Re(-|)master|Version)|((19|20)\d\d(\s*|\s*-\s*)|)(Digital(ly|)\s*|)(Re(-|)master(ed|)|Re(-|)recorded)(\s*Edition|\s*Version|)|\(Deluxe\)|\(Mono\)|\(Reissue\)|\(Revisited\)|\(Stereo\)|\(Web\)|\[Deluxe\]|\[Mono\]|\[Reissue\]|\[Revisited\]|\[Stereo\]|\[Web\]/gi, '').replace(/\(\s*\)|\[\s*\]/g, ' ').replace(/\s\s+/g, ' ').replace(/-\s*$/g, ' ').trim();
+		return n.replace(/CD(\s*\d|\.0\d)|CD\s*(One|Two|Three)|Dis[ck]\s*\d|Dis[ck]\s*(III|II|I|One|Two|Three)\b|(Bonus\s*Track|Collector's|(Digital\s*|Super\s*|)Deluxe|Digital|Expanded|Limited|Platinum|Reissue|Special)\s*(Edition|Version)|(Bonus\s*(CD|Disc))|\d\d\w\w\s*Anniversary\s*(Expanded\s*|Re(-|)master\s*|)(Edition|Re(-|)master|Version)|((19|20)\d\d(\s*|\s*-\s*)|)(Digital(ly|)\s*|)(Re(-|)master(ed|)|Re(-|)recorded)(\s*Edition|\s*Version|)|\(Deluxe\)|\(Mono\)|\(Reissue\)|\(Revisited\)|\(Stereo\)|\(Web\)|\[Deluxe\]|\[Mono\]|\[Reissue\]|\[Revisited\]|\[Stereo\]|\[Web\]/gi, '').replace(/\(\s*\)|\[\s*\]/g, ' ').replace(/\s\s+/g, ' ').replace(/-\s*$/g, ' ').trim();
 	}
 
 	albumTidy(n) {
-		return n.replace(/CD(\s*\d|\.0\d)|CD\s*(One|Two|Three)|Dis(c|k)\s*\d|Dis(c|k)\s*(III|II|I|One|Two|Three)\b/gi, '').replace(/\(\s*\)|\[\s*\]/g, ' ').replace(/\s\s+/g, ' ').replace(/-\s*$/g, ' ').trim();
+		return n.replace(/CD(\s*\d|\.0\d)|CD\s*(One|Two|Three)|Dis[ck]\s*\d|Dis[ck]\s*(III|II|I|One|Two|Three)\b/gi, '').replace(/\(\s*\)|\[\s*\]/g, ' ').replace(/\s\s+/g, ' ').replace(/-\s*$/g, ' ').trim();
 	}
 
 	artist(focus, ignoreLock) {
@@ -64,8 +67,8 @@ class Names {
 				artist = $.regexEscape($.clean(artist));
 				this.cur_artist = artist;
 			}
-			return RegExp(`^${artist + this.lfmUID}`, 'i').test(fn) || RegExp(this.lfmUID, 'i').test(fn); // Regorxxx <- Cut default download paths to avoid +256 chars ->
-		} else return RegExp(this.lfmUID, 'i').test(fn);
+			return new RegExp(`^${artist + this.lfmUID}`, 'i').test(fn) || new RegExp(this.lfmUID, 'i').test(fn); // Regorxxx <- Cut default download paths to avoid +256 chars ->
+		} else return new RegExp(this.lfmUID, 'i').test(fn);
 	}
 
 	title(focus, ignoreLock) {

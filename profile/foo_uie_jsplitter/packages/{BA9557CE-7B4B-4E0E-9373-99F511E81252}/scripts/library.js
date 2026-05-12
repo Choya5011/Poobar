@@ -1,8 +1,9 @@
 ﻿'use strict';
+//24/04/26
 
 class Library {
 	constructor() {
-		this.db_lib;
+		this.db_lib; // NOSONAR init
 		this.update = true;
 	}
 
@@ -39,7 +40,7 @@ class Library {
 				cfg.artFields.forEach((v, i) => q += (i ? ' OR ' : '') + v + ' IS ' + a);
 				const items = $.query(this.getLibItems(), q);
 				if (!items.Count) return false;
-				return !type ? true : items[0];
+				return type ? items[0] : true;
 			}
 		}
 	}

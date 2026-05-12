@@ -1,4 +1,5 @@
 ﻿'use strict';
+//24/04/26
 
 class Setting {
 	constructor(key, default_value, type) {
@@ -26,8 +27,8 @@ class Setting {
 					if (new_value !== true && new_value !== false) new_value = this.default_value;
 					break;
 				case 'num':
-					new_value = parseInt(new_value);
-					if (isNaN(new_value)) {
+					new_value = Number.parseInt(new_value);
+					if (Number.isNaN(new_value)) {
 						new_value = this.default_value;
 					}
 					break;
@@ -40,7 +41,7 @@ class Setting {
 
 class Settings {
 	constructor(name) {
-		// this.key_list = {}; debug
+		this.key_list = {}; // debug
 
 		this.cfgBaseName = name;
 		this.storageFolder = `${my_utils.packageInfo.Directories.Storage}\\`;
@@ -90,7 +91,7 @@ class Settings {
 		const update = this.checkCfg();
 		this.settingsKeys = settings.map(v => v[3]);
 		settings.forEach(v => {
-			// this.validate(v); debug
+			this.validate(v); // debug
 			this.add(v);
 		});
 		if (update) {
@@ -109,24 +110,24 @@ class Settings {
 
 	validate(item) {
 		if (!$.isArray(item) || item.length !== 4 || typeof item[3] !== 'string') {
-			throw ('invalid settings: requires array: [string, any, string, string, string]: ' + item[3]);
+			throw new Error('invalid settings: requires array: [string, any, string, string, string]: ' + item[3]);
 		}
 
 		if (item[3] === 'add') {
-			throw ('settings_id: ' + item[3] + '\nThis id is reserved');
+			throw new Error('settings_id: ' + item[3] + '\nThis id is reserved');
 		}
 
 		if (this[item[3]] != null || this[item[3] + '_internal'] != null) {
-			throw ('settings_id: ' + item[3] + '\nThis id is already occupied');
+			throw new Error('settings_id: ' + item[3] + '\nThis id is already occupied');
 		}
 
 		if (this.key_list[item[3]] != null) {
-			throw ('settings_key: ' + item[3] + '\nThis key is already occupied');
+			throw new Error('settings_key: ' + item[3] + '\nThis key is already occupied');
 		}
 	}
 
 	add(item) {
-		// this.key_list[item[3]] = 1; debug
+		this.key_list[item[3]] = 1; // debug
 		this[item[3] + '_internal'] = new Setting(item[3], item[1], item[2]);
 
 		Object.defineProperty(this, item[3], {
@@ -155,8 +156,8 @@ class Settings {
 				}
 				break;
 			case 'num':
-				saved_value = parseInt(saved_value);
-				if (isNaN(saved_value)) {
+				saved_value = Number.parseInt(saved_value);
+				if (Number.isNaN(saved_value)) {
 					this.set(key, default_value);
 					return default_value;
 				}
@@ -245,8 +246,7 @@ class Settings {
 		const timer = setInterval(() => {
 			if ($.server && i < foArr.length) {
 				let files = utils.Glob(foArr[i] + '\\*');
-				if (!files.length) try {fso.DeleteFolder(foArr[i]);} catch (e) {}
-				else {
+				if (files.length) {
 					let accessed = 0;
 						files.forEach(w => {
 							accessed = Math.max(accessed, $.lastAccessed(w));
@@ -255,6 +255,7 @@ class Settings {
 							try {fso.DeleteFolder(foArr[i]);} catch (e) {}
 						}
 				}
+				else {try {fso.DeleteFolder(foArr[i]);} catch (e) {}}
 				i++;
 			} else {
 				clearInterval(timer);
@@ -331,7 +332,8 @@ class Settings {
 		this.lang.arr.some((v, i) => {
 			if (v.toLowerCase() == this.language.toLowerCase()) {
 				this.lang.ix = i;
-				return this.lang.ok = true;
+				this.lang.ok = true;
+				return true;
 			}
 		});
 	}
@@ -403,12 +405,12 @@ class Settings {
 		const tfNames = ['%BIO_ALBUMARTIST%', '%BIO_ARTIST%', '%BIO_ALBUM%', '%BIO_TITLE%', '%BIO_ALBUM%'];
 
 		tfNames.forEach((v, i) => { // remove self
-			this.tf[tfItems[i]] = this[tfIni[i]].replace(RegExp(v, 'gi'), '');
+			this.tf[tfItems[i]] = this[tfIni[i]].replace(new RegExp(v, 'gi'), '');
 		});
 
 		this.substituteTf = n => {
 			tfNames.forEach((v, i) => {
-				n = n.replace(RegExp(v, 'gi'), this.tf[tfItems[i]]);
+				n = n.replace(new RegExp(v, 'gi'), this.tf[tfItems[i]]);
 			})
 			return n;
 		}
@@ -437,12 +439,12 @@ class Settings {
 			foWikiBio: ' [Wikipedia Biography]'
 		}
 
-		const needRevSuffix = [...new Set([this.pth.foLfmRev, this.pth.foAmRev, this.pth.foWikiRev])].length != 3;
+		const needRevSuffix = new Set([this.pth.foLfmRev, this.pth.foAmRev, this.pth.foWikiRev]).size != 3;
 		if (!needRevSuffix) {
 			this.suffix.foLfmRev = this.suffix.foAmRev = this.suffix.foWikiRev = '';
 		}
 
-		const needBioSuffix = [...new Set([this.pth.foLfmBio, this.pth.foAmBio, this.pth.foWikiBio])].length != 3;
+		const needBioSuffix = new Set([this.pth.foLfmBio, this.pth.foAmBio, this.pth.foWikiBio]).size != 3;
 		if (!needBioSuffix) {
 			this.suffix.foLfmBio = this.suffix.foAmBio = this.suffix.foWikiBio = '';
 		}
@@ -493,14 +495,14 @@ class Settings {
 			bioRevItems.forEach(v => {
 				this.sup[v] = this[v];
 				if (arr1.length == arr2.length) arr1.forEach((w, j) => {
-					this.sup[v] = this.sup[v].replace(RegExp(w, 'gi'), arr2[j]);
+					this.sup[v] = this.sup[v].replace(new RegExp(w, 'gi'), arr2[j]);
 				});
 				if (v.endsWith('Rev')) this.sup[v] = this.sup[v].replace(/%BIO_ALBUMARTIST%|%BIO_ARTIST%/gi, '%BIO_ALBUMARTIST%');
 				else this.sup[v] = this.sup[v].replace(/%BIO_ARTIST%|%BIO_ALBUMARTIST%/gi, '%BIO_ARTIST%');
 			});
 		}
 
-		const fields = n => n.replace(/\$.*?\(/gi, '').replace(/(,(|\s+)\d+)/gi, '').replace(/[,()[\]%]/gi, '|').split('|');
+		const fields = n => n.replace(/\$.*?\(/gi, '').replace(/(,(\s+|)\d+)/gi, '').replace(/[,()[\]%]/gi, '|').split('|');
 		this.albartFields = fields(this.tf.albumArtist).filter(v => v.trim());
 		this.artFields = fields(this.tf.artist).filter(v => v.trim());
 		this.albFields = fields(this.tf.album).filter(v => v.trim());
@@ -541,14 +543,14 @@ class Settings {
 			const arr2 = replace.map(v => v.trim() || 'yttm\\bio_supplemental');
 			if (arr1.length == arr2.length) {
 				n = this.foLfmBio
-				arr1.forEach((v, i) => n = n.replace(RegExp(v, 'gi'), arr2[i]));
+				arr1.forEach((v, i) => n = n.replace(new RegExp(v, 'gi'), arr2[i]));
 			} else n = 'Invalid find and replace'
 			n = n.replace(/%BIO_ARTIST%|%BIO_ALBUMARTIST%/gi, '%BIO_ARTIST%');
 		}
-		tfNames.forEach((v, i) => n = n.replace(RegExp(v, 'gi'), tf[i]));
+		tfNames.forEach((v, i) => n = n.replace(new RegExp(v, 'gi'), tf[i]));
 
 		const wildCard = /[*?]/.test(n);
-		return !wildCard ? panel.cleanPth(n, false) : panel.cleanPth(n.replace(/\*/g, '@!@').replace(/\?/g, '!@!'), false).replace(/@!@/g, '*').replace(/!@!/g, '?');
+		return wildCard ? panel.cleanPth(n.replace(/\*/g, '@!@').replace(/\?/g, '!@!'), false).replace(/@!@/g, '*').replace(/!@!/g, '?') : panel.cleanPth(n, false);
 	}
 
 	move(n) {
@@ -1094,5 +1096,5 @@ radioParser = undefined;
 
 if ($.file(cfg.radioParser)) {
 	include(cfg.radioParser);
-	isRadioStreamParser = true;
+	isRadioStreamParser = true; // NOSONAr global
 }

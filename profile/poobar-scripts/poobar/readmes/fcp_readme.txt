@@ -41,3 +41,7 @@ Queue button:
 * middle click: clear
 * select multiple tracks -> double-click then right-click: adds tracks randomly
     * combo reason: bugged/incomplete
+
+Wiki link:
+---------
+https://github.com/Choya5011/Poobar/wiki/Poobar#fluent-control-panel

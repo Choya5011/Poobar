@@ -840,6 +840,32 @@ let fb = {
 let gdi = {
 
     /**
+     * Creates a drawing brush of the specified type. The meaning of the brush's input parameters depends on its type.<br>
+     * For type == {@link module:Flags.BrushType BrushType.Solid}:<br>
+     * - param1: brush colour in ARGB<br>
+     * For type == {@link module:Flags.BrushType BrushType.LinearGradient}:<br>
+     * - param1: start point coords of linear gradient in form of Array(2) (for ex.: [0, 0])<br>
+     * - param2: end point coords of linear gradient in form of Array(2) (for ex.: [100, 0])<br>
+     * - param3: gradient stops specified as an array with alternating position and color values for each stop (for ex.: [0.0, 0xFF000000, 0.5, 0xFFFF0000, 1.0, 0xFFFFFFFF])<br>
+     * For type == {@link module:Flags.BrushType BrushType.RadialGradient}:<br>
+     * - param1: center point coords of radial gradient in form of Array(2) (for ex.: [50, 50])<br>
+     * - param2: radius values for X and Y axes in form of Array(2) (for ex.: [50, 50])<br>
+     * - param3: gradient stops specified as an array with alternating position and color values for each stop (for ex.: [0.0, 0xFF000000, 0.5, 0xFFFF0000, 1.0, 0xFFFFFFFF])<br>
+     * For type == {@link module:Flags.BrushType BrushType.Bitmap}:<br>
+     * - param1: GdiBitmap object used for drawing by brush<br>
+     * - param2: wrap mode responsible for how the image is repeated when drawing. See {@link module:Flags.BrushWrapMode BrushWrapMode}
+     * 
+     * @param {BrushType} type
+     * @param {*} param1
+     * @param {*=} [param2=undefined]
+     * @param {*=} [param3=undefined]
+     * @return {GdiBrush} Brush object used in Draw/Fill methods
+     * 
+     * @sourceFile ../../component/samples/basic/Brushes.js
+     */
+    Brush: function (type, param1, param2, param3) { }, // (GdiBrush)
+
+    /**
      * @param {number} w
      * @param {number} h
      * @return {GdiBitmap}
@@ -859,20 +885,8 @@ let gdi = {
      *   "bgr24"   24bpp BGR<br>
      *   "rgb24"   24bpp RGB<br>
      * @returns {GdiBitmap} null if was an error (for example pixelData array length is not suitable for the specified parameters)
-     * @example
-     * const img = gdi.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Field.jpg`);
      * 
-     * let imgPixelData = img.GetPixelData();
-     * 
-     * utils.WriteBinaryFile("D:\\Field.bin", imgPixelData);
-     * 
-     * let rData = utils.ReadBinaryFile("D:\\Field.bin");
-     * 
-     * let rImg = gdi.CreateImageFromPixelData(rData, 2208, 1242);
-     * 
-     * function on_paint(gr) {
-     *     gr.DrawImage(rImg, 0, 0, img.Width, img.Height, 0, 0, img.Width, img.Height);
-     * }
+     * @sourceFile ../../component/samples/basic/CreateImageFromPixelData.js
      */
     CreateImageFromPixelData: function(pixelData, width, height, format = "bgra32") { }, // (GdiBitmap)
 
@@ -1568,6 +1582,15 @@ let utils = {
     CheckFont: function (name) { }, // (boolean)
 
     /**
+     * Opens system colour picker dialog window.
+     *
+     * @param {number} window_id unused
+     * @param {number} default_colour Color in ARGB format
+     * @return {number} Chosen color in ARGB format or default_colour if cancelled
+     */
+    ColourPicker: function (window_id, default_colour) { },
+
+    /**
      * Converts string from UTF-8 to ASCII.
      *
      * @param {string} str
@@ -1602,7 +1625,23 @@ let utils = {
      * @param {string} path
      * @return {boolean}
      */
-    CreateFolder: function (window_id, default_colour) { }, // (uint)
+    CreateFolder: function (path) { }, // (uint)
+
+    /**
+     * Calculates CRC32 value for string
+     *
+     * @param {string} str input string
+     * @return {number} CRC32 value for input string. If string is empty returns 0
+     */
+    CRC32: function (str) { }, // (uint)
+
+    /**
+     * Calculates CRC32 value for file content
+     *
+     * @param {string} path input file path
+     * @return {number} CRC32 value for input file content. If it was an error while reading file or file is empty returns 0
+     */
+    CRC32FromFile: function (path) { }, // (uint)
 
     /**
      * Detect the codepage of the file.<br>
@@ -1679,6 +1718,17 @@ let utils = {
     FileExists: function (path) { },
 
     /**
+     * Opens system file picker dialog window
+     *
+     * @param {string=} [title=undefined] Title of dialog. If empty it will be the title by system default
+     * @param {string=} [default_path=undefined] Default file path to choose. If only path without file name is specified it will open specified folder
+     * @param {string=} [filter=undefined] Files filter in form (for ex.): "Image files (*.jpg;*.png;*.bmp)|*.jpg;*.png;*.bmp|All files (*.*)|*.*"
+     * @param {string=} [mode=0] File dialog mode. 0 - open, 1 - save
+     * @return {string} Chosen file path. If dialog is cancelled returns empty string
+     */
+    FilePicker: function (title, default_path, filter, mode) { },
+
+    /**
      * Various utility functions for working with file.<br>
      * <br>
      * Deprecated: use {@link utils.DetectCharset}, {@link utils.FileExists}, {@link utils.GetFileSize},
@@ -1702,6 +1752,25 @@ let utils = {
      * // arr[2] <= ".txt"
      */
     FileTest: function (path, mode) { }, // (VARIANT)
+
+    /**
+     * Opens system folder picker dialog window
+     *
+     * @param {string=} [title=undefined] Title of dialog. If empty it will be the title by system default
+     * @param {string=} [default_path=undefined] Default folder path to choose
+     * @return {string} Chosen folder path. If dialog is cancelled returns empty string
+     */
+    FolderPicker: function (title, default_path) { },
+
+    /**
+     * Opens system font picker dialog window (with pixel size field extension).
+     *
+     * @param {GdiFont=} [default_font=undefined] (or D2DFont if window.DrawMode=1) If specified, it will be selected in the dialog, otherwise the default system message font will be selected
+     * @return {?GdiFont} (or D2DFont if window.DrawMode=1) Chosen font or default_font if cancelled (if default_font is undefined returns null)
+     *
+     * @sourceFile ../../component/samples/basic/FontPicker.js
+     */
+    FontPicker: function (default_font) { },
 
     /**
      * @param {number} seconds
@@ -1935,6 +2004,22 @@ let utils = {
     MapString: function (text, lcid, flags) { }, // (string)
 
     /**
+     * Calculates MD5 for string
+     *
+     * @param {string} str input string
+     * @return {string} MD5 value for input in hex format string. If input string is empty returns "d41d8cd98f00b204e9800998ecf8427e"
+     */
+    MD5: function (str) { }, // (uint)
+
+    /**
+     * Calculates MD5 value for file content
+     *
+     * @param {string} path input file path
+     * @return {string} MD5 value for input file content in hex format string. If it was an error while reading file returns empty string. If file is empty returns "d41d8cd98f00b204e9800998ecf8427e"
+     */
+    MD5FromFile: function (path) { }, // (uint)
+
+    /**
      * Check if the supplied string matches the pattern.<br>
      * Using Microsoft MS-DOS wildcards match type. eg "*.txt", "abc?.tx?"
      *
@@ -1994,20 +2079,8 @@ let utils = {
      * Read a file as raw binary.
      * @param {string} path Absolute file path
      * @returns {Uint8Array} File bytes, or null if was an error
-     * @example
-     * const img = gdi.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Field.jpg`);
      * 
-     * let imgPixelData = img.GetPixelData();
-     * 
-     * utils.WriteBinaryFile("D:\\Field.bin", imgPixelData);
-     * 
-     * let rData = utils.ReadBinaryFile("D:\\Field.bin");
-     * 
-     * let rImg = gdi.CreateImageFromPixelData(rData, 2208, 1242);
-     * 
-     * function on_paint(gr) {
-     *     gr.DrawImage(rImg, 0, 0, img.Width, img.Height, 0, 0, img.Width, img.Height);
-     * }
+     * @sourceFile ../../component/samples/basic/CreateImageFromPixelData.js
      */
     ReadBinaryFile: function(path) { },
 
@@ -2030,6 +2103,22 @@ let utils = {
      */
     SetClipboardText: function (text) { },
 
+    /**
+     * Calculates SHA1 for string
+     *
+     * @param {string} str input string
+     * @return {string} SHA1 value for input in hex format string. If input string is empty returns "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+     */
+    SHA1: function (str) { }, // (uint)
+
+    /**
+     * Calculates SHA1 value for file content
+     *
+     * @param {string} path input file path
+     * @return {string} SHA1 value for input file content in hex format string. If it was an error while reading file returns empty string. If file is empty returns "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+     */
+    SHA1FromFile: function (path) { }, // (uint)
+    
     /**
      * Displays an html dialog, rendered by IE engine.<br>
      * Utilizes the latest non-Edge IE that you have on your system.<br>
@@ -2600,6 +2689,15 @@ let window = {
      * @param {*=} val
      */
     SetProperty: function (name, val) { }, // (void)
+
+    /**
+     * Sets panel shortcut filter.<br>
+     *
+     * @param {boolean=} [enabled=true] If true filter is enabled. Suppresses player shortcuts depending on the following two parameters
+     * @param {boolean=} [type_only=true] If true suppresses only shortcuts that identified as user input (keyboard_shortcut_manager::is_typing_message from SDK used). If false ALL shortcuts are disabled for panel
+     * @param {boolean=} [suppress_children=false] If true suppresses also shortcuts for all JSplitter's children. Takes into account the parameter type_only only for DUI. For CUI alwas disables ALL shortcuts
+     */
+    SetShortcutFilter: function (enabled, type_only, suppress_children) { }, // (uint)
 
     /**
      * See {@link setTimeout}.
@@ -3856,6 +3954,117 @@ function GdiFont(name, size_px, style) {
 }
 
 /**
+ * Object used for drawing as alternative for simple colour.<br>
+ * Can also be used to reuse brushes for drawing instead of creating them every time for any primitive drawing operation (if just a color is specified in the Draw/Fill methods, a brush is always created).<br>
+ * Created by {@link gdi.Brush}
+ * @constructor
+ * @param {GdiBrush} arg
+ * 
+ * @sourceFile ../../component/samples/basic/Brushes.js
+ */
+function GdiBrush(arg) {
+
+    /**
+     * Brush type.<br>
+     * See {@link module:Flags.BrushType BrushType}
+     * @type {BrushType}
+     * @readonly
+     */
+    this.Type = undefined;// (uint) (read)
+
+    /**
+     * Wrap mode responsible for how the brush gradient or image is repeated when drawing<br>
+     * See {@link module:Flags.BrushWrapMode BrushWrapMode}
+     * @type {BrushWrapMode} 
+     * @readonly
+     */
+    this.WrapMode = undefined;// (uint) (read, write)
+
+    /**
+     * Applies translation matrix to the current GdiBrush matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-translation(d2d1_size_f)}
+     *
+     * @param {number} dx
+     * @param {number} dy
+     */
+    this.Translate = function(dx, dy) {}
+
+    /**
+     * Applies rotation matrix to the current GdiBrush matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-rotation}
+     *
+     * @param {float} angle Angle of rotation in degrees
+     * @param {number=} [cx=0] Rotation center point x coord
+     * @param {number=} [cy=0] Rotation center point y coord
+     */
+    this.Rotate = function(angle, cx, cy) {}
+
+    /**
+     * Applies scale matrix to the current GdiBrush matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-scale(d2d1_size_f_d2d1_point_2f)}
+     *
+     * @param {float} sx The x-axis scale factor
+     * @param {float=} [sy=0] The y-axis scale factor. If zero sx will be used as sy
+     * @param {number=} [cx=0] Scale center point x coord
+     * @param {number=} [cy=0] Scale center point y coord
+     */
+    this.Scale = function(sz, sy, cx, cy) {}
+    
+    /**
+     * Applies skew matrix to the current GdiBrush matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-skew}
+     *
+     * @param {float} angleX The x-axis skew angle, which is measured in degrees counterclockwise from the y-axis.
+     * @param {float} angleY The y-axis skew angle, which is measured in degrees clockwise from the x-axis.
+     * @param {number=} [cx=0] Skew center point x coord
+     * @param {number=} [cy=0] Skew center point y coord
+     */
+    this.Skew = function(angleX, angleY, cx, cy) {}
+
+    /**
+     * Saves current GdiBrush matrix in internal stack. To restore the matrix use {@link GdiGraphics#PopTransform PopTransform}.
+     */
+    this.PushTransform = function() {}
+
+    /**
+     * Restores GdiBrush matrix from internal stack pushed previously by {@link GdiGraphics#PushTransform PushTransform}.
+     */
+    this.PopTransform = function() {}
+
+    /**
+     * Gets GdiBrush current transformation matrix of 3x2 size (Float32Array(6))<br>
+     * Matrix3x2 helper class from the component/docs/Matrix.js will be useful
+     * @return {Float32Array}
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
+     */
+    this.GetTransform = function() {}
+
+    /**
+     * Replaces the current GdiBrush matrix with specified transformation matrix of 3x2 size.<br>
+     * Matrix3x2 helper class from the component/docs/Matrix.js will be useful
+     * @param {Float32Array} matrix Array that presents 3x2 matrix for transformation (length = 6)
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
+     */
+    this.SetTransform = function(matrix) {}
+
+    /**
+     * Resets current GdiBrush matrix to original identity matrix.
+     */
+    this.ResetTransform = function () {}
+
+    /**
+     * Applies specified transformation matrix of 3x2 size to the current GdiBrush matrix.<br>
+     * Matrix3x2 helper class from the component/docs/Matrix.js will be useful
+     * @param {Float32Array} matrix Array that presents 3x2 matrix for transformation (length = 6)
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
+     */
+    this.ApplyTransform = function(matrix) {}    
+}
+
+/**
  * Typically used inside `on_paint`.<br>
  *
  * Note: there are many different ways to get colours:
@@ -3897,9 +4106,9 @@ function GdiGraphics() {
      * @param {number} w
      * @param {number} h
      * @param {number} line_width
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link GdiBrush} object
      */
-    this.DrawEllipse = function (x, y, w, h, line_width, colour) { }; // (void)
+    this.DrawEllipse = function (x, y, w, h, line_width, colour_or_brush) { }; // (void)
 
     /**
      * @param {GdiBitmap} img
@@ -3922,30 +4131,30 @@ function GdiGraphics() {
      * @param {number} x2
      * @param {number} y2
      * @param {number} line_width
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link GdiBrush} object
      */
-    this.DrawLine = function (x1, y1, x2, y2, line_width, colour) { }; // (void)
+    this.DrawLine = function (x1, y1, x2, y2, line_width, colour_or_brush) { }; // (void)
 
     /**
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link GdiBrush} object
      * @param {number} line_width
      * @param {Array<Array<number>>} points
      */
-    this.DrawPolygon = function (colour, line_width, points) { }; // (void)
+    this.DrawPolygon = function (colour_or_brush, line_width, points) { }; // (void)
 
     /**
      * Should be only used when {@link GdiGraphics#GdiDrawText GdiDrawText} is not applicable.
      *
      * @param {string} str
      * @param {GdiFont} font
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link GdiBrush} object
      * @param {number} x
      * @param {number} y
      * @param {number} w
      * @param {number} h
      * @param {number=} [flags=0] See {@link module:Flags.StringFormatFlags StringFormatFlags} flags
      */
-    this.DrawString = function (str, font, colour, x, y, w, h, flags) { }; // (void) [, flags]
+    this.DrawString = function (str, font, colour_or_brush, x, y, w, h, flags) { }; // (void) [, flags]
 
     /**
      * @param {number} x
@@ -3953,9 +4162,9 @@ function GdiGraphics() {
      * @param {number} w
      * @param {number} h
      * @param {number} line_width
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link GdiBrush} object
      */
-    this.DrawRect = function (x, y, w, h, line_width, colour) { }; // (void)
+    this.DrawRect = function (x, y, w, h, line_width, colour_or_brush) { }; // (void)
 
     /**
      * @param {number} x
@@ -3965,9 +4174,9 @@ function GdiGraphics() {
      * @param {number} arc_width
      * @param {number} arc_height
      * @param {number} line_width
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link GdiBrush} object
      */
-    this.DrawRoundRect = function (x, y, w, h, arc_width, arc_height, line_width, colour) { }; // (void)
+    this.DrawRoundRect = function (x, y, w, h, arc_width, arc_height, line_width, colour_or_brush) { }; // (void)
 
     /**
      * @param {string} str
@@ -3990,9 +4199,9 @@ function GdiGraphics() {
      * @param {number} y
      * @param {number} w
      * @param {number} h
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link GdiBrush} object
      */
-    this.FillEllipse = function (x, y, w, h, colour) { }; // (void)
+    this.FillEllipse = function (x, y, w, h, colour_or_brush) { }; // (void)
 
     /**
      * Note: this may appear buggy depending on rectangle size. The easiest fix is
@@ -4023,11 +4232,11 @@ function GdiGraphics() {
     this.FillGradRectV2 = function (x, y, w, h, angle, stops) { };
 
     /**
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link GdiBrush} object
      * @param {number} fillmode 0 alternate, 1 winding.
      * @param {Array<Array<number>>} points
      */
-    this.FillPolygon = function (colour, fillmode, points) { }; // (void)
+    this.FillPolygon = function (colour_or_brush, fillmode, points) { }; // (void)
 
     /**
      * @param {number} x
@@ -4036,18 +4245,18 @@ function GdiGraphics() {
      * @param {number} h
      * @param {number} arc_width
      * @param {number} arc_height
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link GdiBrush} object
      */
-    this.FillRoundRect = function (x, y, w, h, arc_width, arc_height, colour) { }; // (void)
+    this.FillRoundRect = function (x, y, w, h, arc_width, arc_height, colour_or_brush) { }; // (void)
 
     /**
      * @param {number} x
      * @param {number} y
      * @param {number} w
      * @param {number} h
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link GdiBrush} object
      */
-    this.FillSolidRect = function (x, y, w, h, colour) { }; // (void)
+    this.FillSolidRect = function (x, y, w, h, colour_or_brush) { }; // (void)
 
     /**
      * @param {GdiRawBitmap} img
@@ -4115,6 +4324,89 @@ function GdiGraphics() {
      * @return {MeasureStringInfo}
      */
     this.MeasureString = function (str, font, x, y, w, h, flags) { }; // (MeasureStringInfo) [, flags]
+
+    /**
+     * Applies translation matrix to the current GdiGraphics matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-translation(d2d1_size_f)}
+     *
+     * @param {number} dx
+     * @param {number} dy
+     */
+    this.Translate = function(dx, dy) {}
+
+    /**
+     * Applies rotation matrix to the current GdiGraphics matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-rotation}
+     *
+     * @param {float} angle Angle of rotation in degrees
+     * @param {number=} [cx=0] Rotation center point x coord
+     * @param {number=} [cy=0] Rotation center point y coord
+     */
+    this.Rotate = function(angle, cx, cy) {}
+
+    /**
+     * Applies scale matrix to the current GdiGraphics matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-scale(d2d1_size_f_d2d1_point_2f)}
+     *
+     * @param {float} sx The x-axis scale factor
+     * @param {float=} [sy=0] The y-axis scale factor. If zero sx will be used as sy
+     * @param {number=} [cx=0] Scale center point x coord
+     * @param {number=} [cy=0] Scale center point y coord
+     */
+    this.Scale = function(sz, sy, cx, cy) {}
+    
+    /**
+     * Applies skew matrix to the current GdiGraphics matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-skew}
+     *
+     * @param {float} angleX The x-axis skew angle, which is measured in degrees counterclockwise from the y-axis.
+     * @param {float} angleY The y-axis skew angle, which is measured in degrees clockwise from the x-axis.
+     * @param {number=} [cx=0] Skew center point x coord
+     * @param {number=} [cy=0] Skew center point y coord
+     */
+    this.Skew = function(angleX, angleY, cx, cy) {}
+
+    /**
+     * Saves current GdiGraphics matrix in internal stack. To restore the matrix use {@link GdiGraphics#PopTransform PopTransform}.
+     */
+    this.PushTransform = function() {}
+
+    /**
+     * Restores current GdiGraphics matrix from internal stack pushed previously by {@link GdiGraphics#PushTransform PushTransform}.
+     */
+    this.PopTransform = function() {}
+
+    /**
+     * Gets GdiGraphics current transformation matrix of 3x2 size (Float32Array(6))
+     * Matrix helpers from the component/docs/Matrix.js will be useful
+     * @return {Float32Array}
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
+     */
+    this.GetTransform = function() {}
+
+    /**
+     * Replaces the current GdiGraphics matrix with specified transformation matrix of 3x2 size.<br>
+     * Matrix helpers from the component/docs/Matrix.js will be useful
+     * @param {Float32Array} matrix Array that presents 3x2 matrix for transformation (length = 6)
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
+     */
+    this.SetTransform = function(matrix) {}
+
+    /**
+     * Resets current GdiGraphics matrix to original identity matrix.
+     */
+    this.ResetTransform = function () {}
+
+    /**
+     * Applies specified transformation matrix of 3x2 size to the current GdiGraphics matrix.<br>
+     * Matrix helpers from the component/docs/Matrix.js will be useful
+     * @param {Float32Array} matrix Array that presents 3x2 matrix for transformation (length = 6)
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
+     */
+    this.ApplyTransform = function(matrix) {}
 
     /**
      * @constructor

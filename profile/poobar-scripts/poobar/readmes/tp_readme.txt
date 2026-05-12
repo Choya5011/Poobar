@@ -1,3 +1,7 @@
+Readme contains info on following settings:
+* Unify
+* Transparency
+
 Unified Background:
 ------------------
 This is a main panel setting that enabled the SupportPseudoTransparency flag for all child panels & changes background drawing logic of the main panel.
@@ -13,3 +17,7 @@ A few required settings to make this work are:
 NOTE:
 ----
 Enabling transparency will cause drawing issues if the pre-requisites are not done. Simply disable if this happens.
+
+Wiki link:
+---------
+https://github.com/Choya5011/Poobar/wiki/Poobar#poobar-main-panel

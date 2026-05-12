@@ -201,8 +201,8 @@ function _layout(panelNames, defaultDelay, unify = false) {
         }
     };
 
-    this.layout = function() {
-        return this.config ? this.config.type : null;
+    this.cc = function(string) { // check config
+        return this.config && typeof string === 'string' && string === this.config.type;
     };
 
     // Layout detection methods...

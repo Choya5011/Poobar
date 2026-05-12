@@ -144,8 +144,7 @@ const pboStr = {
 let child = { // panels
     wf: { // waveform
         x: 0, y: 0, w: 0, h: 0, panel,
-        name: 'Not-A-Waveform-Seekbar-SMP',
-        errTitle: 'No waveform panel present (see logs)',
+        error: 'No waveform panel present (see logs)',
         log: ': Missing Panel \nNo Waveform panel found: make sure the waveform panel is the topmost panel inside the control panel. See instructions:\n',
         instruct: 'Preferences -> Display -> Columns UI -> Layout -> JSplitter titled Fluent Control Panel -> Right click -> Insert panel -> Waveform panel of choice'
     },
@@ -154,7 +153,7 @@ let child = { // panels
     }
 }
 
-try { child.wf.panel = window.GetPanelByIndex(0); if (child.wf.panel.Name === 'JSplitter') { child.wf.panel.Text = child.wf.name; } else if (child.wf.panel.Name !== 'Waveform minibar (mod)') { child.wf.panel = null; }  } catch (e) { child.wf.panel = null; }
+try { child.wf.panel = window.GetPanelByIndex(0); } catch (e) { child.wf.panel = null; }
 try { child.spec.panel = window.GetPanel('Spectrum Analyzer'); } catch (e) { child.spec.panel = null; }
 
 // Initial updates
@@ -253,7 +252,7 @@ function on_size() {
     ww = window.Width;
     wh = window.Height;
     if (!ww || !wh) return;
-    console.log(log.dimensions());
+    //console.log(log.dimensions());
 
     bx = ((ww - (bs * 7)) / 2);
     by = seekbar.y - _scale(36);
@@ -272,7 +271,6 @@ function on_size() {
     volume.x = (ww > scaler.s800) ? ww - (bs * 4) : ww - (bs * 2.3);
     volume.y = (ww > scaler.s520) ? seekbar.y + _scale(12) : wh - _scale(10);
     volume.h =  bar_h;
-    console.log(volume.w);
     volume.w =  ww > scaler.s800 ? _scale(75): _scale(75) * 0.86;
     volume.arc = volume.h / 2;
 
@@ -331,10 +329,10 @@ function on_paint(gr) {
     if (wh >= scaler.s80) { // bar backgrounds
         if (ppt.roundBars.enabled) {
             if (ppt.mode.enabled) gr.FillRoundRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, seekbar.arc, seekbar.arc, colours.seekbar_background);
-            if (!(ww <= scaler.s520 && wh <= scaler.s130) || (ww > scaler.s520 && wh < scaler.s80)) gr.FillRoundRect(volume.x, volume.y, volume.w, volume.h, volume.arc, volume.arc, colours.seekbar_background); // button condition
+            if (ppt.vol.enabled && !(ww <= scaler.s520 && wh <= scaler.s130) || (ww > scaler.s520 && wh < scaler.s80)) gr.FillRoundRect(volume.x, volume.y, volume.w, volume.h, volume.arc, volume.arc, colours.seekbar_background);
         } else {
             if (ppt.mode.enabled) gr.FillSolidRect(seekbar.x, seekbar.y + bar_h, seekbar.w + _scale(6), bar_h, colours.seekbar_background);
-            if (!(ww <= scaler.s520 && wh <= scaler.s130) || (ww > scaler.s520 && wh < scaler.s80)) gr.FillSolidRect(volume.x, volume.y, volume.w, volume.h, colours.seekbar_background);
+            if (ppt.vol.enabled && !(ww <= scaler.s520 && wh <= scaler.s130) || (ww > scaler.s520 && wh < scaler.s80)) gr.FillSolidRect(volume.x, volume.y, volume.w, volume.h, colours.seekbar_background);
         }
     }
     if (!ppt.mode.enabled && !child.wf.panel && wh > scaler.s100) {
@@ -386,24 +384,26 @@ function on_paint(gr) {
         if (fb.PlaybackLength > 0 && wh >= scaler.s80) {
             const pos = seekbar.pos();
             if (ppt.mode.enabled) {
+                if (ppt.bar_mode.enabled) gr.FillEllipse(seekbar.x + pos - 4, seekbar.y, _scale(12), _scale(12), g_textcolour); //knob
+
                 //progress_bar
                 if (ppt.roundBars.enabled && pos >= bar_h) {
                     if (ppt.bar_mode.enabled) {
-                        gr.FillRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, seekbar.arc, seekbar.arc, colours.seek.core); //bar core
-                        gr.DrawRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, seekbar.arc, seekbar.arc, _scale(2), g_textcolour); //bar outline
+                        gr.FillRoundRect(seekbar.x, seekbar.y + bar_h, pos, bar_h, seekbar.arc, seekbar.arc, colours.seek.core); //bar core
+                        gr.DrawRoundRect(seekbar.x, seekbar.y + bar_h, pos, bar_h, seekbar.arc, seekbar.arc, _scale(2), g_textcolour); //bar outline
                     } else {
-                        gr.FillRoundRect(seekbar.x, seekbar.y + _scale(4), pos, bar_h, seekbar.arc, seekbar.arc, colours.seek.bar); // normal bar
+                        gr.FillRoundRect(seekbar.x, seekbar.y + bar_h, pos, bar_h, seekbar.arc, seekbar.arc, colours.seek.bar); // normal bar
                     }
                 } else {
                     if (ppt.bar_mode.enabled) {
-                        gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), colours.seek.core); //bar core
-                        gr.DrawRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), _scale(2), g_textcolour); //bar outline
+                        gr.FillSolidRect(seekbar.x, seekbar.y + bar_h, pos, bar_h, colours.seek.core); //bar core
+                        gr.DrawRect(seekbar.x, seekbar.y + bar_h, pos, bar_h, _scale(2), g_textcolour); //bar outline
                     } else {
-                        gr.FillSolidRect(seekbar.x, seekbar.y + _scale(4), pos, _scale(4), colours.seek.bar); //normal bar
+                        gr.FillSolidRect(seekbar.x, seekbar.y + bar_h, pos, bar_h, colours.seek.bar); //normal bar
                     }
                 }
 
-                gr.FillEllipse(seekbar.x + pos - 4, seekbar.y, _scale(12), _scale(12), g_textcolour); //knob
+                if (!ppt.bar_mode.enabled)gr.FillEllipse(seekbar.x + pos - 4, seekbar.y, _scale(12), _scale(12), g_textcolour); //knob
                 if (ppt.bar_mode.enabled) gr.FillEllipse(seekbar.x + pos - 1.5, seekbar.y + 2.5, _scale(8), _scale(8), colours.seek.core); //knob core
     			gr.GdiDrawText(tfo.playback_time.Eval(), panel.fonts.normal, g_textcolour, seekbar.x - _scale(45), seekbar.y + _scale(5), _scale(45), 0, RIGHT);
     			gr.GdiDrawText(tfo.length.Eval(), panel.fonts.normal, g_textcolour, seekbar.x + seekbar.w + _scale(6), seekbar.y + _scale(5), _scale(45), 0, LEFT);
@@ -467,7 +467,7 @@ rating.paint = (gr) => {
 function refresh_wf_panel(panelName) {
     if (!ppt.mode.enabled) {
         let p; try { p = window.GetPanelByIndex(0); } catch (e) { return; }
-        if (p.Text === panelName || p.Name === panelName) { p.Hidden = true; p.Hidden = false; }
+        if (p.Name === 'JSplitter' || p.Text === 'JSplitter') { p.Hidden = true; p.Hidden = false; }
         if (p.Name === 'Waveform minibar (mod)') { window.SetTimeout(function() { p.ShowCaption = true; p.ShowCaption = false; }, 0); }
     }
 }
@@ -835,62 +835,111 @@ function on_mouse_rbtn_up(x, y) {
 
     const np_menu = menu.newMenu('Selection...', 'main', MF_STRING, {type: 'nowplaying'});
 
-    menu.newEntry({entryText: 'sep'});
+    menu.newSeparator();
 
-    const show_menu = menu.newMenu('Show...');
-    menu.newEntry({menuName: show_menu, entryText: 'Album art', func: () => {ppt.art.toggle(); update_art(ppt); on_size(); window.Repaint(); if (child.spec.panel && ppt.art.enabled) fb.ShowPopupMessage('A Spectrum Analyzer panel is present.\nAlbum art hidden.', window.ScriptInfo.Name);}, flags: () => ppt.art.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: show_menu, entryText: 'Next track', func: () => {ppt.nxt.toggle(); window.Repaint();}, flags: () => ppt.nxt.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: show_menu, entryText: 'Rating', func: () => {ppt.rating.toggle(); window.Repaint();}, flags: () => ppt.rating.enabled ? MF_CHECKED : MF_STRING});
+    {
+        const menuName = menu.newMenu('Show...');
+        menu.newEntry({menuName, entryText: 'Album art', func: () => {ppt.art.toggle(); update_art(ppt); on_size(); window.Repaint(); if (child.spec.panel && ppt.art.enabled) fb.ShowPopupMessage('A Spectrum Analyzer panel is present.\nAlbum art hidden.', window.ScriptInfo.Name);}, flags: () => ppt.art.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Next track', func: () => {ppt.nxt.toggle(); window.Repaint();}, flags: () => ppt.nxt.enabled ? MF_CHECKED : MF_STRING});
+    }
 
-    const sbar_menu = menu.newMenu('Bars');
-    menu.newCheckMenu(sbar_menu, 'Seekbar', 'Waveform', () => ppt.mode.enabled ? 0 : 1);
-    menu.newEntry({menuName: sbar_menu, entryText: 'Seekbar', func: () => {ppt.mode.enabled = true; on_size(); buttons.update(); window.Repaint();}});
-    menu.newEntry({menuName: sbar_menu, entryText: 'Waveform', func: () => {ppt.mode.enabled = false; on_size(); buttons.update(); window.Repaint();}});
-    menu.newEntry({menuName: sbar_menu, entryText: 'sep'});
-    menu.newEntry({menuName: sbar_menu, entryText: 'Volume slider', func: () => {ppt.vol.toggle(); buttons.update(); window.Repaint();}, flags: () => ppt.vol.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: sbar_menu, entryText: 'perma dB', func: () => {ppt.db.toggle(); window.Repaint();}, flags: () => ppt.db.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: sbar_menu, entryText: 'sep'});
-    menu.newEntry({menuName: sbar_menu, entryText: 'Rounded bars', func: () => {ppt.roundBars.toggle(); window.Repaint();}, flags: () => ppt.roundBars.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: sbar_menu, entryText: 'Bar cores', func: () => {ppt.bar_mode.toggle(); /*#*/ if (ppt.bar_mode.enabled) { colours.seek.bar = getBarColor(false); colours.seek.core = getCoreColor(false); colours.vol.bar = getBarColor(false); colours.vol.core = getCoreColor(false); } /*#*/ window.Repaint();}, flags: () => ppt.bar_mode.enabled ? MF_CHECKED : MF_STRING});
+    {
+        const bars = menu.newMenu('Bars');
+        {
+            const menuName = menu.newMenu('Seekbar', bars);
+            menu.newCheckMenu(menuName, 'Normal', 'Waveform', () => ppt.mode.enabled ? 0 : 1);
+            menu.newEntry({menuName, entryText: 'Normal', func: () => {ppt.mode.enabled = true; on_size(); buttons.update(); window.Repaint();}});
+            menu.newEntry({menuName, entryText: 'Waveform', func: () => {ppt.mode.enabled = false; on_size(); buttons.update(); window.Repaint();}});
+        }
+        {
+            const menuName = menu.newMenu('Volume', bars);
+            menu.newEntry({menuName, entryText: 'Volume slider', func: () => {ppt.vol.toggle(); buttons.update(); window.Repaint();}, flags: () => ppt.vol.enabled ? MF_CHECKED : MF_STRING});
+            menu.newEntry({menuName, entryText: 'perma dB', func: () => {ppt.db.toggle(); window.Repaint();}, flags: () => ppt.db.enabled ? MF_CHECKED : MF_STRING});
+        }
+        menu.newSeparator(bars);
+        menu.newEntry({menuName: bars, entryText: 'Rounded bars', func: () => {ppt.roundBars.toggle(); window.Repaint();}, flags: () => ppt.roundBars.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName: bars, entryText: 'Bar cores', func: () => {ppt.bar_mode.toggle(); /*#*/ if (ppt.bar_mode.enabled) { colours.seek.bar = getBarColor(false); colours.seek.core = getCoreColor(false); colours.vol.bar = getBarColor(false); colours.vol.core = getCoreColor(false); } /*#*/ window.Repaint();}, flags: () => ppt.bar_mode.enabled ? MF_CHECKED : MF_STRING});
+    }
 
-    const but_menu = menu.newMenu('Buttons');
-    const sub_but_2 = menu.newMenu('PBO Button', but_menu);
-    menu.newCheckMenu(sub_but_2, 'List', 'Cycle', () => ppt.pboMode.enabled ? 0 : 1);
-    menu.newEntry({menuName: sub_but_2, entryText: 'List', func: () => {ppt.pboMode.enabled = true; buttons.update();}});
-    menu.newEntry({menuName: sub_but_2, entryText: 'Cycle', func: () => {ppt.pboMode.enabled = false; buttons.update();}});
-    const sub_but_3 = menu.newMenu('Like Mode', but_menu);
-    menu.newEntry({menuName: sub_but_3, entryText: 'FEEDBACK tag', func: () => {ppt.loveMode.value = 1; buttons.update();}, flags: () => ppt.loveMode.value === 1 ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: sub_but_3, entryText: 'last.fm sync', func: () => {ppt.loveMode.value = 2; buttons.update();}, flags: () => ppt.loveMode.value === 2 ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: sub_but_3, entryText: 'Dual mode', func: () => {ppt.loveMode.value = 3; buttons.update();}, flags: () => ppt.loveMode.value === 3 ? MF_CHECKED : MF_STRING});
+    {
+        const buttons = menu.newMenu('Buttons');
+        menu.newEntry({menuName: buttons, entryText: 'Show Rating', func: () => {ppt.rating.toggle(); on_size(); window.Repaint();}, flags: () => ppt.rating.enabled ? MF_CHECKED : MF_STRING});
+        menu.newSeparator(buttons);
+        {
+            const menuName = menu.newMenu('PBO Button', buttons);
+            menu.newCheckMenu(menuName, 'List', 'Cycle', () => ppt.pboMode.enabled ? 0 : 1);
+            menu.newEntry({menuName, entryText: 'List', func: () => {ppt.pboMode.enabled = true; buttons.update();}});
+            menu.newEntry({menuName, entryText: 'Cycle', func: () => {ppt.pboMode.enabled = false; buttons.update();}});
+        }
+        {
+            const menuName = menu.newMenu('Like Mode', buttons);
+            menu.newEntry({menuName, entryText: 'FEEDBACK tag', func: () => {ppt.loveMode.value = 1; buttons.update();}, flags: () => ppt.loveMode.value === 1 ? MF_CHECKED : MF_STRING});
+            menu.newEntry({menuName, entryText: 'last.fm sync', func: () => {ppt.loveMode.value = 2; buttons.update();}, flags: () => ppt.loveMode.value === 2 ? MF_CHECKED : MF_STRING});
+            menu.newEntry({menuName, entryText: 'Dual mode', func: () => {ppt.loveMode.value = 3; buttons.update();}, flags: () => ppt.loveMode.value === 3 ? MF_CHECKED : MF_STRING});
+        }
+    }
 
-    menu.newEntry({entryText: 'sep'});
+    menu.newSeparator();
 
-    const tp_menu = menu.newMenu('Transparency');
-    menu.newEntry({menuName: tp_menu, entryText: 'Panel transparency', flags: MF_GRAYED});
-    menu.newEntry({menuName: tp_menu, entryText: 'sep'});
-    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.bgShow.enabled = false; ppt.transparency.toggle(); window.Repaint(); refresh_wf_panel(child.wf.name); if (ppt.transparency.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
+    {
+        const menuName = menu.newMenu('Transparency');
+        menu.newEntry({menuName, entryText: 'Panel transparency', flags: MF_GRAYED});
+        menu.newSeparator(menuName);
+        menu.newEntry({menuName, entryText: 'Enable', func: () => { ppt.bgShow.enabled = false; ppt.transparency.toggle(); window.Repaint(); refresh_wf_panel(); }, flags: () => ppt.transparency.enabled ? MF_CHECKED : MF_STRING});
+        menu.newSeparator(menuName);
+        menu.newEntry({
+            menuName,
+            entryText: 'Readme...',
+            func: () => {
+                let readme;
+                try {
+                   readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001);
+                } catch (e) {
+                    readme = 'Transparency readme not found.\n\nAvoid without instructions, might cause glitches otherwise.'
+                };
+                fb.ShowPopupMessage(readme, 'Unified background & pseudotransparency');
+                readme = null;
+            }
+        });
+    }
 
-    const bg_menu = menu.newMenu('Background', 'main', ppt.transparency.enabled ? MF_GRAYED : MF_STRING);
-    menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
-    menu.newEntry({menuName: bg_menu, entryText: 'sep'});
-    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); buttons.update(); update_art(ppt); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: bg_menu, entryText: 'sep'});
-    menu.newCheckMenu(bg_menu, 'Playing album cover', 'Default', () => !ppt.bgMode.enabled ? 0 : 1);
-    menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt); window.Repaint(); refresh_wf_panel(child.wf.name);}});
-    menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (!/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt); window.Repaint(); refresh_wf_panel(child.wf.name);}});
+    {
+        const menuName = menu.newMenu('Background', 'main', ppt.transparency.enabled ? MF_GRAYED : MF_STRING);
+        menu.newEntry({menuName, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
+        menu.newSeparator(menuName);
+        menu.newEntry({menuName, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); buttons.update(); update_art(ppt); window.Repaint(); refresh_wf_panel();}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt); window.Repaint(); refresh_wf_panel();}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint(); refresh_wf_panel();}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
+        menu.newSeparator(menuName);
+        menu.newCheckMenu(menuName, 'Playing album cover', 'Default', () => !ppt.bgMode.enabled ? 0 : 1);
+        menu.newEntry({menuName, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt); window.Repaint(); refresh_wf_panel();}});
+        menu.newEntry({menuName, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (!/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt); window.Repaint(); refresh_wf_panel();}});
+    }
 
-    const col_menu = menu.newMenu('Colours');
-    menu.newEntry({menuName: col_menu, entryText: 'System', func: () => {ppt.col_mode.value = 1; on_colours_changed(); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: col_menu, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; on_colours_changed(); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; on_colours_changed(); window.Repaint(); refresh_wf_panel(child.wf.name);}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
+    {
+        const menuName = menu.newMenu('Colours');
+        menu.newEntry({menuName, entryText: 'System', func: () => {ppt.col_mode.value = 1; on_colours_changed(); window.Repaint(); refresh_wf_panel();}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; on_colours_changed(); window.Repaint(); refresh_wf_panel();}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; on_colours_changed(); window.Repaint(); refresh_wf_panel();}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
+    }
 
-    menu.newEntry({entryText: 'sep'});
+    menu.newSeparator();
 
-    menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\fcp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
+    menu.newEntry({
+        entryText: 'Open readme...',
+        func: () => {
+            let readme;
+            try {
+                readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\fcp_readme.txt', 65001);
+            } catch (e) {
+                readme = 'readme file not found'
+            };
+            fb.ShowPopupMessage(readme, window.ScriptInfo.Name);
+            readme = null;
+        }
+    });
 
-    menu.newEntry({entryText: 'sep'});
+    menu.newSeparator();
 
     menu.newEntry({entryText: 'Panel Properties', func: () => {window.ShowProperties();}});
     menu.newEntry({entryText: 'Configure...', func: () => {window.ShowConfigureV2();}});

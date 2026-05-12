@@ -1,8 +1,9 @@
 ﻿'use strict';
-//01/01/26
+//28/04/26
 
-if (!window.ScriptInfo.PackageId) { window.DefineScript('Library-Tree-SMP', { author: 'regorxxx', version: '1.0.0', features: { drag_n_drop: true, grab_focus: true } }); }
+if (!window.ScriptInfo.PackageId) { window.DefineScript('Library-Tree-SMP', { author: 'regorxxx', version: '2.0.0', features: { drag_n_drop: true, grab_focus: true } }); }
 
+window.DrawMode = Math.max(Math.min(window.GetProperty('- Draw mode: GDI (0), D2D (1)', 0), 1), 0);  // Regorxxx <- GDI/D2D draw mode ->
 
 const loadAsync = window.GetProperty('Load Library Tree Asynchronously', true);
 
@@ -17,19 +18,25 @@ async function readFiles(files) {
 const files = [
 	// Regorxxx <- xxx-scripts helpers
 	'helpers\\helpers_xxx.js',
-	/* global globProfiler:readable */
+	/* global globProfiler:readable, globSettings:readable */
 	'helpers\\helpers_xxx_flags.js',
+	'helpers\\helpers_xxx_input.js',
 	'helpers\\helpers_xxx_language.js',
-	'helpers\\callbacks_xxx.js',
+	'helpers\\helpers_xxx_prototypes_smp.js',
 	'helpers\\helpers_xxx_tags.js',
+	'helpers\\callbacks_xxx.js',
 	'helpers\\helpers_xxx_prototypes_smp_post.js',
+	'helpers\\helpers_xxx_UI_draw.js',
 	'main\\filter_and_query\\remove_duplicates.js',
 	'main\\sort\\scatter_by_tags.js',
 	'main\\sort\\harmonic_mixing.js',
+	'main\\window\\window_xxx_dynamic_colors.js',
 	// Regorxxx ->
 	'main\\library_tree\\helpers.js',
 	'main\\library_tree\\properties.js',
+	/* global ppt:readable */
 	'main\\library_tree\\interface.js',
+	'main\\library_tree\\images.js', // Regorxxx <- Code cleanup | External integration | Custom TF art ->
 	'main\\library_tree\\panel.js',
 	'main\\library_tree\\scrollbar.js',
 	'main\\library_tree\\library.js',
@@ -40,7 +47,6 @@ const files = [
 	'main\\library_tree\\timers.js',
 	'main\\library_tree\\menu.js',
 	'main\\library_tree\\initialise.js',
-	'main\\library_tree\\images.js',
 	'main\\library_tree\\callbacks.js'
 ];
 // Regorxxx ->
@@ -51,8 +57,19 @@ if (loadAsync) {
 		if (!window.ID) return; // fix pss issue
 		on_size();
 		if (window.IsVisible) { window.Repaint(); }
+		// Update check
+		if (ppt.bAutoUpdateCheck) {
+			include('helpers\\helpers_xxx_web_update.js');
+			/* global checkUpdate:readable */
+			setTimeout(checkUpdate, 120000, { bDownload: globSettings.bAutoUpdateDownload, bOpenWeb: globSettings.bAutoUpdateOpenWeb });
+		}
 	});
 } else {
 	files.forEach(v => include(v));
 	globProfiler.Print('helpers'); // Regorxxx <- Init profiler ->
+	// Update check
+	if (ppt.bAutoUpdateCheck) {
+		include('helpers\\helpers_xxx_web_update.js');
+		setTimeout(checkUpdate, 120000, { bDownload: globSettings.bAutoUpdateDownload, bOpenWeb: globSettings.bAutoUpdateOpenWeb });
+	}
 }

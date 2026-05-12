@@ -1,8 +1,9 @@
-﻿// language applies to menu only
-// choose in panel properties (shift + windows key): Language [Menu] ....
-// English, simplifed Chinese and traditional Chinese are currently available (translated by always.beta and SyaoranChang)
+﻿'use strict';
+//24/04/26
 
-'use strict';
+// language applies to menu only
+// choose in panel properties (shift + windows key): Language [Menu] ....
+// English, simplified Chinese and traditional Chinese are currently available (translated by always.beta and SyaoranChang)
 
 const English = {
 	" - Remove from black list (click name): ": " - Remove from black list (click name): ",

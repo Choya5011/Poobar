@@ -642,7 +642,7 @@ function on_download_file_done(path, success, error_text) { }
  * 
  * @memberof module:Callbacks
  * @param {number} task_id
- * @param {boolean} handles
+ * @param {FbMetadbHandleList} handles
  * 
  * @example
  * function on_mouse_lbtn_dblclk() {
@@ -665,7 +665,7 @@ function on_locations_added(task_id, handles) { }
  * @param {number} task_id task id returned by {@link utils.HTTPRequestAsync}
  * @param {boolean} success 
  * @param {string} response_text
- * @param {string} status HTTP response code
+ * @param {number} status HTTP response code
  * @param {string} response_headers stringified JSON containing response headers
  */
 function on_http_request_done(task_id, success, response_text, status, response_headers) { }

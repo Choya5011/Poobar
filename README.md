@@ -32,7 +32,7 @@ Lyrics (optional): [UD Digi Kyokasho (NP-B)](https://learn.microsoft.com/en-us/t
 
 ### Components & Packages (included)
 **Components**  
-[Columns UI](https://www.foobar2000.org/components/view/foo_ui_columns) | [JSplitter](https://hydrogenaudio.org/index.php/topic,126743.msg1063721.html#msg1063721) | [ESLyric](https://github.com/ESLyric/release) | [Playback Statistics](https://www.foobar2000.org/components/view/foo_playcount) | [Waveform minibar (mod)](https://www.foobar2000.org/components/view/foo_wave_minibar_mod) | [Oscilloscope Visualisation](https://www.foobar2000.org/components/view/foo_vis_oscilloscope) | [Spectrum Analyzer](https://www.foobar2000.org/components/view/foo_vis_spectrum_analyzer)
+[Columns UI](https://www.foobar2000.org/components/view/foo_ui_columns) | [JSplitter](https://github.com/dima-lur/jsplitter) | [ESLyric](https://github.com/ESLyric/release) | [Playback Statistics](https://www.foobar2000.org/components/view/foo_playcount) | [Waveform minibar (mod)](https://www.foobar2000.org/components/view/foo_wave_minibar_mod) | [Oscilloscope Visualisation](https://www.foobar2000.org/components/view/foo_vis_oscilloscope) | [Spectrum Analyzer](https://www.foobar2000.org/components/view/foo_vis_spectrum_analyzer)
 
 **Packages**  
 [Not-A-Waveform-Seekbar-SMP](https://github.com/regorxxx/Not-A-Waveform-Seekbar-SMP) | [Biography](https://hydrogenaudio.org/index.php/topic,112914.9999999.html#bot) | [Library Tree](https://github.com/regorxxx/Library-Tree-SMP)
@@ -68,5 +68,9 @@ Credits to the original authors of any modified scripts as well as any included 
 Original author names are present in modified scripts & most item links are present in this readme at [Assets](#assets).
 
 Themes in this repo are inspired by:
-* Classic Poobar: [Eureka Theme](https://www.reddit.com/r/foobar2000/comments/1mhdyy5/display_the_next_track_and_add_tracks_to_queue_in/)
+* Poobar (Split): [Eureka Theme](https://www.reddit.com/r/foobar2000/comments/1mhdyy5/display_the_next_track_and_add_tracks_to_queue_in/)
 * Amethyst-like: [Amethyst](https://github.com/Geoxor/amethyst)
+
+**Disclaimer (05-2026)**  
+The split layout looks a lot like Georgia-ReBORN.
+Georgia-ReBORN is better in every aspect if this themes features are not needed.

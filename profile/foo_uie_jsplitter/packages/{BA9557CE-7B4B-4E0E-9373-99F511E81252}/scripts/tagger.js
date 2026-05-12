@@ -1,4 +1,5 @@
 ﻿'use strict';
+//24/04/26
 
 class Tagger {
 	constructor() {
@@ -96,7 +97,7 @@ class Tagger {
 
 	getScore(pc, lis, type) {
 		const score = ['pc', 'lis'].map((v, i) => {
-			const n = !i ? pc : lis;
+			const n = i ? lis : pc;
 			return n >= this.score[type][v].threshold ? (Math.log(n / this.score[type][v].scale) * this.score[type][v].baseLog) * 10 : (n * 0.9 / this.score[type][v].threshold + 0.1) * 10;
 		});
 		const pcScore = $.clamp(Math.floor(score[0]), 1, 105);
@@ -108,7 +109,7 @@ class Tagger {
 		let ix = -1;
 		let match = null;
 		let v = '';
-		match = text.match(RegExp(keywords));
+		match = text.match(new RegExp(keywords));
 		const correction = listeners || 0;
 
 		if (match) {
@@ -127,8 +128,8 @@ class Tagger {
 					const m2 = v.match(/\u200b\|[\d.,\s]*$/gm);
 					const playcount = m1 ? m1[0].replace(/\u200b\|/, '').slice(0, -1).trim() : '';
 					const lis = m2 ? m2[0].replace(/\u200b\|/, '').trim() : '';
-					const pcNum = parseInt(playcount.replace(/[,.\s]/g, ''));
-					const lisNum = parseInt(lis.replace(/[,.\s]/g, ''));
+					const pcNum = Number.parseInt(playcount.replace(/[,.\s]/g, ''));
+					const lisNum = Number.parseInt(lis.replace(/[,.\s]/g, ''));
 					v = pcNum && lisNum ? ['Playcount', playcount, 'Listeners', lis, 'Score', this.getScore(pcNum, lisNum, type)] : '';
 				} else {
 					v = v.includes('\u200b') ? v.split(/\u200b,\s/) : v.split(/,\s/);
@@ -148,16 +149,16 @@ class Tagger {
 			this.arr1.forEach((w, j) => {
 				if (!w.includes('\\b')) {
 					if ($.strip(v) == w) n[i] = this.arr2[j];
-				} else if (RegExp(w, 'i').test(v)) {
+				} else if (new RegExp(w, 'i').test(v)) {
 					n[i] = this.arr2[j]; // translate: includes is supported by regex test (regex should be 1st item of pair & must contain a word boundary marker [\b] for recognition); if test is true, 2nd item of pair is returned
 				}
 			});
 		});
 		n.forEach((v, i) => {
 			const j = this.genresStripped.indexOf($.strip(v));
-			n[i] = j != -1 ? this.genres[j] : ''; 
+			n[i] = j == -1 ? '' : this.genres[j]; 
 		});
-		n = n.filter(v => v);
+		n = n.filter(Boolean);
 		n = this.uniq(n);
 		return n;
 	}
@@ -227,7 +228,7 @@ class Tagger {
 		const tf_albumArtist = FbTitleFormat(`$upper(${cfg.tf.albumArtist})`);
 		const tf_cue = FbTitleFormat('$ext(%path%)');
 		const tf_l = FbTitleFormat(`$upper(${cfg.tf.album})`);
-		const artists = !radioStream ? tf_artist.EvalWithMetadbs(handles) : [tf_artist.Eval()];
+		const artists = radioStream ? [tf_artist.Eval()] : tf_artist.EvalWithMetadbs(handles);
 		const albumArtists = tf_albumArtist.EvalWithMetadbs(handles);
 		const cues = tf_cue.EvalWithMetadbs(handles);
 		const albums = tf_l.EvalWithMetadbs(handles);
@@ -239,15 +240,22 @@ class Tagger {
 			albumArtist = albumArtists[i];
 			cue[i] = cues[i].toLowerCase() == 'cue';
 			album = albums[i];
-			album = !cfg.albStrip ? name.albumTidy(album) : name.albumClean(album);
-			if (artist != cur_artist) {
+			album = cfg.albStrip ? name.albumClean(album) : name.albumTidy(album); // NOSONAR name
+			if (artist == cur_artist) {
+				artGenre_am[i] = artGenre_am[i - 1];
+				artGenre_w[i] = artGenre_w[i - 1];
+				artListeners[i] = artListeners[i - 1];
+				artTags[i] = artTags[i - 1];
+				locale[i] = locale[i - 1];
+				similarArtists[i] = similarArtists[i - 1];
+			} else {
 				cur_artist = artist;
 				similarArtists[i] = '';
 				if (cfg.tagEnabled7 || cfg.tagEnabled8 || cfg.tagEnabled9 || cfg.tagEnabled10 && cfg.tagEnabled13 < 7 || force) {
 					artTags[i] = '';
 					artListeners[i] = '';
 					locale[i] = '';
-					const lfmBio = panel.cleanPth(cfg.pth.foLfmBio, !radioStream ? handles[i] : panel.id.focus, !radioStream ? 'tag' : 'notifyRadioStream') + $.clean(artist) + cfg.suffix.foLfmBio + '.txt';
+					const lfmBio = panel.cleanPth(cfg.pth.foLfmBio, radioStream ? panel.id.focus : handles[i], radioStream ? 'notifyRadioStream' : 'tag') + $.clean(artist) + cfg.suffix.foLfmBio + '.txt';
 					if ($.file(lfmBio)) {
 						const lBio = $.open(lfmBio);
 						if (cfg.tagEnabled7 || force) {
@@ -274,7 +282,7 @@ class Tagger {
 				if (!similarArtists[i].length) similarArtists[i] = '';
 				if (cfg.tagEnabled12 || !locale[i] && notify || force) {
 					artGenre_w[i] = '';
-					const wikiBio = panel.cleanPth(cfg.pth.foWikiBio, !radioStream ? handles[i] : panel.id.focus, !radioStream ? 'tag' : 'notifyRadioStream') + $.clean(artist) + cfg.suffix.foWikiBio + '.txt';
+					const wikiBio = panel.cleanPth(cfg.pth.foWikiBio, radioStream ? panel.id.focus : handles[i], radioStream ? 'notifyRadioStream' : 'tag') + $.clean(artist) + cfg.suffix.foWikiBio + '.txt';
 					if ($.file(wikiBio)) {
 						const wBio = $.open(wikiBio);
 						artGenre_w[i] = this.getTag(wBio, 'Genre: ').tag;
@@ -283,7 +291,7 @@ class Tagger {
 				}
 				if (cfg.tagEnabled4 || !locale[i] && notify || force) {
 					artGenre_am[i] = '';
-					const amBio = panel.cleanPth(cfg.pth.foAmBio, !radioStream ? handles[i] : panel.id.focus, !radioStream ? 'tag' : 'notifyRadioStream') + $.clean(artist) + cfg.suffix.foAmBio + '.txt';
+					const amBio = panel.cleanPth(cfg.pth.foAmBio, radioStream ? panel.id.focus : handles[i], radioStream ? 'notifyRadioStream' : 'tag') + $.clean(artist) + cfg.suffix.foAmBio + '.txt';
 					if ($.file(amBio)) {
 						const aBio = $.open(amBio);
 						artGenre_am[i] = this.getTag(aBio, 'Genre: ').tag;
@@ -304,15 +312,16 @@ class Tagger {
 						if (!locale[i] || !locale[i].length) { locale[i] = ''; }
 				}
 				// Regorxxx ->
-			} else {
-				artGenre_am[i] = artGenre_am[i - 1];
-				artGenre_w[i] = artGenre_w[i - 1];
-				artListeners[i] = artListeners[i - 1];
-				artTags[i] = artTags[i - 1];
-				locale[i] = locale[i - 1];
-				similarArtists[i] = similarArtists[i - 1];
 			}
-			if (albumArtist + album != cur_albumArtist + cur_album) {
+			if (albumArtist + album == cur_albumArtist + cur_album) {
+				albGenre_am[i] = albGenre_am[i - 1];
+				albGenre_w[i] = albGenre_w[i - 1];
+				albListeners[i] = albListeners[i - 1];
+				amMoods[i] = amMoods[i - 1];
+				amRating[i] = amRating[i - 1];
+				amThemes[i] = amThemes[i - 1];
+				albTags[i] = albTags[i - 1];
+			} else {
 				cur_albumArtist = albumArtist;
 				cur_album = album;
 				if (cfg.tagEnabled0 || cfg.tagEnabled1 || cfg.tagEnabled2 || cfg.tagEnabled3 || force) {
@@ -369,18 +378,10 @@ class Tagger {
 						albGenre_w[i] = this.getTag(wRev, 'Genre: ').tag;
 					}
 				}
-			} else {
-				albGenre_am[i] = albGenre_am[i - 1];
-				albGenre_w[i] = albGenre_w[i - 1];
-				albListeners[i] = albListeners[i - 1];
-				amMoods[i] = amMoods[i - 1];
-				amRating[i] = amRating[i - 1];
-				amThemes[i] = amThemes[i - 1];
-				albTags[i] = albTags[i - 1];
 			}
 		}
 
-		for (let j = 0; j < 13; j++) this[`tagName${j}`] = !notify ? cfg[`tagName${j}`] : cfg[`tagName${j}_internal`].default_value;
+		for (let j = 0; j < 13; j++) this[`tagName${j}`] = notify ? cfg[`tagName${j}_internal`].default_value : cfg[`tagName${j}`];
 
 		for (let i = 0; i < handles.Count; i++) {
 			if (!cue[i] && (albGenre_am[i] || amMoods[i] || amRating[i] || amThemes[i] || artGenre_am[i] || albTags[i] || albListeners[i] || artTags[i] || artListeners[i] || locale[i] || similarArtists[i] || albGenre_w[i] || artGenre_w[i])) {
@@ -408,7 +409,7 @@ class Tagger {
 				artist: artists[0],
 				album: albums[0],
 				handle: handles[0],
-				selectionMode: !panel.id.focus ? 'Prefer nowplaying' : 'Follow selected track (playlist)', // Regorxxx <- Fix bugged notification of selection mode ->
+				selectionMode: panel.id.focus ? 'Follow selected track (playlist)' : 'Prefer nowplaying', // Regorxxx <- Fix bugged notification of selection mode ->
 				tags: tags[0]
 			});
 		}

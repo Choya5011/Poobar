@@ -214,7 +214,7 @@
  * The height of the kernel matrix. The units are specified in kernel units.<br>
  * The default value is 3
  * @property {number} ConvolveMatrix.KernelMatrix
- * Value type: <b>Float32Array(9)<b><br>
+ * Value type: <b>Float32Array(9)</b><br>
  * The kernel matrix to be applied to the image. The kernel elements aren't bounded and are specified as floats. The first set of KernelSizeX numbers in the FLOAT[] corresponds to the first row in the kernel. The second set of KernelSizeX numbers correspond to the second row, and so on up to KernelSizeY rows.<br>
  * The default value is [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
  * @property {number} ConvolveMatrix.Divisor
@@ -340,7 +340,7 @@
  * Value type: <b>FLOAT</b><br>
  * Value specifying the light direction used to create the effect. The allowed range is 0.0 to 360.0<br>
  * The default value is 0.0
- * 
+ *
  * @property {Object} Posterize
  * The posterize effect reduces the number of unique colors in an image.<br>
  * For more information, see: {@link https://learn.microsoft.com/en-us/windows/win32/direct2d/posterize-effect}
@@ -586,6 +586,46 @@
  * Value type: <b>Float32Array(4)</b><br>
  * The color and opacity of the bitmap. This property is a Float32Array(4). The individual values for each channel are of type FLOAT, unbounded and unitless. The effect doesn't modify the values for the channels. The RGBA values for each channel range from 0 to 1<br>
  * The default value is [0.0, 0.0, 0.0, 1.0f]
+ * 
+ * @property {Object} Turbulence
+ * Use the turbulence effect to generate a bitmap based on the Perlin noise function.<br>
+ * For more information, see: {@link https://learn.microsoft.com/en-us/windows/win32/direct2d/turbulence}
+ * @property {string} Turbulence.ID
+ * CLSID of effect.
+ * @property {number} Turbulence.Offset
+ * Value type: <b>Float32Array(2)</b><br>
+ * The coordinates where the turbulence output is generated.<br>
+ * The algorithm used to generate the Perlin noise is position dependent, so a different offset results in a different output. This property is not bounded and the units are specified in DIPs<br>
+ * Note: The offset does not have the same effect as a translation because the noise function output is infinite and the function will wrap around the tile.<br>
+ * The default value is [0.0, 0.0]
+ * @property {number} Turbulence.Size
+ * Value type: <b>Float32Array(2)</b><br>
+ * The size of the turbulence output. This property is not bounded and the units are specified in DIPs<br>
+ * The default value is [0.0, 0.0]
+ * @property {number} Turbulence.BaseFrequency
+ * Value type: <b>Float32Array(2)</b><br>
+ * The base frequencies in the X and Y direction. This property is a float and must be greater than 0. The units are specified in 1/DIPs.<br>
+ * A value of 1 (1/DIPs) for the base frequency results in the Perlin noise completing an entire cycle between two pixels. The ease interpolation for these pixels results in completely random pixels, since there is no correlation between the pixels.<br>
+ * A value of 0.1(1/DIPs) for the base frequency, the Perlin noise function repeats every 10 DIPs. This results in correlation between pixels and the typical turbulence effect is visible.<br>
+ * The default value is [0.01, 0.01]
+ * @property {number} Turbulence.NumOctaves
+ * Value type: <b>UINT32</b><br>
+ * The number of octaves for the noise function. This property is a UINT32 and must be greater than 0.<br>
+ * The default value is 1
+ * @property {number} Turbulence.Seed
+ * Value type: <b>UINT32</b><br>
+ * The seed for the pseudo random generator. This property is unbounded.<br>
+ * The default value is 0
+ * @property {number} Turbulence.Noise
+ * Value type: <b>{@link module:Effects.TurbulenceNoise TurbulenceNoise}</b><br>
+ * The turbulence noise mode. This property can be either fractal sum or turbulence. Indicates whether to generate a bitmap based on Fractal Noise or the Turbulence function.<br>
+ * The default value is {@link module:Effects.TurbulenceNoise TurbulenceNoise.FractalSum}
+ * @property {number} Turbulence.Stitchable
+ * Value type: <b>BOOL</b><br>
+ * Turns stitching on or off. The base frequency is adjusted so that output bitmap can be stitched. This is useful if you want to tile multiple copies of the turbulence effect output.<br>
+ * <b>True</b> The output bitmap can be tiled (using the tile effect) without the appearance of seams. The base frequency is adjusted so that output bitmap can be stitched.<br>
+ * <b>False</b> The base frequency is not adjusted, so seams may appear between tiles if the bitmap is tiled.<br>
+ * The default value is FALSE
  * 
  * @property {Object} AffineTransform
  * The 2D affine transform effect applies a spatial transform to an image based on a 3X2 matrix using the Direct2D matrix transform and any of six interpolation modes. You can use this effect to rotate, scale, skew, or translate an image. Or, you can combine these operations. Affine transfers preserve parallel lines and the ratio of distances between any three points in an image.<br>
@@ -1051,6 +1091,17 @@ const Effects = {
         Color: 0
     },
 
+    Turbulence: {
+        ID: '{CF2BB6AE-889A-4ad7-BA29-A2FD732C9FC9}',
+        Offset: 0,
+        Size:1 ,
+        BaseFrequency: 2,
+        NumOctaves: 3,
+        Seed: 4,
+        Noise: 5,
+        Stitchable: 6
+    },
+
     // ================================== Transform ======================================
     // https://learn.microsoft.com/en-us/windows/win32/direct2d/built-in-effects#transform
     
@@ -1376,445 +1427,6 @@ const D3DTransformInterpolationMode = {
 };
 
 /**
- * Matrix class to provide helper functions for transforming the image in 3 dimensions.<br>
- * For more information, see: {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nl-d2d1helper-matrix3x2f}<br>
- * Used in {@link module:Effects.Effects Effects.AffineTransform}<br>
- * @memberof module:Effects
- * @class
- * @hideconstructor
- */
-class Matrix3x2 {
-
-    /**
-     * Generates identity matrix.
-     * @method
-     * @return {Float32Array}
-     */
-    static Identity() {
-        return new Float32Array([
-            1, 0,
-            0, 1,
-            0, 0
-        ]);
-    }
-
-    /**
-     * Creates a translation transformation that has the specified x and y displacements.
-     * @method
-     * @param {float} x
-     * @param {float} y
-     * @return {Float32Array}
-     */
-    static Translation(x, y) {
-        return new Float32Array([
-            1, 0,
-            0, 1,
-            x, y
-        ]);
-    }
-
-    /**
-     * Creates a scale transformation that has the specified scale factors and center point.
-     * @method
-     * @param {float} x
-     * @param {float} y
-     * @param {float} centerX
-     * @param {float} centerY
-     * @return {Float32Array}
-     */
-    static Scale(x, y, centerX, centerY) {
-        return new Float32Array([
-            x, 0,
-            0, y,
-            centerX - x * centerX, centerY - y * centerY
-        ]);
-    }
-
-    /**
-     * Creates a rotation transformation that has the specified angle and center point.
-     * @method
-     * @param {float} angle
-     * @param {float} centerX
-     * @param {float} centerY
-     * @return {Float32Array}
-     */
-    static Rotation(angle, centerX, centerY) {
-        const angleInRadian = angle * (Math.PI / 180);
-        const sinAngle = Math.sin(angleInRadian);
-        const cosAngle = Math.cos(angleInRadian);
-        return new Float32Array([
-            cosAngle, sinAngle,
-            -sinAngle, cosAngle,
-            centerX - centerX * cosAngle + centerY * sinAngle, centerY - centerX * sinAngle - centerY * cosAngle
-        ]);
-    }
-
-    /**
-     * Creates a skew transformation that has the specified x-axis and y-axis values and center point.
-     * @method
-     * @param {float} degreeX
-     * @return {Float32Array}
-     */
-    static Skew(angleX, angleY, centerX, centerY) {
-        const angleXInRadian = angleX * (Math.PI / 180);
-        const angleYInRadian = angleY * (Math.PI / 180);
-        const tanAngleX = Math.tan(angleXInRadian);
-        const tanAngleY = Math.tan(angleYInRadian);
-        return new Float32Array([
-            1, tanAngleY,
-            tanAngleX, 1,
-            -centerY * tanAngleX, -centerX * tanAngleY
-        ]);
-    }
-
-    /**
-     * Returns determinant for specified matrix.
-     * @method
-     * @param {Float32Array} m
-     * @return {float}
-     */
-    static Determinant(m) {
-        return m[0] * m[3] - m[1] * m[2];
-    }
-
-    /**
-     * Returns product of two or more matrices.
-     * @method
-     * @param {Array<Float32Array>} matrices
-     * @return {Float32Array}
-     */
-    static Multiply(...matrices) {
-        if (matrices.length < 2) {
-            throw new Error('At least two matrices are required for multiplication');
-        }
-        for (const m of matrices) {
-            if (!(m instanceof Float32Array) || m.length !== 6) {
-                throw new Error('Each matrix must be a Float32Array of 6 numbers');
-            }
-        }
-
-        function mul(a, b) {
-            return new Float32Array([
-                a[0] * b[0] + a[1] * b[2],
-                a[0] * b[1] + a[1] * b[3],
-
-                a[2] * b[0] + a[3] * b[2],
-                a[2] * b[1] + a[3] * b[3],
-
-                a[4] * b[0] + a[5] * b[2] + b[4],
-                a[4] * b[1] + a[5] * b[3] + b[5]
-            ]);
-        }
-
-        let result = matrices[0];
-        for (let i = 1; i < matrices.length; i++) {
-            result = mul(result, matrices[i]);
-        }
-        return result;
-    }
-
-    /**
-     * Uses this matrix m to transform the specified point and returns the result.
-     * @method
-     * @param {Array<Float32Array>} matrices
-     * @return {Object(x, y)}
-     */
-    static TransformPoint(pointX, pointY, m) {
-        return { 
-            x: pointX * m[0] + pointY * m[2] + m[4],
-            y: pointX * m[1] + pointY * m[3] + m[5]
-        };
-    }
-}
-
-/**
- * Matrix class to provide helper functions for transforming the image in 3 dimensions.<br>
- * For more information, see: {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1_1helper/nl-d2d1_1helper-matrix4x4f}<br>
- * Used in {@link module:Effects.Effects Effects.D3DTransform}<br>
- * @memberof module:Effects
- * @class
- * @hideconstructor
- */
-class Matrix4x4 {
-
-    /**
-     * Generates identity matrix.
-     * @method
-     * @return {Float32Array}
-     */
-    static Identity() {
-        return new Float32Array([
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        ]);
-    }
-
-    /**
-     * Generates a transform matrix that translates the projection plane in the X, Y, or Z direction.
-     * @method
-     * @param {float} x
-     * @param {float} y
-     * @param {float} z
-     * @return {Float32Array}
-     */
-    static Translation(x, y, z) {
-        return new Float32Array([
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            x, y, z, 1
-        ]);
-    }
-
-    /**
-     * Generates a transform matrix that scales the projection plane in the X, Y, and/or Z direction.
-     * @method
-     * @param {float} x
-     * @param {float} y
-     * @param {float} z
-     * @return {Float32Array}
-     */
-    static Scale(x, y, z) {
-        return new Float32Array([
-            x, 0, 0, 0,
-            0, y, 0, 0,
-            0, 0, z, 0,
-            0, 0, 0, 1
-        ]);
-    }
-
-    /**
-     * Generates a transform matrix that rotates the projection plane about the X axis.
-     * @method
-     * @param {float} degreeX
-     * @return {Float32Array}
-     */
-    static RotationX(degreeX) {
-        const angleInRadian = degreeX * (Math.PI / 180);
-        const sinAngle = Math.sin(angleInRadian);
-        const cosAngle = Math.cos(angleInRadian);
-        return new Float32Array([
-            1, 0, 0, 0,
-            0, cosAngle, sinAngle, 0,
-            0, -sinAngle, cosAngle, 0,
-            0, 0, 0, 1
-        ]);
-    }
-
-    /**
-     * Generates a transform matrix that rotates the projection plane about the Y axis.
-     * @method
-     * @param {float} degreeY
-     * @return {Float32Array}
-     */
-    static RotationY(degreeY) {
-        const angleInRadian = degreeY * (Math.PI / 180);
-        const sinAngle = Math.sin(angleInRadian);
-        const cosAngle = Math.cos(angleInRadian);
-        return new Float32Array([
-            cosAngle, 0, -sinAngle, 0,
-            0, 1, 0, 0,
-            sinAngle, 0, cosAngle, 0,
-            0, 0, 0, 1
-        ]);
-    }
-
-    /**
-     * Generates a transform matrix that rotates the projection plane about the Z axis.
-     * @method
-     * @param {float} degreeZ
-     * @return {Float32Array}
-     */
-    static RotationZ(degreeZ) {
-        const angleInRadian = degreeZ * (Math.PI / 180);
-        const sinAngle = Math.sin(angleInRadian);
-        const cosAngle = Math.cos(angleInRadian);
-        return new Float32Array([
-            cosAngle, sinAngle, 0, 0,
-            -sinAngle, cosAngle, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        ]);
-    }
-
-    /**
-     * Generates a transform matrix that skews the projection plane in the X direction.
-     * @method
-     * @param {float} degreeX
-     * @return {Float32Array}
-     */
-    static SkewX(degreeX) {
-        const angleInRadian = degreeX * (Math.PI / 180);
-        const tanAngle = Math.tan(angleInRadian);
-        return new Float32Array([
-            1, 0, 0, 0,
-            tanAngle, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        ]);
-    }
-
-    /**
-     * Generates a transform matrix that skews the projection plane in the Y direction.
-     * @method
-     * @param {float} degreeY
-     * @return {Float32Array}
-     */
-    static SkewY(degreeY) {
-        const angleInRadian = degreeY * (Math.PI / 180);
-        const tanAngle = Math.tan(angleInRadian);
-        return new Float32Array([
-            1, tanAngle, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        ]);
-    }
-
-    /**
-     * A perspective transformation with a depth value.
-     * @method
-     * @param {float} depth
-     * @return {Float32Array}
-     */
-    static PerspectiveProjection(depth)
-    {
-        let proj = 0;
-
-        if (depth > 0)
-        {
-            proj = -1/depth;
-        }
-
-        return new Float32Array([
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, proj,
-            0, 0, 0, 1
-        ]);
-    }
-
-    /**
-     * Rotates the projection plane about the axis you specify.
-     * @method
-     * @param {float} x
-     * @param {float} y
-     * @param {float} z
-     * @param {float} degree
-     * @return {Float32Array}
-     */
-    static RotationArbitraryAxis(x, y, z, degree)
-    {
-        // Normalize the vector represented by x, y, and z
-        const magnitude = Math.sqrt(x*x + y*y + z*z);
-        x /= magnitude;
-        y /= magnitude;
-        z /= magnitude;
-
-        const angleInRadian = degree * (Math.PI / 180);
-        const sinAngle = Math.sin(angleInRadian);
-        const cosAngle = Math.cos(angleInRadian);
-
-        const oneMinusCosAngle = 1 - cosAngle;
-
-        return new Float32Array([
-            1             + oneMinusCosAngle * (x * x - 1),
-            z  * sinAngle + oneMinusCosAngle *  x * y,
-            -y * sinAngle + oneMinusCosAngle *  x * z,
-            0,
-
-            -z * sinAngle + oneMinusCosAngle *  y * x,
-            1             + oneMinusCosAngle * (y * y - 1),
-            x  * sinAngle + oneMinusCosAngle *  y * z,
-            0,
-
-            y  * sinAngle + oneMinusCosAngle *  z * x,
-            -x * sinAngle + oneMinusCosAngle *  z * y,
-            1             + oneMinusCosAngle * (z * z - 1),
-            0,
-
-            0, 0, 0, 1
-        ]);
-    }
-
-    /**
-     * Returns product of two or more matrices.
-     * @method
-     * @param {Array<Float32Array>} matrices
-     * @return {Float32Array}
-     */
-    static Multiply(...matrices) {
-        if (matrices.length < 2) {
-            throw new Error('At least two matrices are required for multiplication');
-        }
-        for (const m of matrices) {
-            if (!(m instanceof Float32Array) || m.length !== 16) {
-                throw new Error('Each matrix must be a Float32Array of 16 numbers');
-            }
-        }
-
-        function mul(a, b) {
-            return new Float32Array([
-                a[0] * b[0] + a[1] * b[4] + a[2] * b[8] + a[3] * b[12], 
-                a[0] * b[1] + a[1] * b[5] + a[2] * b[9] + a[3] * b[13], 
-                a[0] * b[2] + a[1] * b[6] + a[2] * b[10] + a[3] * b[14], 
-                a[0] * b[3] + a[1] * b[7] + a[2] * b[11] + a[3] * b[15],
-
-                a[4] * b[0] + a[5] * b[4] + a[6] * b[8] + a[7] * b[12], 
-                a[4] * b[1] + a[5] * b[5] + a[6] * b[9] + a[7] * b[13], 
-                a[4] * b[2] + a[5] * b[6] + a[6] * b[10] + a[7] * b[14], 
-                a[4] * b[3] + a[5] * b[7] + a[6] * b[11] + a[7] * b[15],
-
-                a[8] * b[0] + a[9] * b[4] + a[10] * b[8] + a[11] * b[12], 
-                a[8] * b[1] + a[9] * b[5] + a[10] * b[9] + a[11] * b[13], 
-                a[8] * b[2] + a[9] * b[6] + a[10] * b[10] + a[11] * b[14],
-                a[8] * b[3] + a[9] * b[7] + a[10] * b[11] + a[11] * b[15],
-
-                a[12] * b[0] + a[13] * b[4] + a[14] * b[8] + a[15] * b[12], 
-                a[12] * b[1] + a[13] * b[5] + a[14] * b[9] + a[15] * b[13], 
-                a[12] * b[2] + a[13] * b[6] + a[14] * b[10] + a[15] * b[14],
-                a[12] * b[3] + a[13] * b[7] + a[14] * b[11] + a[15] * b[15]
-            ]);            
-            // const result = new Float32Array(16);
-            // for (let i = 0; i < 4; i++) {
-            //     for (let j = 0; j < 4; j++) {
-            //         let sum = 0;
-            //         for (let k = 0; k < 4; k++) {
-            //             sum += a[i * 4 + k] * b[k * 4 + j];
-            //         }
-            //         result[i * 4 + j] = sum;
-            //     }
-            // }
-            // return result;
-        }
-
-        let result = matrices[0];
-        for (let i = 1; i < matrices.length; i++) {
-            result = mul(result, matrices[i]);
-        }
-        return result;
-    }
-
-    /**
-     * Returns determinant for specified matrix.
-     * @method
-     * @param {Float32Array} m
-     * @return {float}
-     */
-    static Determinant(m)
-    {
-        const minor1 = m[12] * (m[1] * (m[6] * m[11] - m[10] * m[7]) - m[2] * (m[5] * m[11] - m[7] * m[9]) + m[3] * (m[5] * m[10] - m[6] * m[9]));
-        const minor2 = m[13] * (m[0] * (m[4] * m[11] - m[8] * m[7]) - m[2] * (m[4] * m[11] - m[7] * m[8]) + m[3] * (m[4] * m[10] - m[6] * m[8]));
-        const minor3 = m[14] * (m[0] * (m[5] * m[11] - m[9] * m[7]) - m[1] * (m[4] * m[11] - m[7] * m[8]) + m[3] * (m[4] * m[9] - m[5] * m[8]));
-        const minor4 = m[15] * (m[0] * (m[5] * m[10] - m[9] * m[6]) - m[1] * (m[4] * m[10] - m[6] * m[8]) + m[2] * (m[4] * m[9] - m[5] * m[8]));
-
-        return minor1 - minor2 + minor3 - minor4;
-    }
-}
-
-/**
  * Used in {@link module:Effects.Effects Effects.D3DPerspectiveTransform}<br>
  * <b>NearestNeighbor</b>: Samples the nearest single point and uses that. This mode uses less processing time, but outputs the lowest quality image.<br>
  * <b>Linear</b>: Uses a four point sample and linear interpolation. This mode uses more processing time than the nearest neighbor mode, but outputs a higher quality image.<br>
@@ -1921,4 +1533,16 @@ const ColorMatrixAlphaMode = {
 const HdrToneMapDisplayMode = {
     SDR: 0,
     HDR: 1
+};
+
+/**
+ * Used in {@link module:Effects Effects.TurbulenceNoise}<br>
+ * <b>FractalSum</b>: Computes a sum of the octaves, shifting the output range from [-1, 1], to [0, 1].<br>
+ * <b>Turbulence</b>: Computes a sum of the absolute value of each octave.<br>
+ * @memberof module:Effects
+ * @default
+ */
+const TurbulenceNoise = {
+    FractalSum: 0,
+    Turbulence: 1
 };

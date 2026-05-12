@@ -65,7 +65,7 @@ function D2DBitmap(arg) {
     /**
      * Returns a JSON array in string form so you need to use JSON.parse() on the result.<br>
      * Each entry in the array is an object which contains colour and frequency values.<br>
-     * Uses a different method for calculating colours than {@link GdiBitmap#GetColourScheme GetColourScheme}.<br>
+     * Uses a different method for calculating colours than {@link D2DBitmap#GetColourScheme GetColourScheme}.<br>
      * Image is automatically resized during processing for performance reasons so there's no
      * need to resize before calling the method.
      *
@@ -74,7 +74,7 @@ function D2DBitmap(arg) {
      *
      * @example
      * // See docs\Helpers.js for "toRGB" function.
-     * img = ... // use utils.GetAlbumArtV2 / gdi.Image / etc
+     * img = ... // use utils.GetAlbumArtV2 / d2d.Image / etc
      * colours = JSON.parse(img.GetColourSchemeJSON(5));
      * console.log(colours[0].col); // -4194304
      * console.log(colours[0].freq); // 0.34
@@ -85,7 +85,7 @@ function D2DBitmap(arg) {
     /**
      * Returns a JSON array in string form so you need to use JSON.parse() on the result.<br>
      * Each entry in the array is an object which contains colour and frequency values.<br>
-     * Uses a different method than {@link GdiBitmap#GetColourSchemeJSON GetColourSchemeJSON} for calculating colours (K-means++ with Oklab).<br>
+     * Uses a different method than {@link D2DBitmap#GetColourSchemeJSON GetColourSchemeJSON} for calculating colours (K-means++ with Oklab).<br>
      *
      * @param {number} max_count
      * @param {number} [min_chroma=0.0] minimal chroma value for choosing start cluster pixel
@@ -100,6 +100,21 @@ function D2DBitmap(arg) {
      * @return {D2DGraphics}
      */
     this.GetGraphics = function () { };
+
+    /**
+     * Extract raw pixels from bitmap as a byte array in specified pixel format
+     *
+     * @param {string} [format="bgra32"] Pixel format string (default: "bgra32")
+     * Supported formats:<br>
+     *   "bgra32"  32bpp BGRA<br>
+     *   "rgba32"  32bpp RGBA<br>
+     *   "bgr24"   24bpp BGR<br>
+     *   "rgb24"   24bpp RGB<br>
+     * @returns {Uint8Array} null if was an error (for example, bitmap in unsupported format or unsupported format specified)
+     * 
+     * @sourceFile ../../component/samples/basic/CreateImageFromPixelData.js
+     */
+    this.GetPixelData = function(format) { };
 
     /**
      * Inverts the colours in a bitmap, to create a negative image.
@@ -346,6 +361,117 @@ function D2DEffect(CLSID) {
 }
 
 /**
+ * Object used for drawing as alternative for simple colour.<br>
+ * Can also be used to reuse brushes for drawing instead of creating them every time for any primitive drawing operation (if just a color is specified in the Draw/Fill methods, a brush is always created).<br>
+ * Created by {@link d2d.Brush}
+ * @constructor
+ * @param {D2DBrush} arg
+ * 
+ * @sourceFile ../../component/samples/basic/Brushes.js
+ */
+function D2DBrush(arg) {
+
+    /**
+     * Brush type.<br>
+     * See {@link module:Flags.BrushType BrushType}
+     * @type {BrushType}
+     * @readonly
+     */
+    this.Type = undefined;// (uint) (read)
+
+    /**
+     * Wrap mode responsible for how the brush gradient or image is repeated when drawing<br>
+     * See {@link module:Flags.BrushWrapMode BrushWrapMode}
+     * @type {BrushWrapMode} 
+     * @readonly
+     */
+    this.WrapMode = undefined;// (uint) (read, write)
+
+    /**
+     * Applies translation matrix to the current D2DBrush matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-translation(d2d1_size_f)}
+     *
+     * @param {number} dx
+     * @param {number} dy
+     */
+    this.Translate = function(dx, dy) {}
+
+    /**
+     * Applies rotation matrix to the current D2DBrush matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-rotation}
+     *
+     * @param {float} angle Angle of rotation in degrees
+     * @param {number=} [cx=0] Rotation center point x coord
+     * @param {number=} [cy=0] Rotation center point y coord
+     */
+    this.Rotate = function(angle, cx, cy) {}
+
+    /**
+     * Applies scale matrix to the current D2DBrush matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-scale(d2d1_size_f_d2d1_point_2f)}
+     *
+     * @param {float} sx The x-axis scale factor
+     * @param {float=} [sy=0] The y-axis scale factor. If zero sx will be used as sy
+     * @param {number=} [cx=0] Scale center point x coord
+     * @param {number=} [cy=0] Scale center point y coord
+     */
+    this.Scale = function(sz, sy, cx, cy) {}
+    
+    /**
+     * Applies skew matrix to the current D2DBrush matrix.<br>
+     * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-skew}
+     *
+     * @param {float} angleX The x-axis skew angle, which is measured in degrees counterclockwise from the y-axis.
+     * @param {float} angleY The y-axis skew angle, which is measured in degrees clockwise from the x-axis.
+     * @param {number=} [cx=0] Skew center point x coord
+     * @param {number=} [cy=0] Skew center point y coord
+     */
+    this.Skew = function(angleX, angleY, cx, cy) {}
+
+    /**
+     * Saves current D2DBrush matrix in internal stack. To restore the matrix use {@link D2DGraphics#PopTransform PopTransform}.
+     */
+    this.PushTransform = function() {}
+
+    /**
+     * Restores D2DBrush matrix from internal stack pushed previously by {@link D2DGraphics#PushTransform PushTransform}.
+     */
+    this.PopTransform = function() {}
+
+    /**
+     * Gets D2DBrush current transformation matrix of 3x2 size (Float32Array(6))<br>
+     * Matrix3x2 helper class from the component/docs/Matrix.js will be useful
+     * @return {Float32Array}
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
+     */
+    this.GetTransform = function() {}
+
+    /**
+     * Replaces the current D2DBrush matrix with specified transformation matrix of 3x2 size.<br>
+     * Matrix3x2 helper class from the component/docs/Matrix.js will be useful
+     * @param {Float32Array} matrix Array that presents 3x2 matrix for transformation (length = 6)
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
+     */
+    this.SetTransform = function(matrix) {}
+
+    /**
+     * Resets current D2DBrush matrix to original identity matrix.
+     */
+    this.ResetTransform = function () {}
+
+    /**
+     * Applies specified transformation matrix of 3x2 size to the current D2DBrush matrix.<br>
+     * Matrix3x2 helper class from the component/docs/Matrix.js will be useful
+     * @param {Float32Array} matrix Array that presents 3x2 matrix for transformation (length = 6)
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
+     */
+    this.ApplyTransform = function(matrix) {}    
+}
+
+/**
  * Typically used inside `on_paint`.<br>
  * Use on_paint(dgr) for D2DGraphics members hints in auto-completion list.<br>
  * Note: there are many different ways to get colours:
@@ -399,10 +525,10 @@ function D2DGraphics() {
      * @param {number} w
      * @param {number} h
      * @param {number} line_width
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      * @param {DashStyle=} [style=DashStyle.Solid] See {@link module:Flags.DashStyle DashStyle}
      */
-    this.DrawEllipse = function (x, y, w, h, line_width, colour, style) { }; // (void)
+    this.DrawEllipse = function (x, y, w, h, line_width, colour_or_brush, style) { }; // (void)
 
     /**
      * @param {D2DBitmap} img
@@ -425,34 +551,34 @@ function D2DGraphics() {
      * @param {number} x2
      * @param {number} y2
      * @param {number} line_width
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      * @param {DashStyle=} [style=DashStyle.Solid] See {@link module:Flags.DashStyle DashStyle}
      * @param {CapStyle=} [startCap=CapStyle.Solid] See {@link module:Flags.CapStyle CapStyle}
      * @param {CapStyle=} [endCap=CapStyle.Solid] See {@link module:Flags.CapStyle CapStyle}
      */
-    this.DrawLine = function (x1, y1, x2, y2, line_width, colour, style, startCap, endCap) { }; // (void)
+    this.DrawLine = function (x1, y1, x2, y2, line_width, colour_or_brush, style, startCap, endCap) { }; // (void)
 
     /**
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      * @param {number} line_width
      * @param {Array<Array<number>>} points
      * @param {DashStyle=} [style=DashStyle.Solid] See {@link module:Flags.DashStyle DashStyle}
      */
-    this.DrawPolygon = function (colour, line_width, points, style) { }; // (void)
+    this.DrawPolygon = function (colour_or_brush, line_width, points, style) { }; // (void)
 
     /**
      * Should be only used when {@link D2DGraphics#DrawText DrawText} is not applicable.
      *
      * @param {string} str
      * @param {D2DFont} font
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      * @param {number} x
      * @param {number} y
      * @param {number} w
      * @param {number} h
      * @param {number=} [flags=0] See {@link module:Flags.StringFormatFlags StringFormatFlags} flags
      */
-    this.DrawString = function (str, font, colour, x, y, w, h, flags) { }; // (void) [, flags]
+    this.DrawString = function (str, font, colour_or_brush, x, y, w, h, flags) { }; // (void) [, flags]
 
     /**
      * @param {number} x
@@ -460,10 +586,10 @@ function D2DGraphics() {
      * @param {number} w
      * @param {number} h
      * @param {number} line_width
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      * @param {DashStyle=} [style=DashStyle.Solid] See {@link module:Flags.DashStyle DashStyle}
      */
-    this.DrawRect = function (x, y, w, h, line_width, colour, style) { }; // (void)
+    this.DrawRect = function (x, y, w, h, line_width, colour_or_brush, style) { }; // (void)
 
     /**
      * @param {number} x
@@ -473,10 +599,10 @@ function D2DGraphics() {
      * @param {number} arc_width
      * @param {number} arc_height
      * @param {number} line_width
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      * @param {DashStyle=} [style=DashStyle.Solid] See {@link module:Flags.DashStyle DashStyle}
      */
-    this.DrawRoundRect = function (x, y, w, h, arc_width, arc_height, line_width, colour, style) { }; // (void)
+    this.DrawRoundRect = function (x, y, w, h, arc_width, arc_height, line_width, colour_or_brush, style) { }; // (void)
 
     /**
      * @param {string} str
@@ -499,9 +625,9 @@ function D2DGraphics() {
      * @param {number} y
      * @param {number} w
      * @param {number} h
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      */
-    this.FillEllipse = function (x, y, w, h, colour) { }; // (void)
+    this.FillEllipse = function (x, y, w, h, colour_or_brush) { }; // (void)
 
     /**
      * Note: this may appear buggy depending on rectangle size. The easiest fix is
@@ -533,11 +659,11 @@ function D2DGraphics() {
     this.FillGradRectV2 = function (x, y, w, h, angle, stops) { };
 
     /**
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      * @param {number} fillmode 0 alternate, 1 winding.
      * @param {Array<Array<number>>} points
      */
-    this.FillPolygon = function (colour, fillmode, points) { }; // (void)
+    this.FillPolygon = function (colour_or_brush, fillmode, points) { }; // (void)
 
     /**
      * @param {number} x
@@ -546,18 +672,18 @@ function D2DGraphics() {
      * @param {number} h
      * @param {number} arc_width
      * @param {number} arc_height
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      */
-    this.FillRoundRect = function (x, y, w, h, arc_width, arc_height, colour) { }; // (void)
+    this.FillRoundRect = function (x, y, w, h, arc_width, arc_height, colour_or_brush) { }; // (void)
 
     /**
      * @param {number} x
      * @param {number} y
      * @param {number} w
      * @param {number} h
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      */
-    this.FillSolidRect = function (x, y, w, h, colour) { }; // (void)
+    this.FillSolidRect = function (x, y, w, h, colour_or_brush) { }; // (void)
 
     /**
      * @param {D2DBitmap} img
@@ -588,14 +714,14 @@ function D2DGraphics() {
      *
      * @param {string} str
      * @param {D2DFont} font
-     * @param {number} colour
+     * @param {*} colour_or_brush colour ARGB or {@link D2DBrush} object
      * @param {number} x
      * @param {number} y
      * @param {number} w
      * @param {number} h
      * @param {number=} [format=0] See flags like {@link module:Flags.DT_LEFT DT_LEFT}
      */
-    this.DrawText = function (str, font, colour, x, y, w, h, format) { };
+    this.DrawText = function (str, font, colour_or_brush, x, y, w, h, format) { };
 
     /**
      * Draws stroked text in clipped rectangle. Flags for formatting text are not supported.
@@ -638,8 +764,8 @@ function D2DGraphics() {
      * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-rotation}
      *
      * @param {float} angle Angle of rotation in degrees
-     * @param {number} cx Rotation center point x coord
-     * @param {number} cy Rotation center point y coord
+     * @param {number=} [cx=0] Rotation center point x coord
+     * @param {number=} [cy=0] Rotation center point y coord
      */
     this.Rotate = function(angle, cx, cy) {}
 
@@ -648,9 +774,9 @@ function D2DGraphics() {
      * For more information see {@link https://learn.microsoft.com/en-us/windows/win32/api/d2d1helper/nf-d2d1helper-matrix3x2f-scale(d2d1_size_f_d2d1_point_2f)}
      *
      * @param {float} sx The x-axis scale factor
-     * @param {float} sy The y-axis scale factor
-     * @param {number} cx Scale center point x coord
-     * @param {number} cy Scale center point y coord
+     * @param {float=} [sy=0] The y-axis scale factor. If zero sx will be used as sy
+     * @param {number=} [cx=0] Scale center point x coord
+     * @param {number=} [cy=0] Scale center point y coord
      */
     this.Scale = function(sz, sy, cx, cy) {}
     
@@ -660,8 +786,8 @@ function D2DGraphics() {
      *
      * @param {float} angleX The x-axis skew angle, which is measured in degrees counterclockwise from the y-axis.
      * @param {float} angleY The y-axis skew angle, which is measured in degrees clockwise from the x-axis.
-     * @param {number} cx Skew center point x coord
-     * @param {number} cy Skew center point y coord
+     * @param {number=} [cx=0] Skew center point x coord
+     * @param {number=} [cy=0] Skew center point y coord
      */
     this.Skew = function(angleX, angleY, cx, cy) {}
 
@@ -671,19 +797,25 @@ function D2DGraphics() {
     this.PushTransform = function() {}
 
     /**
-     * Restores current D2DGraphics matrix from internal stack pushed previously by {@link D2DGraphics#PushTransform PushTransform}.
+     * Restores D2DGraphics matrix from internal stack pushed previously by {@link D2DGraphics#PushTransform PushTransform}.
      */
     this.PopTransform = function() {}
 
     /**
-     * Gets D2DGraphics current transformation matrix of 3x2 size.
-     * @return {Array}
+     * Gets D2DGraphics current transformation matrix of 3x2 size (Float32Array(6))<br>
+     * Matrix3x2 helper class from the component/docs/Matrix.js will be useful
+     * @return {Float32Array}
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
      */
     this.GetTransform = function() {}
 
     /**
-     * Replaces the current D2DGraphics matrix with specified transformation matrix of 3x2 size.
-     * @param {Array} matrix Array that presents 3x2 matrix for transformation (length = 6)
+     * Replaces the current D2DGraphics matrix with specified transformation matrix of 3x2 size.<br>
+     * Matrix3x2 helper class from the component/docs/Matrix.js will be useful
+     * @param {Float32Array} matrix Array that presents 3x2 matrix for transformation (length = 6)
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
      */
     this.SetTransform = function(matrix) {}
 
@@ -693,8 +825,11 @@ function D2DGraphics() {
     this.ResetTransform = function () {}
 
     /**
-     * Applies specified transformation matrix of 3x2 size to the current D2DGraphics matrix.
-     * @param {Array} matrix Array that presents 3x2 matrix for transformation (length = 6)
+     * Applies specified transformation matrix of 3x2 size to the current D2DGraphics matrix.<br>
+     * Matrix3x2 helper class from the component/docs/Matrix.js will be useful
+     * @param {Float32Array} matrix Array that presents 3x2 matrix for transformation (length = 6)
+     * 
+     * @sourceFile ../../component/docs/Matrix.js
      */
     this.ApplyTransform = function(matrix) {}
 
@@ -796,38 +931,82 @@ function D2DGraphics() {
 let d2d = {
 
     /**
+     * Creates a drawing brush of the specified type. The meaning of the brush's input parameters depends on its type.<br>
+     * For type == {@link module:Flags.BrushType BrushType.Solid}:<br>
+     * - param1: brush colour in ARGB<br>
+     * For type == {@link module:Flags.BrushType BrushType.LinearGradient}:<br>
+     * - param1: start point coords of linear gradient in form of Array(2) (for ex.: [0, 0])<br>
+     * - param2: end point coords of linear gradient in form of Array(2) (for ex.: [100, 0])<br>
+     * - param3: gradient stops specified as an array with alternating position and color values for each stop (for ex.: [0.0, 0xFF000000, 0.5, 0xFFFF0000, 1.0, 0xFFFFFFFF])<br>
+     * For type == {@link module:Flags.BrushType BrushType.RadialGradient}:<br>
+     * - param1: center point coords of radial gradient in form of Array(2) (for ex.: [50, 50])<br>
+     * - param2: radius values for X and Y axes in form of Array(2) (for ex.: [50, 50])<br>
+     * - param3: gradient stops specified as an array with alternating position and color values for each stop (for ex.: [0.0, 0xFF000000, 0.5, 0xFFFF0000, 1.0, 0xFFFFFFFF])<br>
+     * For type == {@link module:Flags.BrushType BrushType.Bitmap}:<br>
+     * - param1: D2DBitmap object used for drawing by brush<br>
+     * - param2: wrap mode responsible for how the image is repeated when drawing. See {@link module:Flags.BrushWrapMode BrushWrapMode}
+     * 
+     * @param {BrushType} type
+     * @param {*} param1
+     * @param {*=} [param2=undefined]
+     * @param {*=} [param3=undefined]
+     * @return {D2DBrush} Brush object used in Draw/Fill methods
+     * 
+     * @sourceFile ../../component/samples/basic/Brushes.js
+     */
+    Brush: function (type, param1, param2, param3) { }, // (D2DBrush)
+
+    /**
      * @param {number} w
      * @param {number} h
-     * @return {GdiBitmap}
+     * @return {D2DBitmap}
      */
-    CreateImage: function (w, h) { }, // (GdiBitmap)
+    CreateImage: function (w, h) { }, // (D2DBitmap)
+
+    /**
+     * Create D2DBitmap from raw pixel data in memory.
+     *
+     * @param {Uint8Array} pixelData Raw pixel bytes
+     * @param {number} width Image width in pixels
+     * @param {number} height Image height in pixels
+     * @param {string} [format="bgra32"] Pixel format string (default: "bgra32")
+     * Supported formats:<br>
+     *   "bgra32"  32bpp BGRA<br>
+     *   "rgba32"  32bpp RGBA<br>
+     *   "bgr24"   24bpp BGR<br>
+     *   "rgb24"   24bpp RGB<br>
+     * @returns {D2DBitmap} null if was an error (for example pixelData array length is not suitable for the specified parameters)
+     * 
+     * @sourceFile ../../component/samples/basic/CreateImageFromPixelData.js
+     */
+    CreateImageFromPixelData: function(pixelData, width, height, format = "bgra32") { }, // (D2DBitmap)
 
     /**
      * Performance note: avoid using inside `on_paint`.<br>
-     * Performance note II: try caching and reusing `GdiFont` objects,
+     * Performance note II: try caching and reusing `D2DFont` objects,
      * since the maximum amount of such objects is hard-limited by Windows.
-     * `GdiFont` creation will fail after reaching this limit.
+     * `D2DFont` creation will fail after reaching this limit.
      *
      * @param {string} name
      * @param {number} size_px See {@link module:Helpers.Point2Pixel Point2Pixel} function for conversions
      * @param {number=} [style=0] See {@link module:Flags.FontStyle FontStyle} flags
-     * @return {?GdiFont} null, if font is not present.
+     * @return {?D2DFont} null, if font is not present.
      */
-    Font: function (name, size_px, style) { }, // (GdiFont) [, style]
+    Font: function (name, size_px, style) { }, // (D2DFont) [, style]
 
     /**
      * Load image from file.<br>
      * <br>
-     * Performance note: consider using {@link gdi.LoadImageAsync} or {@link gdi.LoadImageAsyncV2} if there are a lot of images to load
+     * Performance note: consider using {@link d2d.LoadImageAsync} or {@link d2d.LoadImageAsyncV2} if there are a lot of images to load
      * or if the image is big.
      *
      * @param {string} path
-     * @return {?GdiBitmap} null, if image failed to load.
+     * @return {?D2DBitmap} null, if image failed to load.
      *
      * @example
-     * let img = gdi.Image('e:\\images folder\\my_image.png');
+     * let img = d2d.Image('e:\\images folder\\my_image.png');
      */
-    Image: function (path) { }, // (GdiBitmap)
+    Image: function (path) { }, // (D2DBitmap)
 
     /**
      * Load image from file asynchronously.
@@ -846,7 +1025,7 @@ let d2d = {
      *
      * @param {number} window_id unused
      * @param {string} path
-     * @return {Promise.<?GdiBitmap>}
+     * @return {Promise.<?D2DBitmap>}
      *
      * @sourceFile ../../component/samples/basic/LoadImageAsyncV2.js
      */
@@ -861,14 +1040,14 @@ let d2d = {
     Effect: function (CLSID) { },
 
     /**
-     * Creates Direct2D effect.
+     * Compiles Direct2D shader.
      * @param {string} source Shader source code (ASCII HLSL code)
      * @param {string} [entryPoint="main"] The name of the shader entry point function where shader execution begins.<br>
      * @param {string} [target=""] A string that specifies the shader target or set of shader features to compile against.<br>
      * The shader target can be shader model 2, shader model 3, shader model 4, or shader model 5.<br>
      * For full target list see {@link https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/specifying-compiler-targets}<br>
      * Default value: "ps_5_0" if Direct2D 1.1 or higher is available on the system, otherwise "ps_4_0".
-     * @param {D2DCompileFlags} [false=0x4A008] Affects compiler flags. {@link module:Flags.D2DCompileFlags D2DCompileFlags}<br>
+     * @param {D2DCompileFlags} [flags=0x4A008] Affects compiler flags. {@link module:Flags.D2DCompileFlags D2DCompileFlags}<br>
      * For flags values see: {@link https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/d3dcompile-constants}<br>
      * <b>Default value</b>: D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_IEEE_STRICTNESS | D3DCOMPILE_WARNINGS_ARE_ERRORS | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR<br>
      * <b>Example for debug build</b>: D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_ALL_RESOURCES_BOUND | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR
@@ -908,7 +1087,7 @@ let d2d = {
      * 
      * const shaderCode = d2d.Compile(shaderSource);
      * if (shaderCode.Error !== "") 
-     *     fb.ShowPopupMessage(code.Error, "Direct2D compile error!");
+     *     fb.ShowPopupMessage(shaderCode.Error, "Direct2D compile error!");
      * else
      *     effect.SetValue(Effects.CustomShader.ShaderCode, shaderCode.Code);
      * 
@@ -917,7 +1096,6 @@ let d2d = {
      * }
      */
     Compile: function (source, entryPoint, target, flags) { },
-
 };
 
 /**
@@ -929,7 +1107,7 @@ function D2DCompileInfo() {
 
     /**
      * Compiled shader (bytecode)
-     * @type {Array<number>}
+     * @type {Uint8Array}
      * @readonly
      */
     this.Code = [];

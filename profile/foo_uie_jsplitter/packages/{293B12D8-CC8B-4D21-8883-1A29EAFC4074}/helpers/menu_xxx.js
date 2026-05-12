@@ -1,5 +1,5 @@
 ﻿'use strict';
-//27/12/25
+//19/03/26
 
 /* exported _menu */
 
@@ -7,7 +7,7 @@
 	Contextual Menu helper v2.6.0
  */
 
-include(fb.ComponentPath + 'docs\\Flags.js');
+include(fb.ComponentPath + 'docs\\Flags.js'); // Can also be replaced with fb.ComponentPath + 'samples\\complete\\js\\helpers.js';
 /* global MF_STRING:readable, MF_GRAYED:readable, abortWebRequests:readable */
 
 /**
@@ -105,7 +105,7 @@ function _menu({ bInit = true, bSuppressDefaultMenu = true, properties = null, i
 	/** @type {number} - Internal menu idx count */
 	let idx = 0;
 	/** @type {_menu.Separator} - Separator string identifier to be used by externally */
-	this.separator = void(0);
+	this.separator = void (0);
 	Object.defineProperty(this, 'separator', { get() { return _menu.separator; } });
 	/** @type {RegExp} - Expression to check for separator entries */
 	const separator = /(?:^|\\)(?:sep|separator)$/i;
@@ -120,7 +120,10 @@ function _menu({ bInit = true, bSuppressDefaultMenu = true, properties = null, i
 	 * @property  {(number) => number} btn_up
 	 * @property  {(number) => void} btn_up_done
 	 */
-
+	/** @type {number} - Last btn_up() x coord */
+	this.mx = -1;
+	/** @type {string} - Last btn_up() y coord */
+	this.my = -1;
 	/* Methods (public) */
 	/**
 	 * Get total number of menu entries (parents and entries)
@@ -968,6 +971,8 @@ function _menu({ bInit = true, bSuppressDefaultMenu = true, properties = null, i
 	 * @returns {boolean} Flag to suppress default panel menu
 	 */
 	this.btn_up = (x, y, object, forcedEntry = '', bExecute = true, replaceFunc = null, flag = 0, bindArgs = null) => {
+		this.mx = x;
+		this.my = y;
 		// Recreate menu(s)
 		const manualMenuArr = this.initMenu(object);
 		// Find currently selected item
@@ -1070,6 +1075,16 @@ function _menu({ bInit = true, bSuppressDefaultMenu = true, properties = null, i
 	};
 
 	/* Helpers (public) */
+	/**
+	 * Returns coordinates from last .btn_up() call
+	 *
+	 * @kind getter
+	 * @memberof _menu
+	 * @name lastCoords
+	 * @type {[number, number]}
+	 */
+	this.lastCoords = void(0);
+	Object.defineProperty(this, 'lastCoords', { get() { return [this.mx, this.my]; } });
 	/**
 	 * Checks if a menu entry (object) is a separator.
 	 *
@@ -1300,7 +1315,7 @@ _menu.isFunction = function isFunction(obj) {
  * @name separator
  * @type {_menu.Separator}
 */
-_menu.separator = void(0);
+_menu.separator = void (0);
 Object.defineProperty(_menu, 'separator', { get() { return this.separators[0]; } });
 /**
  * Separators identifier
@@ -1311,7 +1326,7 @@ Object.defineProperty(_menu, 'separator', { get() { return this.separators[0]; }
  * @name separator
  * @type {string[]}
 */
-_menu.separators = void(0);
+_menu.separators = void (0);
 Object.defineProperty(_menu, 'separators', {
 	configurable: false,
 	writable: false,

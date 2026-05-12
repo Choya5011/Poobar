@@ -16,7 +16,7 @@ let ww, wh = 0;
 let cph = _scale(ppt.cph.value); // Control Panel & visualizer heights
 
 // _layout usage instruction found at: fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js'
-const panelNames = ['control panel', 'tabstack', 'oscilloscope_xy', 'curve', 'radial bars', 'oscilloscope']; // controlpanel, tabstack, oscilloscope, curve, radial
+const panelNames = ['control panel', 'tabstack', 'oscilloscope_xy', 'curve', 'oscilloscope', 'radial bars']; // controlpanel, tabstack, oscilloscope, curve, radial
 let layout = new _layout(panelNames, 150);
 let y, cpx;
 
@@ -97,5 +97,4 @@ function on_size(width, height) {
     y = wh - cph - _scale(20);
 
     layout.update();
-    console.log(layout.layout());
 }

@@ -1,4 +1,5 @@
 ﻿'use strict';
+//24/04/26
 
 class Scrollbar {
 	constructor() {
@@ -32,7 +33,7 @@ class Scrollbar {
 		this.scrollStep = 3;
 		this.start = 0;
 		this.timer_but = null;
-		this.timestamp;
+		this.timestamp; // NOSONAr init
 		this.x = 0;
 		this.y = 0;
 		this.w = 0;
@@ -55,7 +56,7 @@ class Scrollbar {
 		}
 
 		this.narrow = {
-			show: ppt.sbarShow == 1 ? true : false,
+			show: ppt.sbarShow == 1,
 			x: 0
 		}
 
@@ -151,14 +152,15 @@ class Scrollbar {
 		if (ppt.smooth) {
 			this.event = type || 'scroll';
 			this.start = this.delta;
-			if (this.event != 'drag') {
+			if (this.event == 'drag') { this.scrollDrag(); }
+			else {
 				if (this.bar.isDragging && Math.abs(this.delta - this.scroll) > this.scrollbar.height) this.event = 'barFast';
 				this.clock = Date.now();
 				if (!this.draw_timer) {
 					this.scrollTimer();
 					this.smoothScroll();
 				}
-			} else this.scrollDrag();
+			}
 		} else this.scrollThrottle();
 	}
 
@@ -167,19 +169,19 @@ class Scrollbar {
 			let sbar_x = this.x;
 			let sbar_w = this.w;
 			if (ppt.sbarShow == 1) {
-				sbar_x = !this.narrow.show ? this.x : this.narrow.x;
-				sbar_w = !this.narrow.show ? this.w : ui.narrowSbarWidth;
+				sbar_x = this.narrow.show ? this.narrow.x : this.x;
+				sbar_w = this.narrow.show ? ui.narrowSbarWidth : this.w;
 			}
 			gr.SetSmoothingMode(this.narrow.show || ppt.sbarType == 2 || this.arc < 1 ? 3 : 4);
 			switch (ui.sbar.type) {
 				case 0:
-					if (this.arc > 0 && !this.narrow.show) gr.FillRoundRect(sbar_x - 0.5, this.y + this.bar.y, sbar_w, this.bar.h, this.arc, this.arc, this.narrow.show ? this.col[this.alpha2] : !this.bar.isDragging ? this.col[this.alpha] : this.col['max']);
-					else gr.FillSolidRect(sbar_x, this.y + this.bar.y, sbar_w, this.bar.h, this.narrow.show ? this.col[this.alpha2] : !this.bar.isDragging ? this.col[this.alpha] : this.col['max']);
+					if (this.arc > 0 && !this.narrow.show) gr.FillRoundRect(sbar_x - 0.5, this.y + this.bar.y, sbar_w, this.bar.h, this.arc, this.arc, this.narrow.show ? this.col[this.alpha2] : this.bar.isDragging ? this.col['max'] : this.col[this.alpha]);
+					else gr.FillSolidRect(sbar_x, this.y + this.bar.y, sbar_w, this.bar.h, this.narrow.show ? this.col[this.alpha2] : this.bar.isDragging ? this.col['max'] : this.col[this.alpha]);
 					break;
 				case 1:
 					if (!this.narrow.show || ppt.sbarShow != 1) gr.FillSolidRect(sbar_x, this.y - panel.sbar.offset, this.w, this.h + panel.sbar.offset * 2, this.col['bg']);
-					if (this.arc > 0 && !this.narrow.show) gr.FillRoundRect(sbar_x - 0.5, this.y + this.bar.y, sbar_w, this.bar.h, this.arc, this.arc, this.narrow.show ? this.col[this.alpha2] : !this.bar.isDragging ? this.col[this.alpha] : this.col['max']);
-					else gr.FillSolidRect(sbar_x, this.y + this.bar.y, sbar_w, this.bar.h, this.narrow.show ? this.col[this.alpha2] : !this.bar.isDragging ? this.col[this.alpha] : this.col['max']);
+					if (this.arc > 0 && !this.narrow.show) gr.FillRoundRect(sbar_x - 0.5, this.y + this.bar.y, sbar_w, this.bar.h, this.arc, this.arc, this.narrow.show ? this.col[this.alpha2] : this.bar.isDragging ? this.col['max'] : this.col[this.alpha]);
+					else gr.FillSolidRect(sbar_x, this.y + this.bar.y, sbar_w, this.bar.h, this.narrow.show ? this.col[this.alpha2] : this.bar.isDragging ? this.col['max'] : this.col[this.alpha]);
 					break;
 				case 2: // windows
 					switch (ppt.sbarType) {
@@ -191,8 +193,8 @@ class Scrollbar {
 							break;
 						case 3: // dark mode
 							if (!this.narrow.show || ppt.sbarShow != 1) gr.FillSolidRect(sbar_x, this.y - panel.sbar.offset, this.w, this.h + panel.sbar.offset * 2, this.col['bg']);
-							if (this.arc > 0 && !this.narrow.show) gr.FillRoundRect(sbar_x + (this.narrow.show ?  0 : ui.style.l_w) - 0.5, this.y + this.bar.y, sbar_w - (this.narrow.show ? 0 : ui.style.l_w * 2), this.bar.h, this.arc, this.arc, this.narrow.show ? RGB(77, 77, 77) : !this.bar.isDragging ? this.col[this.alpha] : this.col['max']);
-							else gr.FillSolidRect(sbar_x + (this.narrow.show ?  0 : ui.style.l_w), this.y + this.bar.y, sbar_w - (this.narrow.show ? 0 : ui.style.l_w * 2), this.bar.h, this.narrow.show ? RGB(77, 77, 77) : !this.bar.isDragging ? this.col[this.alpha] : this.col['max']);
+							if (this.arc > 0 && !this.narrow.show) gr.FillRoundRect(sbar_x + (this.narrow.show ? 0 : ui.style.l_w) - 0.5, this.y + this.bar.y, sbar_w - (this.narrow.show ? 0 : ui.style.l_w * 2), this.bar.h, this.arc, this.arc, this.narrow.show ? RGB(77, 77, 77) : this.bar.isDragging ? this.col['max'] : this.col[this.alpha]);
+							else gr.FillSolidRect(sbar_x + (this.narrow.show ? 0 : ui.style.l_w), this.y + this.bar.y, sbar_w - (this.narrow.show ? 0 : ui.style.l_w * 2), this.bar.h, this.narrow.show ? RGB(77, 77, 77) : this.bar.isDragging ? this.col['max'] : this.col[this.alpha]);
 							break;
 					}
 					break;
@@ -221,8 +223,8 @@ class Scrollbar {
 		let dir;
 		if (x > this.w || y < 0 || y > this.h || this.row.count <= this.rows_drawn) return;
 		if (x < 0) {
-			if (!ppt.touchControl) return;
-			else return this.tap(p_x, p_y);
+			if (ppt.touchControl) { return this.tap(p_x, p_y); }
+			else { return; }
 		}
 		this.onSbar = true;
 		if (y < this.but_h || y > this.h - this.but_h) return;
@@ -290,12 +292,12 @@ class Scrollbar {
 		this.horizontal = horizontal;
 		this.but_h = ui.sbar.but_h;
 		this.scrollStep = $.clamp(ppt.scrollStep, 0, 10);
-		if (this.type == 'film' && this.scrollStep != 0) this.scrollStep = Math.max(Math.round(this.scrollStep /= 3), 1);
+		if (this.type == 'film' && this.scrollStep != 0) this.scrollStep = Math.max(Math.round(this.scrollStep / 3), 1);
 		// draw info
 		this.scrollbar.height = Math.round(this.h - this.but_h * 2);
 		this.bar.h = Math.max(Math.round(this.scrollbar.height * this.rows_drawn / this.row.count), $.clamp(this.scrollbar.height / 2, 5, ppt.sbarShow == 2 ? ppt.sbarGripHeight : ppt.sbarGripHeight * 2));
 		let min_w = Math.min(this.w, this.bar.h); if (ppt.sbarType == 3) min_w -= ui.style.l_w * 2;
-		this.arc = !ppt.sbarGripRounded ? 0 : Math.floor(min_w / 2);
+		this.arc = ppt.sbarGripRounded ? Math.floor(min_w / 2) : 0;
 		this.scrollbar.travel = this.scrollbar.height - this.bar.h;
 		// scrolling info
 		this.scrollable_lines = this.rows_drawn > 0 ? this.row.count - this.rows_drawn : 0;
@@ -317,7 +319,7 @@ class Scrollbar {
 			this.scrollbar.zone = true;
 			this.narrow.show = false;
 			if (ppt.sbarShow == 1 && this.scrollbar.zone != this.scrollbar.cur_zone) {
-				but.setScrollBtnsHide(!this.scrollbar.zone || this.scrollable_lines < 1 || ppt.img_only || txt.lyricsDisplayed(), this.type); 
+				but.setScrollBtnsHide(!this.scrollbar.zone || this.scrollable_lines < 1 || ppt.img_only || txt.lyricsDisplayed(), this.type);
 				this.scrollbar.cur_zone = this.scrollbar.zone;
 			}
 		} else this.scrollbar.zone = false;
@@ -412,7 +414,7 @@ class Scrollbar {
 
 	scrollTo() {
 		this.bar.y = this.but_h + this.scrollbar.travel * (this.delta * this.ratio) / (this.row.count * this.row.h);
-		this.type != 'film' ? panel.text_paint() : filmStrip.paint();
+		this.type == 'film' ? filmStrip.paint() : panel.text_paint();
 	}
 
 	scrollToEnd() {
@@ -420,9 +422,9 @@ class Scrollbar {
 	}
 
 	setCol() { // not called by film type
-		this.alpha = ppt.sbarType == 3 ? 140 : !ui.sbar.col ? 75 : (!ui.sbar.type ? 68 : 51);
+		this.alpha = ppt.sbarType == 3 ? 140 : ui.sbar.col ? (ui.sbar.type ? 51 : 68) : 75;
 		this.alpha1 = this.alpha;
-		this.alpha2 = ppt.sbarType == 3 ? 255 : !ui.sbar.col ? 128 : (!ui.sbar.type ? 119 : 85);
+		this.alpha2 = ppt.sbarType == 3 ? 255 : ui.sbar.col ? (ui.sbar.type ? 85 : 119) : 128;
 		this.inStep = ui.sbar.type && ui.sbar.col ? 12 : 18;
 		switch (ui.sbar.type) {
 			case 0:
@@ -452,7 +454,7 @@ class Scrollbar {
 				}
 				break;
 		}
-		
+
 		if (ppt.sbarType == 3) { // dark mode
 			this.col.bg = RGB(23, 23, 23);
 			for (let i = 0; i < 116; i++) {
@@ -469,7 +471,7 @@ class Scrollbar {
 		this.scroll = b;
 		this.delta = this.scroll;
 		this.bar.y = this.but_h + this.scrollbar.travel * (this.delta * this.ratio) / (this.row.count * this.row.h);
-		this.type != 'film' ? panel.text_paint() : filmStrip.paint();
+		this.type == 'film' ? filmStrip.paint() : panel.text_paint();
 	}
 
 	setRows(row_count) {
@@ -550,10 +552,12 @@ class Scrollbar {
 	transitionPaint() {
 		if (this.init) return;
 		this.alpha = this.hover ? this.alpha1 : this.alpha2;
-		clearTimeout(this.bar.timer);
-		this.bar.timer = null;
+		if (this.bar.timer) {
+			clearTimeout(this.bar.timer);
+			this.bar.timer = null;
+		}
 		this.bar.timer = setInterval(() => {
-			this.alpha = this.hover ? Math.min(this.alpha += this.inStep, this.alpha2) : Math.max(this.alpha -= 3, this.alpha1);
+			this.alpha = this.hover ? Math.min(this.alpha + this.inStep, this.alpha2) : Math.max(this.alpha - 3, this.alpha1);
 			this.paint();
 			if (this.hover && this.alpha == this.alpha2 || !this.hover && this.alpha == this.alpha1) {
 				this.cur_hover = this.hover;
@@ -564,6 +568,6 @@ class Scrollbar {
 	}
 
 	wheel(step) {
-		this.checkScroll(Math.round((this.scroll + step * -(!this.scrollStep ? this.rows_drawn : this.scrollStep) * this.row.h) / this.row.h) * this.row.h, this.scrollStep ? 'step' : 'full');
+		this.checkScroll(Math.round((this.scroll + step * -(this.scrollStep ? this.scrollStep : this.rows_drawn) * this.row.h) / this.row.h) * this.row.h, this.scrollStep ? 'step' : 'full');
 	}
 }

@@ -19,3 +19,7 @@ Colors:
 ------
 The tabstack is hidden and paused when resizing the window to reduce resizing stutter.
 During this short window the background will be a solid color unless unify is enabled that is also affected by the color mode (e.g. system/dynamic/custom).
+
+Wiki link:
+---------
+https://github.com/Choya5011/Poobar/wiki/Poobar#poobar-main-panel

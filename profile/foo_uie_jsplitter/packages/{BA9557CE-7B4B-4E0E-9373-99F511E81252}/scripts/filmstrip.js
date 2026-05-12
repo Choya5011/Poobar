@@ -1,4 +1,5 @@
 ﻿'use strict';
+//24/04/26
 
 class FilmStrip {
 	constructor() {
@@ -19,7 +20,7 @@ class FilmStrip {
 		this.w = 0;
 
 		ppt.thumbNailGap = Math.max(ppt.thumbNailGap, 0);
-		ppt.filmStripSize = $.clamp(parseFloat(ppt.filmStripSize.toFixed(15)), 0.02, 0.98);
+		ppt.filmStripSize = $.clamp(Number.parseFloat(ppt.filmStripSize.toFixed(15)), 0.02, 0.98);
 
 		this.blocks = {
 			drawn: 6,
@@ -96,7 +97,7 @@ class FilmStrip {
 	cacheIt(image, key, style) {
 		try {
 			if (image) {
-				if (img.filter.size && ppt.artistView && (!ppt.imgFilterBothPx ? image.Width < img.filter.minPx && image.Height < img.filter.minPx : image.Width < img.filter.minPx || image.Height < img.filter.minPx) && img.art.images.length > img.filter.minNo) {
+				if (img.filter.size && ppt.artistView && (ppt.imgFilterBothPx ? image.Width < img.filter.minPx || image.Height < img.filter.minPx : image.Width < img.filter.minPx && image.Height < img.filter.minPx) && img.art.images.length > img.filter.minNo) {
 					const image_path = key.replace(/^\d+/, '');
 					const rem_ix = img.art.images.findIndex(v => v == image_path);
 					if (rem_ix != -1) img.art.images.splice(rem_ix, 1);
@@ -104,10 +105,10 @@ class FilmStrip {
 					seeker.upd();
 					this.logScrollPos();
 					this.check('imgUpd');
-					!ppt.imgSeeker ? this.paint() : txt.paint();
+					ppt.imgSeeker ? txt.paint() : this.paint();
 					return;
 				}
-				if (img.filter.size && !ppt.artistView && img.artFolder && (!ppt.imgFilterBothPx ? image.Width < img.filter.minPx && image.Height < img.filter.minPx : image.Width < img.filter.minPx || image.Height < img.filter.minPx) && img.cov.images.length > img.filter.minNo + 1) {
+				if (img.filter.size && !ppt.artistView && img.artFolder && (ppt.imgFilterBothPx ? image.Width < img.filter.minPx || image.Height < img.filter.minPx : image.Width < img.filter.minPx && image.Height < img.filter.minPx) && img.cov.images.length > img.filter.minNo + 1) {
 					const image_path = key.replace(/^\d+/, '');
 					const rem_ix = img.cov.images.findIndex(v => v == image_path);
 					if (rem_ix != -1) {
@@ -118,10 +119,10 @@ class FilmStrip {
 					seeker.upd();
 					this.logScrollPos();
 					this.check('imgUpd');
-					!ppt.imgSeeker ? this.paint() : txt.paint();
+					ppt.imgSeeker ? txt.paint() : this.paint();
 					return;
 				}
-			} else if (!image) image = img.stub.default[!key.includes('noitem') ? ppt.artistView ? 1 : 0 : 2];
+			} else if (!image) image = img.stub.default[key.includes('noitem') ? 2 : ppt.artistView ? 1 : 0];
 			if (image) {
 				image = img.format(image, 1, ['default', 'crop', 'circular'][style], this.im_w, this.im_w, 'filmStrip');
 				this.checkCache();
@@ -210,11 +211,11 @@ class FilmStrip {
 				panel.setStyle(resize.down); // if clear: called by refresh(0)
 				panel.checkFilm(); // if clear: refresh(0) does text
 			}
-		} else if (id.borId != this.cur.borId) {
-			this.cur.borId = id.borId;
-			this.setSize();
+		} else if (id.borId == this.cur.borId) {
 			this.setFilmStripSize();
 		} else {
+			this.cur.borId = id.borId;
+			this.setSize();
 			this.setFilmStripSize();
 		}
 		this.paint();
@@ -237,7 +238,7 @@ class FilmStrip {
 	}
 
 	createBorder() {
-		if (!ppt.showFilmStrip || this.blockSize < 2 || isNaN(this.blockSize)) return;
+		if (!ppt.showFilmStrip || this.blockSize < 2 || Number.isNaN(this.blockSize)) return;
 		const sp = Math.round((this.blockSize - this.im_w) / 2);
 		for (let j = 0; j < 3; j++) {
 			for (let i = 0; i < 3; i++) {
@@ -266,7 +267,7 @@ class FilmStrip {
 		this.getItemsToDraw();
 		for (let i = this.blocks.start; i < this.blocks.end; i++) {
 			box_x = this.style.horizontal ? Math.floor(this.x + i * this.blockSize - this.scrollerType().delta) : this.x;
-			box_y = !this.style.horizontal ? Math.floor(this.y + i * this.blockSize - this.scrollerType().delta) : this.y;
+			box_y = this.style.horizontal ? this.y : Math.floor(this.y + i * this.blockSize - this.scrollerType().delta);
 			const im = this.getImg(i);
 			if (im) {
 				iw = im.Width;
@@ -274,9 +275,9 @@ class FilmStrip {
 				const sel = (!ppt.text_only || ui.style.isBlur) && this.blocks.length > 1 && this.images[i] == img.cur_pth();
 				const x = box_x + Math.round((this.blockSize - iw) / 2);
 				const y = box_y + Math.round((this.blockSize - ih) / 2);
-				let bor = !sel ? this.blocks.style[imgStyle].bor[1] : this.blocks.style[imgStyle].bor[2];
+				let bor = sel ? this.blocks.style[imgStyle].bor[2] : this.blocks.style[imgStyle].bor[1];
 				if (imgStyle != 2 && !sel && (this.style.gap || this.style.fit && i == this.blocks.end - 2 && i != this.blocks.length - 2 || i == this.blocks.length - 1)) bor = this.blocks.style[imgStyle].bor[0];
-				!this.style.horizontal ? this.drawVerticalStrip(gr, im, bor, box_x, box_y, x, y, ih, iw, imgStyle) : this.drawhorizontalStrip(gr, im, bor, box_x, box_y, x, y, ih, iw, imgStyle);
+				this.style.horizontal ? this.drawhorizontalStrip(gr, im, bor, box_x, box_y, x, y, ih, iw, imgStyle) : this.drawVerticalStrip(gr, im, bor, box_x, box_y, x, y, ih, iw, imgStyle);
 			} else this.noIm(gr, box_x, box_y, imgStyle);
 		}
 	}
@@ -355,15 +356,15 @@ class FilmStrip {
 					const key = this.getKey(v.key);
 					if (!this.cache[key]) {
 						const embeddedImg = img.isEmbedded('thumb', v.ix);
-						if (!embeddedImg) {
+						if (embeddedImg) {
+							this.cacheIt(embeddedImg, key, this.style.image[Number(ppt.artistView)]);
+						} else {
 							this.cache[key] = {
 								img: 'called',
 								style: this.style.image[Number(ppt.artistView)],
 								accessed: ++this.accessed
 							}
 							gdi.LoadImageAsync(0, v.key);
-						} else {
-							this.cacheIt(embeddedImg, key, this.style.image[Number(ppt.artistView)]);
 						}
 					}
 					this.items.shift();
@@ -431,7 +432,7 @@ class FilmStrip {
 		const needExtraId = ppt.showFilmStrip && ppt.filmStripOverlay && img.isType('AnyBor');
 		const id = panel.style.showFilmStrip + panel.filmStripSize.t + panel.filmStripSize.r + panel.filmStripSize.b + panel.filmStripSize.l + ppt.filmStripPos;
 		return {
-			id: isNaN(id) ? Infinity : id, // stop NaN != NaN = true & too much recursion
+			id: Number.isNaN(id) ? Infinity : id, // stop NaN != NaN = true & too much recursion
 			borId: needExtraId ? img.style.crop + img.isType('Border') : 0
 		}
 	}
@@ -523,15 +524,18 @@ class FilmStrip {
 	}
 
 	move(x, y) {
-		if (!ppt.showFilmStrip || ppt.text_only && !ui.style.isBlur) return this.hand = false;
+		if (!ppt.showFilmStrip || ppt.text_only && !ui.style.isBlur) {
+			this.hand = false;
+			return;
+		}
 		this.m_i = this.get_ix(x, y);
-		this.hand = this.m_i == -1 ? false : true;
+		this.hand = this.m_i != -1;
 	}
 
 	noIm(gr, box_x, box_y, imgStyle) {
 		if ((!this.style.horizontal && box_y >= this.y && box_y <= this.y + this.h - this.blockSize) || (this.style.horizontal && box_x >= this.x && box_x <= this.x + this.w - this.blockSize)) {
-			if (imgStyle != 2) gr.FillSolidRect(box_x + this.noimg.xy, box_y + this.noimg.xy, this.noimg.wh, this.noimg.wh, ui.col.bg1);
-			else gr.FillEllipse(box_x + this.noimg.xy, box_y + this.noimg.xy, this.noimg.wh, this.noimg.wh, ui.col.bg1);
+			if (imgStyle == 2) {gr.FillEllipse(box_x + this.noimg.xy, box_y + this.noimg.xy, this.noimg.wh, this.noimg.wh, ui.col.bg1);}
+			else {gr.FillSolidRect(box_x + this.noimg.xy, box_y + this.noimg.xy, this.noimg.wh, this.noimg.wh, ui.col.bg1);}
 		}
 	}
 
@@ -565,16 +569,16 @@ class FilmStrip {
 	}
 	
 	setFilmStripSize() {
-		panel.filmStripSize = !panel.style.showFilmStrip ? {
-			t: 0,
-			r: 0,
-			b: 0,
-			l: 0
-		} : {
+		panel.filmStripSize = panel.style.showFilmStrip ? {
 			t: ppt.filmStripPos == 0 ? this.y + this.h : 0,
 			r: ppt.filmStripPos == 1 ? panel.w - this.x : 0,
 			b: ppt.filmStripPos == 2 ? panel.h - this.y : 0,
 			l: ppt.filmStripPos == 3 ? this.x + this.w : 0
+		} : {
+			t: 0,
+			r: 0,
+			b: 0,
+			l: 0
 		}
 	}
 
@@ -613,7 +617,7 @@ class FilmStrip {
 		this.style.fit = ppt.filmStripAutofit;
 		this.style.gap = ppt.thumbNailGap;
 		const filmStripOverlay = ppt.filmStripOverlay && !ppt.text_only;
-		const spacer = Math.round((!this.style.gap ? 2 : this.style.gap < 3 ? 1 : 0) * $.scale);
+		const spacer = Math.round((this.style.gap ? this.style.gap < 3 ? 1 : 0 : 2) * $.scale);
 		let bor = 0;
 		if (filmStripOverlay && img.isType('AnyBor') && img.style.crop) {
 			const isBorder = img.isType('Border');
@@ -621,16 +625,15 @@ class FilmStrip {
 				bor = 5 * $.scale;
 			}
 		}
-		let max_h = panel.h;
-		let max_w = panel.w;
+		let max_h,max_w;
 		this.max_sz = panel.w;
 		this.text_y = !panel.style.fullWidthHeading || ppt.img_only ? 0 : panel.text.t;
 		switch (ppt.filmStripPos) {
 			case 0: // top
-				this.y = !filmStripOverlay ? (ppt.filmStripMargin == 2 ? ppt.borT : ppt.filmStripMargin == 4 ? ppt.textT : spacer) : panel.img.t + bor;
-				max_h = !filmStripOverlay ? panel.h - this.y : ppt.style == 0 || ppt.style == 2 ? panel.style.imgSize : panel.h - panel.img.t - panel.img.b - bor * 2;
-				this.x = !filmStripOverlay ? (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borL : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textL : spacer) : panel.img.l + bor;
-				this.w = !filmStripOverlay ? (panel.w - this.x - (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borR : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textR : spacer)) : ppt.style == 0 || ppt.style == 2 || ppt.style > 3 || ppt.img_only ? panel.w - panel.img.l - panel.img.r - bor * 2 : panel.style.imgSize - bor * 2;
+				this.y = filmStripOverlay ? panel.img.t + bor : (ppt.filmStripMargin == 2 ? ppt.borT : ppt.filmStripMargin == 4 ? ppt.textT : spacer);
+				max_h = filmStripOverlay ? ppt.style == 0 || ppt.style == 2 ? panel.style.imgSize : panel.h - panel.img.t - panel.img.b - bor * 2 : panel.h - this.y
+				this.x = filmStripOverlay ? panel.img.l + bor : (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borL : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textL : spacer);
+				this.w = filmStripOverlay ? ppt.style == 0 || ppt.style == 2 || ppt.style > 3 || ppt.img_only ? panel.w - panel.img.l - panel.img.r - bor * 2 : panel.style.imgSize - bor * 2 : (panel.w - this.x - (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borR : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textR : spacer));
 				this.max_sz = Math.min(max_h - 5, this.w);
 				this.blockSize = Math.round(ppt.filmStripSize * panel.h);
 				if (this.style.fit) {
@@ -652,9 +655,9 @@ class FilmStrip {
 
 			case 1: { // right
 				const pad_r = ppt.filmStripMargin == 2 ? ppt.borR : ppt.filmStripMargin == 4 ? ppt.textR : spacer;
-				max_w = !filmStripOverlay ? panel.w - pad_r : ppt.style == 0 || ppt.style == 2 || ppt.style > 3 ? panel.w - panel.img.l - panel.img.r - bor * 2 : panel.style.imgSize - bor * 2;
-				this.y = !filmStripOverlay ? (this.text_y || (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borT : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textT : spacer)) : panel.img.t + bor;
-				this.h = !filmStripOverlay ? (panel.h - this.y - (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borB : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textB : spacer)) : ppt.style == 0 || ppt.style == 2 ? panel.style.imgSize - bor * 2 : ppt.style > 3 ? (panel.clip ? panel.style.imgSize - ppt.borT : panel.h - panel.img.t - panel.img.b - bor * 2) : panel.h - panel.img.t - panel.img.b - bor * 2;
+				max_w = filmStripOverlay ? ppt.style == 0 || ppt.style == 2 || ppt.style > 3 ? panel.w - panel.img.l - panel.img.r - bor * 2 : panel.style.imgSize - bor * 2 : panel.w - pad_r;
+				this.y = filmStripOverlay ? panel.img.t + bor : (this.text_y || (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borT : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textT : spacer));
+				this.h = filmStripOverlay ? ppt.style == 0 || ppt.style == 2 ? panel.style.imgSize - bor * 2 : ppt.style > 3 ? (panel.clip ? panel.style.imgSize - ppt.borT : panel.h - panel.img.t - panel.img.b - bor * 2) : panel.h - panel.img.t - panel.img.b - bor * 2 : (panel.h - this.y - (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borB : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textB : spacer));
 				this.max_sz = Math.min(max_w - 5, this.h)
 				this.blockSize = Math.round(ppt.filmStripSize * panel.w);
 				if (this.style.fit) {
@@ -665,7 +668,7 @@ class FilmStrip {
 					this.blockSize = Math.min(this.blockSize, this.max_sz);
 					this.w = this.blockSize;
 				}
-				this.x = !filmStripOverlay ? panel.w - this.w - pad_r : ppt.style == 0 || ppt.style == 2 || ppt.style > 3 || ppt.img_only ? panel.w - this.w - panel.img.r - bor : panel.img.l + panel.style.imgSize - this.w - bor;
+				this.x = filmStripOverlay ? ppt.style == 0 || ppt.style == 2 || ppt.style > 3 || ppt.img_only ? panel.w - this.w - panel.img.r - bor : panel.img.l + panel.style.imgSize - this.w - bor : panel.w - this.w - pad_r;
 				this.style.horizontal = false;
 				this.repaint = {
 					x: this.x - 2,
@@ -678,9 +681,9 @@ class FilmStrip {
 
 			case 2: { // bottom
 				const pad_b = ppt.filmStripMargin == 2 ? ppt.borB : ppt.filmStripMargin == 4 ? ppt.textB : spacer
-				max_h = !filmStripOverlay ? panel.h - pad_b : ppt.style == 0 || ppt.style == 2 || ppt.style > 3 ? panel.style.imgSize - bor * 2 : panel.h - panel.img.t - panel.img.b - bor * 2;
-				this.x = !filmStripOverlay ? (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borL : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textL : spacer) : panel.img.l + bor;
-				this.w = !filmStripOverlay ? (panel.w - this.x - (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borR : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textR : spacer)) : ppt.style == 0 || ppt.style == 2 || ppt.style > 3 || ppt.img_only ? panel.w - panel.img.l - panel.img.r - bor * 2 : panel.style.imgSize - bor * 2;
+				max_h = filmStripOverlay ? ppt.style == 0 || ppt.style == 2 || ppt.style > 3 ? panel.style.imgSize - bor * 2 : panel.h - panel.img.t - panel.img.b - bor * 2 : panel.h - pad_b;
+				this.x = filmStripOverlay ? panel.img.l + bor : (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borL : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textL : spacer);
+				this.w = filmStripOverlay ? ppt.style == 0 || ppt.style == 2 || ppt.style > 3 || ppt.img_only ? panel.w - panel.img.l - panel.img.r - bor * 2 : panel.style.imgSize - bor * 2 : (panel.w - this.x - (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borR : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textR : spacer));
 				this.max_sz = Math.min(max_h - 5, this.w);
 				this.blockSize = Math.round(ppt.filmStripSize * panel.h);
 				if (this.style.fit) {
@@ -691,7 +694,7 @@ class FilmStrip {
 					this.blockSize = Math.min(this.blockSize, this.max_sz);
 					this.h = this.blockSize;
 				}
-				this.y = !filmStripOverlay ? panel.h - this.h - pad_b : ppt.style == 0 || ppt.style == 2 ? panel.img.t + panel.style.imgSize - this.h - bor : ppt.style > 3 ? (panel.clip ? panel.ibox.t + panel.style.imgSize - this.h: panel.h - panel.img.b - this.h - bor) : panel.h - panel.img.b - this.h - bor;
+				this.y = filmStripOverlay ? ppt.style == 0 || ppt.style == 2 ? panel.img.t + panel.style.imgSize - this.h - bor : ppt.style > 3 ? (panel.clip ? panel.ibox.t + panel.style.imgSize - this.h: panel.h - panel.img.b - this.h - bor) : panel.h - panel.img.b - this.h - bor : panel.h - this.h - pad_b;
 				this.style.horizontal = true;
 				this.repaint = {
 					x: 0,
@@ -703,10 +706,10 @@ class FilmStrip {
 			}
 
 			case 3: // left
-				this.x = !filmStripOverlay ? (ppt.filmStripMargin == 2 ? ppt.borL : ppt.filmStripMargin == 4 ? ppt.textL : spacer) : panel.img.l + bor;
-				max_w = !filmStripOverlay ? panel.w - this.x : ppt.style == 0 || ppt.style == 2 || ppt.style > 3 ? panel.w - panel.img.l - panel.img.r - bor * 2 : panel.style.imgSize - bor * 2;
-				this.y = !filmStripOverlay ? (this.text_y || (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borT : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textT : spacer)) : panel.img.t + bor;
-				this.h = !filmStripOverlay ? (panel.h - this.y - (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borB : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textB : spacer)) : ppt.style == 0 || ppt.style == 2 ? panel.style.imgSize - bor * 2 : ppt.style > 3 ? (panel.clip ? panel.style.imgSize - ppt.borT : panel.h - panel.img.t - panel.img.b - bor * 2) : panel.h - panel.img.t - panel.img.b - bor * 2;
+				this.x = filmStripOverlay ? panel.img.l + bor : (ppt.filmStripMargin == 2 ? ppt.borL : ppt.filmStripMargin == 4 ? ppt.textL : spacer);
+				max_w = filmStripOverlay ? ppt.style == 0 || ppt.style == 2 || ppt.style > 3 ? panel.w - panel.img.l - panel.img.r - bor * 2 : panel.style.imgSize - bor * 2 : panel.w - this.x;
+				this.y = filmStripOverlay ? panel.img.t + bor : (this.text_y || (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borT : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textT : spacer));
+				this.h = filmStripOverlay ? ppt.style == 0 || ppt.style == 2 ? panel.style.imgSize - bor * 2 : ppt.style > 3 ? (panel.clip ? panel.style.imgSize - ppt.borT : panel.h - panel.img.t - panel.img.b - bor * 2) : panel.h - panel.img.t - panel.img.b - bor * 2 : (panel.h - this.y - (ppt.filmStripMargin == 1 || ppt.filmStripMargin == 2 ? ppt.borB : ppt.filmStripMargin == 3 || ppt.filmStripMargin == 4 ? ppt.textB : spacer));
 				this.max_sz = Math.min(max_w - 5, this.h);
 				this.blockSize = Math.round(ppt.filmStripSize * panel.w);
 				if (this.style.fit) {

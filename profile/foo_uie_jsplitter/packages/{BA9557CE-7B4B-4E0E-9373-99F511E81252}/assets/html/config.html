@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
-<html>
+﻿<!DOCTYPE html> <!-- 24/04/26 -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
 
 <head>
-
+	<title>Biography: Settings</title>
 	<meta http-equiv="x-ua-compatible" content="IE=8" />
 	<link rel="stylesheet" type="text/css" href="styles10.css">
 	<style type="text/css">
@@ -15,7 +15,7 @@
 		.tablink {
 			background-color: #e5e5e5;
 			overflow: hidden;
-			font: 1em Arial;
+			font: 1em Arial, serif;
 		}
 
 		.tablink a {
@@ -59,12 +59,12 @@
 		.tablink2 {
 			background-color: #e5e5e5;
 			overflow: hidden;
-			font: 1em Arial;
+			font: 1em Arial, serif;
 		}
 
 		.tablink2 a {
 			margin: 0;
-			background-color: #A9A9A9;
+			background-color: #555;
 			color: white;
 			text-align: center;
 			float: left;
@@ -141,7 +141,7 @@
 			vertical-align: middle;
 			margin-left: 0.5em;
 			margin-right: 17%;
-			font: bold 1.15em Segoe UI;
+			font: bold 1.15em Segoe UI, serif;
 			color: #0066CC;
 		}
 
@@ -252,7 +252,7 @@
 		.div_text12,
 		.div_text13,
 		.div_text14 {
-			font: bold 1.15em Segoe UI;
+			font: bold 1.15em Segoe UI, serif;
 			color: #0066CC;
 			word-wrap: break-word;
 			white-space: pre-wrap;
@@ -373,7 +373,7 @@
 		.alignLeft4,
 		.alignRight1,
 		.alignRight2 {
-			font: bold 1em Segoe UI;
+			font: bold 1em Segoe UI, serif;
 			word-wrap: break-word;
 			white-space: pre-wrap;
 		}
@@ -516,7 +516,7 @@
 		}
 
 		.input66,
-		input98 {
+		.input98 {
 			display: block;
 		}
 
@@ -638,8 +638,8 @@
 		.dropbtn {
 			white-space: nowrap;
 			width: 100%;
-			background-color: #3e8e41;
-			color: white;
+			background-color: #8994bc;
+			color: black;
 			text-decoration: none;
 			padding: 0.13em 5px;
 			border: none;
@@ -647,7 +647,7 @@
 		}
 
 		.dropbtn:after {
-			font-family: FontAwesome;
+			font-family: FontAwesome, serif;
 			content: "\f107";
 			padding-left: 0.5em;
 			padding-right: 0.19em;
@@ -928,7 +928,7 @@
 					<div id="overlayMetrics"></div>
 					<div style="margin-right:10%;" class="info2">Flat and rounded support custom colours. As an alternative for lyrics, try menu > layout > full overlay with:<br>Flat style, strength 61 and a custom overlay colour of RGB(0,0,0).<br>For the lyrics use a bold white font, highlight RGB(255,240,132), drop shadow level 2.</div>
 					<div class="div_text7">Extra menu items</div>
-					<table id="menu" class="table75">
+					<table id="menu" class="table75"><!-- //NOSONAR Headers added later -->
 						<colgroup>
 							<col span="6" style="width:16%">
 						</colgroup>
@@ -943,8 +943,8 @@
 				<div class="column33">
 					<div class="div_text3">Metrics</div>
 					<div class="info6"><b>Main margins (px)</b></div>
-					<table id="imageMarginTable" class="table" style="width:1%; border:none"></table>
-					<table id="textMarginTable" class="table" style="margin-top:1.01em; width:1%; border:none"></table>
+					<table id="imageMarginTable" class="table" style="width:1%; border:none"></table><!-- //NOSONAR Headers added later -->
+					<table id="textMarginTable" class="table" style="margin-top:1.01em; width:1%; border:none"></table><!-- //NOSONAR Headers added later -->
 					<div id="metrics" style="padding:1.01em 0 0;"></div>
 					<div id="metrics2"></div>
 					<div class="div_text6">Text</div>
@@ -1271,7 +1271,7 @@
 				<div class="column50">
 					<!-- Regorxxx Add tooltip to links -->
 					<a class="tooltip" id="extIntegr1" href=" https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Colors/Color_picker_tool#ColorPicker_tool" target="_blank" oncontextmenu="copyToClipboardId('extIntegr1')">
-						<p style="font:1.2em Arial;" "></p>Colour picker</p><span class=" tooltiptext">L. Click to open in IE<br>R. Click to copy</span>
+						<p style="font:1.2em Arial, serif;" "></p>Colour picker</p><span class=" tooltiptext">L. Click to open in IE<br>R. Click to copy</span>
 					</a>
 					<!-- Regorxxx -->
 					<div class="info3"><i>Colours</i>: flexible entry, e.g. 255,0,0 or 0-255-0 or rgba(255,0,0,64)<br><i>Alpha</i>: 0-255 or 0-1 scale<br><i>Transparent</i>: background N/A; transparent fill can be used</div>
@@ -1518,7 +1518,7 @@
 	<!-- Regorxxx IE8 Polyfill -->
 	<script>
 		if (!('indexOf' in Array.prototype)) {
-			Array.prototype.indexOf = function (find, i /*opt*/) {
+			Array.prototype.indexOf = function (find, i) {
 				'use strict';
 				if (typeof i === 'undefined') { i = 0; }
 				if (i < 0) { i += this.length; }
@@ -1532,10 +1532,10 @@
 		if (!('filter' in Array.prototype)) {
 			Array.prototype.filter = function (fun /*, thisp */) {
 				'use strict';
-				if (typeof this === 'undefined' || this === null) { throw new TypeError(); }
+				if (typeof this === 'undefined' || this === null) { throw new TypeError('This undefined or null'); }
 				var t = Object(this);
 				var len = t.length >>> 0;
-				if (typeof fun !== 'function') { throw new TypeError(); }
+				if (typeof fun !== 'function') { throw new TypeError('Invalid type, not function'); }
 				var res = [];
 				var thisp = arguments[1];
 				for (var i = 0; i < len; i++) {
@@ -1548,11 +1548,22 @@
 				return res;
 			};
 		}
+		if (!('trunc' in Math)) {
+			Math.trunc = function (v) {
+				return v < 0 ? Math.ceil(v) : Math.floor(v);
+			};
+		}
 		if (!('startsWith' in String.prototype)) {
 			String.prototype.startsWith = function (search, rawPos) {
-				var pos = rawPos > 0 ? rawPos | 0 : 0;
+				var pos = rawPos > 0 ? Math.trunc(rawPos) : 0;
 				return this.substring(pos, pos + search.length) === search;
 			};
+		}
+		if (!('parseFloat' in Number)) {
+			Number.parseFloat = parseFloat; // NOSONAR
+		}
+		if (!('parseInt' in Number)) {
+			Number.parseInt = parseInt; // NOSONAR
 		}
 		// Expand alert popup with automatic type parsing
 		var formatArg = function (arg) {
@@ -1636,7 +1647,8 @@
 		function getValue(id) {
 			var div = document.getElementById(id);
 			div.style.height = '1em';
-			return (em = Math.max(div.offsetHeight, 13.6));
+			em = Math.max(div.offsetHeight, 13.6);
+			return em;
 		}
 		getValue('div');
 
@@ -1655,22 +1667,22 @@
 		function openTab(tabName, elmnt, color) {
 			cur.tab = tabName;
 			var cur_id = document.getElementById(cur.tab);
+			var gray_id;
 			if (cur.tab == 'PanelCfg') {
 				cur_id.style.borderLeft = "0.31em solid #329932";
 				cur_id.style.borderRight = "0.31em solid #329932";
-				var gray_id = document.getElementById("ServerCfg");
+				gray_id = document.getElementById("ServerCfg");
 				gray_id.style.borderLeft = "none";
 				gray_id.style.borderRight = "none";
 			} else if (cur.tab == 'ServerCfg') {
 				cur_id.style.borderLeft = "0.31em solid #326edb";
 				cur_id.style.borderRight = "0.31em solid #326edb";
-				var gray_id = document.getElementById("PanelCfg");
+				gray_id = document.getElementById("PanelCfg");
 				gray_id.style.borderLeft = "none";
 				gray_id.style.borderRight = "none";
 
 			}
-			var tabcontent2, tablinks2;
-			tabcontent2 = document.querySelectorAll(".tabcontent2");
+			var tabcontent, tabcontent2, tablinks2;
 			tablinks2 = document.getElementsByTagName("a");
 			for (i = 0; i < tablinks2.length; i++) {
 				tablinks2[i].style.backgroundColor = "";
@@ -1678,9 +1690,10 @@
 			document.getElementById(tabName).style.display = "block";
 			elmnt.style.backgroundColor = color;
 
+			var id;
 			if (tabName == 'PanelCfg') {
 				for (i = 0; i < panelTabs.length; i++) {
-					var id = document.getElementById(panelTabs[i]);
+					id = document.getElementById(panelTabs[i]);
 					id.style.display = "block";
 					id.style.width = "13.67%";
 				}
@@ -1693,7 +1706,7 @@
 				}
 			} else {
 				for (i = 0; i < serverTabs.length; i++) {
-					var id = document.getElementById(serverTabs[i]);
+					id = document.getElementById(serverTabs[i]);
 					id.style.display = "block";
 					id.style.width = "16%";
 				}
@@ -1761,6 +1774,7 @@
 		}
 
 		function getPreview(id, value) {
+			var ev;
 			if (cur.page == "title_format" || cur.page == "download" || cur.page == "cover" || cur.page == "textreader" && id.slice(-1) < 8) {
 				var sFind = null;
 				var sReplace = null;
@@ -1779,7 +1793,7 @@
 					tfAll += document.getElementById('tf_container' + i).value;
 					if (i < 4) tfAll += '~#~'
 				}
-				var ev = tf_callback && tf_callback(value, tfAll, excludeStream, sFind, sReplace);
+				ev = tf_callback && tf_callback(value, tfAll, excludeStream, sFind, sReplace);
 				if (tf) ev = ev.slice(0, -1);
 				if (cur.page == "title_format" && document.getElementById("tf_preview") && id != "tf_preview") document.getElementById("tf_preview").value = ev;
 				if (cur.page == "download" && document.getElementById("dld_preview") && id != "dld_preview") document.getElementById("dld_preview").value = ev;
@@ -1791,14 +1805,14 @@
 				var t_id = id.slice(-1);
 				var artistType = t_id < 2;
 				var trackType = t_id > 1;
-				var ev = tf_callback && tf_callback(value, null, null, null, null, artistType, trackType);
+				ev = tf_callback && tf_callback(value, null, null, null, null, artistType, trackType);
 				if (document.getElementById("tf_heading_preview") && id != "tf_heading_preview") document.getElementById("tf_heading_preview").value = ev;
 			}
 		}
 
 		function set_btn_apply_state() {
 			getValues();
-			document.getElementById("btn_apply").disabled = JSON.stringify(ppt) != parsed_args[0] || JSON.stringify(cfg) != parsed_args[1] ? false : true;
+			document.getElementById("btn_apply").disabled = !(JSON.stringify(ppt) != parsed_args[0] || JSON.stringify(cfg) != parsed_args[1]);
 
 			var el = document.activeElement;
 			var id = el.id;
@@ -1820,7 +1834,7 @@
 			c = c.replace(/[^0-9.,-]/g, '').replace(/-/g, ',').split(',');
 			var cc = ''; if (c.length != 3 && c.length != 4) return [255, 255, 255];
 			for (i = 0; i < c.length; i++) {
-				c[i] = parseFloat(c[i]);
+				c[i] = Number.parseFloat(c[i]);
 				if (i < 3) c[i] = clamp(Math.round(c[i]), 0, 255);
 				else if (i == 3) {
 					if (c[i] <= 1) c[i] = Math.round(255 * c[i]);
@@ -1838,14 +1852,14 @@
 		}
 
 		function clamp(num, min, max) {
-			num = num <= max ? num : max; num = num >= min ? num : min; return num;
+			return Math.max(Math.min(num, max), min);
 		}
 
 		function getSelCol(c) {
 			var cc = [], v = 1;
 			for (i = 0; i < c.length; i++) {
 				v = c[i] / 255;
-				cc.push(v <= 0.03928 ? v /= 12.92 : Math.pow(((v + 0.055) / 1.055), 2.4));
+				cc.push(v <= 0.03928 ? v / 12.92 : Math.pow(((v + 0.055) / 1.055), 2.4));
 			}
 			var L = 0.2126 * cc[0] + 0.7152 * cc[1] + 0.0722 * cc[2]; if (L > 0.31) return 'black'; else return 'white';
 		}
@@ -1867,6 +1881,10 @@
 		var scale = 1;
 		var sizes = [];
 		var isTransparent = false;
+		var heightOffset;
+		var widthOffset;
+		var langLabels;
+		var input, box, radio;
 
 		try {
 			parsed_args = window.external.dialogArguments.toArray();
@@ -1903,8 +1921,8 @@
 			window.resizeTo(window_w, window_h);
 			window.moveTo(left, top);
 			height = document.documentElement.clientHeight || document.body.clientHeight;
-			var heightOffset = window_h - height;
-			var widthOffset = window_w - (document.documentElement.clientWidth || document.body.clientWidth);
+			heightOffset = window_h - height;
+			widthOffset = window_w - (document.documentElement.clientWidth || document.body.clientWidth);
 			checkWindowDefaultSize();
 			document.getElementById(cur.tab).click();
 
@@ -1929,7 +1947,7 @@
 			var headingFormatlabels = ['Left', 'Right', 'Center', 'Show title', 'Show button', 'Full width'];
 			var headingPaddingLabels = ['Heading', 'Bottom Line', 'Button'];
 			var highlightLabels = ['Button', 'Heading', 'Line', 'Image border', 'Overlay border', 'Rating stars', 'Subheadings', 'Summary', 'Text'];
-			var langLabels = ['English', 'Deutsch', 'Espa\u00f1ol', 'Fran\u00e7ais', 'Italiano', '\u65e5\u672c\u8a9e', 'Polski', 'Portugu\u00eas', '\u0420\u0443\u0441\u0441\u043a\u0438\u0439', 'Svenska', 'T\u00fcrk\u00e7e', '\u7b80\u4f53\u4e2d\u6587'];
+			langLabels = ['English', 'Deutsch', 'Espa\u00f1ol', 'Fran\u00e7ais', 'Italiano', '\u65e5\u672c\u8a9e', 'Polski', 'Portugu\u00eas', '\u0420\u0443\u0441\u0441\u043a\u0438\u0439', 'Svenska', 'T\u00fcrk\u00e7e', '\u7b80\u4f53\u4e2d\u6587'];
 			var layoutLabels = ['Double-click toggle', 'Same layout for Artist and Album'];
 			var lookupLabels = ['Hide', 'Top left', 'Prefer heading', 'Auto-cycle time (seconds; min 30)'];
 			var lineLabels = ['None', 'Bottom', 'Center'];
@@ -1957,7 +1975,7 @@
 			var textStyleLabels = ['Top align', 'Expand lists', 'Auto-optimise if multiple items shown'];
 			var tfLabels = ['Biography', 'Review', 'Title', 'Lyrics', 'Title'];
 			var tfServLabels = ['%BIO_ALBUMARTIST%', '%BIO_ARTIST%', '%BIO_ALBUM%', '%BIO_TITLE%', 'Composition tag'];
-			var themeLabels = !ppt['themed_internal'].value ? ['User interface', 'Dark', 'Blend', 'Light', 'Random', 'Always cover based', 'Swap colours'] : ['N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set'];
+			var themeLabels = ppt['themed_internal'].value ? ['N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set', 'N/A: central set'] : ['User interface', 'Dark', 'Blend', 'Light', 'Random', 'Always cover based', 'Swap colours'];
 			var themeBlurLabels = ['Auto-fill', 'Level (%)', 'Opacity (%)', '%', 'Load delay (ms)', 'Leading item: load immediately (ignore delay)'];
 			var whitelistLabels = ['Write all Last.fm tags', 'Apply filter to remove non-standard genres using this <a class="tooltip" id="extIntegr1" href="https://musicbrainz.org/genres" target="_blank" oncontextmenu="copyToClipboardId(\'extIntegr1\')">whitelist<span class="tooltiptext">L. Click to open in IE<br>R. Click to copy</span></a>']; // Regorxxx <- Add tooltip to links ->
 
@@ -1969,7 +1987,7 @@
 			callback = parsed_args[4];
 			tf_callback = parsed_args[5];
 
-			var input = {
+			input = {
 				behaviour: {
 					name: ['cycTimeItem', 'bioFallbackText', 'revFallbackText', 'overlayStrength', 'overlayGradient', 'overlayBorderWidth'],
 					type: ['float', 'text', 'text', 'float', 'float', 'float']
@@ -2027,7 +2045,7 @@
 			}
 			input.all.name = input.behaviour.name.concat(input.display.name, input.headings.name, input.image.name, input.textreader.name, input.custom.name, input.advanced.name, input.title_format.name, input.download.name, input.photo.name, input.cover.name, input.tagger.name, input.misc.name);
 			input.all.type = input.behaviour.type.concat(input.display.type, input.headings.type, input.image.type, input.textreader.type, input.custom.type, input.advanced.type, input.title_format.type, input.download.type, input.photo.type, input.cover.type, input.tagger.type, input.misc.type);
-			var box = {
+			box = {
 				behaviour: ['dblClickToggle', 'sameStyle', 'sbarWinMetrics', 'sbarGripRounded', 'smooth', 'touchControl'],
 				display: ['topAlign', 'expandLists', 'autoOptimiseText', 'covBlur', 'swapCol', 'highlightHdBtn', 'highlightHdText', 'highlightHdLine', 'highlightImgBor', 'highlightOvBor', 'highlightStars', 'highlightSubHd', 'highlightSummary', 'highlightText', 'colLineDark', 'amRating', 'lfmRating', 'summaryGenre', 'summaryDate', 'summaryLocale', 'summaryPopNow', 'summaryLatest', 'summaryOther'],
 				headings: ['hdShowTitle', 'hdBtnShow', 'fullWidthHeading', 'hdShowBtnBg', 'hdShowRedLfm', 'bioFlagShow', 'revFlagShow'],
@@ -2043,7 +2061,7 @@
 				misc: ['albStrip', 'imgRevHQ', 'partialMatchEnabled', 'showConsoleMessages', 'showConsoleMessagesError', 'showConsoleMessagesNotFound'] // Regorxxx <- Logging settings
 			}
 			box.all = box.behaviour.concat(box.display, box.headings, box.image, box.textreader, box.custom, box.advanced, box.title_format, box.download, box.photo, box.cover, box.tagger, box.misc);
-			var radio = {
+			radio = {
 				behaviour: ['lookUp', 'menuShowPaste', 'menuShowPlaylists', 'menuShowTagger', 'menuShowMissingData', 'menuShowInactivate'],
 				display: ['star'],
 				headings: ['hdPos', 'hdShowBtnLabel', 'hdLine'],
@@ -2063,8 +2081,11 @@
 
 			function getTableData(id) {
 				var cells = [];
-				var headings = [];
 				var columnCount = 0;
+				var headers;
+				var items;
+				var n, menId;
+				var input0, input1, input2, input3;
 				switch (id) {
 					case 'imageFormat':
 						headers = [];
@@ -2073,13 +2094,13 @@
 						cells.push(subHeaders);
 						var radioLabels = ['Regular', 'Auto-fill', 'Circular'];
 						var cboxLabels = ['Reflection', 'Border', 'Shadow'];
-						var items = [];
+						items = [];
 						for (j = 0; j < 3; j++) {
 							items[j] = [];
 							for (i = 0; i < imgTable1.length; i++) {
-								var n = imgTable1[i];
-								var id = imgTable1[i] + j;
-								items[j].push('<input id="' + id + '" name="' + n + '" style="' + cbox + '" type="radio" />');
+								n = imgTable1[i];
+								menId = imgTable1[i] + j;
+								items[j].push('<input id="' + menId + '" name="' + n + '" style="' + cbox + '" type="radio" />');
 								if (i == 5) {
 									items[j].push('<div style="padding-left:0.46em; text-align:left">' + radioLabels[j] + '</div>');
 									cells.push(items[j]);
@@ -2089,8 +2110,8 @@
 						for (j = 0; j < 3; j++) {
 							items[j] = [];
 							for (i = 0; i < imgTable2[j].length; i++) {
-								var id = imgTable2[j][i];
-								items[j].push(i < 4 ? '<input id="' + id + '" name="image_checkbox" style="' + cbox + '" type="checkbox" />' : '');
+								menId = imgTable2[j][i];
+								items[j].push(i < 4 ? '<input id="' + menId + '" name="image_checkbox" style="' + cbox + '" type="checkbox" />' : '');
 								if (i == 5) {
 									items[j].push('<div style="padding-left:0.46em; text-align:left">' + cboxLabels[j] + '</div>');
 									cells.push(items[j]);
@@ -2104,14 +2125,13 @@
 						headers = ['Paste', 'Playlists', 'Tagger', 'Missing data', 'Inactivate', ''];
 						cells.push(headers);
 						var labels = ['Hide', 'Require&nbspShift&nbsp', 'Show'];
-						var items = [];
+						items = [];
 						for (j = 0; j < 3; j++) {
 							items[j] = [];
 							for (i = 0; i < menuTable.length; i++) {
-
-								var n = menuTable[i];
-								var id = n + j;
-								items[j].push('<input id="' + id + '" name="' + n + '" style="' + cbox + '" type="radio" />');
+								n = menuTable[i];
+								menId = n + j;
+								items[j].push('<input id="' + menId + '" name="' + n + '" style="' + cbox + '" type="radio" />');
 								if (i == 4) {
 									items[j].push('<div style="padding-left:0.46em; text-align:left">' + labels[j] + '</div>');
 									cells.push(items[j]);
@@ -2122,10 +2142,10 @@
 						break;
 
 					case 'imageMarginTable':
-						var input0 = '<label for="image_metrics0" >Top</label><input id="image_metrics0" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" />'
-						var input1 = '<input id="image_metrics1" name="display_input" style="padding:0; margin-left:0.31em;" class="input2" />'
-						var input2 = '<input id="image_metrics2" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" />'
-						var input3 = '<input id="image_metrics3" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" /><label for="image_metrics3" >Bottom</label>'
+						input0 = '<label for="image_metrics0" >Top</label><input id="image_metrics0" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" />'
+						input1 = '<input id="image_metrics1" name="display_input" style="padding:0; margin-left:0.31em;" class="input2" />'
+						input2 = '<input id="image_metrics2" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" />'
+						input3 = '<input id="image_metrics3" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" /><label for="image_metrics3" >Bottom</label>'
 						headers = [];
 						cells = [
 							headers,
@@ -2137,10 +2157,10 @@
 						break;
 
 					case 'textMarginTable':
-						var input0 = '<label for="text_metrics' + i + '" >Top</label><input id="text_metrics' + i + '" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" />'
-						var input1 = '<input id="text_metrics' + i + '" name="display_input" style="padding:0; margin-left:0.31em;" class="input2" />'
-						var input2 = '<input id="text_metrics' + i + '" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" />'
-						var input3 = '<input id="text_metrics' + i + '" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" /><label for="text_metrics' + i + '" >Bottom</label>'
+						input0 = '<label for="text_metrics' + i + '" >Top</label><input id="text_metrics' + i + '" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" />'
+						input1 = '<input id="text_metrics' + i + '" name="display_input" style="padding:0; margin-left:0.31em;" class="input2" />'
+						input2 = '<input id="text_metrics' + i + '" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" />'
+						input3 = '<input id="text_metrics' + i + '" name="display_input" style="padding:0; margin-right:0.31em;" class="input2" /><label for="text_metrics' + i + '" >Bottom</label>'
 						headers = [];
 						cells = [
 							headers,
@@ -2161,7 +2181,6 @@
 				var table = document.getElementById(tb);
 				// Get the count of columns.
 				var columnCount = items[2];
-				var noInternalBorder = tb == 'imageMarginTable' || tb == 'textMarginTable';
 
 				// Add the header row.
 				var row;
@@ -2176,7 +2195,7 @@
 				}
 
 				// Add the data rows.
-				for (var i = 1; i < cells.length; i++) {
+				for (i = 1; i < cells.length; i++) {
 					row = table.insertRow(-1);
 					for (j = 0; j < columnCount; j++) {
 						var cell = row.insertCell(-1);
@@ -2195,7 +2214,7 @@
 			function setCacheTime(n) {
 				if (n > 4) return;
 				var r = !n || window.confirm('WARNING: expired items will be removed after next biography initialization.\n\nThis will happen on a foobar2000 restart or upon altering certain panel or server settings that require a biography reload.');
-				if (r == true) {
+				if (r) {
 					window.cache_dropdown.innerHTML = cacheLabels[n];
 					cfg['autoCacheTime_internal'].value = n;
 					window.cacheTime.style.display = 'none';
@@ -2247,37 +2266,37 @@
 				window[prop + '_dropdown'].style.fontStyle = n == 2 || n == 3 || n == 5 ? 'italic' : 'normal';
 			}
 
-			function setLyricsScrollMethod(n) {
+			function setLyricsScrollMethod(n) { // NOSONAR
 				window.lyricsScrollMethod_dropdown.innerHTML = lyricsScrollMethodLabels[n];
 				ppt['lyricsScrollMaxMethod_internal'].value = n;
 				window.lyricsScrollMethod.style.display = 'none';
 			}
 
-			function setOverlayType(n) {
+			function setOverlayType(n) { // NOSONAR
 				window.overlay_dropdown.innerHTML = overlayLabels[n];
 				ppt['typeOverlay_internal'].value = n;
 				window.overlayType.style.display = 'none';
 			}
 
-			function ratingTextPosn(n) {
+			function ratingTextPosn(n) { // NOSONAR
 				window.rating_dropdown.innerHTML = 'Text position: ' + ratingTextPosLabels[n];
 				ppt['ratingTextPos_internal'].value = n;
 				window.ratingTextPos.style.display = 'none';
 			}
 
-			function setReflectionType(n) {
+			function setReflectionType(n) { // NOSONAR
 				window.reflection_dropdown.innerHTML = reflPosLabels[n];
 				ppt['imgReflType_internal'].value = n;
 				window.reflPos.style.display = 'none';
 			}
 
-			function setSbarShow(n) {
+			function setSbarShow(n) { // NOSONAR
 				window.sbarShow_dropdown.innerHTML = sbarShowLabels[n];
 				ppt['sbarShow_internal'].value = n;
 				window.sbarShow.style.display = 'none';
 			}
 
-			function setsbarType(n) {
+			function setsbarType(n) { // NOSONAR
 				window.sbarType_dropdown.innerHTML = sbarTypeLabels[n];
 				ppt['sbarType_internal'].value = n;
 				sbar_col_dropdown.style.display = n < 2 ? "inline-block" : "none";
@@ -2285,25 +2304,25 @@
 				window.sbarType.style.display = 'none';
 			}
 
-			function setSbarCol(n) {
+			function setSbarCol(n) { // NOSONAR
 				window.sbarCol_dropdown.innerHTML = sbarColLabels[n];
 				ppt['sbarCol_internal'].value = n;
 				window.sbarCol.style.display = 'none';
 			}
 
-			function setSbarIcon(n) {
+			function setSbarIcon(n) { // NOSONAR
 				window.sbarIcon_dropdown.innerHTML = sbarIconLabels[n];
 				ppt['sbarButType_internal'].value = n;
 				window.sbarIcon.style.display = 'none';
 			}
 
-			function setSeekerShow(n) {
+			function setSeekerShow(n) { // NOSONAR
 				window.seeker_dropdown.innerHTML = sbarShowLabels[n];
 				ppt['imgSeekerShow_internal'].value = n;
 				window.seeker.style.display = 'none';
 			}
 
-			function setTheme(n) {
+			function setTheme(n) { // NOSONAR
 				window.theme_dropdown.innerHTML = themeLabels[n];
 				ppt['theme_internal'].value = n;
 				window.themeBg.style.display = 'none';
@@ -2396,11 +2415,10 @@
 				i = 2; window.mainImage.insertAdjacentHTML('beforeend', '<div class="input_cnt1"><input id="cycleTime_container' + i + '" name="image_input" style="padding:0; margin:0;" class="input2" /><label for="cycleTime_container' + i + '" class="inp_label2">' + mainImgLabels[i] + '</label></div>');
 
 				window.seeker_dropdown.innerHTML = sbarShowLabels[ppt['imgSeekerShow_internal'].value];
-				if (!ppt['imgSeekerDisabled_internal'].value) for (i = 0; i < 3; i++) { window.seeker.insertAdjacentHTML('beforeend', '<a onclick="setSeekerShow(' + i + ');">' + sbarShowLabels[i] + '</a>'); }
-				else {
+				if (ppt['imgSeekerDisabled_internal'].value) {
 					window.seeker_dropdown.style.background = '#EBEBE4';
 					window.seeker_dropdown.style.color = '#C6C6C6';
-				}
+				} else { for (i = 0; i < 3; i++) { window.seeker.insertAdjacentHTML('beforeend', '<a onclick="setSeekerShow(' + i + ');">' + sbarShowLabels[i] + '</a>'); } }
 
 				for (i = 0; i < 2; i++) { window.seekerStyle.insertAdjacentHTML('beforeend', '<div class="input_cnt2"><input id="imgSeekerStyle' + i + '" name="image_checkbox" style="' + cbox + '" type="checkbox" /><label for="imgSeekerStyle' + i + '" class="checkbox_label">' + seekerLabels[i] + '</label></div>'); }
 				for (i = 2; i < 4; i++) { window.seekerDots.insertAdjacentHTML('beforeend', '<div class="input_cnt2"><input id="imgSeekerDots' + i + '" name="imgSeekerDots" style="' + cbox + '" type="radio" /><label for="imgSeekerDots' + i + '" class="checkbox_label">' + seekerLabels[i] + '</label></div>'); }
@@ -2508,7 +2526,6 @@
 				for (i = 4; i < 9; i++) {
 					window.lastfm.insertAdjacentHTML('beforeend', '<div class="input_cnt3"><input id="dnld_checkbox' + i + '" name="download_checkbox" type="checkbox" /><label for="dnld_checkbox' + i + '" class="checkbox_label">' + dlLabels[i] + '</label><input id="dld_container' + i + '" name="download_input" class="input82" /></div>');
 				}
-				window.dnld_checkbox8.parentNode.style.display = 'none'; // similar artists: now auto
 				for (i = 9; i < 11; i++) {
 					window.wikipedia.insertAdjacentHTML('beforeend', '<div class="input_cnt3"><input id="dnld_checkbox' + i + '" name="download_checkbox" type="checkbox" /><label for="dnld_checkbox' + i + '" class="checkbox_label">' + dlLabels[i] + '</label><input id="dld_container' + i + '" name="download_input" class="input82" /></div>');
 				}
@@ -2569,7 +2586,7 @@
 				for (i = 0; i < 12; i++) {
 					window.language.insertAdjacentHTML('beforeend', '<a onclick="setLanguage(' + i + ')" >' + langLabels[i] + '</a>');
 				}
-				window.lang_checkbox0.parentNode.disabled = !lang_ix ? true : false;
+				window.lang_checkbox0.parentNode.disabled = !lang_ix;
 				window.prev.insertAdjacentHTML('beforeend', '<div class="input_cnt3" id="preview_cnt"><input id="dld_preview" name="preview" readonly class="input82"/><label for="dld_container1000" class="inp_label3">Current Item:</label></div>');
 				window.covPreview.insertAdjacentHTML('beforeend', '<div class="input_cnt3" id="custom3"><input id="cov_preview" name="preview" class="input82" readonly/><label for="preview_container" class="inp_label3">Current Item:</label></div>');
 			}
@@ -2590,6 +2607,8 @@
 			setInputs('all', 'value');
 			setCheckboxStates();
 			document.getElementById("btn_apply").disabled = true;
+
+			if (setCacheTime && setDropShadowLevel && setFilmAlignment && setHeadingShow && setHeadingFont && setLyricsScrollMethod && setOverlayType && ratingTextPosn && setReflectionType && setSbarShow && setTheme && setSeekerShow && setSbarIcon && setSbarCol && setsbarType) { void (0); }; // NOSONAR disable unused functions
 		}
 
 		function setInputs(page, value) {
@@ -2657,12 +2676,12 @@
 			window.cache_dropdown.style.display = !cur.displaySaveFolders && window.autoCache1.checked && showStorageTimeOption ? "inline-block" : "none";
 			window.cache_dropdown.style.width = !cur.displaySaveFolders && window.autoCache1.checked && showStorageTimeOption ? "auto" : 0;
 			window.photoLimit.style.display = window.autoCache1.checked && showStorageTimeOption && cfg['autoCacheTime_internal'].value > 3 ? "block" : "none";
-			window.cacheLocation.style.display = !cur.displaySaveFolders ? "block" : "none";
-			window.cache0.style.display = !cur.displaySaveFolders ? "block" : "none";
-			window.cache1.style.display = !cur.displaySaveFolders ? "block" : "none";
+			window.cacheLocation.style.display = cur.displaySaveFolders ? "none" : "block";
+			window.cache0.style.display = cur.displaySaveFolders ? "none" : "block";
+			window.cache1.style.display = cur.displaySaveFolders ? "none" : "block";
 			window.save_folders.style.display = cur.displaySaveFolders || showStorageTimeOption && window.autoCache1.checked ? "none" : "block";
 			if (!showStorageTimeOption) window.save_folders.disabled = window.autoCache1.checked;
-			window.hide_folders.style.display = !cur.displaySaveFolders ? "none" : "block";
+			window.hide_folders.style.display = cur.displaySaveFolders ? "block" : "none";
 
 			var showsupplCacheOption = false;
 			if (!showsupplCacheOption) {
@@ -2675,7 +2694,7 @@
 		function setLanguage(n) {
 			window.btn_dropdown.innerHTML = 'Last.fm + Wikipedia language: ' + langLabels[n];
 			cfg['language_internal'].value = ['EN', 'DE', 'ES', 'FR', 'IT', 'JA', 'PL', 'PT', 'RU', 'SV', 'TR', 'ZH'][n];
-			window.lang_checkbox0.parentNode.disabled = !n ? true : false;
+			window.lang_checkbox0.parentNode.disabled = !n;
 		}
 
 		function setCheckboxes(page, value) {
@@ -2709,7 +2728,7 @@
 		function getValues() {
 			var inputs = document.querySelectorAll("[name$='_input']");
 			for (i = 0; i < inputs.length; i++) {
-				(ppt[input.all.name[i] + '_internal'] || cfg[input.all.name[i] + '_internal']).value = input.all.type[i] == 'text' ? inputs[i].value : input.all.type[i] == 'int' ? parseInt(inputs[i].value) : parseFloat(inputs[i].value);
+				(ppt[input.all.name[i] + '_internal'] || cfg[input.all.name[i] + '_internal']).value = input.all.type[i] == 'text' ? inputs[i].value : input.all.type[i] == 'int' ? Number.parseInt(inputs[i].value) : Number.parseFloat(inputs[i].value);
 			}
 
 			var boxes = document.querySelectorAll("[name$='_checkbox']");
@@ -2797,8 +2816,7 @@
 
 		window.btn_reset.onclick = function () {
 			var msg = cur.tab == 'PanelCfg' ? 'Reset panel settings to default\nContinue?' : 'Reset server settings to default\n\nOriginal (' + cfg.cfgBaseName + '.cfg ) will be backed up\n\nContinue?';
-			var r = window.confirm(msg);
-			if (r == true) {
+			if (window.confirm(msg)) {
 				var new_cur = JSON.stringify(cur);
 				if (new_cur == parsed_args[2]) new_cur = '';
 				close_window();
@@ -2847,8 +2865,8 @@
 		}
 
 		function toggle(item) {
-			if (window[item].style.display != 'block') window[item].style.display = 'block'
-			else window[item].style.display = 'none';
+			if (window[item].style.display == 'block') { window[item].style.display = 'none'; }
+			else { window[item].style.display = 'block' }
 		}
 
 		var h = [

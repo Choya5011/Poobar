@@ -1303,6 +1303,38 @@ const CompositeMode = {
 };
 
 /**
+ * Brush types used in {@link gdi.Brush}, {@link d2d.Brush} and {@link GdiBrush#Type GdiBrush.Type}, {@link D2DBrush#Type D2DBrush.Type}
+ * @memberof module:Flags
+ * @default
+ */
+const BrushType = {
+    Solid: 0,
+    LinearGradient: 1,
+    RadialGradient: 2,
+    Bitmap: 3    
+};
+
+/**
+ * Brush wrap modes used in {@link GdiBrush#WrapMode GdiBrush.WrapMode} and {@link D2DBrush#WrapMode D2DBrush.WrapMode}<br>
+ * Behavior of the modes may differ between GDI+ and Direct2D<br>
+ * <b>Tile</b>: Specifies tiling without flipping.<br>
+ * <b>TileFlipX</b>: Specifies that tiles are flipped horizontally as you move from one tile to the next in a row.<br>
+ * <b>TileFlipY</b>: Specifies that tiles are flipped vertically as you move from one tile to the next in a column.<br>
+ * <b>TileFlipXY</b>: Specifies that tiles are flipped horizontally as you move along a row and flipped vertically as you move along a column.<br>
+ * <b>Clamp</b>: Specifies that no tiling takes place. In D2D mode extends the edges of the source out by clamping sample points outside the source to the edges. In GDI: simply stops the output and for linear gradient brushes is not valid parameter.
+ * 
+ * @memberof module:Flags
+ * @default
+ */
+const BrushWrapMode = {
+    Tile: 0,
+    TileFlipX: 1,
+    TileFlipY: 2,
+    TileFlipXY: 3,
+    Clamp: 4
+};
+
+/**
  * SupportColourFlagCUI = {
  *     text: 0x0,
  *     selection_text: 0x2,

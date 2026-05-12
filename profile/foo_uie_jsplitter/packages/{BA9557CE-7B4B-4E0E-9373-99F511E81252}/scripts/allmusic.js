@@ -1,4 +1,5 @@
 'use strict';
+//24/04/2026
 
 class RequestAllmusic {
 	constructor() {
@@ -39,7 +40,7 @@ class RequestAllmusic {
 		const setRequest = (onreadystatechange) => {
 			// https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest#bypassing_the_cache
 			// Add ('&' + new Date().getTime()) to URLS to avoid caching
-			const fullUrl = URL + (bypassCache ? (/\?/.test(URL) ? '&' : '?') + new Date().getTime() : '');
+			const fullUrl = URL + (bypassCache ? (/\?/.test(URL) ? '&' : '?') + Date.now() : '');
 			this.request.Open(method, fullUrl, true);
 			requestHeader.forEach(pair => {
 				if (!pair[0] || !pair[1]) {
@@ -63,12 +64,8 @@ class RequestAllmusic {
 				this.request.WaitForResponse(-1);
 				this.onStateChange(resolve, reject, func);
 			} catch (e) {
-				let status = 400;
-				if (e.message.indexOf('0x80072ee7') !== -1) {
-					status = 400;
-				} else if (e.message.indexOf('0x80072ee2') !== -1) {
-					status = 408;
-				} else if (e.message.indexOf('0x8000000a') !== -1) {
+				let status = 400; // 0x80072ee7
+				if (e.message.includes('0x80072ee2') || e.message.includes('0x8000000a')) {
 					status = 408;
 				}
 				this.abortRequest();
@@ -127,7 +124,7 @@ class DldAllmusicBio {
 		this.title = p_title;
 		this.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36';
 
-		this.search(!this.title ? 'artist' : 'id', URL, referer);
+		this.search(this.title ? 'id' : 'artist', URL, referer);
 	}
 
 	search(item, URL, referer) {
@@ -325,7 +322,7 @@ class DldAllmusicRev {
 								doc.close();
 								this.titleLink = list[i].titleLink;
 								if (this.titleLink) {
-									return this.search('review', this.titleLink + (item.type != 'composition' ? '/reviewAjax' : '/descriptionAjax'), this.titleLink);
+									return this.search('review', this.titleLink + (item.type == 'composition' ? '/descriptionAjax' : '/reviewAjax'), this.titleLink);
 								}
 							} else if (!this.va) {
 								doc.close();
@@ -336,7 +333,7 @@ class DldAllmusicRev {
 						}
 						server.getBio(this.force, this.art, 1);
 						if (this.dn_type.includes('biography')) server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.pth_rev);
-						server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev + (this.dn_type != 'track' ? '' : ' ' + this.album + ' ' + this.albumArtist));
+						server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev + (this.dn_type == 'track' ? ' ' + this.album + ' ' + this.albumArtist : ''));
 						if (cfg.showConsoleMessagesError) { $.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true); } // Regorxxx <- Tweak logging ->
 						doc.close();
 					},
@@ -346,7 +343,7 @@ class DldAllmusicRev {
 				).catch((error) => {
 					server.getBio(this.force, this.art, 1);
 					server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.pth_rev);
-					server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev + (this.dn_type != 'track' ? '' : ' ' + this.album + ' ' + this.albumArtist));
+					server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev + (this.dn_type == 'track' ? ' ' + this.album + ' ' + this.albumArtist : ''));
 					if (cfg.showConsoleMessagesNotFound) { $.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true); } // Regorxxx <- Tweak logging ->
 				})
 				// Regorxxx <- Force last.fm img downloading for newest SMP methods or server errors. Retry only once per ID
@@ -390,8 +387,8 @@ class DldAllmusicRev {
 						} else this.review = server.format(this.review[0]);
 						doc.close();
 						if (this.titleLink) {
-							if (!this.dn_type.includes('composition')) this.search('moodsThemes', this.titleLink + '/moodsThemesAjax', this.titleLink);
-							else this.search('titlePage', this.titleLink, 'https://allmusic.com');
+							if (this.dn_type.includes('composition')) {this.search('titlePage', this.titleLink, 'https://allmusic.com');}
+							else {this.search('moodsThemes', this.titleLink + '/moodsThemesAjax', this.titleLink);}
 						}
 					},
 					(error) => {}
@@ -426,12 +423,12 @@ class DldAllmusicRev {
 							}
 						});
 						if (reviewMood.length) {
-							if (this.dn_type != 'track') this.reviewMood = 'Album Moods: ' + reviewMood.join('\u200b, ');
-							else this.songMood = reviewMood;
+							if (this.dn_type == 'track') {this.songMood = reviewMood;}
+							else {this.reviewMood = 'Album Moods: ' + reviewMood.join('\u200b, ');}
 						}
 						if (reviewTheme.length) {
-							if (this.dn_type != 'track') this.reviewTheme = 'Album Themes: ' + reviewTheme.join('\u200b, ')
-							else this.songTheme = reviewTheme;
+							if (this.dn_type == 'track') {this.songTheme = reviewTheme;}
+							else {this.reviewTheme = 'Album Themes: ' + reviewTheme.join('\u200b, ')}
 						}
 						doc.close();
 						if (this.titleLink) this.search('titlePage', this.titleLink, 'https://allmusic.com');
@@ -458,7 +455,31 @@ class DldAllmusicRev {
 						const dv = div.getElementsByTagName('div');
 						const reviewGenre = [];
 						let tg = '';
-						if (this.dn_type != 'track') {
+						if (this.dn_type == 'track') {
+							$.htmlParse(div.getElementsByTagName('div'), 'className', 'composer', v => {
+								const a = v.getElementsByTagName('a');
+								for (const composer of a) {
+									if (composer.innerText) this.composer.push(composer.innerText);
+								}
+							});
+							$.htmlParse(div.getElementsByTagName('div'), 'className', 'genre', v => {
+								const a = v.getElementsByTagName('a');
+								for (const genre of a) {
+									if (genre.innerText) this.songGenre.push(genre.innerText);
+								}
+							});
+							$.htmlParse(div.getElementsByTagName('div'), 'className', 'styles', v => {
+								const a = v.getElementsByTagName('a');
+								for (const style of a) {
+									if (style.innerText) this.songGenre.push(style.innerText);
+								}
+							});
+							const m = response.match(/data-releaseyear=\s*"\s*\d+\s*"/i);
+							if (m) {
+								this.songReleaseYear = m[0].replace(/\D/g, '').trim();
+							}
+							this.saveTrackReview();
+						} else {
 							$.htmlParse(dv, 'className', 'release-date', v => this.releaseDate = v.innerText.replace(/Release Date/i, 'Release Date: ').trim());
 							$.htmlParse(a, false, false, v => {
 								if (v.href.includes('www.allmusic.com/genre') || v.href.includes('www.allmusic.com/style')) {
@@ -468,32 +489,8 @@ class DldAllmusicRev {
 							});
 							if (reviewGenre.length) this.reviewGenre = 'Genre: ' + reviewGenre.join('\u200b, ');
 							const match = response.match(/allmusicRating ratingAllmusic(\d)/i);
-							if (match && match.length == 2) this.rating = match[1] != 0 ? match[1] / 2 + 0.5 : 0;
+							if (match && match.length == 2) this.rating = match[1] == 0 ? 0 : match[1] / 2 + 0.5;
 							this.saveAlbumReview();
-						} else {
-							$.htmlParse(div.getElementsByTagName('div'), 'className', 'composer', v => {
-								const a = v.getElementsByTagName('a');
-								for (let i = 0; i < a.length; i++) {
-									if (a[i].innerText) this.composer.push(a[i].innerText);
-								}
-							});
-							$.htmlParse(div.getElementsByTagName('div'), 'className', 'genre', v => {
-								const a = v.getElementsByTagName('a');
-								for (let i = 0; i < a.length; i++) {
-									if (a[i].innerText) this.songGenre.push(a[i].innerText);
-								}
-							});
-							$.htmlParse(div.getElementsByTagName('div'), 'className', 'styles', v => {
-								const a = v.getElementsByTagName('a');
-								for (let i = 0; i < a.length; i++) {
-									if (a[i].innerText) this.songGenre.push(a[i].innerText);
-								}
-							});
-							const m = response.match(/data-releaseyear=\s*"\s*\d+\s*"/i);
-							if (m) {
-								this.songReleaseYear = m[0].replace(/\D/g, '').trim();
-							}
-							this.saveTrackReview();
 						}
 						doc.close();
 
@@ -518,7 +515,7 @@ class DldAllmusicRev {
 						}
 					}
 					server.updateNotFound('Bio ' + cfg.partialMatch + ' ' + this.pth_rev);
-					server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev + (this.dn_type != 'track' ? '' : ' ' + this.album + ' ' + this.albumArtist));
+					server.updateNotFound('Rev ' + cfg.partialMatch + ' ' + this.pth_rev + (this.dn_type == 'track' ? ' ' + this.album + ' ' + this.albumArtist : ''));
 					if (cfg.showConsoleMessagesNotFound) { $.trace('allmusic review: ' + this.album + ' / ' + this.albumArtist + ': not found', true); } // Regorxxx <- Tweak logging ->
 				});
 				break;
@@ -627,8 +624,8 @@ class Parse {
 
 		$.htmlParse(dv, 'className', 'group-members', v => {
 			const a = v.getElementsByTagName('a');
-			for (let i = 0; i < a.length; i++) {
-				if (a[i].innerText) that.groupMembers.push(a[i].innerText.trim());
+			for (const members of a) {
+				if (members.innerText) that.groupMembers.push(members.innerText.trim());
 			}
 		});
 
@@ -656,15 +653,15 @@ class Parse {
 	amSearch(div, artist, item) {
 		let j = 0, list = [];
 		let items = div.getElementsByTagName('div');
-		for (let i = 0; i < items.length; i++) {
-			if (items[i]['className'] == item) {
+		for (const element of items) {
+			if (element['className'] == item) {
 				list[j] = {}
-				$.htmlParse(items[i].getElementsByTagName('div'), 'className', 'title', v => {
+				$.htmlParse(element.getElementsByTagName('div'), 'className', 'title', v => {
 					const a = v.getElementsByTagName('a');
 					list[j].title = a.length && a[0].innerText ? a[0].innerText : 'N/A';
 					list[j].titleLink = a.length && a[0].href ? a[0].href : '';
 				});
-				$.htmlParse(items[i].getElementsByTagName('div'), 'className', artist, v => {
+				$.htmlParse(element.getElementsByTagName('div'), 'className', artist, v => {
 					const a = v.getElementsByTagName('a');
 					list[j].artist = a.length && a[0].innerText ? a[0].innerText : v.innerText;
 					list[j].artistLink = a.length && a[0].href ? a[0].href : '';

@@ -1,4 +1,5 @@
 ﻿'use strict';
+//24/04/2026
 
 class Lyrics {
 	constructor() {
@@ -52,7 +53,7 @@ class Lyrics {
 		if (!this.display()) return;
 		const top = this.locus * this.lineHeight - this.locusOffset;
 		const transition_factor = $.clamp((this.lineHeight - this.scroll) / this.lineHeight, 0, 1);
-		const transition_factor_in = !this.lyrics[this.locus].multiLine ? transition_factor : 1;
+		const transition_factor_in = this.lyrics[this.locus].multiLine ? 1 : transition_factor;
 		const transition_factor_out = $.clamp(transition_factor_in * 3, 0, 1);
 		const alpha = Math.min(255 * transition_factor * 4 / 3, 255);
 		const blendIn = this.type.synced ? ui.getBlend(ui.col.accent, ui.col.text, transition_factor_in) : ui.col.text;
@@ -79,7 +80,7 @@ class Lyrics {
 			const line_y = Math.round(y - top + lyric_y);
 			const bottomLine = line_y > this.bot;
 			if (this.showlyric(lyric_y, top)) {
-				const font = !lyric.highlight ? ui.font.lyrics : this.font.lyrics;
+				const font = lyric.highlight ? this.font.lyrics : ui.font.lyrics;
 				if (this.shadowEffect && line_y >= this.top && !bottomLine) {
 					if (this.dropNegativeShadowLevel) {
 						gr.DrawString(lyric.content, font, ui.col.dropShadow, this.x - this.dropNegativeShadowLevel, line_y, this.w + 1, this.lineHeight + 1, this.alignCenter);
@@ -115,7 +116,7 @@ class Lyrics {
 							maxScrollTime = Math.min(maxScrollTime * numLines, (lyrics[i + 1].timestamp - lyrics[i].timestamp) / numLines);
 						}
 						for (let j = 0; j < l.length; j += 2) {
-							this.lyrics.push({content: l[j].trim(), timestamp: lyrics[i].timestamp + maxScrollTime * j / 2, id: i, multiLine: j ? true : false});
+							this.lyrics.push({content: l[j].trim(), timestamp: lyrics[i].timestamp + maxScrollTime * j / 2, id: i, multiLine: !!j});
 						}
 					} else this.lyrics.push({content: lyrics[i].content.trim(), timestamp: lyrics[i].timestamp, id: i});
 				}
@@ -138,7 +139,7 @@ class Lyrics {
 
 	getMilliseconds(t) {
 		t = t.trim().replace(/[[\]]/,'').split(':');
-		return Math.max((t.reduce((acc, time) => (60 * acc) + parseFloat(time))) * 1000, 0);
+		return Math.max((t.reduce((acc, time) => (60 * acc) + Number.parseFloat(time))) * 1000, 0);
 	}
 
 	getScrollSpeed() {
@@ -151,7 +152,7 @@ class Lyrics {
 			if (t3 && t3 - t2 > 0 && t3 - t2 < this.durationScroll) durationScroll = $.clamp(t3 - t2, this.minDurationScroll, this.durationScroll);
 		}
 
-		const variSpeed = !ppt.lyricsScrollMaxMethod ? 10 * 500 : 0;
+		const variSpeed = ppt.lyricsScrollMaxMethod ? 0 : 10 * 500;
 		if (variSpeed) {
 			let diff1 = 0;
 			let diff2 = 0;
@@ -181,13 +182,13 @@ class Lyrics {
 			this.userOffset = 0;
 		}
 		this.font = {
-			lyrics: !ppt.largerSyncLyricLine ? ui.font.lyrics : gdi.Font(ui.font.main.Name, ui.font.zoomSize * 1.33, ui.font.lyrics.Style)
+			lyrics: ppt.largerSyncLyricLine ? gdi.Font(ui.font.main.Name, ui.font.zoomSize * 1.33, ui.font.lyrics.Style) : ui.font.lyrics
 		}
 		this.alignCenter = StringFormat(1, 1);
 		this.alignRight = StringFormat(2, 1);
 		
 		this.init = true;
-		this.lineHeight = !ppt.largerSyncLyricLine ? ui.font.lyrics_h + 4 * $.scale : ui.font.lyrics_h * 1.33;
+		this.lineHeight = ppt.largerSyncLyricLine ? ui.font.lyrics_h * 1.33 : ui.font.lyrics_h + 4 * $.scale;
 		this.arc1 = Math.max(1, Math.floor((this.lineHeight + 1) / 2));
 		this.arc2 = Math.max(1, Math.floor((this.lineHeight + 1 - 2) / 2));
 		ppt.lyricsScrollTimeMax = $.clamp(Math.round(ppt.lyricsScrollTimeMax), 0, 3000);
@@ -207,7 +208,7 @@ class Lyrics {
 		this.dropNegativeShadowLevel = this.dropShadowLevel > 1 ? Math.floor(this.dropShadowLevel / 2) : 0;
 		this.showOffsetTimer = null;
 		this.timer = null;
-		this.trackLength = parseInt(this.tfLength.Eval(true));
+		this.trackLength = Number.parseInt(this.tfLength.Eval(true));
 		this.transitionOffset = this.durationScroll / 2;
 		this.transBot = {}
 		this.transTop = {}
@@ -239,7 +240,7 @@ class Lyrics {
 		this.userOffset += 1000 * -step;
 		if (!this.userOffset) this.repaintRect();
 		this.showOffset = this.type.synced && this.userOffset != 0;
-		clearTimeout(this.showOffsetTimer);
+		if (this.showOffsetTimer) { clearTimeout(this.showOffsetTimer); }
 		this.showOffsetTimer = setTimeout(() => {
 			this.repaintRect();
 			this.showOffset = false;
@@ -267,14 +268,14 @@ class Lyrics {
 			case this.type.synced: {
 				let lyrOffset = null;
 				lyr.some(line => lyrOffset = line.match(/^\s*\[offset\s*:(.*)\]\s*$/));
-				if (lyrOffset && lyrOffset.length > 0) this.lyricsOffset = parseInt(lyrOffset[1]);
-				if (isNaN(this.lyricsOffset)) this.lyricsOffset = 0;
+				if (lyrOffset && lyrOffset.length > 0) this.lyricsOffset = Number.parseInt(lyrOffset[1]);
+				if (Number.isNaN(this.lyricsOffset)) this.lyricsOffset = 0;
 				this.format(this.parseSyncLyrics(lyr, this.type.none), this.type.synced);
 				break;
 			}
 			case this.type.unsynced: {
 				this.format(this.parseUnsyncedLyrics(lyr, this.type.none));
-				const ratio = !panel.isRadio() ? this.trackLength / this.lyrics.length * 1000 : 2000;
+				const ratio = panel.isRadio() ? 2000 : this.trackLength / this.lyrics.length * 1000;
 				this.lyrics.forEach((line, i) => line.timestamp = ratio * i);
 				break;
 			}
@@ -309,7 +310,7 @@ class Lyrics {
 	}
 
 	playbackTime() {
-		const time = !panel.isRadio() ? fb.PlaybackTime : fb.PlaybackTime - txt.reader.trackStartTime;
+		const time = panel.isRadio() ? fb.PlaybackTime - txt.reader.trackStartTime : fb.PlaybackTime;
 		return Math.round(time * 1000) + this.lyricsOffset + this.transitionOffset + this.userOffset;
 	}
 
@@ -351,8 +352,8 @@ class Lyrics {
 	start() {
 		if (this.timer || !fb.IsPlaying || fb.IsPaused) return;
 		this.timer = setInterval(() => {
-			if (!this.init) this.smoothScroll();
-			else this.init = false;
+			if (this.init) {this.init = false;}
+			else {this.smoothScroll();}
 		}, 16);
 	}
 

@@ -1,5 +1,5 @@
 ﻿'use strict';
-//28/01/26
+//06/04/26
 
 /* exported _getNameSpacePath, _deleteFolder, _copyFile, _recycleFile, _restoreFile, _saveFSO, _saveSplitJson, _jsonParseFileSplit, _jsonParseFileCheck, _parseAttrFile, _explorer, getFiles, _run, _runHidden, _exec, editTextFile, findRecursiveFile, findRelPathInAbsPath, sanitizePath, sanitize, UUID, created, getFileMeta, popup, getPathMeta, testPath, youTubeRegExp, _isNetwork, findRecursiveDirs, _copyFolder, _renameFolder, _copyDependencies, _moveFile, _foldPath */
 
@@ -260,17 +260,29 @@ function _comparePaths(source, destination) {
 	return (source.endsWith('\\') ? source.slice(0, -1) : source).toLowerCase() === (destination.endsWith('\\') ? destination.slice(0, -1) : destination).toLowerCase();
 }
 
+function _longPath(path) {
+	return '\\\\?\\' + path;
+}
+
 function _isFile(file) {
 	if (!isString(file)) { return false; }
 	file = _resolvePath(file);
 	if (file.endsWith('\\')) { file = file.slice(0, -1); }
-	try { return utils.IsFile(file); } catch (e) { return fso.FileExists(file); }  // eslint-disable-line no-unused-vars
+	if (file.length > 260) { // Long paths workaround https://stackoverflow.com/a/74352295
+		return fso.FileExists(_longPath(file));
+	} else {
+		try { return utils.IsFile(file); } catch (e) { return fso.FileExists(file); }  // eslint-disable-line no-unused-vars
+	}
 }
 
 function _isFolder(folder) {
 	if (!isString(folder)) { return false; }
 	folder = _resolvePath(folder);
-	try { return utils.IsDirectory(folder); } catch (e) { return fso.FolderExists(folder); } // eslint-disable-line no-unused-vars
+	if (folder.length > 260) { // Long paths workaround https://stackoverflow.com/a/74352295
+		return fso.FolderExists(_longPath(folder));
+	} else {
+		try { return utils.IsDirectory(folder); } catch (e) { return fso.FolderExists(folder); } // eslint-disable-line no-unused-vars
+	}
 }
 
 function _isLink(path) {
@@ -283,7 +295,8 @@ function _createFolder(folder) { // Creates complete dir tree if needed up to th
 	if (!folder.length) { return false; }
 	folder = _resolvePath(folder);
 	if (!_isFolder(folder) && !_isFile(folder)) {
-		if (utils.CreateFolder) { return utils.CreateFolder(folder); }
+		const bLongPath = folder.length > 260;
+		if (!bLongPath && utils.CreateFolder) { return utils.CreateFolder(folder); }
 		if (!folder.endsWith('\\')) { folder += '\\'; }
 		const subFolders = new Set(folder.split('\\').map((_, i, arr) => {
 			return i ? arr.slice(0, i).reduce((path, name) => { return path + '\\' + name; }) : _;
@@ -291,7 +304,8 @@ function _createFolder(folder) { // Creates complete dir tree if needed up to th
 		subFolders.forEach((path) => {
 			if (!_isFolder(path)) {
 				try {
-					fso.CreateFolder(path);
+					// Long paths workaround https://stackoverflow.com/a/74352295
+					fso.CreateFolder(bLongPath ? _longPath(path) : path);
 				} catch (e) {
 					console.log('_createFolder: ' + folder + '\n\t ' + parseWinApiError(e.message));
 					return false;
@@ -306,10 +320,11 @@ function _createFolder(folder) { // Creates complete dir tree if needed up to th
 // Delete. Can not be undone.
 function _deleteFile(file, bForce = true) {
 	file = _resolvePath(file);
-	if (utils.RemovePath) { return utils.RemovePath(file) > 0; }
+	const bLongPath = file.length > 260;
+	if (!bLongPath && utils.RemovePath) { return utils.RemovePath(file) > 0; }
 	if (_isFile(file)) {
 		try {
-			fso.DeleteFile(file, bForce);
+			fso.DeleteFile(bLongPath ? _longPath(file) : file, bForce);
 		} catch (e) {
 			console.log('_deleteFile: ' + file + '\n\t ' + parseWinApiError(e.message));
 			return false;
@@ -322,11 +337,12 @@ function _deleteFile(file, bForce = true) {
 // Delete. Can not be undone.
 function _deleteFolder(folder, bForce = true) {
 	folder = _resolvePath(folder);
-	if (utils.RemovePath) { return utils.RemovePath(folder) > 0; }
+	const bLongPath = folder.length > 260;
+	if (!bLongPath && utils.RemovePath) { return utils.RemovePath(folder) > 0; }
 	if (_isFolder(folder)) {
 		if (folder.endsWith('\\')) { folder = folder.slice(0, -1); }
 		try {
-			fso.DeleteFolder(folder, bForce);
+			fso.DeleteFolder(bLongPath ? _longPath(folder) : folder, bForce);
 		} catch (e) {
 			console.log('_deleteFolder: ' + folder + '\n\t ' + parseWinApiError(e.message));
 			return false;
@@ -337,16 +353,21 @@ function _deleteFolder(folder, bForce = true) {
 }
 
 // Rename/move
+// Long paths not supported
 function _renameFile(oldFilePath, newFilePath) {
 	if (!newFilePath.length) { return; }
 	oldFilePath = _resolvePath(oldFilePath);
 	newFilePath = _resolvePath(newFilePath);
 	if (_comparePaths(oldFilePath, newFilePath)) { return true; }
+	if (oldFilePath.length > 260 || newFilePath.length > 260) {
+		console.log('_renameFile: ' + oldFilePath + ' -> ' + newFilePath + '\n\t Error: Path longer than 260 chars.');
+		return false;
+	}
 	if (utils.RenamePath) { return utils.RenamePath(oldFilePath, newFilePath); }
 	if (!_isFile(newFilePath)) {
 		if (_isFile(oldFilePath)) {
-			const filePath = utils.SplitFilePath(newFilePath)[0];
-			if (!_isFolder(filePath)) { _createFolder(filePath); }
+			const newFolderPath = utils.SplitFilePath(newFilePath)[0];
+			if (!_isFolder(newFolderPath)) { _createFolder(newFolderPath); }
 			try {
 				fso.MoveFile(oldFilePath, newFilePath);
 			} catch (e) {
@@ -360,23 +381,29 @@ function _renameFile(oldFilePath, newFilePath) {
 	return false;
 }
 
+// Long paths not supported
 function _moveFile(oldFilePath, newFilePath) {
 	if (_isFile(newFilePath)) {
 		_deleteFile(newFilePath + '.old');
 		_renameFile(newFilePath, newFilePath + '.old');
 	}
 	const bDone = _renameFile(oldFilePath, newFilePath);
-	if (!bDone) { _renameFile(newFilePath + '.old', newFilePath); }
-	else { _deleteFile(newFilePath + '.old'); }
+	if (bDone) { _deleteFile(newFilePath + '.old'); }
+	else { _renameFile(newFilePath + '.old', newFilePath); }
 	return bDone;
 }
 
 // https://learn.microsoft.com/en-us/office/vba/language/reference/user-interface-help/movefolder-method
-function _renameFolder(oldFolderPath, newFolderPath) {
+// Long paths not supported
+function _renameFolder(oldFolderPath, newFolderPath) { // TODO
 	if (!newFolderPath.length) { return; }
 	oldFolderPath = _resolvePath(oldFolderPath);
 	newFolderPath = _resolvePath(newFolderPath);
 	if (_comparePaths(oldFolderPath, newFolderPath)) { return true; }
+	if (oldFolderPath.length > 260 || newFolderPath.length > 260) {
+		console.log('_renameFolder: ' + oldFolderPath + ' -> ' + newFolderPath + '\n\t Error: Path longer than 260 chars.');
+		return false;
+	}
 	if (utils.RenamePath) { return utils.RenamePath(oldFolderPath, newFolderPath); }
 	const source = oldFolderPath.replace(/\*$/i, '');
 	if (!source.endsWith('\\') || !_isFolder(newFolderPath)) {
@@ -395,12 +422,18 @@ function _renameFolder(oldFolderPath, newFolderPath) {
 	return false;
 }
 
+
 // Copy
 // https://learn.microsoft.com/en-us/office/vba/language/reference/user-interface-help/copyfile-method
+// Long paths not supported
 function _copyFile(oldFilePath, newFilePath, bAsync = false) {
 	if (!newFilePath.length) { return; }
 	oldFilePath = _resolvePath(oldFilePath);
 	newFilePath = _resolvePath(newFilePath);
+	if ((oldFilePath.length > 260 || newFilePath.length > 260) && !bAsync) {
+		console.log('_copyFile: ' + oldFilePath + ' -> ' + newFilePath + '\n\t Error: Path longer than 260 chars.');
+		return false;
+	}
 	const source = oldFilePath.replace(/(([^\\.]*\.\*)|(\*\.[^.]*)|\*\.\*)$/i, '');
 	const bWildCard = !_comparePaths(oldFilePath, source);
 	const bTargetFolder = newFilePath.endsWith('\\');
@@ -412,7 +445,9 @@ function _copyFile(oldFilePath, newFilePath, bAsync = false) {
 				if (!_isFolder(filePath)) { _createFolder(filePath); }
 			}
 			try {
-				bAsync ? _runCmd('CMD /C COPY "' + oldFilePath + '" "' + newFilePath + '"', false) : fso.CopyFile(oldFilePath, newFilePath);
+				bAsync
+					? _runCmd('CMD /C COPY "' + oldFilePath + '" "' + newFilePath + '"', false)
+					: fso.CopyFile(oldFilePath, newFilePath);
 			} catch (e) {
 				console.log('_copyFile: ' + oldFilePath + ' -> ' + newFilePath + '\n\t ' + parseWinApiError(e.message));
 				return false;
@@ -426,12 +461,17 @@ function _copyFile(oldFilePath, newFilePath, bAsync = false) {
 
 // Copy
 // https://learn.microsoft.com/en-us/office/vba/language/reference/user-interface-help/copyfolder-method
+// Long paths not supported
 function _copyFolder(oldFolderPath, newFolderPath, bAsync = false) {
 	if (!newFolderPath.length) { return; }
 	oldFolderPath = _resolvePath(oldFolderPath);
 	newFolderPath = _resolvePath(newFolderPath);
 	const source = oldFolderPath.replace(/(\\\\)?\*?$/i, '$1');
 	if (_comparePaths(oldFolderPath, newFolderPath)) { return true; }
+	if ((oldFolderPath.length > 260 || newFolderPath.length > 260) && !bAsync) {
+		console.log('_copyFile: ' + oldFolderPath + ' -> ' + newFolderPath + '\n\t Error: Path longer than 260 chars.');
+		return false;
+	}
 	if (_isFolder(source)) {
 		if (newFolderPath.endsWith('\\') && !_isFolder(newFolderPath)) { _createFolder(newFolderPath); }
 		try {
@@ -462,12 +502,17 @@ function _copyDependencies(paths, root = folders.binaries, bAsync = false) {
 // Works even pressing shift thanks to an external utility
 // Otherwise file would be removed without sending to recycle bin!
 // Use utils.IsKeyPressed(VK_SHIFT) and debouncing as workaround when external exe must not be run
+// Long paths not supported
 function _recycleFile(file, bCheckBin = false) {
 	file = _resolvePath(file);
 	if (_isFile(file)) {
 		let bIsBin = true;
 		if (bCheckBin && !_hasRecycleBin(file.match(/^(.+?:)/g)[0])) { bIsBin = false; }
 		if (bIsBin) {
+			if (file.length > 260) {
+				console.log('_recycleFile: ' + file + '\n\t Error: Path longer than 260 chars.');
+				return false;
+			}
 			try {
 				if (utils.IsKeyPressed(VK_SHIFT)) { throw new Error('Shift'); }
 				app.NameSpace(spaces.bin).MoveHere(file); // First nameSpace method (may not work on Unix systems)
@@ -475,7 +520,6 @@ function _recycleFile(file, bCheckBin = false) {
 				try {
 					if (utils.IsKeyPressed(VK_SHIFT)) { throw new Error('Shift'); }
 					app.NameSpace(0).ParseName(file).InvokeVerb('delete'); // Second nameSpace method (may not work on Unix systems)
-					// fso.GetFile(file).Delete(true);
 				} catch (e) { // eslint-disable-line no-unused-vars
 					try { _runCmd(_q(folders.xxx + 'helpers-external\\cmdutils\\Recycle.exe') + ' -f ' + _q(file), true); } // cmdUtils as fallback /* cspell:disable-line */
 					catch (e) { return false; } // eslint-disable-line no-unused-vars
@@ -489,9 +533,13 @@ function _recycleFile(file, bCheckBin = false) {
 
 // Restores file from the recycle Bin, you must pass the original path.
 // Beware of collisions... same file deleted 2 times has the same virtual name on bin...
+// Long paths not supported
 function _restoreFile(file) {
 	file = _resolvePath(file);
-	if (!_isFile(file)) {
+	if (_isFile(file)) {
+		console.log('_restoreFile(): Can not restore file to \'' + file + '\' since there is already another file at the same path.');
+		return false;
+	} else {
 		const arr = utils.SplitFilePath(file);
 		const originalFileName = (arr[1].endsWith(arr[2])) ? arr[1] : arr[1] + arr[2]; // <1.4.0 Bug: [directory, filename + filename_extension, filename_extension]
 		let numItems, items;
@@ -508,18 +556,20 @@ function _restoreFile(file) {
 		const bFound = _isFile(file);
 		if (!bFound) { console.log('_restoreFile(): Can not restore file, \'' + originalFileName + '\' was not found at the bin.'); }
 		return bFound;
-	} else {
-		console.log('_restoreFile(): Can not restore file to \'' + file + '\' since there is already another file at the same path.');
-		return false;
 	}
 }
 
 function _getAttrFile(file) {
 	file = _resolvePath(file);
 	if (!_isFile(file)) { return null; }
-	const fileObj = fso.GetFile(file);
-	if (!fileObj) { return null; }
-	return fileObj.Attributes;
+	const bLongPath = file.length > 260;
+	try {
+		const fileObj = fso.GetFile(bLongPath ? _longPath(file) : file);
+		if (!fileObj) { return null; }
+		return fileObj.Attributes;
+	} catch (e) {  // eslint-disable-line no-unused-vars
+		return null;
+	}
 }
 
 function _parseAttrFile(file) {
@@ -535,7 +585,8 @@ function _parseAttrFile(file) {
 function _open(file, codePage = 0) {
 	file = _resolvePath(file);
 	if (_isFile(file)) {
-		return tryMethod('ReadTextFile', utils)(file, codePage) || '';  // Bypasses crash on file locked by other process
+		const bLongPath = file.length > 260;
+		return tryMethod('ReadTextFile', utils)(bLongPath ? _longPath(file) : file, codePage) || '';  // Bypasses crash on file locked by other process
 	} else {
 		return '';
 	}
@@ -546,13 +597,14 @@ function _save(file, value, bBOM = false) {
 	const filePath = utils.SplitFilePath(file)[0];
 	if (!_isFolder(filePath)) { _createFolder(filePath); }
 	if (round(roughSizeOfObject(value) / 1024 ** 2 / 2, 1) > 110) { console.popup('Data is bigger than 100 Mb, it may crash SMP. Report to use split JSON.', window.FullPanelName + ': JSON saving'); }
+	const bLongPath = file.length > 260;
 	if (_isFolder(filePath)) {
-		if (utils.WriteTextFile(file, value, bBOM) || _isFile(file) && value === '') {
+		if (utils.WriteTextFile(bLongPath ? _longPath(file) : file, value, bBOM) || _isFile(file) && value === '') {
 			return true;
 		}
 	}
-	if (file.length > 255) {
-		fb.ShowPopupMessage('Script is trying to save a file in a path containing more than 256 chars which leads to problems on Windows systems.\n\nPath:\n' + file + '\n\nTo avoid this problem, install your foobar portable installation at another path (with less nesting).');
+	if (bLongPath) {
+		fb.ShowPopupMessage('Script is trying to save a file in a path containing more than 260 chars which leads to problems on Windows systems.\n\nPath:\n' + file + '\n\nTo avoid this problem, install your foobar portable installation at another path (with less nesting).');
 	}
 	console.log('Error saving to ' + file);
 	return false;
@@ -563,8 +615,9 @@ function _saveFSO(file, value, bUTF16) {
 	const filePath = utils.SplitFilePath(file)[0];
 	if (!_isFolder(filePath)) { _createFolder(filePath); }
 	if (_isFolder(filePath)) {
+		const bLongPath = file.length > 260;
 		try {
-			const fileObj = fso.CreateTextFile(file, true, bUTF16);
+			const fileObj = fso.CreateTextFile(bLongPath ? _longPath(file) : file, true, bUTF16);
 			fileObj.Write(value);
 			fileObj.Close();
 			return true;
@@ -583,12 +636,12 @@ function _saveSplitJson(file, value, replacer = void (0), space = void (0), spli
 	if (_isFolder(filePath)) {
 		const fileName = utils.SplitFilePath(file)[1];
 		const len = value.length;
-		const add = len > splitBy ? splitBy : len;
+		const add = Math.min(len, splitBy);
 		const count = Math.ceil(len / splitBy);
 		let bDone = true;
 		for (let i = 0; i < count; i++) {
 			const newFilename = file.replace(fileName, fileName + i);
-			bDone = bDone && _save(newFilename, JSON.stringify(value.slice(i * add, ((i + 1) * add < len ? (i + 1) * add : len)), replacer, space), bBOM);
+			bDone = bDone && _save(newFilename, JSON.stringify(value.slice(i * add, Math.min((i + 1) * add, len)), replacer, space), bBOM);
 		}
 		return bDone;
 	}
@@ -598,8 +651,7 @@ function _saveSplitJson(file, value, replacer = void (0), space = void (0), spli
 
 function _jsonParse(value) {
 	try {
-		const data = JSON.parse(value);
-		return data;
+		return JSON.parse(value);
 	} catch (e) { // eslint-disable-line no-unused-vars
 		return null;
 	}
@@ -625,7 +677,7 @@ function _jsonParseFileSplit(filePath, codePage = 0) {
 	return result;
 }
 
-function _jsonParseFileCheck(file, fileName = 'Json', popupName = window.FullPanelName, codePage = 0, notFoundText, corruptText) {
+function _jsonParseFileCheck(file, fileName = 'Json', popupName = window.FullPanelName, codePage = 0, notFoundText = '', corruptText = '') {
 	file = _resolvePath(file);
 	let data = null;
 	if (_isFile(file)) {
@@ -642,15 +694,25 @@ function _jsonParseFileCheck(file, fileName = 'Json', popupName = window.FullPan
 }
 
 // Opens explorer on file (and selects it) or folder
+// Long paths not supported
 function _explorer(fileOrFolder) {
 	fileOrFolder = _resolvePath(fileOrFolder);
+	const bLongPath = fileOrFolder.length > 260;
 	if (fileOrFolder.startsWith('::{')) { // Virtual folder
 		WshShell.Run('explorer /e, ' + fileOrFolder);
 		return true; // There is no way to know if the explorer window got opened at the right path...
 	} else if (_isFile(fileOrFolder)) { // File
+		if (bLongPath) {
+			console.log('_explorer: ' + fileOrFolder + '\n\t Error: Path longer than 260 chars.');
+			return false;
+		}
 		WshShell.Run('explorer /select,' + _q(fileOrFolder));
 		return true;
 	} else if (_isFolder(fileOrFolder)) { // Folder
+		if (bLongPath) {
+			console.log('_explorer: ' + fileOrFolder + '\n\t Error: Path longer than 260 chars.');
+			return false;
+		}
 		WshShell.Run('explorer /e,' + _q(fileOrFolder));
 		return true;
 	} else if (_isLink(fileOrFolder)) { // Link
@@ -661,11 +723,15 @@ function _explorer(fileOrFolder) {
 }
 
 // Workaround for bug on win 7 on utils.Glob(), matching extensions with same chars: utils.Glob(*.m3u) returns *.m3u8 files too
-function getFiles(folderPath, extensionSet) {
+function getFiles(folderPath, extensionSet, mask) {
 	folderPath = _resolvePath(folderPath);
-	return utils.Glob(folderPath + '*.*').filter((item) => {
+	const bLongPath = folderPath.length > 260;
+	const files = utils.Glob((bLongPath ? _longPath(folderPath) : folderPath) + '*.*').filter((item) => {
 		return extensionSet.has('.' + item.split('.').pop().toLowerCase());
-	});
+	}).map((path) => path.replace(/^\\\\\?\\/, ''));
+	return mask
+		? files.map((file) => utils.PathWildcardMatch(mask, file) ? file : null).filter(Boolean)
+		: files;
 }
 
 function _run() {
@@ -770,14 +836,15 @@ function editTextFile(filePath, originalString, newString, bBOM = false) {
 			} else if (isString(originalString) && isString(newString)) {
 				fileTextNew = fileTextNew.replace(originalString, newString);
 			}
-			if (fileTextNew !== fileText) {
+			if (fileTextNew === fileText) { reason = 1; }
+			else {
 				bDone = utils.WriteTextFile(filePath, fileTextNew, bBOM);
 				// Check
 				if (_isFile(filePath) && bDone) {
 					const check = _open(filePath, utf8);
 					bDone = (check === fileTextNew);
 				} else { reason = -1; }
-			} else { reason = 1; }
+			}
 		} else { reason = 0; }
 	} else { reason = -1; }
 	return [bDone, reason];
@@ -809,7 +876,9 @@ function checkCodePage(originalText, extension, bAdvancedCheck = false) {
 function findRecursivePaths(path = fb.ProfilePath) {
 	path = _resolvePath(path);
 	let arr = [], pathArr = [];
-	arr = utils.Glob(path + '*.*', 0x00000020); // Directory
+	const bLongPath = path.length > 260;
+	arr = utils.Glob((bLongPath ? _longPath(path) : path) + '*.*', 0x00000020) // Directory
+		.map((path) => path.replace(/^\\\\\?\\/, ''));
 	arr.forEach((subPath) => {
 		if (subPath.includes('\\..') || subPath.includes('\\.')) { return; }
 		if (_comparePaths(subPath, path)) { return; }
@@ -829,7 +898,11 @@ function findRecursiveFile(fileMask, inPaths = [fb.ProfilePath, fb.ComponentPath
 		inPaths = inPaths.map((path) => _resolvePath(path));
 		let pathArr = inPaths; // Add itself
 		inPaths.forEach((path) => { pathArr = pathArr.concat(findRecursivePaths(path)); });
-		pathArr.forEach((path) => { fileArr = fileArr.concat(utils.Glob(path + (path.endsWith('\\') ? '' : '\\') + fileMask)); });
+		pathArr.forEach((path) => {
+			const bLongPath = path.length > 260;
+			fileArr = fileArr.concat(utils.Glob((bLongPath ? _longPath(path) : path) + (path.endsWith('\\') ? '' : '\\') + fileMask))
+				.map((path) => path.replace(/^\\\\\?\\/, ''));;
+		});
 	}
 	return fileArr;
 }
@@ -855,7 +928,7 @@ function findRelPathInAbsPath(relPath, absPath = fb.FoobarPath) {
 			}
 			finalPath = relPathArr.join('\\');
 		} else {
-			finalPath = relPathArr.map((folder) => { return (folder !== '..' ? folder : ''); }).filter(Boolean);
+			finalPath = relPathArr.map((folder) => { return (folder === '..' ? '' : folder); }).filter(Boolean);
 			finalPath = absPathArr.slice(0, absPathArr.length - (relPathArr.length - finalPath.length)).concat(finalPath);
 			finalPath = finalPath.join('\\');
 		}
@@ -877,6 +950,7 @@ function testPath(path, relativeTo = '') {
 	}
 	return !bDead;
 }
+
 function sanitize(value) {
 	return value && value.length ? value.replace(/[/\\|:–]/g, '-').replace(/\*/g, 'x').replace(/"/g, '\'\'').replace(/[<>]/g, '_').replace(/\?/g, '').replace(/(?! )\s/g, '') : '';
 }
@@ -889,7 +963,7 @@ function sanitizePath(value) { // Sanitize illegal chars but skip drive
 
 function UUID() {
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { /* cspell:disable-line */
-		const rnd = Math.random() * 16 | 0;
+		const rnd = Math.trunc(Math.random() * 16);
 		const v = c === 'x' ? rnd : (rnd & 0x3 | 0x8);
 		return v.toString(16);
 	});
@@ -898,24 +972,43 @@ function UUID() {
 function lastModified(file, bParse = false) {
 	file = _resolvePath(file);
 	if (!_isFile(file)) { return -1; }
-	if (utils.GetLastModified) { return bParse ? utils.GetLastModified(file) : dateFormatter.format(new Date(utils.GetLastModified(file))); }
-	return bParse ? Date.parse(fso.GetFile(file).DateLastModified) : fso.GetFile(file).DateLastModified;
+	const bLongPath = file.length > 260;
+	if (!bLongPath && utils.GetLastModified) { return bParse ? utils.GetLastModified(file) : dateFormatter.format(new Date(utils.GetLastModified(file))); }
+	try {
+		return bParse
+			? Date.parse(fso.GetFile(bLongPath ? _longPath(file) : file).DateLastModified)
+			: fso.GetFile(bLongPath ? _longPath(file) : file).DateLastModified;
+	} catch (e) { // eslint-disable-line no-unused-vars
+		return -1;
+	}
 }
 
 function created(file, bParse = false) {
 	file = _resolvePath(file);
 	if (!_isFile(file)) { return -1; }
-	return bParse ? Date.parse(fso.GetFile(file).DateCreated) : fso.GetFile(file).DateCreated;
+	const bLongPath = file.length > 260;
+	try {
+		return bParse
+			? Date.parse(fso.GetFile(bLongPath ? _longPath(file) : file).DateCreated)
+			: fso.GetFile(bLongPath ? _longPath(file) : file).DateCreated;
+	} catch (e) { // eslint-disable-line no-unused-vars
+		return -1;
+	}
 }
 
 function getFileMeta(file, bParse = false) {
 	file = _resolvePath(file);
 	if (!_isFile(file)) { return null; }
-	const fileObj = fso.GetFile(file);
-	return {
-		created: bParse ? Date.parse(fileObj.DateCreated) : fileObj.DateCreated,
-		modified: bParse ? Date.parse(fileObj.DateLastModified) : fileObj.DateLastModified
-	};
+	const bLongPath = file.length > 260;
+	try {
+		const fileObj = fso.GetFile(bLongPath ? _longPath(file) : file);
+		return {
+			created: bParse ? Date.parse(fileObj.DateCreated) : fileObj.DateCreated,
+			modified: bParse ? Date.parse(fileObj.DateLastModified) : fileObj.DateLastModified
+		};
+	} catch (e) { // eslint-disable-line no-unused-vars
+		return null;
+	}
 }
 
 function formatFileSize(val) {
@@ -924,7 +1017,7 @@ function formatFileSize(val) {
 	const regexUnit = /(^\d*.*\d* )(\w*)/;
 	val = utils.FormatFileSize(val);  // X.XX bb
 	if (regexHundreds.test(val)) {
-		val = val.replace(regexHundreds, round(parseFloat(val.match(regexHundreds)[0] / 1024), 3));
+		val = val.replace(regexHundreds, round(Number.parseFloat(val.match(regexHundreds)[0] / 1024), 3));
 		const unit = val.match(regexUnit)[2];
 		let toUnit = '';
 		switch (unit) {
@@ -936,58 +1029,62 @@ function formatFileSize(val) {
 		val = val.replace(regexUnit, '$1' + toUnit);
 	}
 	if (regexTwoDecs.test(val)) {
-		val = val.replace(regexTwoDecs, round(parseFloat(val.match(regexTwoDecs)[0]), 1));
+		val = val.replace(regexTwoDecs, round(Number.parseFloat(val.match(regexTwoDecs)[0]), 1));
 	}
 	return val;
 }
 
 function getPathMeta(path, sizeUnit = 'GB', bSkipFolderSize = true) {
 	path = _resolvePath(path);
-	const driveName = fso.GetDriveName(path);
-	if (!driveName) { return null; }
-	const drive = fso.GetDrive(driveName);
-	if (!drive) { return null; }
-	const folder = fso.GetFolder(path);
-	const out = {
-		letter: null, path: null, type: null, volume: null,
-		folder: { name: null, size: null, sizePercent: null, type: null, isRoot: null, dateCreated: null, dateModified: null },
-		size: { total: null, free: null, name: null, freePercent: null }
-	};
-	const unit = fileSizeMask.get(sizeUnit) || 1;
-	if (drive.IsReady) {
-		out.letter = drive.DriveLetter;
-		out.path = drive.Path + '\\';
-		out.type = drive.DriveType;
-		out.volume = drive.VolumeName;
-		out.size.total = round(drive.TotalSize / unit, 2);
-		out.size.free = round(drive.FreeSpace / unit, 2);
-		out.size.freePercent = round(out.size.free / out.size.total * 100, 1);
-		out.size.totalFormat = formatFileSize(drive.TotalSize);
-		out.size.freeFormat = formatFileSize(drive.FreeSpace);
-		out.folder.name = folder.Name || out.letter;
-		out.folder.path = folder.Path || out.path;
-		out.folder.type = folder.Type || out.type;
-		out.folder.isRoot = folder.IsRootFolder;
-		if (!out.folder.isRoot) {
-			if (!bSkipFolderSize) { // Is slow...
-				try {
-					out.folder.size = round(folder.Size, 2);
-					out.folder.sizePercent = round(out.folder.size / out.size.total * 100, 1);
-				} catch (e) { /* fso fails on large folders */ } // eslint-disable-line no-unused-vars
+	try {
+		const driveName = fso.GetDriveName(path);
+		if (!driveName) { return null; }
+		const drive = fso.GetDrive(driveName);
+		if (!drive) { return null; }
+		const bLongPath = path.length > 260;
+		const folder = fso.GetFolder(bLongPath ? _longPath(path) : path);
+		const out = {
+			letter: null, path: null, type: null, volume: null,
+			folder: { name: null, size: null, sizePercent: null, type: null, isRoot: null, dateCreated: null, dateModified: null },
+			size: { total: null, free: null, name: null, freePercent: null }
+		};
+		const unit = fileSizeMask.get(sizeUnit) || 1;
+		if (drive.IsReady) {
+			out.letter = drive.DriveLetter;
+			out.path = drive.Path + '\\';
+			out.type = drive.DriveType;
+			out.volume = drive.VolumeName;
+			out.size.total = round(drive.TotalSize / unit, 2);
+			out.size.free = round(drive.FreeSpace / unit, 2);
+			out.size.freePercent = round(out.size.free / out.size.total * 100, 1);
+			out.size.totalFormat = formatFileSize(drive.TotalSize);
+			out.size.freeFormat = formatFileSize(drive.FreeSpace);
+			out.folder.name = folder.Name || out.letter;
+			out.folder.path = folder.Path || out.path;
+			out.folder.type = folder.Type || out.type;
+			out.folder.isRoot = folder.IsRootFolder;
+			if (out.folder.isRoot) {
+				out.folder.size = out.size.total;
+				out.folder.sizePercent = 100;
+			} else {
+				if (!bSkipFolderSize) { // Is slow...
+					try {
+						out.folder.size = round(folder.Size, 2);
+						out.folder.sizePercent = round(out.folder.size / out.size.total * 100, 1);
+					} catch (e) { /* fso fails on large folders */ } // eslint-disable-line no-unused-vars
+				}
+				out.folder.dateCreated = folder.DateCreated; // .toString()
+				out.folder.dateModified = folder.DateLastModified;
 			}
-			out.folder.dateCreated = folder.DateCreated; // .toString()
-			out.folder.dateModified = folder.DateLastModified;
-		} else {
-			out.folder.size = out.size.total;
-			out.folder.sizePercent = 100;
 		}
+		return out;
+	} catch (e) { // eslint-disable-line no-unused-vars
+		return null;
 	}
-	return out;
 }
-
 
 function parseWinApiError(message, bAddLink = true) {
 	const code = (/\((\w*)\)/gi.exec(message)[1] || 'UNKNOWN').toUpperCase().replace('0X', '0x');
 	return 'WinAPI error: ' + code + ' - ' + WinApiError[code] +
-		(bAddLink ? '\n\t Check: https://www.hresult.info/FACILITY_CONTROL' + (code !== 'UNKNOWN' ? '/' + code : '') : '');
+		(bAddLink ? '\n\t Check: https://www.hresult.info/FACILITY_CONTROL' + (code === 'UNKNOWN' ? '' : '/' + code) : '');
 }

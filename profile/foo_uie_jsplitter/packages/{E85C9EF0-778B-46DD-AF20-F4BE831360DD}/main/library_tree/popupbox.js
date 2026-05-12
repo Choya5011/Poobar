@@ -1,5 +1,5 @@
 ﻿'use strict';
-//15/12/25
+//09/04/26
 
 /* global ppt:readable, $:readable, WshShell:readable, doc:readable */
 /* global folders:readable */
@@ -16,8 +16,15 @@ class PopUpBox {
 	// Methods
 
 	config(cfg, ppt, cfgWindow, ok_callback) {
+		// Regorxxx <- Preset rules
+		const playlistIds = JSON.stringify(
+			plman.PlaylistCount > 0
+				? $.range(0, plman.PlaylistCount - 1, 1).map((idx) => { return { name: plman.GetPlaylistName(idx), guid: plman.GetGUID(idx) }; })
+				: []
+		);
+		// Regorxxx ->
 		utils.ShowHtmlDialog(0, this.configHtmlCode, {
-			data: [cfg, ppt, cfgWindow, ok_callback, void(0), folders.xxx + 'assets\\library_tree\\html'],  // Regorxxx <- Root path ->
+			data: [cfg, ppt, cfgWindow, ok_callback, void (0), folders.xxx + 'assets\\library_tree\\html', playlistIds], // Regorxxx <- Root path | Preset rules ->
 			resizable: true
 		});
 	}
@@ -111,7 +118,7 @@ class PopUpBox {
 	}
 
 	isIEInstalled() {
-		const diskLetters = Array.from(Array(26)).map((e, i) => i + 65).map((x) => `${String.fromCharCode(x)}:\\`);
+		const diskLetters = Array.from({ length: 26 }, (e, i) => `${String.fromCodePoint(i + 65)}:\\`);
 		const paths = ['Program Files\\Internet Explorer\\ieinstal.exe', 'Program Files (x86)\\Internet Explorer\\ieinstal.exe'];
 		return diskLetters.some(d => {
 			try { // Needed when permission error occurs and current SMP implementation is broken for some devices....

@@ -1,8 +1,8 @@
 ﻿'use strict';
-//24/12/25
+//28/04/26
 
 /* global $:readable */
-/* global globQuery:readable, globTags:readable */ // helpers\helpers_xxx_global.js
+/* global globQuery:readable, globTags:readable, globSettings:readable */ // helpers\helpers_xxx_global.js
 /* global _b:readable, _t:readable */ // helpers\helpers_xxx_prototypes.js
 /* global queryJoin:readable */ // helpers\helpers_xxx_tags.js
 
@@ -30,7 +30,7 @@ class PanelProperty {
 
 class PanelProperties {
 	constructor() {
-		// this.name_list = {}; debug
+		this.name_list = {}; // debug
 	}
 
 	// Methods
@@ -39,7 +39,7 @@ class PanelProperties {
 		switch (type) {
 			case 'auto':
 				properties.forEach(v => {
-					// this.validate(v); debug
+					this.validate(v); //debug
 					this.add(v);
 				});
 				break;
@@ -51,24 +51,24 @@ class PanelProperties {
 
 	validate(item) {
 		if (!$.isArray(item) || item.length !== 3 || typeof item[2] !== 'string') {
-			throw ('invalid property: requires array: [string, any, string]');
+			throw new Error('invalid property: requires array: [string, any, string]');
 		}
 
 		if (item[2] === 'add') {
-			throw (`property_id: ${item[2]}\nThis id is reserved`);
+			throw new Error(`property_id: ${item[2]}\nThis id is reserved`);
 		}
 
 		if (this[item[2]] != null || this[item[2] + '_internal'] != null) {
-			throw (`property_id: ${item[2]}\nThis id is already occupied`);
+			throw new Error(`property_id: ${item[2]}\nThis id is already occupied`);
 		}
 
 		if (this.name_list[item[0]] != null) {
-			throw (`property_name: ${item[0]}\nThis name is already occupied`);
+			throw new Error(`property_name: ${item[0]}\nThis name is already occupied`);
 		}
 	}
 
 	add(item) {
-		// this.name_list[item[0]] = 1; debug
+		this.name_list[item[0]] = 1; // debug
 		this[`${item[2]}_internal`] = new PanelProperty(item[0], item[1]);
 
 		Object.defineProperty(this, item[2], {
@@ -144,10 +144,17 @@ let properties = [
 	['Custom Colour Side Marker Use', false, 'sideMarkerUse'],
 	['Custom Colour Transparent Fill Use', false, 'bgTransUse'],
 
+	// Regorxxx <- Custom album art overlay track count/year
+	['Custom Colour Art Track Count Text', '255,255,255', 'textTrackCount'],
+	['Custom Colour Art Track Count Text Use', false, 'textTrackCountUse'],
+	['Custom Colour Art Track Count Overlay', '0,0,0,0.45', 'bgTrackCount'],
+	['Custom Colour Art Track Count Overlay Use', false, 'bgTrackCountUse'],
+	// Regorxxx ->
+
 	['Custom Font', 'Segoe UI,16,0', 'custFont'],
-	['Custom Font Album Art Line 1', 'Segoe UI,1', 'custAlbumArtGrpFont'],
+	['Custom Font Album Art Line 1', 'Segoe UI,0', 'custAlbumArtGrpFont'], // Regorxxx <- Change default font styles ->
 	['Custom Font Album Art Line 2', 'Segoe UI Semibold,0', 'custAlbumArtLotFont'],
-	['Custom Font Album Art Line 3', 'Segoe UI,0', 'custAlbumArtDurFont'],
+	['Custom Font Album Art Line 3', 'Segoe UI,2', 'custAlbumArtDurFont'], // Regorxxx <- Change default font styles ->
 
 	['Custom Font Use', false, 'custFontUse'],
 	['Custom Font Album Art Line 1 Use', false, 'custAlbumArtGrpFontUse'],
@@ -175,6 +182,9 @@ let properties = [
 	['Height Auto-Expand', 578, 'pn_h_max'],
 	['Highlight Row', 2, 'highLightRow'],
 	['Highlight Frame Image', false, 'frameImage'],
+	['Highlight Frame Root Image', false, 'frameImageRoot'], // Regorxxx <- Fix img frame for root images (hover effect) ->
+	['Highlight Frame Reflection Image', false, 'frameReflection'], // Regorxxx <- Effect per art type ->
+	['Highlight Flare Image', false, 'flareImage'], // Regorxxx <- Flare hover effect ->
 	['Highlight Text', false, 'highLightText'],
 	['Hot Key [Focus Not Needed]: 1-10 // Assign Spider Monkey Panel index in keyboard shortcuts', 'CollapseAll,0,PlaylistAdd,0,PlaylistInsert,0,PlaylistNew,0,Search,0,SearchClear,0', 'hotKeys'],
 
@@ -189,7 +199,6 @@ let properties = [
 	['Image Current No Artist', 2, 'curNoArtistImg'],
 	['Image Current No Cover', 6, 'curNoCoverImg'],
 	['Image Disk Cache Enabled', true, 'albumArtDiskCache'],
-	['Image Drop Shadow', false, 'albumArtDropShadow'],
 	['Image Group Level', 0, 'albumArtGrpLevel'],
 	['Image Group Names', JSON.stringify({}), 'albumArtGrpNames'],
 	['Image Flip Labels', false, 'albumArtFlipLabels'],
@@ -199,6 +208,7 @@ let properties = [
 	['Image Item Overlay', 1, 'itemOverlayType'],
 	['Image Label', 1, 'albumArtLabelType'],
 	['Image Memory Limit MB (0 = default)', 0, 'memoryLimit'],
+	['Image Memory Limit Aggressiveness: 0 (off) - 2 (max)', 0, 'memLimitMode'], // Regorxxx <- More strict memory limits ->
 	['Image No Artist Images', JSON.stringify([]), 'noArtistImages'],
 	['Image No Cover Images', JSON.stringify([]), 'noCoverImages'],
 	['Image Preload Images In Disk Cache', false, 'albumArtPreLoad'],
@@ -218,6 +228,87 @@ let properties = [
 	['Image Thumbnail Size', 2, 'thumbNailSize'],
 	['Image Type', 0, 'artId'],
 	['Image View By: Same As Tree', true, 'artTreeSameView'],
+	// Regorxxx <- Custom TF art
+	['Image Label TF view', '.\\profile\\images\\$lower($nodename).*', 'albumArtTfView'],
+	['Image Label TF folders', '$replace($directory_path(%PATH%),$directory(%PATH%,1),)*.jpg', 'albumArtTfFolder'],
+	['Image Style [TF] Regular-0 Auto-Fill-1 Circular-2', 2, 'imgStyleTF'],
+	// Regorxxx ->
+	// Regorxxx <- Effect per art type | Image border setting | Custom TF art
+	['Image Reflection [Front]', false, 'imgFrontRefl'],
+	['Image Reflection [Back]', false, 'imgBackRefl'],
+	['Image Reflection [Disc]', false, 'imgDiscRefl'],
+	['Image Reflection [Icon]', false, 'imgIconRefl'],
+	['Image Reflection [Artist]', false, 'imgArtistRefl'],
+	['Image Reflection [TF]', false, 'imgTfRefl'],
+	['Image Reflection Style [Front]', 1, 'imgFrontReflStyle'],
+	['Image Reflection Style [Back]', 1, 'imgBackReflStyle'],
+	['Image Reflection Style [Disc]', 1, 'imgDiscReflStyle'],
+	['Image Reflection Style [Icon]', 1, 'imgIconReflStyle'],
+	['Image Reflection Style [Artist]', 1, 'imgArtistReflStyle'],
+	['Image Reflection Style [TF]', 1, 'imgTfReflStyle'],
+	['Image Reflection Root [Front]', false, 'imgFrontReflRoot'],
+	['Image Reflection Root [Back]', false, 'imgBackReflRoot'],
+	['Image Reflection Root [Disc]', false, 'imgDiscReflRoot'],
+	['Image Reflection Root [Icon]', false, 'imgIconReflRoot'],
+	['Image Reflection Root [Artist]', false, 'imgArtistReflRoot'],
+	['Image Reflection Root [TF]', false, 'imgTfReflRoot'],
+	['Image Border [Front]', true, 'imgFrontBorder'],
+	['Image Border [Back]', true, 'imgBackBorder'],
+	['Image Border [Disc]', true, 'imgDiscBorder'],
+	['Image Border [Icon]', true, 'imgIconBorder'],
+	['Image Border [Artist]', true, 'imgArtistBorder'],
+	['Image Border [TF]', true, 'imgTfBorder'],
+	['Image Shadow [Front]', false, 'imgFrontShadow'],
+	['Image Shadow [Back]', false, 'imgBackShadow'],
+	['Image Shadow [Disc]', false, 'imgDiscShadow'],
+	['Image Shadow [Icon]', false, 'imgIconShadow'],
+	['Image Shadow [Artist]', false, 'imgArtistShadow'],
+	['Image Shadow [TF]', false, 'imgTfShadow'],
+	['Image Mute [Front]', false, 'imgFrontMute'],
+	['Image Mute [Back]', false, 'imgBackMute'],
+	['Image Mute [Disc]', false, 'imgDiscMute'],
+	['Image Mute [Icon]', false, 'imgIconMute'],
+	['Image Mute [Artist]', false, 'imgArtistMute'],
+	['Image Mute [TF]', false, 'imgTfMute'],
+	['Image Mute Intensity: 0-100', 75, 'imgMute'],
+	['Image Edge Glow [Front]', false, 'imgFrontEdgeGlow'],
+	['Image Edge Glow [Back]', false, 'imgBackEdgeGlow'],
+	['Image Edge Glow [Disc]', false, 'imgDiscEdgeGlow'],
+	['Image Edge Glow [Icon]', false, 'imgIconEdgeGlow'],
+	['Image Edge Glow [Artist]', false, 'imgArtistEdgeGlow'],
+	['Image Edge Glow [TF]', false, 'imgTfEdgeGlow'],
+	['Image Edge Glow Intensity: 0-100', 75, 'imgEdgeGlow'],
+	['Image Bloom [Front]', false, 'imgFrontBloom'],
+	['Image Bloom [Back]', false, 'imgBackBloom'],
+	['Image Bloom [Disc]', false, 'imgDiscBloom'],
+	['Image Bloom [Icon]', false, 'imgIconBloom'],
+	['Image Bloom [Artist]', false, 'imgArtistBloom'],
+	['Image Bloom [TF]', false, 'imgTfBloom'],
+	['Image Bloom Intensity: 0-100', 75, 'imgBloom'],
+	['Image Blur [Front]', false, 'imgFrontBlur'],
+	['Image Blur [Back]', false, 'imgBackBlur'],
+	['Image Blur [Disc]', false, 'imgDiscBlur'],
+	['Image Blur [Icon]', false, 'imgIconBlur'],
+	['Image Blur [Artist]', false, 'imgArtistBlur'],
+	['Image Blur [TF]', false, 'imgTfBlur'],
+	['Image Blur Intensity: 0-100', 5, 'imgBlur'],
+	['Image Blur Circular', false, 'imgCircularBlur'],
+	['Image Blur Directional (D2D)', false, 'imgDirectionalBlur'],
+	['Image Vignette [Front]', false, 'imgFrontVignette'],
+	['Image Vignette [Back]', false, 'imgBackVignette'],
+	['Image Vignette [Disc]', false, 'imgDiscVignette'],
+	['Image Vignette [Icon]', false, 'imgIconVignette'],
+	['Image Vignette [Artist]', false, 'imgArtistVignette'],
+	['Image Vignette [TF]', false, 'imgTfVignette'],
+	['Image Vignette Intensity: 0-100', 50, 'imgVignette'],
+	['Image Vignette Color', $.RGB(0, 0, 0), 'imgVignetteColor'],
+	['Image Gray Scale [Front] (D2D)', false, 'imgFrontGrayScale'],
+	['Image Gray Scale [Back] (D2D)', false, 'imgBackGrayScale'],
+	['Image Gray Scale [Disc] (D2D)', false, 'imgDiscGrayScale'],
+	['Image Gray Scale [Icon] (D2D)', false, 'imgIconGrayScale'],
+	['Image Gray Scale [Artist] (D2D)', false, 'imgArtistGrayScale'],
+	['Image Gray Scale [TF] (D2D)', false, 'imgTfGrayScale'],
+	// Regorxxx ->
 
 	['Initial Load Filters', true, 'initialLoadFilters'],
 	['Initial Load Views', true, 'initialLoadViews'],
@@ -229,10 +320,18 @@ let properties = [
 	['Library Source: Active Playlist Follow Focus', true, 'followPlaylistFocus'],
 	['Library Source: Fixed Playlist', false, 'fixedPlaylist'],
 	['Library Source: Fixed Playlist Name', '', 'fixedPlaylistName'],
+	['Library Source: Playing Playlist', false, 'playingPlaylist'], // Regorxxx <- Playing playlist source ->
+	['Library Source: Playing Playlist Fallback', false, 'playlistFallback'], // Regorxxx <- Playing playlist source ->
+	['Library Source: Playing Playlist Fallback Stopped', false, 'playlistFallbackStop'], // Regorxxx <- Playing playlist source ->
 	['Library Source: Playback Queue force sorting', true, 'queueSorting'], // Regorxxx <- Queue source ->
+	['Library Source: Playback Queue show now playing', true, 'queueNowPlaying'], // Regorxxx <- Queue source ->
+	['Library Source: Use cache (experimental)', true, 'libSourceCache'], // Regorxxx <- Internal cache of views ->
+	['Library Source: Playlist force sorting', false, 'plsSorting'], // Regorxxx <- Internal cache of views ->
 
 	['Limit Menu Expand: 10-6000', 500, 'treeExpandLimit'],
 	['Limit Tree Auto Expand: 10-1000', 350, 'autoExpandLimit'],
+	['Limit Tree Branch Sort on selection: 0-Infinity', 3000, 'treeSortLimit'], // Regorxxx <- Preserve tree sorting at selection | Performance improvements ->
+	['Limit Up/Down Scroll Playlist Refresh: 0-1000', 250, 'plsRefreshLimit'], // Regorxxx <- Throttle selection playlist update | Performance improvements ->
 	['Line Padding', 5, 'verticalPad'],
 	['Line Padding Album Art', 2, 'verticalAlbumArtPad'],
 	['Margin', Math.round(8 * $.scale), 'margin'],
@@ -263,6 +362,7 @@ let properties = [
 
 	['Play on Enter or Send from Menu', false, 'autoPlay'],
 	['Playlist: Custom Sort', '', 'customSort'],
+	['Playlist: Smart Sort by view', false, 'smartSort'], // Regorxxx <- Preserve tree sorting at selection ->
 	['Playlist: Default', 'Library Viewer Selection', 'libPlaylist'], // Regorxxx <- Default CUI/DUI playlist ->
 	['Playlist: Default Activate on Change', true, 'activateOnChange'],
 	['Playlist: Default Create always', false, 'libPlaylistCreate'], // Regorxxx <- Default playlist being always created even when unused | https://github.com/regorxxx/Library-Tree-SMP/issues/5  ->
@@ -275,12 +375,13 @@ let properties = [
 	['Playlist: Top tracks sorting', '$rand()', 'topTracksSorting'],
 	['Playlist: Top tracks remove duplicates', JSON.stringify(globTags.remDupl), 'topTracksRemDupl'],
 	// Regorxxx ->
-	['Prefixes to Strip or Swap (| Separator)', 'A|An|The|Las|Los|Les|La|El|Le|Lo|Au|Aux|Il|I|L\'\'|Gli|Una|Uno|Une|Unas|Unos|Unes|Der|Das|Die|Al|Ar|Ul|Ur|Els|Uns|Des|O|Os|As|Um|Uma|Uns|Umas', 'prefix'], // Regorxxx <- separators in other languages ->
+	['Prefixes to Strip or Swap (| Separator)', 'A|An|The|Las|Los|Les|La|El|Le|Lo|Au|Aux|Il|I|L\'\'|Gli|Una|Uno|Une|Unas|Unos|Unes|Der|Das|Die|Al|Ar|Ul|Ur|Els|Uns|Des|O|Os|As|Um|Uma|Uns|Umas', 'prefix'], // Regorxxx <- Separators in other languages ->
 	['Preset: Load Current View', false, 'presetLoadCurView'],
 	['Remember.PreSearch', true, 'rememberPreSearch'],
 	['Remember.Proc', false, 'process'],
 	['Remember.Tree', true, 'rememberTree'],
 	['Remember.View', false, 'rememberView'],
+	['Remember.Selection (forced)', false, 'rememberSelForce'], // Regorxxx <- Switch forced selection remember ->
 	['Reset Tree', false, 'reset'],
 	['Row Stripes', true, 'rowStripes'],
 
@@ -303,6 +404,7 @@ let properties = [
 	['Scrollbar Width', Math.round(11 * $.scale), 'sbarWidth'],
 	['Scrollbar Width Bar', 11, 'sbarBase_w'],
 	['Scrollbar Windows Metrics', false, 'sbarWinMetrics'],
+	['Scrollbar Windows style dark theme fix', window.IsDark, 'sbarWinDarkThemeFix'], // Regorxxx <- Scrollbar on windows style improvements ->
 
 	['Search Enter', false, 'searchEnter'],
 	['Search History', JSON.stringify([]), 'searchHistory'],
@@ -313,6 +415,8 @@ let properties = [
 	['Show Panel Source Message', true, 'panelSourceMsg'],
 	['Show Search', true, 'searchShow'],
 	['Show Settings', true, 'settingsShow'],
+	['Show Filter|View|Source multi-button', true, 'multiBtnShow'], // Regorxxx <- Filter / View / Source button ->
+	['Contextual menu show', 3, 'contextMenuShow'], // Regorxxx <- Contextual menu options ->
 	['Side Marker Width', 0, 'sideMarkerWidth'],
 	['Single-Click Action', 1, 'clickAction'],
 	['Statistics Show', 0, 'itemShowStatistics'],
@@ -321,20 +425,25 @@ let properties = [
 	// Regorxxx <- Default TF for compatibility with all stats components
 	['Statistics Titleformat Added', _b('$date(' + _t(globTags.sortAdded) + ')'), 'tfAdded'],
 	['Statistics Titleformat Date', _b(_t(globTags.date)), 'tfDate'],
-	['Statistics Titleformat First Played', _b('$date(' + _t(globTags.sortFirstPlayed)  + ')'), 'tfFirstPlayed'],
-	['Statistics Titleformat Last Played', _b('$date(' + _t(globTags.sortLastPlayed)  + ')'), 'tfLastPlayed'],
+	['Statistics Titleformat First Played', _b('$date(' + _t(globTags.sortFirstPlayed) + ')'), 'tfFirstPlayed'],
+	['Statistics Titleformat Last Played', _b('$date(' + _t(globTags.sortLastPlayed) + ')'), 'tfLastPlayed'],
 	['Statistics Titleformat Playcount DataPinningScheme|Field', '%ARTIST%%ALBUM%%DISCNUMBER%%TRACKNUMBER%%TITLE%|' + _t(globTags.playCount), 'tfPc'],
 	['Statistics Titleformat Rating', '[$if2(' + _t(globTags.rating) + ',%2003_RATING%)]', 'tfRating'],
 	['Statistics Titleformat Loved', '[$if2(' + _t(globTags.feedback) + ',%2003_LOVED%)]', 'tfLoved'],
 	// Regorxxx ->
-	// Regorxxx <- New statistics
+	// Regorxxx <- New statistics | Improve statistics tooltip
 	['Statistics Titleformat Custom-1 (sum)', '$if($or($meta_test(LYRICS),$meta_test(UNSYNCEDLYRICS)),1,0)', 'tfCustom1Sum'],
 	['Statistics Titleformat Custom-2 (sum)', '$ifequal(' + _t(globTags.rating) + ',5,1,0)', 'tfCustom2Sum'],
 	['Statistics Titleformat Custom-3 (sum)', '$ifgreater($if2($strstr($lower(' + globTags.genreStyle.map((t) => _t(t)).join('\', \'') + '),instrumental),$strstr($lower(%LANGUAGE%),zxx)),0,0,1)', 'tfCustom3Sum'],
 	['Statistics Titleformat Custom-1 (avg)', '[%DYNAMIC RANGE%]', 'tfCustom1Avg'],
 	['Statistics Titleformat Custom-2 (avg)', '[' + _t(globTags.bpm) + ']', 'tfCustom2Avg'],
 	['Statistics Titleformat Custom-3 (avg)', '$min($add($select($add(' + _t(globTags.feedback) + ',%2003_LOVED%,2),-10,0,10),$select(' + _t(globTags.rating) + ',0,2,5,7,10)),10)', 'tfCustom3Avg'],
-	['Statistics Titleformat Custom labels', 'Lyrics|Top Rated|Instrumental tracks|Avg. Dynamic Range|Avg. BPM|Avg. Score', 'tfCustomLabels'],
+	['Statistics Titleformat Custom-1 (p-mean)', '[%DYNAMIC RANGE%]', 'tfCustom1MeX'],
+	['Statistics Titleformat Custom-2 (p-mean)', '[' + _t(globTags.bpm) + ']', 'tfCustom2MeX'],
+	['Statistics Titleformat Custom-3 (p-mean)', '[$if2(' + _t(globTags.rating) + ',%2003_RATING%)]', 'tfCustom3MeX'],
+	['Statistics Titleformat p-mean exponent', 3, 'expCustomMeX'],
+	['Statistics Titleformat Custom labels', 'Lyrics|Top Rated|Instrumental tracks|Avg. Dynamic Range|Avg. BPM|Avg. Score|Weighted-Dynamic Range|Weighted-BPM|Weighted-Rating', 'tfCustomLabels'],
+	['Statistics Titleformat Custom tooltip', ' tracks with lyrics| tracks| tracks| DR| BPMs|| DR| BPMs| ', 'tfCustomTooltip'],
 	// Regorxxx ->
 	['Statistics Titleformat Popularity', '[$meta(Track Statistics Last.fm,5[score])]', 'tfPopularity'],
 	['Statistics Tooltips Show', true, 'tooltipStatistics'],
@@ -354,12 +463,13 @@ let properties = [
 	['View By', 1, 'viewBy'],
 	['View By Album Art', 1, 'albumArtViewBy'],
 	['View By Tree', 1, 'treeViewBy'],
-	// Regorxxx <- Fix "View by Folder Structure" to match Windows Explorer. Custom sorting for standard views
+	// Regorxxx <- Fixed Library's "View by Folder Structure" to match Windows Explorer | Custom sorting for standard views | Sorting transliteration
 	['View By Sorting', 0, 'viewSorting'],
 	['View By Sorting transliteration', true, 'viewSortingTrans'],
 	['View By Folder Sorting', 3, 'folderSorting'],
 	['View By Folder Sorting from foobar2000', true, 'folderSortingFb'],
 	['View By Folder Sorting transliteration', true, 'folderSortingTrans'],
+	['View By transliteration languages', 'el|ru|jp|ch', 'sortingTransLangs'],
 	// Regorxxx ->
 	['Zoom Filter Size (%)', 100, 'zoomFilter'],
 	['Zoom Font Size (%)', 100, 'zoomFont'],
@@ -374,9 +484,9 @@ let properties = [
 	['Library Source: Chained source notifications', true, 'libSourceChained'], // Regorxxx <- Chained facets updates
 	// Regorxxx <- Drag n' drop to search box
 	['Search Drag n\' Drop Method (Auto=0, Tags=1, Disabled=-1)', 0, 'searchDragMethod'],
-	['Search Drag n\' Drop Tags (no modifier)', JSON.stringify([globTags.artistRaw]), 'searchDragTags'],
-	['Search Drag n\' Drop Tags (ctrl modifier)', JSON.stringify([globTags.artistRaw, globTags.genre]), 'searchDragTagsCtrl'],
-	['Search Drag n\' Drop Tags (alt modifier)', JSON.stringify([globTags.artistRaw, globTags.genre]), 'searchDragTagsAlt'],
+	['Search Drag n\' Drop Tags (no modifier)', JSON.stringify([{from:[globTags.artistRaw,'ALBUMARTISTS','INVOLVEDPEOPLE'], to:[globTags.artistRaw]}]), 'searchDragTags'],
+	['Search Drag n\' Drop Tags (ctrl modifier)', JSON.stringify([{from:[globTags.artistRaw,'ALBUMARTISTS','INVOLVEDPEOPLE'], to:['INVOLVEDPEOPLE']}]), 'searchDragTagsCtrl'],
+	['Search Drag n\' Drop Tags (alt modifier)', JSON.stringify([{from:[globTags.genre], to:[globTags.genre]}, {from:[globTags.style], to:[globTags.style]}]), 'searchDragTagsAlt'],
 	['Search Drag n\' Drop Multi-value Operator (no modifier)', 'OR', 'searchDragValOp'],
 	['Search Drag n\' Drop Multi-value Operator (ctrl modifier)', 'OR', 'searchDragValOpCtrl'],
 	['Search Drag n\' Drop Multi-value Operator (alt modifier)', 'AND', 'searchDragValOpAlt'],
@@ -389,12 +499,34 @@ let properties = [
 	['Search Drag n\' Drop Inter-query Operator (none modifier)', '', 'searchDragQueryOp'],
 	['Search Drag n\' Drop Inter-query Operator (shift modifier)', 'OR', 'searchDragQueryOpShift'],
 	// Regorxxx ->
-	['Auto-DJ stop if repeating track', true, 'autoDjStopRepeat'], // Regorxxx <- Auto-DJ feature ->
+	// Regorxxx <- Auto-DJ feature
+	['Auto-DJ stop if repeating track', true, 'autoDjStopRepeat'],
+	['Auto-DJ track picking method', 'match', 'autoDjTrackPicking'],
+	// Regorxxx ->
 	// Regorxxx <- Global duplicates filter
 	['Filter duplicates by', JSON.stringify(globTags.remDupl), 'filterDuplBy'],
 	['Filter remove duplicates', false, 'filterDupl'],
-	['Filter show duplicates ', false, 'showDupl']
+	['Filter show duplicates ', false, 'showDupl'],
 	// Regorxxx ->
+	['- Draw mode: GDI (0), D2D (1)', 0, 'drawMode'], // Regorxxx <- GDI/D2D draw mode ->
+	['Automatically check updates', globSettings.bAutoUpdateCheck, 'bAutoUpdateCheck'], // Regorxxx <- Update checks ->
+	['Image mouse rectangle selection on album art', true, 'selRectArt'], // Regorxxx <- Selection rectangle on art view ->
+	// Regorxxx <- Customizable quicksearch timer
+	['Quick-search jump initial char timer', 150, 'findTimerInit'],
+	['Quick-search jump next chars timer', 300, 'findTimerNext'],
+	// Regorxxx ->
+	// Regorxxx <- Quicksearch transliteration
+	['Quick-search transliteration', true, 'findTrans'],
+	// Regorxxx ->
+	// Regorxxx <- Sources tab | Preset rules
+	['Sources|Views|Filters presets', JSON.stringify([]), 'presetRules'],
+	['Sources|Views|Filters presets use on Source switch', true, 'presetRulesOnSourceUse'],
+	['Sources|Views|Filters presets use on Views switch', true, 'presetRulesOnViewUse'],
+	['Sources|Views|Filters presets use on Filters switch', true, 'presetRulesOnFilterUse'],
+	['Sources|Views|Filters presets use on Playlists switch', true, 'presetRulesOnPlsUse'],
+	['Sources|Views|Filters presets use on Notify switch', false, 'presetRulesOnNotifyUse'],
+	// Regorxxx ->
+	['Reset selection clicking on blank regions', true, 'resetSel'], // Regorxxx <- Reset selection on blank regions ->
 ];
 
 const ppt = new PanelProperties;
@@ -405,10 +537,7 @@ if (ppt.get('Tree List View')) {
 	ppt.facetView = ppt.get('Tree List View');
 	ppt.set('Tree List View', null);
 }
-ppt.set('Image Pre-Load Images In Disk Cache', null);
-ppt.set('Image Root Collage', null);
+if (ppt.get('Image Type') > 5) { ppt.set('Image Type', 0); } // Regorxxx <- Custom TF art safety check ->
 ppt.set('Image Show Index Number', null);
 ppt.set('Image Show Index Year Auto', null);
-ppt.set('Node: Item Show Duration', null);
-ppt.set('Node [Squares]: Windows 0 or 1', null);
-properties = undefined;
+properties = void (0);

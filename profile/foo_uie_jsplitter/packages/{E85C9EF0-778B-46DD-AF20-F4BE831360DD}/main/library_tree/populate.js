@@ -1,8 +1,10 @@
 ﻿'use strict';
-//24/12/25
+//27/04/26
 
 /* global ui:readable, panel:readable, ppt:readable, lib:readable, pop:readable, but:readable, img:readable, search:readable, timer:readable, $:readable, men:readable, vk:readable, tooltip:readable, globFonts:readable, sbar:readable */
 
+/* global SmoothingMode:readable*/
+/* global debounce:readable*/
 /* global globTags:readable*/
 /* global Language:readable*/
 
@@ -25,6 +27,7 @@ class Populate {
 		this.inlineRoot = ppt.rootNode && (ppt.inlineRoot || ppt.facetView);
 		this.is_focused = false;
 		this.last_sel = -1;
+		this.lastSelMul = []; // Regorxxx <- Rectangle selection on art view ->
 		this.lbtnDn = false;
 		this.libItems = false;
 		this.mbtn_dbl_clicked = false;
@@ -39,6 +42,18 @@ class Populate {
 		this.sy_sz = 8;
 		this.tree = [];
 		this.tf = {}; // Regorxxx <- New statistics ->
+		// Regorxxx <- Rectangle selection on art view
+		this.selRect = {
+			down: false,
+			x: void (0),
+			w: void (0),
+			y: void (0),
+			h: void (0),
+			mx: void (0),
+			my: void (0),
+			over: new Set()
+		};
+		// Regorxxx ->
 
 		this.cache = {
 			'standard': {},
@@ -49,17 +64,17 @@ class Populate {
 		this.highlight = {};
 
 		this.getMainMenuIndex = {
-			add: parseFloat(this.hotKeys[3]),
-			collapseAll: parseFloat(this.hotKeys[1]),
-			insert: parseFloat(this.hotKeys[5]),
-			new: parseFloat(this.hotKeys[7]),
-			searchClear: parseFloat(this.hotKeys[11]),
-			searchFocus: parseFloat(this.hotKeys[9])
+			add: Number.parseFloat(this.hotKeys[3]),
+			collapseAll: Number.parseFloat(this.hotKeys[1]),
+			insert: Number.parseFloat(this.hotKeys[5]),
+			new: Number.parseFloat(this.hotKeys[7]),
+			searchClear: Number.parseFloat(this.hotKeys[11]),
+			searchFocus: Number.parseFloat(this.hotKeys[9])
 		};
 
 		this.last_pressed_coord = {
-			x: undefined,
-			y: undefined
+			x: void (0),
+			y: void (0)
 		};
 
 		this.m = {
@@ -81,12 +96,16 @@ class Populate {
 			select: null
 		};
 
+
+		this.debounce = {}; // Regorxxx <- Throttle selection playlist update | Performance improvements ->
+
 		// Regorxxx <- Fixed Library's "View by Folder Structure"
 		this.collator = new Intl.Collator(void (0), { sensitivity: 'accent', numeric: true });
 		this.folderCollator = new Intl.Collator(void (0), { sensitivity: 'base', numeric: true });
 		// Regorxxx ->
 
 		this.setTf(); // Regorxxx <- New statistics ->
+		this.setAsyncFunc(); // Regorxxx <- Throttle selection playlist update | Performance improvements ->
 		this.setActions();
 		this.setValues();
 	}
@@ -111,13 +130,24 @@ class Populate {
 			custom3Sum: FbTitleFormat(ppt.tfCustom3Sum),
 			custom1Avg: FbTitleFormat(ppt.tfCustom1Avg),
 			custom2Avg: FbTitleFormat(ppt.tfCustom2Avg),
-			custom3Avg: FbTitleFormat(ppt.tfCustom3Avg)
+			custom3Avg: FbTitleFormat(ppt.tfCustom3Avg),
+			custom1MeX: FbTitleFormat(ppt.tfCustom1MeX),
+			custom2MeX: FbTitleFormat(ppt.tfCustom2MeX),
+			custom3MeX: FbTitleFormat(ppt.tfCustom3MeX),
 		};
 		// Regorxxx <- Expand TF support. Fix sorting not being applied after HTML options panel change.
-		this.customSort = lib.processCustomTf(ppt.customSort) !== ppt.customSort
-			? ppt.customSort
-			: FbTitleFormat(ppt.customSort); // If not using special $funcs{} then caching is faster
+		this.customSort = panel.processCustomTf(ppt.customSort) === ppt.customSort
+			? FbTitleFormat(ppt.customSort)
+			: ppt.customSort; // If not using special $funcs{} then caching is faster
 		// Regorxxx ->
+	}
+	// Regorxxx ->
+
+	// Regorxxx <- Throttle selection playlist update | Performance improvements
+	setAsyncFunc() {
+		this.debounce = {
+			setPlaylist: debounce(this.setPlaylist, ppt.plsRefreshLimit, false, this)
+		};
 	}
 	// Regorxxx ->
 
@@ -149,8 +179,7 @@ class Populate {
 				this.tree[ix].sel = true;
 				this.getTreeSel();
 				callback();
-				if (bRepaint) { panel.treePaint(); }
-				lib.treeState(false, ppt.rememberTree);
+				lib.treeState(false, ppt.rememberTree) || bRepaint && panel.treePaint();
 			}
 		}
 	}
@@ -162,20 +191,40 @@ class Populate {
 		);
 	}
 
-	loadTopTracks(bAddToPls, bUseDefaultPls) {
-		let items = fb.GetQueryItems(this.getHandleList(), lib.processCustomTf(ppt.topTracksFilter));
+	getTopTracks(handleList = this.getHandleList(), bCustomSort = false) {
+		let items = fb.GetQueryItems(handleList, panel.processCustomTf(ppt.topTracksFilter));
 		items = lib.removeDuplicates(items, $.jsonParse(ppt.topTracksRemDupl, globTags.remDupl));
-		const bCustomSort = ppt.topTracksSorting.length;
-		if (bCustomSort) { items = lib.processCustomSort(items, ppt.topTracksSorting); }
-		this.load({ handleList: items, bAddToPls, bAutoPlay: false, bUseDefaultPls, bInsertToPls: false, bApplySort: !bCustomSort });
+		if (bCustomSort && ppt.topTracksSorting.length) { items = lib.processCustomSort(items, ppt.topTracksSorting); }
+		return items;
+	}
+
+	loadTopTracks(bAddToPls, bUseDefaultPls) {
+		const bCustomSort = !!ppt.topTracksSorting.length;
+		const handleList = this.getTopTracks(this.getHandleList(), bCustomSort);
+		this.load({ handleList, bAddToPls, bAutoPlay: false, bUseDefaultPls, bInsertToPls: false, bApplySort: !bCustomSort });
 	}
 	// Regorxxx ->
 
-	addItems(arr, item) {
-		item.forEach(v => {
-			for (let i = v.start; i <= v.end; i++) arr.push(i);
-		});
+	// Regorxxx <- Preserve tree sorting at selection
+	addItems(arr, node, bNoSort) {
+		if (panel.playlistSort || bNoSort) { // Regorxxx <- Smart sorting based on view ->
+			node.item.forEach((item) => $.range(item.start, item.end, 1).forEach((idx) => arr.push(idx)));
+		} else {
+			if (node.root) { // When selecting all, omit
+				$.range(0, panel.list.Count - 1, 1).forEach((idx) => arr.push(idx));
+			} else if (node.child && node.child.length) {
+				node.child.forEach((subNode) => this.addItems(arr, subNode));
+			} else if (node.item.length > 1 || node.item[0].count > 1) {
+				this.branch(node, !!node.root, true, true, false);
+				if (node.child.length) { node.child.forEach((subNode) => this.addItems(arr, subNode)); }
+				else { $.range(node.item[0].start, node.item[0].end, 1).forEach((idx) => arr.push(idx)); }
+				this.clearChild(node, true, false);
+			} else {
+				$.range(node.item[0].start, node.item[0].end, 1).forEach((idx) => arr.push(idx));
+			}
+		}
 	}
+	// Regorxxx ->
 
 	arrayToRange(array) {
 		return array.slice().sort((a, b) => { return a - b; }).reduce((ranges, value) => {
@@ -186,10 +235,11 @@ class Populate {
 				ranges[lastIndex].max = value;
 			}
 			return ranges;
-		}, []).map(function (range) { return range.min !== range.max ? range.min + '-' + range.max : range.min.toString(); });
+		}, []).map(function (range) { return range.min === range.max ? range.min.toString() : range.min + '-' + range.max; });
 	}
 
-	branch(br, base, node, block) {
+	// Regorxxx <- Preserve tree sorting at selection
+	branch(br, base, node, block, clearArt) {
 		if (!br || br.track) return;
 		const ix = this.showTracks ? 2 : 3;
 		const l = base ? 0 : this.rootNode ? br.level : br.level + 1;
@@ -201,7 +251,8 @@ class Populate {
 		this.range(br.item).forEach(v => {
 			n = lib.node[v][l];
 			nU = n.toUpperCase();
-			if (n_o != nU) {
+			if (n_o == nU) { br.child[i - 1].item.push(v); }
+			else {
 				n_o = nU;
 				if (panel.multiPrefix) n = lib.prefixes(n);
 				br.child[i] = {
@@ -213,11 +264,12 @@ class Populate {
 					srt: lib.sort(n)
 				};
 				i++;
-			} else br.child[i - 1].item.push(v);
+			}
 		});
 		this.condense(br.child);
-		this.buildTree(lib.root, 0, node, true, block);
+		this.buildTree(lib.root, 0, node, true, block, clearArt);
 	}
+	// Regorxxx ->
 
 	branchChange(br) {
 		const arr = br.level == 0 ? lib.root : this.tree[br.par].child;
@@ -236,7 +288,7 @@ class Populate {
 		let n_o = '#get_branch#';
 		let nU = '';
 		if (base) node = false;
-		const full = !br.root ? false : true;
+		const full = !!br.root;
 		this.range(br.item).forEach(v => {
 			if (l < lib.node[v].length) {
 				n = lib.node[v][l];
@@ -311,75 +363,137 @@ class Populate {
 		return b.length;
 	}
 
-	buildTree(br, level, node, full, block) {
-		const l = !this.rootNode ? level : level - 1;
-		let i = 0;
+	// Regorxxx <- Support SORT BY query sorting | Code cleanup | Preserve tree sorting at selection
+	buildTree(br, level, node, full, block, clearArt) {
+		const l = this.rootNode ? level - 1 : level;
 		let j = 0;
 		if (!br[0].sorted) {
 			switch (panel.multiProcess) {
 				case false:
-					if (!node || node && !full) this.merge(br);
+					if (!node || node && !full) { this.merge(br); }
 					break;
 				case true: {
 					const multi_cond = [];
 					const multi_obj = [];
 					const multi_rem = [];
+					const multi_pos = new Map();
 					const nm_arr = [];
 					let h = -1;
 					let multi = [];
 					let n = '';
 					let n_o = '#condense#';
 					let nU = '';
-					br.forEach((v, i) => {
-						if (v.nm.includes('@@') || v.nm.includes(panel.softSplitter)) {
-							multi = this.getAllCombinations(v.nm);
-							multi_rem.push(i);
-							multi.forEach(w => {
-								multi_obj.push({
-									nm: w.join(''),
+					const splitter = panel.softSplitter;
+					if (lib.searchSort || lib.filterSort) {
+						br.forEach((v, i) => {
+							if (v.nm.includes('@@') || v.nm.includes(splitter)) {
+								multi = this.getAllCombinations(v.nm);
+								multi_rem.push(i);
+								multi.forEach(w => {
+									const obj = {
+										nm: w.join(''),
+										item: this.copy(v.item),
+										track: v.track,
+										srt: lib.sort(w.join(''))
+									};
+									multi_obj.push(obj);
+									multi_pos.set(obj, i);
+								});
+							} else {
+								v.nm = v.nm.replace(/#!#/g, '');
+								nm_arr.push(v.nm);
+							}
+						});
+						let i = multi_rem.length;
+						while (i--) { br.splice(multi_rem[i], 1); }
+						this.sort(multi_obj);
+						multi_obj.forEach((v) => {
+							n = v.nm;
+							nU = n.toUpperCase();
+							if (n_o == nU) { v.item.forEach(v => multi_cond[j - 1].item.push(v)); }
+							else {
+								n_o = nU;
+								multi_cond[j] = {
+									nm: n,
 									item: this.copy(v.item),
 									track: v.track,
-									srt: lib.sort(w.join(''))
-								});
-							});
-						}
-					});
-					i = multi_rem.length;
-					while (i--) br.splice(multi_rem[i], 1);
-					this.sort(multi_obj);
-					multi_obj.forEach(v => {
-						n = v.nm;
-						nU = n.toUpperCase();
-						if (n_o != nU) {
-							n_o = nU;
-							multi_cond[j] = {
-								nm: n,
-								item: this.copy(v.item),
+									srt: v.srt
+								};
+								multi_pos.set(multi_cond[j], multi_pos.get(v));
+								multi_pos.delete(v);
+								j++;
+							}
+						});
+						multi_cond.forEach((v, i) => {
+							h = nm_arr.indexOf(v.nm);
+							if (h != -1) {
+								v.item.forEach(v => br[h].item.push(v));
+								multi_cond.splice(i, 1);
+								multi_pos.delete(v);
+							}
+						});
+						multi_pos.forEach((idx, v) => {
+							br.splice(idx + 1, 0, {
+								nm: v.nm,
+								sel: false,
 								track: v.track,
+								child: [],
+								item: this.copy(v.item),
 								srt: v.srt
-							};
-							j++;
-						} else v.item.forEach(v => multi_cond[j - 1].item.push(v));
-					});
-					br.forEach(v => {
-						v.nm = v.nm.replace(/#!#/g, '');
-						nm_arr.push(v.nm);
-					});
-					multi_cond.forEach((v, i) => {
-						h = nm_arr.indexOf(v.nm);
-						if (h != -1) {
-							v.item.forEach(v => br[h].item.push(v));
-							multi_cond.splice(i, 1);
-						}
-					});
-					multi_cond.forEach((v, i) => br.splice(i + 1, 0, {
-						nm: v.nm,
-						sel: false,
-						track: v.track,
-						child: [],
-						item: this.copy(v.item),
-						srt: v.srt
-					}));
+							});
+						});
+					} else {
+						br.forEach((v, i) => {
+							if (v.nm.includes('@@') || v.nm.includes(splitter)) {
+								multi = this.getAllCombinations(v.nm);
+								multi_rem.push(i);
+								multi.forEach(w => {
+									multi_obj.push({
+										nm: w.join(''),
+										item: this.copy(v.item),
+										track: v.track,
+										srt: lib.sort(w.join(''))
+									});
+								});
+							} else {
+								v.nm = v.nm.replace(/#!#/g, '');
+								nm_arr.push(v.nm);
+							}
+						});
+						let i = multi_rem.length;
+						while (i--) { br.splice(multi_rem[i], 1); }
+						this.sort(multi_obj);
+						multi_obj.forEach((v) => {
+							n = v.nm;
+							nU = n.toUpperCase();
+							if (n_o == nU) { v.item.forEach(v => multi_cond[j - 1].item.push(v)); }
+							else {
+								n_o = nU;
+								multi_cond[j] = {
+									nm: n,
+									item: this.copy(v.item),
+									track: v.track,
+									srt: v.srt
+								};
+								j++;
+							}
+						});
+						multi_cond.forEach((v, i) => {
+							h = nm_arr.indexOf(v.nm);
+							if (h != -1) {
+								v.item.forEach(v => br[h].item.push(v));
+								multi_cond.splice(i, 1);
+							}
+						});
+						multi_cond.forEach((v, i) => br.splice(i + 1, 0, {
+							nm: v.nm,
+							sel: false,
+							track: v.track,
+							child: [],
+							item: this.copy(v.item),
+							srt: v.srt
+						}));
+					}
 					this.merge(br);
 					break;
 				}
@@ -389,23 +503,26 @@ class Populate {
 		}
 		const br_l = br.length;
 		const par = this.tree.length - 1;
-		if (level == 0) this.clearTree();
+		if (level == 0) { this.clearTree(clearArt); }
 		br.forEach((v, i) => {
 			j = this.tree.length;
 			const item = this.tree[j] = v;
-			item.top = !i ? true : false;
-			item.bot = i == br_l - 1 ? true : false;
+			item.top = !i;
+			item.bot = i === br_l - 1;
 			item.count = '';
 			item.ix = j;
 			item.level = level;
 			item.par = par;
 			switch (true) {
 				case ppt.facetView:
-					if (!item.root) item.track = true;
+					if (!item.root) { item.track = true; }
 					break;
 				case l != -1 && !this.showTracks:
-					this.range(item.item).some(v => {
-						if (lib.node[v] && (lib.node[v].length == l + 1 || lib.node[v].length == l + 2)) return item.track = true;
+					this.range(item.item).some((v) => {
+						if (lib.node[v] && (lib.node[v].length == l + 1 || lib.node[v].length == l + 2)) {
+							item.track = true;
+							return item.track;
+						}
 					});
 					break;
 				case l == 0 && lib.node[item.item[0].start] && lib.node[item.item[0].start].length == 1:
@@ -414,25 +531,30 @@ class Populate {
 			}
 			if (ui.col.counts && (!item.track || !this.showTracks)) {
 				const str = '@!#' + ui.col.counts + '`' + (this.highlight.text ? ui.col.text_h : ui.col.counts) + '`' + ui.col.textSel + '@!#';
-				if (!item.nm.endsWith(str)) item.nm += str;
+				if (!item.nm.endsWith(str)) { item.nm += str; }
 			}
-			item.name = !panel.noDisplay ? item.nm : item.nm.replace(/#@#.*?#@#/g, '');
-			if (v.child.length > 0) this.buildTree(v.child, level + 1, node, !item.root ? false : true);
+			item.name = panel.noDisplay ? item.nm.replace(/#@#.*?#@#/g, '') : item.nm;
+			if (v.child.length > 0) { this.buildTree(v.child, level + 1, node, !!item.root, true, false); }
 		});
 		if (ui.style.squareNode && ui.col.line) {
 			this.row.lineMax = [];
-			this.tree.forEach(v => {
-				const depth = !this.inlineRoot ? v.level : Math.max(v.level - 1, 0);
+			this.tree.forEach((v) => {
+				const depth = this.inlineRoot ? Math.max(v.level - 1, 0) : v.level;
 				this.row.lineMax[depth] = v.ix;
 			});
 		}
-		if (this.rootNode == 3) this.tree[0].name = this.tree[0].child.length > 1 ? panel.rootName.replace('#^^^^#', this.tree[0].child.length) : panel.rootName1;
+		if (this.rootNode === 3) {
+			this.tree[0].name = this.tree[0].child.length > 1
+				? panel.rootName.replace('#^^^^#', this.tree[0].child.length)
+				: panel.rootName1;
+		}
 		find.initials = null;
 		if (!block) {
 			sbar.setRows(this.tree.length);
 			panel.treePaint();
 		}
 	}
+	// Regorxxx ->
 
 	butTooltipFont() {
 		return [globFonts.tooltip.name, Math.round(globFonts.tooltip.size * $.scale * 96 / 72 * ppt.zoomTooltipBut / 100), 0]; // Regorxxx <- Make tooltip text smaller and use global fonts setting ->
@@ -443,35 +565,28 @@ class Populate {
 		const key = 'stat' + this.getKey(v);
 		const type = panel.search.txt ? 'search' : ppt.filterBy ? 'filter' : 'standard';
 		if (this.cache[type][key]) { return this.cache[type][key]; }
-		const handleList = new FbMetadbHandleList();
 		let items = [];
-		this.addItems(items, v.item);
+		this.addItems(items, v, true); // Regorxxx <- Preserve tree sorting at selection ->
 		items = [...new Set(items)].sort(this.numSort);
-		items.some(w => {
-			if (w >= panel.list.Count) { return true; }
-			handleList.Add(panel.list[w]);
-		});
+		const handleList = this.getHandleList(void (0), items);
 		let ln, n, tf, value, rawValue, values;
 		switch (ppt.itemShowStatistics) {
 			case 1: {// bitrate
 				values = this.tf.bitrate.EvalWithMetadbs(handleList);
-				let bitrate;
 				if (values.length == 1) {
-					bitrate = Number(values[0]) || '';
+					value = Number(values[0]) || '';
 				} else {
 					let lengths = FbTitleFormat('%LENGTH_SECONDS_FP%').EvalWithMetadbs(handleList);
 					const total = values.map((v, i) => v * lengths[i]);
-					let totals = total.map(v => parseFloat(v) || '');
+					let totals = total.map(v => Number.parseFloat(v) || '');
 					totals = totals.filter((v, i) => v && lengths[i] ? v : lengths.splice(i, 1));
 					totals = totals.reduce((a, b) => a + b, 0);
-					lengths = lengths.map(v => parseFloat(v)).reduce((a, b) => a + b, 0);
-					bitrate = Number(Math.round(totals / lengths)) || '';
+					lengths = lengths.map(v => Number.parseFloat(v)).reduce((a, b) => a + b, 0);
+					value = Number(Math.round(totals / lengths)) || '';
 				}
-				if (value) {
-					rawValue = bitrate;
-					value = panel.imgView
-						? bitrate + ' kbps'
-						: bitrate;
+				if (typeof value !== 'undefined') {
+					rawValue = value;
+					value += (panel.imgView ? ' kbps' : '');
 				}
 				break;
 			}
@@ -488,7 +603,7 @@ class Populate {
 					return a[a.length - 1];
 				});
 				if (size.length) {
-					size = size.map(v => parseInt(v)).reduce((a, b) => a + b, 0);
+					size = size.map(v => Number.parseInt(v)).reduce((a, b) => a + b, 0);
 					rawValue = size;
 					value = this.formatBytes(size);
 				}
@@ -502,7 +617,7 @@ class Populate {
 				values = values.filter(Boolean);
 				ln = values.length;
 				if (ln) {
-					values = values.map(v => parseFloat(v)).reduce((a, b) => a + b, 0);
+					values = values.map(v => Number.parseFloat(v)).reduce((a, b) => a + b, 0);
 					rawValue = values / ln;
 					value = $.round(rawValue, ppt.ratingDecimals).toFixed(ppt.ratingDecimals); // Regorxxx <- Rating decimals
 					if (panel.imgView && this.label) { value = (ppt.itemShowStatistics == 4 ? 'Rating ' : 'Popularity ') + value; }
@@ -539,31 +654,44 @@ class Populate {
 				}
 				break;
 			}
+			// Regorxxx <- Now playing index | Duplicated idx bug on original script
 			case 7: {// queue
+				/** @type {string|string[]} */
 				let index = '';
-				let indices = [];
+				let indices = new Set();
 				const queueHandles = plman.GetPlaybackQueueHandles();
-				for (let i = 0; i < handleList.Count; i++) {
-					for (let k = 0; k < queueHandles.Count; k++) {
-						if (handleList[i].Compare(queueHandles[k])) indices.push(k + 1);
+				const np = fb.IsPlaying ? fb.GetNowPlaying() : null;
+				const count = handleList.Count;
+				const queueCount = queueHandles.Count;
+				for (let i = 0; i < count; i++) {
+					if (np && handleList[i].Compare(np)) { indices.add(0); }
+					for (let k = 0; k < queueCount; k++) {
+						if (handleList[i].Compare(queueHandles[k])) { indices.add(k + 1); }
 					}
 				}
-				ln = indices.length;
+				ln = indices.size;
 				if (ln) {
-					if (ln == 1) index = indices[0];
+					if (ln === 1) { index = indices.values().next().value.toString(); }
 					else {
-						index = this.arrayToRange(indices);
+						index = this.arrayToRange([...indices]);
 						index.join();
 					}
 				}
-				if (index) {
+				if (index === '0') {
+					rawValue = 0;
+					value = panel.imgView && this.label
+						? 'Now playing'
+						: String.fromCodePoint(9654) /* ▶ */;
+				} else if (index && index.length > 0) {
+					const bIsNowPlaying = Array.isArray(index) && index[0] === '0';
 					rawValue = index;
 					value = panel.imgView && this.label
-						? 'Queue ' + index
-						: index;
+						? 'Queue ' + (bIsNowPlaying ? [String.fromCodePoint(9654), ...index.slice(1)] : index)
+						: bIsNowPlaying ? [String.fromCodePoint(9654), ...index.slice(1)] : index;
 				}
 				break;
 			}
+			// Regorxxx ->
 			case 8: {// playcount
 				let playcount = this.tf.pc.EvalWithMetadbs(handleList);
 				const played = [...new Set(playcount)];
@@ -573,7 +701,7 @@ class Populate {
 				});
 				playcount = this.getNumbers(n);
 				if (playcount.length) {
-					playcount = n.map(v => parseInt(v)).reduce((a, b) => a + b, 0);
+					playcount = n.map(v => Number.parseInt(v)).reduce((a, b) => a + b, 0);
 					rawValue = playcount;
 					value = panel.imgView
 						? (this.label ? 'Played ' : '') + playcount + 'x'
@@ -595,7 +723,7 @@ class Populate {
 						: values.filter((v) => v < 0);
 				ln = values.length;
 				if (ln) {
-					value = Math.abs(values.map(v => parseFloat(v)).reduce((a, b) => a + b, 0));
+					value = Math.abs(values.map(v => Number.parseFloat(v)).reduce((a, b) => a + b, 0));
 					rawValue = value;
 					if (panel.imgView && this.label) { value = (ppt.itemShowStatistics == 14 ? 'Feedback ' : (ppt.itemShowStatistics == 13 ? 'Hated ' : 'Loved ')) + value; }
 				}
@@ -606,7 +734,10 @@ class Populate {
 			case 17:
 			case 18:
 			case 19:
-			case 20: {
+			case 20:
+			case 21:
+			case 22:
+			case 23: {
 				switch (ppt.itemShowStatistics) {
 					case 15: tf = this.tf.custom1Sum; break;
 					case 16: tf = this.tf.custom2Sum; break;
@@ -614,26 +745,33 @@ class Populate {
 					case 18: tf = this.tf.custom1Avg; break;
 					case 19: tf = this.tf.custom2Avg; break;
 					case 20: tf = this.tf.custom3Avg; break;
+					case 21: tf = this.tf.custom1MeX; break;
+					case 22: tf = this.tf.custom2MeX; break;
+					case 23: tf = this.tf.custom3MeX; break;
 				}
 				values = tf.EvalWithMetadbs(handleList).filter((v) => v !== '');
 				ln = values.length;
 				if (ln) {
-					values = values.map(v => parseFloat(v)).reduce((a, b) => a + b, 0);
+					const exp = Number(ppt.expCustomMeX) || 1;
+					values = ppt.itemShowStatistics <= 20
+						? values.map(v => Number.parseFloat(v)).reduce((a, b) => a + b, 0)
+						: values.map(v => Number.parseFloat(v)).reduce((a, b) => a + b ** exp, 0); // Power mean with exponent X
 					rawValue = ppt.itemShowStatistics >= 15 && ppt.itemShowStatistics <= 17
 						? value
 						: values / ln;
+					if (ppt.itemShowStatistics > 20) { rawValue = rawValue ** (1 / exp); }
 					value = ppt.itemShowStatistics >= 15 && ppt.itemShowStatistics <= 17
 						? values
-						: $.round(rawValue, ppt.ratingDecimals).toFixed(ppt.ratingDecimals); // Regorxxx <- Rating decimals;
+						: $.round(rawValue, ppt.ratingDecimals).toFixed(ppt.ratingDecimals); // Regorxxx <- Rating decimals; // Regorxxx <- Rating decimals;
 					if (panel.imgView && this.label) { value = this.label + ' ' + value; }
 				}
 				break;
 			}
 			// Regorxxx ->
 		}
-		return typeof value !== 'undefined'
-			? this.cache[type][key] = { value, rawValue, items }
-			: { value: '', rawValue: void (0), items };
+		return typeof value === 'undefined'
+			? { value: '', rawValue: void (0), items }
+			: (this.cache[type][key] = { value, rawValue, items }); // NOSONAR
 	}
 	// Regorxxx ->
 
@@ -644,8 +782,8 @@ class Populate {
 	check_ix(br, x, y, type) {
 		if (panel.imgView) return true;
 		if (!br) return false;
-		const level = !this.inlineRoot ? br.level : Math.max(br.level - 1, 0);
-		const icon_w = this.inlineRoot && br.ix == 0 ? 0 : ui.icon.w + (!this.fullLineSelection ? ui.l.wf : 0);
+		const level = this.inlineRoot ? Math.max(br.level - 1, 0) : br.level;
+		const icon_w = this.inlineRoot && br.ix == 0 ? 0 : ui.icon.w + (this.fullLineSelection ? 0 : ui.l.wf);
 		return type ? (x >= Math.round(this.treeIndent * level + ui.sz.margin) && x < Math.round(this.treeIndent * level + ui.sz.margin) + br.w + icon_w) :
 			(x >= Math.round(this.treeIndent * level + ui.sz.margin) + icon_w) && x < Math.min(Math.round(this.treeIndent * level + ui.sz.margin) + icon_w + br.w, panel.tree.w);
 	}
@@ -668,7 +806,7 @@ class Populate {
 		if (im >= this.tree.length || im < 0 || x > ui.w - ui.sbar.sp) return -1;
 		if (panel.imgView) return im;
 		const item = this.tree[im];
-		const level = !this.inlineRoot ? item.level : Math.max(item.level - 1, 0);
+		const level = this.inlineRoot ? Math.max(item.level - 1, 0) : item.level;
 		if (x < Math.round(this.treeIndent * level) + ui.icon.w + ui.sz.margin && (!item.track || item.root)) this.m.br = im;
 		return im;
 	}
@@ -684,11 +822,11 @@ class Populate {
 				const trace2 = item.stats_tt && item.stats_tt.needed && x >= item.stats_tt.x + item.stats_tt.w && x <= ui.w - ui.sz.marginRight && y >= item.stats_tt.y && y <= item.stats_tt.y + ui.row.h * 0.9;
 				if (trace2) {
 					text = this.statisticsShow
-						? (item.statistics !== undefined ? this.statistics[this.statisticsShow] + ': ' + item.statistics : '')
+						? (typeof item.statistics === 'undefined' ? '' : this.statistics[this.statisticsShow].name + ': ' + item.statistics) // Regorxxx <- New statistics | Code cleanup ->
 						: (item.count ? ['', 'Tracks', 'Items'][this.nodeCounts] + ':' + item.count : '');
-
+					if (this.statistics[this.statisticsShow].ttFunc) { text = this.statistics[this.statisticsShow].ttFunc(text); } // Regorxxx <- Improve statistics tooltip ->
 				} else if (trace1) {
-					text = (!panel.colMarker ? item.name : item.name.replace(/@!#.*?@!#/g, '')) + (!this.countsRight || this.statisticsShow ? item.count : '');
+					text = (panel.colMarker ? item.name.replace(/@!#.*?@!#/g, '') : item.name) + (!this.countsRight || this.statisticsShow ? item.count : '');
 					text = text.replace(/&/g, '&&');
 				}
 				if (text != tooltip.Text) this.deactivateTooltip();
@@ -702,7 +840,12 @@ class Populate {
 				let trace1 = false;
 				let trace2 = false;
 				let trace3 = false;
-				if (!img.labels.hide) {
+				if (img.labels.hide) {
+					text = panel.lines == 2 ? (ppt.albumArtFlipLabels ? item.lot + '\n' + item.grp : item.grp + '\n' + item.lot) : item.grp;
+					if (panel.colMarker) text = text.replace(/@!#.*?@!#/g, '');
+					text = text.replace(/&/g, '&&');
+					if (text != tooltip.Text) this.deactivateTooltip();
+				} else {
 					if (!item.tt) {
 						this.deactivateTooltip();
 						return;
@@ -718,11 +861,6 @@ class Populate {
 						this.deactivateTooltip();
 						return;
 					}
-				} else {
-					text = panel.lines == 2 ? !ppt.albumArtFlipLabels ? item.grp + '\n' + item.lot : item.lot + '\n' + item.grp : item.grp;
-					if (panel.colMarker) text = text.replace(/@!#.*?@!#/g, '');
-					text = text.replace(/&/g, '&&');
-					if (text != tooltip.Text) this.deactivateTooltip();
 				}
 				break;
 			}
@@ -739,7 +877,11 @@ class Populate {
 			w: w
 		};
 		item.stats_tt = {
-			needed: !this.tooltipStatistics || !this.statisticsShow || item.root ? false : this.statisticsTooltip[this.statisticsShow] && item.statistics !== undefined, // Regorxxx <- New statistics
+			// Regorxxx <- New statistics | Code cleanup
+			needed: !this.tooltipStatistics || !this.statisticsShow || item.root
+				? false
+				: this.statistics[this.statisticsShow].showTooltip && typeof item.statistics !== 'undefined',
+			// Regorxxx ->
 			x: x,
 			y: y + ui.row.h * 0.1,
 			w: w
@@ -768,20 +910,22 @@ class Populate {
 		this.tree.forEach(v => v.sel = false);
 	}
 
-	clearTree() {
-		if (panel.imgView && this.tree.length) img.trimCache(this.tree[0].key);
+	clearTree(clearArt = true) {
+		if (clearArt && panel.imgView && this.tree.length) { img.trimCache(this.tree[0].key); }
 		this.tree = [];
 	}
 
-	clearChild(br) {
+	// Regorxxx <- Preserve tree sorting at selection
+	clearChild(br, block, clearArt) {
 		br.child = [];
-		this.buildTree(lib.root, 0, true, true);
+		this.buildTree(lib.root, 0, true, true, block, clearArt);
 	}
+	// Regorxxx ->
 
 	clickedOn(x, y, item) {
 		if (panel.imgView) return 'text';
 		if (this.inlineRoot && item.ix == 0) return this.check_ix(item, x, y, false) ? 'text' : 'none';
-		const level = !this.inlineRoot ? item.level : Math.max(item.level - 1, 0);
+		const level = this.inlineRoot ? Math.max(item.level - 1, 0) : item.level;
 		return x < Math.round(this.treeIndent * level) + ui.icon.w + ui.sz.margin ? 'node' : this.check_ix(item, x, y, false) ? 'text' : 'none';
 	}
 
@@ -808,7 +952,8 @@ class Populate {
 		this.tree.some((v, i) => {
 			if (v.srt[0].toUpperCase() == nm) {
 				sbar.checkScroll(i * ui.row.h);
-				return scr_pos = true;
+				scr_pos = true;
+				return scr_pos;
 			}
 		});
 		if (!scr_pos) {
@@ -831,7 +976,31 @@ class Populate {
 
 	createImages() {
 		if (!ui.w || !ui.h) return;
-		if (!this.nodeStyle) {
+		if (this.nodeStyle) {
+			let lightCol = ui.isLightCol(ui.col.icon_h);
+			$.gr(1, 1, false, g => {
+				const h = this.nodeStyle == 7 ? g.CalcTextHeight('String', ui.font.main) / 20 : g.CalcTextHeight('String', ui.icon.font) / 15;
+				this.sy_sz = Math.floor(Math.max(8 * ppt.zoomNode / 100 * h, 5));
+			});
+
+			const sz = Math.max(Math.round(this.sy_sz * 1.666667), 1);
+			this.triangle.highlight = $.gr(sz, sz, true, g => {
+				g.SetSmoothingMode(SmoothingMode.AntiAlias);
+				g.FillPolygon(ui.col.icon_h, 1, [sz, 0, sz, sz, 0, sz]);
+				g.SetSmoothingMode();
+			});
+			lightCol = ui.isLightCol(ui.col.icon_e);
+			this.triangle.expand = $.gr(sz, sz, true, g => {
+				g.SetSmoothingMode(SmoothingMode.AntiAlias);
+				g.FillPolygon(ui.col.icon_e & (lightCol ? 0xC0ffffff : 0xBAffffff), 1, [sz, 0, sz, sz, 0, sz]);
+				g.SetSmoothingMode();
+			});
+			this.triangle.select = $.gr(sz, sz, true, g => {
+				g.SetSmoothingMode(SmoothingMode.AntiAlias);
+				g.FillPolygon(ui.col.textSel & (lightCol ? 0xC0ffffff : 0xBAffffff), 1, [sz, 0, sz, sz, 0, sz]);
+				g.SetSmoothingMode();
+			});
+		} else {
 			const sz = ui.sz.node;
 			const ln_w = Math.max(Math.floor(sz / 9), 1);
 			let plus = true;
@@ -842,42 +1011,24 @@ class Populate {
 			if (((sz - ln_w * 3) / 2) % 1 != 0) sy_w = ln_w > 1 ? ln_w - 1 : ln_w + 1;
 			for (let j = 0; j < 4; j++) {
 				this.nd[j] = $.gr(sz, sz, true, g => {
-					hot = j > 1 ? true : false;
-					plus = !j || j == 2 ? true : false;
+					hot = j > 1;
+					plus = !!(!j || j == 2);
 					g.FillSolidRect(x, y, sz, sz, $.RGB(145, 145, 145));
-					if (!hot) g.FillGradRect(x + ln_w, y + ln_w, sz - ln_w * 2, sz - ln_w * 2, 91, plus ? ui.col.icon_e[0] : ui.col.icon_c[0], plus ? ui.col.icon_e[1] : ui.col.icon_c[1], 1.0);
-					else g.FillGradRect(x + ln_w, y + ln_w, sz - ln_w * 2, sz - ln_w * 2, 91, ui.col.icon_h[0], ui.col.icon_h[1], 1.0);
+					if (hot) {
+						g.FillGradRect(x + ln_w, y + ln_w, sz - ln_w * 2, sz - ln_w * 2, 91, ui.col.icon_h[0], ui.col.icon_h[1], 1);
+					}
+					else {
+						g.FillGradRect(x + ln_w, y + ln_w, sz - ln_w * 2, sz - ln_w * 2, 91, plus ? ui.col.icon_e[0] : ui.col.icon_c[0], plus ? ui.col.icon_e[1] : ui.col.icon_c[1], 1);
+					}
 					let x_o = [x, x + sz - ln_w, x, x + sz - ln_w];
 					let y_o = [y, y, y + sz - ln_w, y + sz - ln_w];
 					for (let i = 0; i < 4; i++) g.FillSolidRect(x_o[i], y_o[i], ln_w, ln_w, $.RGB(186, 187, 188));
-					if (plus) g.FillSolidRect(Math.floor(x + (sz - sy_w) / 2), y + ln_w + Math.min(ln_w, sy_w), sy_w, sz - ln_w * 2 - Math.min(ln_w, sy_w) * 2, !hot ? ui.col.iconPlus : ui.col.iconPlus_h);
-					g.FillSolidRect(x + ln_w + Math.min(ln_w, sy_w), Math.floor(y + (sz - sy_w) / 2), sz - ln_w * 2 - Math.min(ln_w, sy_w) * 2, sy_w, !hot ? (plus ? ui.col.iconMinus_e : ui.col.iconMinus_c) : ui.col.iconMinus_h);
+					if (plus) {
+						g.FillSolidRect(Math.floor(x + (sz - sy_w) / 2), y + ln_w + Math.min(ln_w, sy_w), sy_w, sz - ln_w * 2 - Math.min(ln_w, sy_w) * 2, hot ? ui.col.iconPlus_h : ui.col.iconPlus);
+					}
+					g.FillSolidRect(x + ln_w + Math.min(ln_w, sy_w), Math.floor(y + (sz - sy_w) / 2), sz - ln_w * 2 - Math.min(ln_w, sy_w) * 2, sy_w, hot ? ui.col.iconMinus_h : (plus ? ui.col.iconMinus_e : ui.col.iconMinus_c));
 				});
 			}
-		} else {
-			let lightCol = ui.isLightCol(ui.col.icon_h);
-			$.gr(1, 1, false, g => {
-				const h = this.nodeStyle != 7 ? g.CalcTextHeight('String', ui.icon.font) / 15 : g.CalcTextHeight('String', ui.font.main) / 20;
-				this.sy_sz = Math.floor(Math.max(8 * ppt.zoomNode / 100 * h, 5));
-			});
-
-			const sz = Math.max(Math.round(this.sy_sz * 1.666667), 1);
-			this.triangle.highlight = $.gr(sz, sz, true, g => {
-				g.SetSmoothingMode(4);
-				g.FillPolygon(ui.col.icon_h, 1, [sz, 0, sz, sz, 0, sz]);
-				g.SetSmoothingMode(0);
-			});
-			lightCol = ui.isLightCol(ui.col.icon_e);
-			this.triangle.expand = $.gr(sz, sz, true, g => {
-				g.SetSmoothingMode(4);
-				g.FillPolygon(ui.col.icon_e & (lightCol ? 0xC0ffffff : 0xBAffffff), 1, [sz, 0, sz, sz, 0, sz]);
-				g.SetSmoothingMode(0);
-			});
-			this.triangle.select = $.gr(sz, sz, true, g => {
-				g.SetSmoothingMode(4);
-				g.FillPolygon(ui.col.textSel & (lightCol ? 0xC0ffffff : 0xBAffffff), 1, [sz, 0, sz, sz, 0, sz]);
-				g.SetSmoothingMode(0);
-			});
 		}
 	}
 
@@ -924,7 +1075,7 @@ class Populate {
 			text.forEach((v, i) => {
 				if (i % 2 == 0) {
 					const cur_w = x + w_arr[i];
-					const next_text = text[i + 2] ? true : false;
+					const next_text = !!text[i + 2];
 					let ellipsis_corr = 0;
 					let roomForEllipsis = true;
 					if (next_text && cur_w < w && w - cur_w < ellipsisSpace) roomForEllipsis = false;
@@ -949,7 +1100,7 @@ class Populate {
 		}
 		text.forEach((v, i) => {
 			if (i % 2 == 0 && text[i]) {
-				gr.GdiDrawText(text[i], font, !np ? col[i][type] : ui.col.nowp, item_x + col_x[i], item_y, col_w[i], h, panel.lc);
+				gr.GdiDrawText(text[i], font, np ? ui.col.nowp : col[i][type], item_x + col_x[i], item_y, col_w[i], h, panel.lc);
 			}
 		});
 	}
@@ -963,7 +1114,7 @@ class Populate {
 
 	dragDrop(x, y) {
 		if (!this.lbtnDn) return;
-		const drag_diff = !ppt.touchControl ? Math.sqrt((Math.pow(this.last_pressed_coord.x - x, 2) + Math.pow(this.last_pressed_coord.y - y, 2))) : Math.abs(x - this.last_pressed_coord.x);
+		const drag_diff = ppt.touchControl ? Math.abs(x - this.last_pressed_coord.x) : Math.sqrt((Math.pow(this.last_pressed_coord.x - x, 2) + Math.pow(this.last_pressed_coord.y - y, 2)));
 		if (drag_diff > 7) {
 			if (ppt.touchControl) {
 				const ix = this.get_ix(x, y, true, false);
@@ -971,10 +1122,7 @@ class Populate {
 				if (ui.id.dragDrop != ix || ix >= this.tree.length || ix < 0) return;
 				if (!item.sel && !vk.k('ctrl')) this.setTreeSel(ix, item.sel);
 			}
-			this.last_pressed_coord = {
-				x: undefined,
-				y: undefined
-			};
+			this.last_pressed_coord.x = this.last_pressed_coord.x = void (0); // Regorxxx <- Code cleanup ->
 			// Regorxxx <- Expand TF support
 			const handleList = this.sortIfNeeded(this.getHandleList('newItems'));
 			// Regorxxx ->
@@ -985,7 +1133,14 @@ class Populate {
 
 	draw(gr) {
 		if (lib.empty) return gr.GdiDrawText(lib.empty, ui.font.main, ui.col.text, ui.sz.margin, panel.search.h, panel.tree.w, ui.row.h * 3);
-		if (!this.tree.length || !panel.draw) return gr.GdiDrawText(this.libItems && !panel.search.txt && !ppt.filterBy && ppt.libSource ? 'Loading...\n\n' : lib.none, ui.font.main, ui.col.text, ui.sz.margin, panel.search.h, panel.tree.w, ui.row.h * 3);
+		if (!this.tree.length || !panel.draw) return gr.GdiDrawText(this.libItems && !panel.search.txt && !ppt.filterBy && panel.isStandardSource() ? 'Loading...\n\n' : lib.none, ui.font.main, ui.col.text, ui.sz.margin, panel.search.h, panel.tree.w, ui.row.h * 3);
+		// Regorxxx <- Rectangle selection on art view
+		if (ppt.selRectArt && (this.selRect.down && this.selRect.x !== this.selRect.w && this.selRect.y !== this.selRect.h)) {
+			const [x, y, w, h] = [this.selRect.x, this.selRect.y, this.selRect.w - this.selRect.x, this.selRect.h - this.selRect.y];
+			gr.FillSolidRect(x, y, w, h, ui.col.frameImgSel);
+			gr.DrawRect(x, y, w, h, 1, ui.col.frameImg);
+		}
+		// Regorxxx ->
 		if (panel.imgView) return;
 		const b = $.clamp(Math.round(sbar.delta / ui.row.h + 0.4), 0, this.tree.length - 1);
 		const bar_x = this.nodeStyle && this.nodeStyle < 5 ? 0 : ui.sz.pad;
@@ -1004,20 +1159,20 @@ class Populate {
 		if (!ui.style.squareNode) gr.SetTextRenderingHint(5);
 		this.rows = 0;
 		if (ui.style.squareNode && ui.col.line) {
-			level = !this.inlineRoot ? this.tree[b].level : Math.max(this.tree[b].level - 1, 0);
+			level = this.inlineRoot ? Math.max(this.tree[b].level - 1, 0) : this.tree[b].level;
 			for (let j = 0; j <= level; j++) row[j] = b;
 		}
 		for (i = b; i < f; i++) {
 			const item = this.tree[i];
 			this.getItemCount(item);
 			nm[i] = item.name + (i || this.rootNode != 3 || this.nodeCounts == 1 && (this.countsRight || this.statisticsShow) ? (!this.countsRight || this.statisticsShow ? item.count : '') : '');
-			const counts = !this.statisticsShow ? item.count : item.statistics;
+			const counts = this.statisticsShow ? item.statistics : item.count;
 			if (this.highlight.nowPlayingShow && !item.root && this.inRange(this.nowp, item.item)) nowp_c.push(i);
 			item.np = nowp_c.includes(i) || panel.textDiffHighlight && this.m.i == i ? '\u266B  ' : '';
 			if (item.np && item.id != this.id) this.row.note_w = gr.CalcTextWidth(item.np, ui.font.main);
 			if (item.id != this.id || item.np) {
 				let note_w = !item.np || item.track ? 0 : this.row.note_w;
-				item.name_w = gr.CalcTextWidth(!panel.colMarker ? nm[i] : nm[i].replace(/@!#.*?@!#/g, ''), ui.font.main) - note_w;
+				item.name_w = gr.CalcTextWidth(panel.colMarker ? nm[i].replace(/@!#.*?@!#/g, '') : nm[i], ui.font.main) - note_w;
 				item.count_w = this.nodeCounts && this.countsRight || this.statisticsShow ?
 					gr.CalcTextWidth(counts || '000', ui.font.small) + (counts ? ui.row.h * 0.2 : 0) : 0;
 				if (!this.fullLineSelection) {
@@ -1026,7 +1181,7 @@ class Populate {
 				}
 			}
 
-			level = !this.inlineRoot ? item.level : Math.max(item.level - 1, 0);
+			level = this.inlineRoot ? Math.max(item.level - 1, 0) : item.level;
 			item_y = Math.round(ui.row.h * i + panel.search.h - sbar.delta);
 			if (item_y < panel.filter.y) {
 				this.rows++;
@@ -1068,7 +1223,7 @@ class Populate {
 		}
 		for (i = b; i < f; i++) {
 			const item = this.tree[i];
-			const level = !this.inlineRoot ? item.level : Math.max(item.level - 1, 0);
+			const level = this.inlineRoot ? Math.max(item.level - 1, 0) : item.level;
 			item_y = Math.round(ui.row.h * i + panel.search.h - sbar.delta);
 			if (item_y < panel.filter.y) {
 				item_x = Math.round(this.treeIndent * level + ui.sz.margin);
@@ -1089,7 +1244,9 @@ class Populate {
 						} else
 							gr.DrawRect(sel_x + Math.floor(ui.l.w / 2), item_y, sel_w, ui.row.h, ui.l.w, ui.col.frame);
 					}
-					if (this.highlight.row == 2) gr.FillSolidRect(sel_x + (!item.sel || (this.sbarShow == 1 && ui.sbar.type == 2) ? 0 : ui.l.w), item_y + ui.l.wc, sel_w + (!item.sel || (this.sbarShow == 1 && ui.sbar.type == 2) ? ui.l.w : -ui.l.w), ui.row.h - ui.l.w, !item.sel ? ui.col.bg_h : ui.col.bgSel_h);
+					if (this.highlight.row == 2) {
+						gr.FillSolidRect(sel_x + (!item.sel || (this.sbarShow == 1 && ui.sbar.type == 2) ? 0 : ui.l.w), item_y + ui.l.wc, sel_w + (!item.sel || (this.sbarShow == 1 && ui.sbar.type == 2) ? ui.l.w : -ui.l.w), ui.row.h - ui.l.w, item.sel ? ui.col.bgSel_h : ui.col.bg_h);
+					}
 				}
 				if (this.highlight.row == 1 && this.row.i == i && !sbar.draw_timer) gr.FillSolidRect(ui.l.w, item_y, ui.sz.sideMarker, ui.row.h, ui.col.sideMarker);
 
@@ -1098,7 +1255,7 @@ class Populate {
 					const ff = sbar.rows_drawn == this.rows || i < sbar.rows_drawn ? f : f - 1;
 					if (item.bot || i === ff - 1) {
 						for (let depth = (i === ff - 1 ? 0 : level); depth <= level; depth++) {
-							if (row[depth] !== undefined && (this.inlineRoot || !item.root)) {
+							if (typeof row[depth] !== 'undefined' && (this.inlineRoot || !item.root)) {
 								const start = row[depth];
 								let end = i + (item.bot && depth === level ? 0.5 : 1);
 								if (item_y >= panel.filter.y) end -= 1;
@@ -1112,7 +1269,7 @@ class Populate {
 								if (i <= this.row.lineMax[depth] && (!this.inlineRoot || item.level)) gr.FillSolidRect(l_x, l_y, ui.l.w, l_h, ui.col.line);
 							}
 						}
-						if (item.bot) row[level] = undefined;
+						if (item.bot) { row[level] = void (0); }
 					}
 				}
 			}
@@ -1120,7 +1277,7 @@ class Populate {
 
 		for (i = b; i < f; i++) {
 			const item = this.tree[i];
-			const level = !this.inlineRoot ? item.level : Math.max(item.level - 1, 0);
+			const level = this.inlineRoot ? Math.max(item.level - 1, 0) : item.level;
 			item_y = Math.round(ui.row.h * i + panel.search.h - sbar.delta);
 			if (item_y < panel.filter.y) {
 				item_x = Math.round(this.treeIndent * level + ui.sz.margin);
@@ -1129,13 +1286,13 @@ class Populate {
 					if (!item.track && (!this.inlineRoot || item.level)) {
 						const y2 = ui.row.h * i + y1 - ui.l.wf;
 						if (ui.col.line) gr.FillSolidRect(item_x + ui.sz.node, y2, ui.l.s1, ui.l.w, ui.col.line);
-						this.drawNode(gr, item.child.length < 1 ? this.m.br != i ? 0 : 2 : this.m.br != i ? 1 : 3, item_x, item_y + panel.node_y);
+						this.drawNode(gr, item.child.length < 1 ? (this.m.br == i ? 2 : 0) : (this.m.br == i ? 3 : 1), item_x, item_y + panel.node_y);
 					} else if (ui.col.line && (!this.inlineRoot || item.level)) {
 						const y2 = Math.round(panel.search.h - sbar.delta) + Math.ceil(ui.row.h * (i + 0.5)) - ui.l.wf;
 						gr.FillSolidRect(item_x + ui.l.s2, y2, ui.l.s3, ui.l.w, ui.col.line);
 					}
 				} else if (!item.track && (!this.inlineRoot || item.level)) this.drawNode(gr, item, item_x, item_y, item.child.length < 1, this.m.br == i, item.sel);
-				if (!this.inlineRoot || item.level) item_x += ui.icon.w + (!this.fullLineSelection ? ui.l.wf : 0);
+				if (!this.inlineRoot || item.level) item_x += ui.icon.w + (this.fullLineSelection ? 0 : ui.l.wf);
 				const w = panel.tree.w - item_x - ui.sz.sel - item.count_w;
 				this.checkTooltip(item, item_x, item_y, item.name_w, w);
 				if (this.fullLineSelection && item.id != this.id) {
@@ -1150,8 +1307,11 @@ class Populate {
 				const txt_co = np && !item.sel ? ui.col.nowp : item.sel && this.fullLineSelection ? (this.highlight.row ? ui.col.textSel : ui.col.text) : this.m.i == i && this.highlight.text ? ui.col.text_h : ui.col.counts || ui.col.count;
 				const type = item.sel ? (this.highlight.row || !this.fullLineSelection ? 2 : 0) : this.m.i == i && this.highlight.text ? 1 : 0;
 				const txt_c = np && !item.sel ? ui.col.nowp : ui.col.txtArr[type];
-				!panel.colMarker ? gr.GdiDrawText(nm[i], ui.font.main, txt_c, item_x, item_y, w, ui.row.h, panel.lc) : this.cusCol(gr, nm[i], item, item_x, item_y, w, ui.row.h, type, np, ui.font.main, ui.font.mainEllipsisSpace, 'text');
-				if (this.countsRight || this.statisticsShow) gr.GdiDrawText(!this.statisticsShow ? item.count : item.statistics, !item.root || !this.label ? ui.font.small : ui.font.label, txt_co, item_x, item_y, panel.tree.w - item_x, ui.row.h, panel.rc);
+				if (panel.colMarker) { this.cusCol(gr, nm[i], item, item_x, item_y, w, ui.row.h, type, np, ui.font.main, ui.font.mainEllipsisSpace, 'text'); }
+				else { gr.GdiDrawText(nm[i], ui.font.main, txt_c, item_x, item_y, w, ui.row.h, panel.lc); }
+				if (this.countsRight || this.statisticsShow) {
+					gr.GdiDrawText(this.statisticsShow ? item.statistics : item.count, !item.root || !this.label ? ui.font.small : ui.font.label, txt_co, item_x, item_y, panel.tree.w - item_x, ui.row.h, panel.rc);
+				}
 			}
 		}
 	}
@@ -1174,61 +1334,61 @@ class Populate {
 						gr.DrawString(ui.icon.expand, ui.icon.font, selCol ? ui.col.textSel : this.highlight.node ? ui.col.icon_h : ui.col.icon_e, x, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
 						gr.DrawString(ui.icon.expand, ui.icon.font, selCol ? ui.col.textSel : this.highlight.node ? ui.col.icon_h : ui.col.icon_e, x + 1, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
 					} else {
-						gr.DrawString(ui.icon.expand, ui.icon.font, !selCol ? ui.col.icon_c : ui.col.textSel, x, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
-						if (this.nodeStyle == 1) gr.DrawString(ui.icon.expand, ui.icon.font, !selCol ? ui.col.icon_c : ui.col.textSel, x + 1, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
+						gr.DrawString(ui.icon.expand, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_c, x, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
+						if (this.nodeStyle == 1) gr.DrawString(ui.icon.expand, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_c, x + 1, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
 					}
 				} else {
 					if (hover) {
 						gr.DrawString(ui.icon.collapse, ui.icon.font, selCol ? ui.col.textSel : this.highlight.node ? ui.col.icon_h : ui.col.icon_c, x - ui.icon.offset, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
 						gr.DrawString(ui.icon.collapse, ui.icon.font, selCol ? ui.col.textSel : this.highlight.node ? ui.col.icon_h : ui.col.icon_c, x - ui.icon.offset, y2 + 1, panel.tree.w - x, ui.row.h, panel.s_lc);
 					} else {
-						gr.DrawString(ui.icon.collapse, ui.icon.font, !selCol ? ui.col.icon_e : ui.col.textSel, x - ui.icon.offset, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
-						gr.DrawString(ui.icon.collapse, ui.icon.font, !selCol ? ui.col.icon_e : ui.col.textSel, x - ui.icon.offset, y2 + 1, panel.tree.w - x, ui.row.h, panel.s_lc);
+						gr.DrawString(ui.icon.collapse, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_e, x - ui.icon.offset, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
+						gr.DrawString(ui.icon.collapse, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_e, x - ui.icon.offset, y2 + 1, panel.tree.w - x, ui.row.h, panel.s_lc);
 					}
 				}
 				break;
 			case 3: case 4: {
 				if (!this.highlight.row && this.fullLineSelection) x += ui.l.w;
 				const y3 = Math.round(y + (ui.row.h - this.sy_sz) / 2 - 2);
-				gr.SetSmoothingMode(4);
+				gr.SetSmoothingMode(SmoothingMode.AntiAlias);
 				if (parent) {
 					if (hover) {
-						if (this.highlight.node) gr.DrawString(ui.icon.expand2, ui.icon.font, !selCol ? ui.col.icon_h : ui.col.textSel, x, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
-						else gr.DrawString(ui.icon.expand2, ui.icon.font, !selCol ? ui.col.icon_e & 0xCFffffff : ui.col.textSel, x, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
+						if (this.highlight.node) gr.DrawString(ui.icon.expand2, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_h, x, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
+						else gr.DrawString(ui.icon.expand2, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_e & 0xCFffffff, x, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
 					} else {
-						gr.DrawString(ui.icon.expand, ui.icon.font, !selCol ? ui.col.icon_c : ui.col.textSel, x, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
-						if (this.nodeStyle == 3) gr.DrawString(ui.icon.expand, ui.icon.font, !selCol ? ui.col.icon_c : ui.col.textSel, x + 1, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
+						gr.DrawString(ui.icon.expand, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_c, x, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
+						if (this.nodeStyle == 3) gr.DrawString(ui.icon.expand, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_c, x + 1, y2, panel.tree.w - x, ui.row.h, panel.s_lc);
 					}
-				} else if (hover && this.highlight.node) gr.DrawImage(!selCol ? this.triangle.highlight : this.triangle.select, x - ui.icon.offset, y3, this.sy_sz, this.sy_sz, 0, 0, this.triangle.highlight.Width, this.triangle.highlight.Height);
-				else gr.DrawImage(!selCol ? this.triangle.expand : this.triangle.select, x - ui.icon.offset, y3, this.sy_sz, this.sy_sz, 0, 0, this.triangle.expand.Width, this.triangle.expand.Height);
-				gr.SetSmoothingMode(0);
+				} else if (hover && this.highlight.node) gr.DrawImage(selCol ? this.triangle.select : this.triangle.highlight, x - ui.icon.offset, y3, this.sy_sz, this.sy_sz, 0, 0, this.triangle.highlight.Width, this.triangle.highlight.Height);
+				else gr.DrawImage(selCol ? this.triangle.select : this.triangle.expand, x - ui.icon.offset, y3, this.sy_sz, this.sy_sz, 0, 0, this.triangle.expand.Width, this.triangle.expand.Height);
+				gr.SetSmoothingMode();
 				break;
 			}
 			case 5:
 				if (parent) {
 					if (hover) {
 						gr.DrawString(ui.icon.expand, ui.icon.font, selCol ? ui.col.textSel : this.highlight.node ? ui.col.icon_h : ui.col.icon_e, x, y2, panel.tree.w - x, ui.row.h - 1, panel.s_lc);
-					} else gr.DrawString(ui.icon.expand, ui.icon.font, !selCol ? ui.col.icon_c : ui.col.textSel, x, y2, panel.tree.w - x, ui.row.h - 1, panel.s_lc);
+					} else gr.DrawString(ui.icon.expand, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_c, x, y2, panel.tree.w - x, ui.row.h - 1, panel.s_lc);
 				} else {
 					if (hover) {
 						gr.DrawString(ui.icon.collapse, ui.icon.font, selCol ? ui.col.textSel : this.highlight.node ? ui.col.icon_h : ui.col.icon_c, x - ui.icon.offset, y2, panel.tree.w - x, ui.row.h - 1, panel.s_lc);
-					} else gr.DrawString(ui.icon.collapse, ui.icon.font, !selCol ? ui.col.icon_e : ui.col.textSel, x - ui.icon.offset, y2, panel.tree.w - x, ui.row.h - 1, panel.s_lc);
+					} else gr.DrawString(ui.icon.collapse, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_e, x - ui.icon.offset, y2, panel.tree.w - x, ui.row.h - 1, panel.s_lc);
 				}
 				break;
 			case 7:
 				if (item > 1) item -= 2;
-				ui.style.symb.SetPartAndStateID(2, !item ? 1 : 2);
+				ui.style.symb.SetPartAndStateID(2, item ? 2 : 1);
 				ui.style.symb.DrawThemeBackground(gr, x, y, ui.sz.node, ui.sz.node);
 				break;
 			default:
 				if (parent) {
 					if (hover) {
 						gr.DrawString(ui.icon.expand, ui.icon.font, selCol ? ui.col.textSel : this.highlight.node ? ui.col.icon_h : ui.col.icon_e, x, y + this.iconVerticalPad, panel.tree.w - x, ui.row.h, panel.s_lc);
-					} else gr.DrawString(ui.icon.expand, ui.icon.font, !selCol ? ui.col.icon_c : ui.col.textSel, x, y + this.iconVerticalPad, panel.tree.w - x, ui.row.h, panel.s_lc);
+					} else gr.DrawString(ui.icon.expand, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_c, x, y + this.iconVerticalPad, panel.tree.w - x, ui.row.h, panel.s_lc);
 				} else {
 					if (hover) {
 						gr.DrawString(ui.icon.collapse, ui.icon.font, selCol ? ui.col.textSel : this.highlight.node ? ui.col.icon_h : ui.col.icon_c, x - ui.icon.offset, y + this.iconVerticalPad, panel.tree.w - x, ui.row.h, panel.s_lc);
-					} else gr.DrawString(ui.icon.collapse, ui.icon.font, !selCol ? ui.col.icon_e : ui.col.textSel, x - ui.icon.offset, y + this.iconVerticalPad, panel.tree.w - x, ui.row.h, panel.s_lc);
+					} else gr.DrawString(ui.icon.collapse, ui.icon.font, selCol ? ui.col.textSel : ui.col.icon_e, x - ui.icon.offset, y + this.iconVerticalPad, panel.tree.w - x, ui.row.h, panel.s_lc);
 				}
 				break;
 		}
@@ -1270,7 +1430,7 @@ class Populate {
 		this.expandLmt = men.treeExpandLimit;
 		while (m--)
 			if (this.tree[m].sel) {
-				this.expandNodes(this.tree[m], !this.rootNode || m ? false : true);
+				this.expandNodes(this.tree[m], !(!this.rootNode || m));
 				nodes++;
 			}
 		sbar.setRows(this.tree.length);
@@ -1319,7 +1479,7 @@ class Populate {
 					sbar.checkScroll(sbar.scroll - n * ui.row.h, 'step');
 				}
 				let row = this.getRowNumber(y);
-				this.branch(item, !item.root ? false : true, true);
+				this.branch(item, !!item.root, true);
 				if (!ix) panel.setHeight(true);
 				n = 2;
 				if (item.child.length == 1 && ppt.treeAutoExpandSingle) {
@@ -1346,7 +1506,7 @@ class Populate {
 	}
 
 	expandNodes(obj, am) {
-		this.branch(obj, !am ? false : true, true, true);
+		this.branch(obj, !!am, true, true);
 		if (obj.child) obj.child.some(v => {
 			if (v.track) this.expandedTracks++;
 			if (this.expandedTracks >= this.expandLmt) return true;
@@ -1379,12 +1539,12 @@ class Populate {
 		if (!+bytes) return '0 Bytes';
 
 		const k = 1024;
-		const dm = decimals < 0 ? 0 : decimals;
+		const dm = Math.max(decimals, 0);
 		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
 		const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-		return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+		return `${Number.parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 	}
 
 	getAllCombinations(n) {
@@ -1397,7 +1557,7 @@ class Populate {
 		const combinations = [];
 		const divisors = [];
 		const arraysToCombine = [];
-		n = n.replace(RegExp(`(#!#|)${panel.softSplitter}(#!#|)`, 'g'), '@@').split('#!#');
+		n = n.replace(new RegExp(`(#!#|)${panel.softSplitter}(#!#|)`, 'g'), '@@').split('#!#');
 		const ln = n.length;
 		let i = 0;
 		for (i = 0; i < ln; i++) {
@@ -1431,7 +1591,7 @@ class Populate {
 	}
 	// Regorxxx <- Statistics rework
 	getItemCount(v) {
-		let prop = !panel.imgView ? 'statistics' : '_statistics';
+		let prop = panel.imgView ? '_statistics' : 'statistics';
 		if (this.statisticsShow && v[prop] == null) {
 			if (v.root && this.label && !panel.imgView) { v[prop] = this.label; }
 			else {
@@ -1441,19 +1601,9 @@ class Populate {
 			}
 		}
 		if (v.count === '' && this.nodeCounts) {
-			if (!panel.imgView) {
-				if (v.root && this.label) {
-					if (!this.statisticsShow) v.count = this.label;
-				} else {
-					const type = panel.search.txt ? 'search' : ppt.filterBy ? 'filter' : 'standard';
-					const key = this.getKey(v);
-					v.count = !v.track || !this.showTracks ? (v.name ? ' ' : '') + (this.nodeCounts == 1 ? '(' + this.trackCount(v.item) + ')' : this.nodeCounts == 2 ? '(' + this.branchCount(v, !v.root ? false : true, true, false, key, type) + ')' : '') : '';
-					if (!this.showTracks && v.count == (v.name ? ' ' : '') + '(0)') v.count = '';
-					if (this.countsRight && !this.statisticsShow) v.count = v.count.replace(/[()]/g, '');
-				}
-			} else {
-				// Regorxxx <- New statistics
-				if (this.statisticsGetTracks[ppt.itemShowStatistics]) {
+			if (panel.imgView) {
+				// Regorxxx <- New statistics | Code cleanup
+				if (this.statistics[ppt.itemShowStatistics].showTrackCount) {
 					v.count = this.trackCount(v.item);
 					v.count += v.count > 1 ? ' tracks' : ' track';
 				}
@@ -1464,20 +1614,33 @@ class Populate {
 					if (panel.lines == 1 || ppt.albumArtFlipLabels) v.grp += ` (${count})`;
 					else v.lot += ` (${count})`;
 				}
+			} else {
+				if (v.root && this.label) {
+					if (!this.statisticsShow) v.count = this.label;
+				} else {
+					const type = panel.search.txt ? 'search' : ppt.filterBy ? 'filter' : 'standard';
+					const key = this.getKey(v);
+					v.count = !v.track || !this.showTracks ? (v.name ? ' ' : '') + (this.nodeCounts == 1 ? '(' + this.trackCount(v.item) + ')' : this.nodeCounts == 2 ? '(' + this.branchCount(v, !!v.root, true, false, key, type) + ')' : '') : '';
+					if (!this.showTracks && v.count == (v.name ? ' ' : '') + '(0)') v.count = '';
+					if (this.countsRight && !this.statisticsShow) v.count = v.count.replace(/[()]/g, '');
+				}
 			}
 		}
 	}
 	// Regorxxx ->
 
-	getHandleList(n) {
-		if (n == 'newItems') this.getTreeSel();
-		let handleList = new FbMetadbHandleList();
-		this.sel_items.some(v => {
-			if (v >= panel.list.Count) return true;
-			handleList.Add(panel.list[v]);
-		});
-		return handleList;
+	// Regorxxx <- Preserve tree sorting at selection
+	getHandleList(n, selection) {
+		if (n == 'newItems') { this.getTreeSel(); }
+		const max = panel.list.Count;
+		return new FbMetadbHandleList(
+			(selection || this.sel_items).reduce((prev, v) => {
+				if (v < max) { prev.push(panel.list[v]); }
+				return prev;
+			}, [])
+		);
 	}
+	// Regorxxx ->
 
 	get_ix(x, y, simple, type) {
 		let ix;
@@ -1492,18 +1655,55 @@ class Populate {
 			}
 			return -1;
 		}
-		if (y > panel.tree.y && y < panel.tree.y + this.rows * ui.row.h) ix = Math.round((y + sbar.delta - panel.search.h - ui.row.h * 0.5) / ui.row.h);
+		if (y > panel.tree.y && y <= panel.tree.y + this.rows * ui.row.h) ix = Math.round((y + sbar.delta - panel.search.h - ui.row.h * 0.5) / ui.row.h);
 		else ix = -1;
 		if (simple) return ix;
 		if (this.tree.length > ix && ix >= 0 && x < panel.tree.w && y > panel.tree.y && y < panel.tree.y + this.rows * ui.row.h && this.check_ix(this.tree[ix], x, y, type)) return ix;
 		else return -1;
 	}
 
+	// Regorxxx <- Update current item  under mouse while scrolling
+	getTreeRow(pos) {
+		return (pos * ui.row.h - sbar.scroll) / ui.row.h;
+	}
+
+	getArtColumn(pos) {
+		return img.style.vertical
+			? (pos % img.columns * img.columnWidth - sbar.scroll) / img.columnWidth
+			: (pos * img.columnWidth - sbar.scroll) / img.columnWidth;
+	}
+
+	getArtRow(pos) {
+		return img.style.vertical
+			? (Math.floor(pos / img.columns) * img.columnWidth - sbar.scroll) / img.columnWidth
+			: 0;
+	}
+
+	getXY(ix) {
+		let x = -1, y = -1;
+		if (ix >= 0 && ix <= this.tree.length - 1) {
+			if (panel.imgView) {
+				if (img.style.vertical) {
+					x = this.getArtColumn(ix) * img.columnWidth + img.columnWidth / 2 + img.bor.cov;
+					y = this.getArtRow(ix) * sbar.row.h + sbar.row.h / 2 + img.bor.cov;
+				} else {
+					x = this.getArtColumn(ix) * img.columnWidth + img.columnWidth / 2;
+					y = ui.h / 2;
+				}
+			} else {
+				x = ui.w / 2;
+				y = Math.min(this.getTreeRow(ix + 1) * ui.row.h + ui.row.h / 2, panel.tree.y + this.rows * ui.row.h);
+			}
+		}
+		return [x, y];
+	}
+	// Regorxxx ->
+
 	getKey(v) {
 		const level = v.level;
 		const o = {
 			a: v.nm || '',
-			b: level != 0 ? this.tree[v.par].nm : '',
+			b: level == 0 ? '' : this.tree[v.par].nm,
 			c: level > 1 ? this.tree[this.tree[v.par].par].nm : '',
 			d: level > 2 ? this.tree[this.tree[this.tree[v.par].par].par].nm : ''
 		};
@@ -1513,32 +1713,40 @@ class Populate {
 	getNowplaying(handle, stop) {
 		if (stop) {
 			panel.treePaint();
-			return this.nowp = -1;
+			this.nowp = -1;
+			return this.nowp;
 		}
 		if (!handle && fb.IsPlaying) handle = fb.GetNowPlaying();
-		if (!handle) return this.nowp = -1;
+		if (!handle) { this.nowp = -1; return this.nowp; }
 		this.nowp = panel.list.Find(handle);
 		panel.treePaint();
 	}
 
 	getNumbers(arr) { // test [0, '0', "0", "0.5", 10, '10', "", '', '-', null, true, false, 'Oh']
-		return arr.filter(v => Number(v)); // gives ["0.5", 10, "10", true]
-		//return arr.filter(v => parseFloat(v) == v); // gives [0, "0", "0", "0.5", 10, "10"]
-		//return arr.filter(v => Number(v) && parseFloat(v) == v); // gives ["0.5", 10, "10"]
+		return arr.filter(Number); // gives ["0.5", 10, "10", true]
+		/* NOSONAR
+			return arr.filter(v => Number.parseFloat(v) == v); // gives [0, "0", "0", "0.5", 10, "10"]
+			return arr.filter(v => Number(v) && Number.parseFloat(v) == v); // gives ["0.5", 10, "10"]
+		*/
 	}
 
 	getRowNumber(y) {
 		return Math.round((y - panel.tree.y - ui.row.h * 0.5) / ui.row.h);
 	}
 
+	// Regorxxx <- Rectangle selection on art view | Preserve tree sorting at selection | Performance improvements ->
 	getTreeSel() {
 		panel.treePaint();
 		this.sel_items = [];
-		this.tree.forEach(v => {
-			if (v.sel) this.addItems(this.sel_items, v.item);
+		this.lastSelMul = [];
+		this.tree.forEach((v, idx) => {
+			if (v.sel) { this.lastSelMul.push(idx); }
 		});
-		this.uniq(this.sel_items);
+		const bNoSort = !panel.playlistSort && this.lastSelMul.reduce((prev, idx) => prev + this.trackCount(this.tree[idx].item), 0) > (Number(ppt.treeSortLimit) || Infinity);
+		this.lastSelMul.forEach((idx) => this.addItems(this.sel_items, this.tree[idx], bNoSort));
+		this.sel_items = [...new Set(this.sel_items)];
 	}
+	// Regorxxx ->
 
 	imgView(n) {
 		let a, b, c = [];
@@ -1550,7 +1758,7 @@ class Populate {
 	}
 
 	isDate(n) {
-		return isNaN(n) && !isNaN(Date.parse(n));
+		return isNaN(n) && !isNaN(Date.parse(n)); // NOSONAR
 	}
 
 	inRange(num, item) {
@@ -1562,7 +1770,7 @@ class Populate {
 	}
 
 	lbtn_dblclk(x, y) {
-		if (this.autoPlay.click > 2 && ppt.libSource) return;
+		if (this.autoPlay.click > 2 && panel.isStandardSource()) return;
 		if (vk.k('alt')) {
 			this.mbtnDblClickOrAltDblClick(x, y, '', 'alt');
 			return;
@@ -1579,10 +1787,7 @@ class Populate {
 			case 'text':
 				if (!this.check_ix(item, x, y, false)) return;
 				if (this.dblClickAction == 3) {
-					let handleList = new FbMetadbHandleList();
-					this.range(item.item).forEach(v => {
-						if (v < panel.list.Count) handleList.Add(panel.list[v]);
-					});
+					const handleList = this.getHandleList(void (0), this.range(item.item)); // Regorxxx <- Preserve tree sorting at selection ->
 					if (handleList.Count) plman.FlushPlaybackQueue();
 					for (let i = 0; i < handleList.Count; i++) {
 						plman.AddItemToPlaybackQueue(handleList[i]);
@@ -1591,8 +1796,8 @@ class Populate {
 					return;
 				}
 				// Regorxxx <- Fix Double click while using search on playlist sources | Allow multiple fixed playlists as source | Allow fixed playlist by GUID
-				if (!ppt.libSource) {
-					const plsIdxArr = ppt.fixedPlaylist ? lib.getFixedPlaylistSources() : [$.pl_active];
+				if (!panel.isStandardSource()) {
+					const plsIdxArr = panel.isFixedPlaylistSource() ? panel.getFixedPlaylistSources() : [panel.getPlaylistSource()]; // Regorxxx <- Playing playlist source ->
 					if (plsIdxArr.length !== 0) {
 						for (let plsIdx of plsIdxArr) {
 							const idx = panel.search.txt.length
@@ -1614,16 +1819,11 @@ class Populate {
 				if (this.dblClickAction != 2 || this.dblClickAction == 2 && item.track || this.dblClickAction == 2 && panel.imgView) {
 					if (!this.autoFill.mouse) this.send(item, x, y);
 					let pl_stnd_idx = plman.FindOrCreatePlaylist(ppt.libPlaylist.replace(/%view_name%/i, panel.viewName), false);
-					if (ppt.sendToCur) pl_stnd_idx = plman.ActivePlaylist;
-					else plman.ActivePlaylist = pl_stnd_idx;
-					plman.ActivePlaylist = pl_stnd_idx;
+					if (ppt.sendToCur) { pl_stnd_idx = plman.ActivePlaylist; }
+					else { plman.ActivePlaylist = pl_stnd_idx; }
 					// Regorxxx <- Queue source
-					if (ppt.libSource === 3) {
-						let handleList = new FbMetadbHandleList();
-						this.range(item.item).forEach(v => {
-							if (v < panel.list.Count) handleList.Add(panel.list[v]);
-						});
-						handleList = handleList.Convert();
+					if (panel.isQueueSource()) {
+						const handleList = this.getHandleList(void (0), this.range(item.item)).Convert(); // Regorxxx <- Preserve tree sorting at selection ->
 						if (handleList.length) {
 							const queue = plman.GetPlaybackQueueContents();
 							plman.FlushPlaybackQueue();
@@ -1651,16 +1851,39 @@ class Populate {
 		}
 	}
 
+	// Regorxxx <- Rectangle selection on art view
 	lbtn_dn(x, y) {
 		this.lbtnDn = false;
 		this.dbl_clicked = false;
-		if (y < panel.search.h) return;
-		let ix = this.get_ix(x, y, true, false);
-		if (ix >= this.tree.length || ix < 0) return;
-		this.deactivateTooltip();
-		if (ppt.touchControl) {
-			ui.id.dragDrop = ui.id.touch_dn = ix;
+		if (y < panel.search.h) { return; }
+		const vertical = !ppt.albumArtFlowMode || ui.h - panel.search.h > ui.w - ui.sbar.w;
+		if ((!panel.imgView || vertical) && x > ui.w - ui.sbar.sp || panel.imgView && !vertical && y > ui.h - ui.sbar.sp) { return; }
+		const ix = this.get_ix(x, y, true, false);
+		if (ppt.selRectArt && panel.imgView) {
+			if (this.lastSelMul.includes(ix)) {
+				this.selRect.down = false;
+				this.selRect.x = this.selRect.w = this.selRect.y = this.selRect.h = this.selRect.mx = this.selRect.my = void (0);
+				this.selRect.over.clear();
+			} else {
+				this.selRect.down = true;
+				this.last_pressed_coord.x = this.selRect.mx = x;
+				this.last_pressed_coord.y = this.selRect.my = y;
+				this.selRect.x = this.selRect.w = x;
+				this.selRect.y = this.selRect.h = y;
+				return;
+			}
+			if (ix >= this.tree.length || ix < 0) { return; }
+		} else {
+			if (ix >= this.tree.length || ix < 0) { return; }
+			this.deactivateTooltip();
+			if (ppt.touchControl) {
+				ui.id.dragDrop = ui.id.touch_dn = ix;
+			}
 		}
+		this.itemClickDown(ix, x, y);
+	}
+
+	itemClickDown(ix, x, y) {
 		const item = this.tree[ix];
 		this.clicked_on = this.clickedOn(x, y, item);
 		switch (this.clicked_on) {
@@ -1689,28 +1912,68 @@ class Populate {
 	}
 
 	lbtn_up(x, y) {
-		if (lib.empty && ppt.libSource == 1 && !ppt.fixedPlaylist && y > panel.search.h) fb.RunMainMenuCommand('Library/Configure');
-		this.last_pressed_coord = {
-			x: undefined,
-			y: undefined
-		};
+		if (lib.empty && panel.isLibrarySource() && y > panel.search.h) { fb.RunMainMenuCommand('Library/Configure'); }
+		if (ppt.selRectArt && panel.imgView) {
+			if (this.selRect.down) {
+				const bSel = this.last_pressed_coord.x !== x || this.last_pressed_coord.y !== y;
+				this.selRect.down = false;
+				if (bSel) {
+					this.clearSelected();
+					this.selRect.over.forEach((idx) => { if (idx !== -1) { this.tree[idx].sel = true; } });
+					this.getTreeSel();
+					this.last_pressed_coord.x = this.last_pressed_coord.y = void (0);
+					this.lbtnDn = false;
+					this.selRect.x = this.selRect.w = this.selRect.y = this.selRect.h = this.selRect.mx = this.selRect.my = void (0);
+					this.selRect.over.clear();
+					lib.treeState(false, ppt.rememberTree) || panel.treePaint(); // Regorxxx <- Code cleanup | Improve repainting ->
+					return;
+				} else {
+					if (y < panel.search.h || this.dbl_clicked || but.Dn) { return; }
+					const ix = this.get_ix(x, y, true, false);
+					if (ix >= this.tree.length || ix < 0) {
+						// Regorxxx <- Reset selection on blank regions
+						if (ppt.resetSel && (this.sel_items.length || this.lastSelMul.length)) {
+							this.clearSelected();
+							this.sel_items = [];
+							this.lastSelMul = []; // Regorxxx <- Rectangle selection on art view -
+							lib.treeState(false, ppt.rememberTree) || panel.treePaint(); // Regorxxx <- Code cleanup | Improve repainting ->
+						}
+						// Regorxxx ->
+						return;
+					}
+					this.itemClickDown(this.get_ix(x, y, true, false), x, y);
+				}
+			}
+		}
+		this.last_pressed_coord.x = this.last_pressed_coord.y = void (0); // Regorxxx <- Code cleanup ->
 		this.lbtnDn = false;
-		if (y < panel.search.h || this.dbl_clicked || but.Dn) return;
+		if (y < panel.search.h || this.dbl_clicked || but.Dn) { return; }
 		const ix = this.get_ix(x, y, true, false);
 		panel.pos = ix;
-		if (ix >= this.tree.length || ix < 0) return;
-		if (ppt.touchControl && (this.autoFill.mouse || this.autoPlay.click) && ui.id.touch_dn != ix) return;
-		const item = this.tree[ix];
-		if (this.clicked_on != 'text') return;
-		if (!ppt.libSource) return this.setPlaylistSelection(ix, item);
-		if (vk.k('alt')) {
-			this.mbtnUpOrAltClickUp(x, y, '', 'alt');// {
+		if (ix >= this.tree.length || ix < 0) {
+			// Regorxxx <- Reset selection on blank regions
+			if (ppt.resetSel && (this.sel_items.length || this.lastSelMul.length)) {
+				this.clearSelected();
+				this.sel_items = [];
+				this.lastSelMul = []; // Regorxxx <- Rectangle selection on art view ->
+				lib.treeState(false, ppt.rememberTree) || panel.treePaint(); // Regorxxx <- Code cleanup | Improve repainting ->
+			}
+			// Regorxxx ->
 			return;
 		}
-		if (!vk.k('ctrl')) {
+		if (ppt.touchControl && (this.autoFill.mouse || this.autoPlay.click) && ui.id.touch_dn != ix) { return; }
+		const item = this.tree[ix];
+		if (this.clicked_on != 'text') { return; }
+		if (!panel.isStandardSource()) { return this.setPlaylistSelection(ix, item); }
+		if (vk.k('alt')) {
+			this.mbtnUpOrAltClickUp(x, y, '', 'alt');
+			return;
+		}
+		if (vk.k('ctrl')) { this.setTreeSel(ix, item.sel); }
+		else {
 			this.clearSelected();
 			if (!item.sel) this.setTreeSel(ix, item.sel);
-		} else this.setTreeSel(ix, item.sel);
+		}
 		if (this.autoFill.mouse || this.autoPlay.click) {
 			window.Repaint(true);
 			this.send(item, x, y);
@@ -1720,6 +1983,7 @@ class Populate {
 		this.track(this.autoFill.mouse || this.autoPlay.click);
 		lib.treeState(false, ppt.rememberTree);
 	}
+	// Regorxxx ->
 
 	leave() {
 		this.deactivateTooltip();
@@ -1732,11 +1996,16 @@ class Populate {
 		this.cur_ix = 0;
 		this.row.i = -1;
 		this.row.cur = 0;
+		// Regorxxx <- Rectangle selection on art view
+		this.selRect.down = false;
+		this.selRect.x = this.selRect.w = this.selRect.y = this.selRect.h = this.selRect.mx = this.selRect.my = void (0);
+		this.selRect.over.clear();
+		// Regorxxx  ->
 		panel.treePaint();
 	}
 
 	leftKeyCheckScroll() {
-		const row = (panel.pos * ui.row.h - sbar.scroll) / ui.row.h;
+		const row = this.getTreeRow(panel.pos);
 		if (sbar.scroll > panel.pos * ui.row.h) sbar.checkScroll(panel.pos * ui.row.h);
 		else if (row - sbar.rows_drawn > 0) {
 			sbar.checkScroll((panel.pos + 3 - sbar.rows_drawn) * ui.row.h);
@@ -1800,8 +2069,8 @@ class Populate {
 				if (np_item != -1) {
 					np = plman.GetPlayingItemLocation();
 					if (np.IsValid) {
-						if (np.PlaylistIndex != pl_stnd_idx) pl_chk = false;
-						else pid = np.PlaylistItemIndex;
+						if (np.PlaylistIndex == pl_stnd_idx) { pid = np.PlaylistItemIndex; }
+						else { pl_chk = false; }
 					}
 					if (pl_chk && pid == -1 && items.Count < 5000) {
 						if (ui.dui) plman.SetActivePlaylistContext();
@@ -1817,7 +2086,12 @@ class Populate {
 						}
 					}
 				}
-				if (pid != -1) {
+				if (pid == -1) {
+					if (plman.PlaylistItemCount(pl_stnd_idx) < 5000) plman.UndoBackup(pl_stnd_idx);
+					plman.ClearPlaylist(pl_stnd_idx);
+					plman.InsertPlaylistItems(pl_stnd_idx, 0, items);
+					if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(0, items.Count - 1), true); } // Regorxxx <- Send to playlist & select ->
+				} else {
 					plman.ClearPlaylistSelection(pl_stnd_idx);
 					plman.SetPlaylistSelectionSingle(pl_stnd_idx, pid, true);
 					plman.RemovePlaylistSelection(pl_stnd_idx, true);
@@ -1828,26 +2102,21 @@ class Populate {
 					plman.InsertPlaylistItems(pl_stnd_idx, 0, items);
 					plman.InsertPlaylistItems(pl_stnd_idx, plman.PlaylistItemCount(pl_stnd_idx), it);
 					if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(0, items.Count + it.Count), true); } // Regorxxx <- Send to playlist & select ->
-				} else {
-					if (plman.PlaylistItemCount(pl_stnd_idx) < 5000) plman.UndoBackup(pl_stnd_idx);
-					plman.ClearPlaylist(pl_stnd_idx);
-					plman.InsertPlaylistItems(pl_stnd_idx, 0, items);
-					if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(0, items.Count - 1), true); } // Regorxxx <- Send to playlist & select ->
 				}
 			}
-		} else if (!bAddToPls) {
+		} else if (bAddToPls) {
+			if (plman.PlaylistItemCount(pl_stnd_idx) < 5000) plman.UndoBackup(pl_stnd_idx);
+			plman.InsertPlaylistItems(pl_stnd_idx, bInsertToPls ? plman.GetPlaylistFocusItemIndex(pl_stnd_idx) : plman.PlaylistItemCount(pl_stnd_idx), items, true);
+			const f_ix = !bInsertToPls || plman.GetPlaylistFocusItemIndex(pl_stnd_idx) == -1 ? plman.PlaylistItemCount(pl_stnd_idx) - items.Count : plman.GetPlaylistFocusItemIndex(pl_stnd_idx) - items.Count;
+			plman.SetPlaylistFocusItem(pl_stnd_idx, f_ix);
+			plman.EnsurePlaylistItemVisible(pl_stnd_idx, f_ix);
+			if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(f_ix, items.Count - 1), true); } // Regorxxx <- Send to playlist & select ->
+		} else {
 			if (plman.PlaylistItemCount(pl_stnd_idx) < 5000) plman.UndoBackup(pl_stnd_idx);
 			plman.ClearPlaylist(pl_stnd_idx);
 			plman.InsertPlaylistItems(pl_stnd_idx, 0, items);
 			plman.SetPlaylistFocusItem(pl_stnd_idx, 0);
 			if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(0, items.Count - 1), true); } // Regorxxx <- Send to playlist & select ->
-		} else {
-			if (plman.PlaylistItemCount(pl_stnd_idx) < 5000) plman.UndoBackup(pl_stnd_idx);
-			plman.InsertPlaylistItems(pl_stnd_idx, !bInsertToPls ? plman.PlaylistItemCount(pl_stnd_idx) : plman.GetPlaylistFocusItemIndex(pl_stnd_idx), items, true);
-			const f_ix = !bInsertToPls || plman.GetPlaylistFocusItemIndex(pl_stnd_idx) == -1 ? plman.PlaylistItemCount(pl_stnd_idx) - items.Count : plman.GetPlaylistFocusItemIndex(pl_stnd_idx) - items.Count;
-			plman.SetPlaylistFocusItem(pl_stnd_idx, f_ix);
-			plman.EnsurePlaylistItemVisible(pl_stnd_idx, f_ix);
-			if (ppt.selectAdded) { plman.SetPlaylistSelection(pl_stnd_idx, $.range(f_ix, items.Count - 1), true); } // Regorxxx <- Send to playlist & select ->
 		}
 		if (bAutoPlay) {
 			const c = (plman.PlaybackOrder == 3 || plman.PlaybackOrder == 4) ? Math.ceil(plman.PlaylistItemCount(pl_stnd_idx) * Math.random() - 1) : 0;
@@ -1865,10 +2134,7 @@ class Populate {
 		if (type == 'mbtn' && (ppt.actionMode == 2 || ppt.mbtnClickAction == 2) || type == 'alt' && ppt.altClickAction == 2) {
 			const ix = this.get_ix(x, y, true, false);
 			if (ix < this.tree.length && ix >= 0) {
-				let handleList = new FbMetadbHandleList();
-				this.range(this.tree[ix].item).forEach(v => {
-					if (v < panel.list.Count) handleList.Add(panel.list[v]);
-				});
+				const handleList = this.getHandleList(void (0), this.range(this.tree[ix].item)); // Regorxxx <- Preserve tree sorting at selection ->
 				const queueHandles = plman.GetPlaybackQueueHandles();
 				let remove = [];
 				for (let i = 0; i < handleList.Count; i++) {
@@ -1891,12 +2157,9 @@ class Populate {
 				if (this[`${type}_dbl_clicked`]) return;
 				const ix = this.get_ix(x, y, true, false);
 				if (ix < this.tree.length && ix >= 0) {
-					let handleList = new FbMetadbHandleList();
-					this.range(this.tree[ix].item).forEach(v => {
-						if (v < panel.list.Count) handleList.Add(panel.list[v]);
-					});
+					const handleList = this.getHandleList(void (0), this.range(this.tree[ix].item)).Convert(); // Regorxxx <- Preserve tree sorting at selection ->
 					let add = new FbMetadbHandleList();
-					handleList.Convert().forEach(h => {
+					handleList.forEach(h => {
 						let found = false;
 						plman.GetPlaybackQueueHandles().Convert().forEach(q => {
 							if (h.Compare(q)) found = true;
@@ -1907,29 +2170,28 @@ class Populate {
 					const plItems = plman.GetPlaylistItems(ap);
 					add.Convert().forEach(v => {
 						const ix = plItems.Find(v);
-						if (ix != -1) {
-							plman.AddPlaylistItemToPlaybackQueue(ap, ix);
-						} else plman.AddItemToPlaybackQueue(v);
+						if (ix == -1) { plman.AddItemToPlaybackQueue(v); }
+						else { plman.AddPlaylistItemToPlaybackQueue(ap, ix); }
 					});
 				}
 			}, 180);
 			// Regorxxx <- Top tracks
 		} else if ((type == 'mbtn' || type == 'alt') && [3, 4, 5, 6].includes(ppt[`${type}ClickAction`])) {
-			if (!ppt.libSource) return;
+			if (!panel.isStandardSource()) return;
 			this.addTopTracks(x, y, ppt[`${type}ClickAction`] >= 5, ![4, 6].includes(ppt[`${type}ClickAction`]));
 			// Regorxxx ->
 		} else {
-			if (!ppt.libSource) return;
+			if (!panel.isStandardSource()) return;
 			this.add(x, y, !ppt[`${type}ClickAction`]);
 		}
 	}
 
 	merge(m, mergeBrCount) {
-		if (!ppt.libSource && !panel.multiProcess) return;
+		if (!panel.isStandardSource() && !panel.multiProcess) return;
 		const seen = {};
 		for (let i = 0; i < m.length; i++) {
 			const v = m[i].srt[0].toUpperCase();
-			if (seen[v] === undefined) seen[v] = i;
+			if (typeof seen[v] === 'undefined') { seen[v] = i; }
 			else {
 				if (!mergeBrCount) m[i].item.forEach(w => m[seen[v]].item.push(w));
 				m.splice(i, 1);
@@ -1938,9 +2200,34 @@ class Populate {
 		}
 	}
 
-	move(x, y) {
+	move(x, y, scrolling) { // Regorxxx <- Update current item  under mouse while scrolling ->
 		if (but.Dn) return;
-		const ix = this.get_ix(x, y, false, false);
+		// Regorxxx <- Rectangle selection on art view
+		if (ppt.selRectArt && panel.imgView && this.selRect.down) {
+			if (this.last_pressed_coord.x !== x || this.last_pressed_coord.y !== y) {
+				if (x > this.selRect.x && x < this.selRect.w) {
+					if (x < this.selRect.mx) { this.selRect.w = 0; }
+					else { this.selRect.x = this.selRect.w; }
+				}
+				if (y > this.selRect.y && y < this.selRect.h) {
+					if (y < this.selRect.my) { this.selRect.h = 0; }
+					else { this.selRect.y = this.selRect.h; }
+				}
+				[this.selRect.x, this.selRect.w] = [Math.min(this.selRect.x, x), Math.max(this.selRect.x, x, this.selRect.w)];
+				[this.selRect.y, this.selRect.h] = [Math.min(this.selRect.y, y), Math.max(this.selRect.y, y, this.selRect.h)];
+				this.selRect.over.clear();
+				for (let ix = this.selRect.x; ix <= this.selRect.w; ix += 2) {
+					for (let iy = this.selRect.y; iy <= this.selRect.h; iy += 2) {
+						this.selRect.over.add(this.get_ix(ix, iy, true, false));
+					}
+				}
+			}
+			panel.treePaint();
+			this.selRect.mx = x;
+			this.selRect.my = y;
+		}
+		// Regorxxx ->
+		const ix = this.get_ix(x, y, scrolling, false); // Regorxxx <- Update current item  under mouse while scrolling ->
 		this.row.i = this.checkRow(x, y);
 		this.m.i = -1;
 		if (ix != -1) {
@@ -1957,15 +2244,16 @@ class Populate {
 		window.SetCursor(this.hand ? 32649 : !but.Dn && y < panel.search.h && ppt.searchShow && x > but.q.h + but.margin && x < panel.search.x + panel.search.w ? 32513 : 32512);
 		const same = this.m.i == this.cur_ix && this.m.br == this.m.cur_br && this.row.i == this.row.cur;
 		if (same && !sbar.touch.dn) return;
-		if (!sbar.draw_timer && !same) panel.treePaint();
+		if (!scrolling && !sbar.draw_timer && !same) { panel.treePaint(); } // Regorxxx <- Update current item  under mouse while scrolling ->
 		this.cur_ix = this.m.i;
 		this.m.cur_br = this.m.br;
 		this.row.cur = this.row.i;
 	}
 
 	notifySelection(list) {
-		if (list === undefined) list = this.getHandleList('newItems');
+		if (typeof list === 'undefined') { list = this.getHandleList('newItems'); }
 		window.NotifyOthers(window.Name, list);
+		window.NotifyOthers('Timeline-SMP: panel tracks', { handleList: list, uuid: window.Name }); // Regorxxx <- Timeline-SMP integration ->
 		if (list.Count) return true;
 	}
 
@@ -1977,8 +2265,8 @@ class Populate {
 				if (this.inRange(this.nowp, v.item)) {
 					np_i = i;
 					if (!v.root) {
-						if (panel.imgView) i = this.tree.length;
-						else if (!v.track) this.branch(this.tree[np_i]);
+						if (panel.imgView) { break; }
+						else if (!v.track) { this.branch(this.tree[np_i]); }
 					}
 				}
 			}
@@ -1990,7 +2278,7 @@ class Populate {
 		}
 	}
 	// Regorxxx <- Double click scrollbar
-	selShow(item = -1) {
+	selShow(item = -1, bSelect = true) { // Regorxxx <- Scrolling helpers ->
 		if (item === -1 || typeof item === 'undefined') {
 			const handle = fb.GetFocusItem(true);
 			if (handle) { item = panel.list.Find(handle); }
@@ -2002,16 +2290,16 @@ class Populate {
 				if (this.inRange(item, v.item)) {
 					idx = i;
 					if (!v.root) {
-						if (panel.imgView) i = this.tree.length;
-						else if (!v.track) this.branch(this.tree[idx]);
+						if (panel.imgView) { break; }
+						else if (!v.track) { this.branch(this.tree[idx]); }
 					}
 				}
 			}
-			if (!panel.imgView && !this.tree[idx].root) {
+			if (bSelect && !panel.imgView && !this.tree[idx].root) { // Regorxxx <- Scrolling helpers ->
 				this.clearSelected();
 				this.tree[idx].sel = true;
 			}
-			if (idx != -1) this.showItem(idx, 'focus');
+			if (idx != -1) { this.showItem(idx, 'focus', bSelect); } // Regorxxx <- Scrolling helpers ->
 		}
 	}
 	// Regorxxx ->
@@ -2028,14 +2316,39 @@ class Populate {
 				fb.CopyHandleListToClipboard(handleList);
 				break;
 			}
-			case vk.selAll:
+			// Regorxxx <- Extra shortcuts | Select All acts as a toogle | Invert selection
+			case vk.selNone:
+			case vk.selAll: {
+				const bSelected = code === vk.selAll
+					? !this.tree.every((v) => v.root || v.sel)
+					: false;
 				this.tree.forEach(v => {
-					if (!v.root) v.sel = true;
+					if (!v.root) { v.sel = bSelected; }
 				});
 				this.getTreeSel();
-				if (!this.sel_items.length) return;
-				this.setPlaylist();
+				if (panel.isStandardSource()) {
+					if (!this.sel_items.length) { return; }
+					this.setPlaylist();
+				} else if (this.autoFill.key) {
+					if (bSelected) { this.setPlaylistSelectionAll(); }
+					else { this.setPlaylistSelectionNone(); }
+				}
 				break;
+			}
+			case vk.selInvert: {
+				this.tree.forEach(v => {
+					if (!v.root) { v.sel = !v.sel; }
+				});
+				this.getTreeSel();
+				if (panel.isStandardSource()) {
+					if (!this.sel_items.length) { return; }
+					this.setPlaylist();
+				} else if (this.autoFill.key) {
+					this.setPlaylistSelectionInvert();
+				}
+				break;
+			}
+			// Regorxxx ->
 			case vk.eFocusSearch:
 			case vk.lFocusSearch:
 				if (ppt.searchShow) search.focus();
@@ -2054,10 +2367,10 @@ class Populate {
 	}
 
 	setPlaylist(ix, item) {
-		if (ppt.libSource) {
+		if (panel.isStandardSource()) {
 			if (this.autoFill.key) this.load({ bAddToPls: false, bAutoPlay: false, bUseDefaultPls: !ppt.sendToCur, bInsertToPls: false }); // Regorxxx <- Code cleanup ->
 			this.track(true);
-		} else if (this.autoFill.key) this.setPlaylistSelection(ix, item);
+		} else if (this.autoFill.key && typeof item !== 'undefined' && typeof ix !== 'undefined') { this.setPlaylistSelection(ix, item); } // Regorxxx <- Select All not working with playlist sources ->
 	}
 
 	on_key_down(vkey) {
@@ -2073,8 +2386,8 @@ class Populate {
 		if (panel.search.active) return;
 		if (vk.k('enter')) {
 			if (!this.sel_items.length) return;
-			if (!ppt.libSource) {
-				if (this.autoPlay.send) plman.ExecutePlaylistDefaultAction($.pl_active, this.sel_items[0]);
+			if (!panel.isStandardSource()) {
+				if (this.autoPlay.send) plman.ExecutePlaylistDefaultAction(plman.ActivePlaylist, this.sel_items[0]);
 				return;
 			}
 			switch (true) {
@@ -2138,12 +2451,12 @@ class Populate {
 				// !imgView
 				if (item.child.length) {
 					panel.pos++;
-					panel.pos = $.clamp(panel.pos, !this.rootNode ? 0 : 1, this.tree.length - 1);
+					panel.pos = $.clamp(panel.pos, this.rootNode ? 1 : 0, this.tree.length - 1);
 					this.upDnKeyCheckScroll(vkey);
 					break;
 				}
 				if (ppt.autoCollapse) this.branchChange(item, false, true);
-				this.branch(item, !item.root ? false : true, true);
+				this.branch(item, !!item.root, true);
 				let n = 2;
 				if (item.child.length == 1 && ppt.treeAutoExpandSingle) {
 					this.branch(item.child[0], false, true);
@@ -2154,7 +2467,7 @@ class Populate {
 				this.m.i = panel.pos = item.ix;
 				this.setPlaylist(panel.pos, item);
 				sbar.setRows(this.tree.length);
-				const row = (panel.pos * ui.row.h - sbar.scroll) / ui.row.h;
+				const row = this.getTreeRow(panel.pos);
 				if (row + n + item.child.length > sbar.rows_drawn || row < 0) {
 					if (item.child.length > (sbar.rows_drawn - n) || row < 0) sbar.checkScroll(panel.pos * ui.row.h);
 					else sbar.checkScroll(Math.min(panel.pos * ui.row.h, (panel.pos + n - sbar.rows_drawn + item.child.length) * ui.row.h));
@@ -2165,9 +2478,9 @@ class Populate {
 			case vk.pgUp:
 				if (this.tree.length == 0) break;
 				if (panel.imgView) {
-					panel.pos = panel.pos - img.columns * (panel.rows - 1);
+					panel.pos = panel.pos - img.columns * Math.max(panel.rows - 1, 1); // Regorxxx <- Fix scrolling not working when a single row was drawn ->
 					panel.pos = $.clamp(panel.pos, 0, this.tree.length - 1);
-				} else panel.pos = Math.max(Math.round(sbar.scroll / ui.row.h + 0.4) - Math.floor(panel.rows) + 1, !this.rootNode ? 0 : 1);
+				} else { panel.pos = Math.max(Math.round(sbar.scroll / ui.row.h + 0.4) - Math.floor(panel.rows) + 1, this.rootNode ? 1 : 0); }
 				sbar.pageThrottle(1);
 				this.setTreeSel(this.tree[panel.pos].ix);
 				panel.treePaint();
@@ -2178,9 +2491,9 @@ class Populate {
 			case vk.pgDn:
 				if (this.tree.length == 0) break;
 				if (panel.imgView) {
-					panel.pos = panel.pos + img.columns * (panel.rows - 1);
+					panel.pos = panel.pos + img.columns * Math.max(panel.rows - 1, 1); // Regorxxx <- Fix scrolling not working when a single row was drawn ->
 					panel.pos = $.clamp(panel.pos, 0, this.tree.length - 1);
-				} else panel.pos = Math.min(Math.round(sbar.scroll / ui.row.h + 0.4) + Math.floor(panel.rows) * 2 - 2, this.tree.length - 1);
+				} else { panel.pos = Math.min(Math.round(sbar.scroll / ui.row.h + 0.4) + Math.floor(panel.rows) * 2 - 2, this.tree.length - 1); }
 				sbar.pageThrottle(-1);
 				this.setTreeSel(this.tree[panel.pos].ix);
 				panel.treePaint();
@@ -2190,7 +2503,7 @@ class Populate {
 			case vk.home:
 				if (this.tree.length == 0) break;
 				if (vk.k('alt')) { return this.on_key_down(vk.up); } // Regorxxx <- Jump to fist/last sibling ->
-				panel.pos = !this.rootNode ? 0 : 1;
+				panel.pos = this.rootNode ? 1 : 0;
 				sbar.checkScroll(0, 'full');
 				this.setTreeSel(this.tree[panel.pos].ix);
 				panel.treePaint();
@@ -2209,6 +2522,7 @@ class Populate {
 				break;
 			case vk.dn:
 			case vk.up:
+				if (find.jSearch) { break; } // Regorxxx <- Up/down navigation during quicksearch ->
 				if (this.tree.length == 0) break;
 				if ((panel.pos == 0 && vkey == vk.up) || (panel.pos == this.tree.length - 1 && vkey == vk.dn) || (panel.pos === -1 && vk.k('alt'))) {
 					this.setTreeSel(-1);
@@ -2220,30 +2534,30 @@ class Populate {
 				if (vk.k('alt')) {
 					item = this.tree[panel.pos];
 					let sibling;
-					if (!panel.imgView) {
-						if (item.level === 0) { this.on_key_down(vk.right); }
-						const parent = item.level === 0 ? item : this.tree[item.par];
-						if (parent) { sibling = parent.child.slice(vkey === vk.dn ? -1 : 0, vkey === vk.dn ? void (0) : 1)[0]; }
-					} else {
+					if (panel.imgView) {
 						const parentId = item.nm.split('^@^')[0];
 						if (parentId) {
 							sibling = vkey === vk.dn
 								? this.tree.slice(panel.pos).slice().reverse().find((node) => node.nm.startsWith(parentId + '^@^'))
 								: this.tree.slice(0, panel.pos).slice().find((node) => node.nm.startsWith(parentId + '^@^'));
 						}
+					} else {
+						if (item.level === 0) { this.on_key_down(vk.right); }
+						const parent = item.level === 0 ? item : this.tree[item.par];
+						if (parent) { sibling = parent.child.slice(vkey === vk.dn ? -1 : 0, vkey === vk.dn ? void (0) : 1)[0]; }
 					}
 					if (sibling) { panel.pos = sibling.ix; }
 				} else {
-					if (!panel.imgView) {
-						if (vkey == vk.dn) panel.pos++;
-						if (vkey == vk.up) panel.pos--;
-					} else {
+					if (panel.imgView) {
 						if (vkey == vk.dn) panel.pos += img.columns;
 						if (vkey == vk.up) panel.pos -= img.columns;
+					} else {
+						if (vkey == vk.dn) panel.pos++;
+						if (vkey == vk.up) panel.pos--;
 					}
 				}
 				// Regorxxx ->
-				panel.pos = $.clamp(panel.pos, !this.rootNode ? 0 : 1, this.tree.length - 1);
+				panel.pos = $.clamp(panel.pos, this.rootNode ? 1 : 0, this.tree.length - 1);
 				if (panel.imgView) {
 					item = this.tree[panel.pos];
 					this.m.i = panel.pos;
@@ -2253,6 +2567,14 @@ class Populate {
 				}
 				this.upDnKeyCheckScroll(vkey);
 				break;
+			// Regorxxx <- Queue source | Auto-DJ source
+			case vk.del: {
+				if (this.sel_items.length) {
+					if (panel.isQueueSource()) { panel.removeFromQueue(this.getHandleList()); }
+					else if (panel.isAutoDjSource()) { panel.removeFromAutoDjSource(this.getHandleList()); }
+				}
+			}
+			// Regorxxx ->
 		}
 	}
 
@@ -2310,44 +2632,87 @@ class Populate {
 			send: ppt.autoPlay
 		};
 		this.autoFill = {
-			mouse: ppt.actionMode == 2 ? false : ppt.clickAction == 1 || ppt.actionMode == 1 ? true : false,
+			mouse: ppt.actionMode == 2 ? false : ppt.clickAction == 1 || ppt.actionMode == 1,
 			key: ppt.keyAction
 		};
 		this.dblClickAction = ppt.actionMode == 1 ? 1 : ppt.actionMode == 2 ? 3 : ppt.dblClickAction;
 	}
 
-	setPlaylistSelection(ix, item) {
-		this.clearSelected();
-		if (!item.sel) this.setTreeSel(ix, item.sel);
-		panel.treePaint();
-		plman.ClearPlaylistSelection($.pl_active);
+	// Regorxxx <- Select All not working with playlist sources
+	setPlaylistSelectionAll() {
+		if (plman.ActivePlaylist === -1) { return; }
+		plman.ClearPlaylistSelection(plman.ActivePlaylist);
 		let items = [];
 		if (panel.search.txt || ppt.filterBy || panel.multiProcess) {
 			const hl = this.getHandleList();
 			hl.Convert().forEach(h => {
 				const i = lib.full_list.Find(h);
-				if (i != -1) items.push(i);
+				if (i != -1) { items.push(i); }
 			});
 		} else {
-			items = this.range(item.item);
+			items = $.range(0, panel.list.Count - 1);
 		}
-		plman.SetPlaylistSelection($.pl_active, items, true);
+		plman.SetPlaylistSelection(plman.ActivePlaylist, items, true);
 		this.setFocus = true;
-		plman.SetPlaylistFocusItem($.pl_active, items[0]);
+		plman.SetPlaylistFocusItem(plman.ActivePlaylist, items[0]);
 		this.track(false);
 		lib.treeState(false, ppt.rememberTree);
 	}
+
+	setPlaylistSelectionNone() {
+		if (plman.ActivePlaylist === -1) { return; }
+		plman.ClearPlaylistSelection(plman.ActivePlaylist);
+	}
+
+	setPlaylistSelectionInvert() {
+		if (plman.ActivePlaylist === -1) { return; }
+		const toSelect = [];
+		$.range(0, plman.PlaylistItemCount(plman.ActivePlaylist) - 1).forEach((idx) => { if (!plman.IsPlaylistItemSelected(plman.ActivePlaylist, idx)) { toSelect.push(idx); } });
+		plman.ClearPlaylistSelection(plman.ActivePlaylist);
+		plman.SetPlaylistSelection(plman.ActivePlaylist, toSelect, true);
+	}
+
+	setPlaylistSelection(ix, item) {
+		if (plman.ActivePlaylist === -1) { return; }
+		this.clearSelected();
+		if (!item.sel) { this.setTreeSel(ix, item.sel); }
+		panel.treePaint();
+		plman.ClearPlaylistSelection(plman.ActivePlaylist);
+		let items = [];
+		if (panel.search.txt || ppt.filterBy || !ppt.plsSorting || lib.filterSort) { // Regorxxx <- Support playlist sorting | Support SORT BY query sorting ->
+			const hl = this.getHandleList();
+			// Regorxxx <- Select duplicates handles ->
+			const list = lib.full_list.Convert();
+			hl.Convert().forEach((h) => {
+				let i = 0;
+				for (const handle of list) {
+					if (handle.Compare(h)) { items.push(i); }
+					i++;
+				}
+			});
+			// Regorxxx ->
+		} else {
+			items = this.range(item.item);
+		}
+		plman.SetPlaylistSelection(plman.ActivePlaylist, items, true);
+		this.setFocus = true;
+		plman.SetPlaylistFocusItem(plman.ActivePlaylist, items[0]);
+		this.track(false);
+		lib.treeState(false, ppt.rememberTree);
+	}
+	// Regorxxx ->
 
 	setPos(pos) {
 		this.m.i = this.row.i = panel.pos = pos;
 	}
 
 	setTreeSel(idx, state) {
-		const sel_type = idx == -1 ? 0 : vk.k('shift') && this.last_sel > -1 && ppt.libSource ? 1 : vk.k('ctrl') ? 2 : !state ? 3 : 0;
+		const sel_type = idx == -1 ? 0 : vk.k('shift') && this.last_sel > -1 && panel.isStandardSource() ? 1 : vk.k('ctrl') ? 2 : state ? 0 : 3;
 		switch (sel_type) {
 			case 0:
 				this.clearSelected();
 				this.sel_items = [];
+				this.lastSelMul = []; // Regorxxx <- Rectangle selection on art view ->
 				break;
 			case 1: {
 				const direction = (idx > this.last_sel) ? 1 : -1;
@@ -2366,12 +2731,12 @@ class Populate {
 				this.last_sel = idx;
 				break;
 			case 3:
-				this.sel_items = [];
+				// Regorxxx <- Preserve tree sorting at selection | Performance improvements
 				this.clearSelected();
 				this.tree[idx].sel = true;
-				this.addItems(this.sel_items, this.tree[idx].item);
-				this.uniq(this.sel_items);
+				this.getTreeSel();
 				this.last_sel = idx;
+				// Regorxxx ->
 				break;
 		}
 	}
@@ -2394,27 +2759,46 @@ class Populate {
 		this.rootNode = ppt.rootNode;
 		this.rowStripes = ppt.rowStripes;
 		this.sbarShow = ppt.sbarShow;
-		this.showTracks = !ppt.facetView ? ppt.showTracks : false;
-		// Regorxxx <- New statistics
-		this.statistics = ['', 'Bitrate', 'Duration', 'Total size', 'Rating', 'Popularity', 'Date', 'Queue', 'Playcount', 'First played', 'Last played', 'Added', 'Loved', 'Hated', 'Feedback'];
+		this.showTracks = ppt.facetView ? false : ppt.showTracks;
+		// Regorxxx <- New statistics | Code cleanup | Improve statistics tooltip
+		this.statistics = [
+			{ name: '', showTrackCount: true, showTooltip: false },
+			{ name: 'Bitrate', showTrackCount: true, showTooltip: true, ttFunc: (t) => t + ' kbps' },
+			{ name: 'Duration', showTrackCount: true, showTooltip: false, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : '') },
+			{ name: 'Total size', showTrackCount: true, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : '') },
+			{ name: 'Rating', showTrackCount: false, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : '') },
+			{ name: 'Popularity', showTrackCount: false, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : '') },
+			{ name: 'Date', showTrackCount: true, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : '') },
+			{ name: 'Queue', showTrackCount: false, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-not queued-' : '') },
+			{ name: 'Playcount', showTrackCount: false, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : ' listens') },
+			{ name: 'First played', showTrackCount: false, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : '') },
+			{ name: 'Last played', showTrackCount: false, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : '') },
+			{ name: 'Added', showTrackCount: false, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : '') },
+			{ name: 'Loved', showTrackCount: true, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : ' tracks') },
+			{ name: 'Hated', showTrackCount: true, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : 'tracks') },
+			{ name: 'Feedback', showTrackCount: true, showTooltip: true, ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : ' loved - hated tracks') }
+		];
 		{
 			const userCustomTypes = ppt.tfCustomLabels.split('|');
-			['Custom-1 (sum)', 'Custom-2 (sum)', 'Custom-3 (sum)', 'Custom-1 (avg)', 'Custom-2 (avg)', 'Custom-3 (avg)']
+			const userCustomTooltip = ppt.tfCustomTooltip.split('|');
+			['Custom-1 (sum)', 'Custom-2 (sum)', 'Custom-3 (sum)', 'Custom-1 (avg)', 'Custom-2 (avg)', 'Custom-3 (avg)', 'Custom-1 (p-mean)', 'Custom-2 (p-mean)', 'Custom-3 (p-mean)']
 				.forEach((t, i) => {
-					this.statistics.push(!userCustomTypes[i] || !userCustomTypes[i].length ? t : userCustomTypes[i]);
+					this.statistics.push({
+						name: !userCustomTypes[i] || !userCustomTypes[i].length ? t : userCustomTypes[i],
+						showTrackCount: true, showTooltip: true,
+						ttFunc: (t) => t + (t.endsWith(': ') ? '-N/A-' : (userCustomTooltip[i] || ''))
+					});
 				});
 		}
-		this.statisticsGetTracks = [true, true, true, true, false, false, true, false, false, false, false, false, true, true, true, true, true, true, true, true];
-		this.statisticsTooltip = [false, true, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true];
-		// Regorxxx ->
 		this.statisticsShow = ppt.itemShowStatistics;
-		this.label = !ppt.labelStatistics ? '' : this.statisticsShow ? this.statistics[this.statisticsShow] : '';
+		this.label = ppt.labelStatistics ? this.statisticsShow ? this.statistics[this.statisticsShow].name : '' : '';
+		// Regorxxx ->
 		this.tooltipStatistics = ppt.tooltipStatistics;
 		this.treeIndent = ppt.treeIndent;
 		this.imgGetItemCount = ppt.itemOverlayType != 1 && ppt.albumArtLabelType == 2 && !this.statisticsShow && (this.nodeCounts == 1 || this.nodeCounts == 2);
 	}
 
-	showItem(i, type) {
+	showItem(i, type, bSelect = true) { // Regorxxx <- Scrolling helpers ->
 		if (!panel.imgView) {
 			sbar.checkScroll(i * ui.row.h - Math.round(sbar.rows_drawn / 2 - 1) * ui.row.h, 'full');
 			return;
@@ -2422,7 +2806,7 @@ class Populate {
 		this.m.i = -1;
 		const b = $.clamp(Math.round(sbar.delta / sbar.row.h), 0, panel.rows - 1);
 		const f = Math.min(b + Math.floor(img.panel.h / sbar.row.h), panel.rows);
-		this.setTreeSel(i);
+		if (bSelect) { this.setTreeSel(i); } // Regorxxx <- Scrolling helpers ->
 		panel.treePaint();
 		const row1 = Math.floor(i / (img.style.vertical ? img.columns : 1));
 		if (row1 <= b || row1 >= f) {
@@ -2451,14 +2835,17 @@ class Populate {
 
 
 	sort(data) {
-		if (!ppt.libSource && !panel.multiProcess || ppt.libSource === 3 && ppt.queueSorting) { return; } // Regorxxx <- Queue source ->
+		if (!panel.isStandardSource() && !panel.multiProcess) { return; }
+		if (panel.isQueueLikeSource() && ppt.queueSorting) { return; } // Regorxxx <- Queue source ->
+		if (panel.isPlaylistSource() && ppt.plsSorting) { return; } // Regorxxx <- Support playlist sorting ->
+		if (lib.searchSort || lib.filterSort) { return; } // Regorxxx <- Support SORT BY query sorting ->
 		this.specialCharSort(data);
-		// Regorxxx <- Fixed Library's "View by Folder Structure" to match Windows Explorer. Custom sorting for standard views
+		// Regorxxx <- Fixed Library's "View by Folder Structure" to match Windows Explorer | Custom sorting for standard views
 		//	First it tries to apply foobar2000 sorting for tracked library items
 		//	Otherwise it uses custom sorting algorithms which may mimic windows sorting
 		//	For non-library sources, only the second is available, despite playlist or panel sources pointing to tracked items
 		if (panel.folderView) { // Handle sorting for View By Folder Structure
-			if (ppt.libSource === 1 && !ppt.fixedPlaylist && ppt.folderSortingFb) { // For tracked items
+			if (panel.isLibrarySource() && ppt.folderSortingFb) { // For tracked items
 				data.sort((a, b) => a.item[0].start - b.item[0].start);
 			} else {
 				this.sortView(data, ppt.folderSorting, 'folders');
@@ -2470,22 +2857,32 @@ class Populate {
 
 	}
 
+	// Regorxxx <- Support SORT BY query sorting | Preserve tree sorting at selection | Smart sorting based on view ->
 	sortIfNeeded(items) {
-		if (panel.multiProcess && !ppt.customSort.length) {
+		if (lib.searchSort || lib.filterSort) {
+			panel.sort(items, lib.searchSort || lib.filterSort);
+		} else if (panel.multiProcess && !ppt.customSort.length && panel.playlistSort) {
 			items = lib.processCustomSort(items, panel.playlistSort);
 		} else if (ppt.customSort.length) {
 			items = lib.processCustomSort(items, this.customSort);
+		} else if (items.Count === panel.list.Count) {
+			const tf = new FbTitleFormat(panel.cleanViewTf(panel.processCustomTf(panel.curPattern)));
+			panel.sort(items, { tf, direction: 1 });
 		}
 		return items;
 	}
+	// Regorxxx ->
 
-	// Regorxxx <- Fixed Library's "View by Folder Structure" to match Windows Explorer. Custom sorting for standard views
+	// Regorxxx <- Fixed Library's "View by Folder Structure" to match Windows Explorer | Custom sorting for standard views | Sorting transliteration
 	sortView(data, method, type) {
 		switch (method) {
-			default:
+			default: // NOSONAR
 			case 0: {
 				if (ppt.viewSortingTrans && type === 'standard' || ppt.folderSortingTrans && type === 'folders') {
-					data.sort((a, b) => this.collator.compare(Language.transliterate(a.srt[2]), Language.transliterate(b.srt[2])) || (a.srt[3] && !b.srt[3] ? 1 : 0));
+					if (data.some((v) => typeof v.srt[4] === 'undefined')) {
+						data.forEach((v) => v.srt[4] = Language.transliterate(v.srt[2], { languages: panel.sortingTransLangs }));
+					}
+					data.sort((a, b) => this.collator.compare(a.srt[4], b.srt[4]) || (a.srt[3] && !b.srt[3] ? 1 : 0));
 				} else {
 					data.sort((a, b) => this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0));
 				}
@@ -2496,8 +2893,11 @@ class Populate {
 				switch (type) {
 					case 'standard':
 						if (ppt.viewSortingTrans) {
+							if (data.some((v) => typeof v.srt[4] === 'undefined')) {
+								data.forEach((v) => v.srt[4] = Language.transliterate(v.srt[2], { languages: panel.sortingTransLangs }));
+							}
 							data.sort((a, b) => {
-								return this.folderCollator.compare(Language.transliterate(a.srt[2]), Language.transliterate(b.srt[2])) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+								return this.folderCollator.compare(a.srt[4], b.srt[4]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
 							});
 						} else {
 							data.sort((a, b) => {
@@ -2507,8 +2907,14 @@ class Populate {
 						break;
 					case 'folders':
 						if (ppt.folderSortingTrans) {
+							if (data.some((v) => typeof v.srt[4] === 'undefined')) {
+								data.forEach((v) => {
+									v.srt[4] = Language.transliterate(v.srt[0], { languages: panel.sortingTransLangs });
+									v.srt[5] = Language.transliterate(v.srt[2], { languages: panel.sortingTransLangs });
+								});
+							}
 							data.sort((a, b) => {
-								return this.folderCollator.compare(Language.transliterate(a.srt[0]), Language.transliterate(b.srt[0])) || this.collator.compare(Language.transliterate(a.srt[2]), Language.transliterate(b.srt[2])) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+								return this.folderCollator.compare(a.srt[4], b.srt[4]) || this.collator.compare(a.srt[5], b.srt[5]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
 							});
 						} else {
 							data.sort((a, b) => {
@@ -2521,84 +2927,170 @@ class Populate {
 			}
 			case 2: {
 				const idx = type === 'standard' ? 2 : 0;
-				let srtA, typeA, srtB, idxA, typeB, idxB;
-				data.sort((a, b) => {
-					srtA = a.srt[idx];
-					srtB = b.srt[idx];
-					if (srtA.startsWith(' ') && !srtB.startsWith(' ')) { return -1; }
-					else if (!srtA.startsWith(' ') && srtB.startsWith(' ')) { return 1; }
-					srtA = srtA.trim();
-					srtB = srtB.trim();
-					typeA = $.getTypeWeight(srtA[0]);
-					typeB = $.getTypeWeight(srtB[0]);
-					if (typeA !== typeB) { return typeA - typeB; }
-					else if (typeA === typeB && typeA === 0) {
-						idxA = $.getSymbolIndex(srtA[0]);
-						idxB = $.getSymbolIndex(srtB[0]);
-						if (idxA !== idxB) { return idxA - idxB; }
+				if (ppt.viewSortingTrans && type === 'standard' || ppt.folderSortingTrans && type === 'folders') {
+					if (data.some((v) => typeof v.srt[4] === 'undefined')) {
+						data.forEach((v) => {
+							v.srt[4] = Language.transliterate(v.srt[idx].trim(), { languages: panel.sortingTransLangs });
+							v.srt[5] = $.getTypeWeight(v.srt[4]);
+							v.srt[6] = $.getSymbolIndex(v.srt[4][0]);
+							v.srt[7] = Language.transliterate(v.srt[2], { languages: panel.sortingTransLangs });
+						});
 					}
-					return ppt.viewSortingTrans && type === 'standard' || ppt.folderSortingTrans && type === 'folders'
-						? this.folderCollator.compare(Language.transliterate(srtA), Language.transliterate(srtB)) || this.collator.compare(Language.transliterate(a.srt[2]), Language.transliterate(b.srt[2])) || (a.srt[3] && !b.srt[3] ? 1 : 0)
-						: this.folderCollator.compare(srtA, srtB) || this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
-				});
+					data.sort((a, b) => {
+						if (a.srt[idx].startsWith(' ') && !b.srt[idx].startsWith(' ')) { return -1; }
+						else if (!a.srt[idx].startsWith(' ') && b.srt[idx].startsWith(' ')) { return 1; }
+						if (a.srt[5] !== b.srt[5]) { return a.srt[5] - b.srt[5]; }
+						else if (a.srt[5] === b.srt[5] && a.srt[5] === 0) {
+							if (a.srt[6] !== b.srt[6]) { return a.srt[6] - b.srt[6]; }
+						}
+						return this.folderCollator.compare(a.srt[4], b.srt[4]) || this.collator.compare(a.srt[7], b.srt[7]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+					});
+				} else {
+					if (data.some((v) => typeof v.srt[4] === 'undefined')) {
+						data.forEach((v) => {
+							v.srt[4] = v.srt[idx].trim();
+							v.srt[5] = $.getTypeWeight(v.srt[4]);
+							v.srt[6] = $.getSymbolIndex(v.srt[4][0]);
+						});
+					}
+					data.sort((a, b) => {
+						if (a.srt[idx].startsWith(' ') && !b.srt[idx].startsWith(' ')) { return -1; }
+						else if (!a.srt[idx].startsWith(' ') && b.srt[idx].startsWith(' ')) { return 1; }
+						if (a.srt[5] !== b.srt[5]) { return a.srt[5] - b.srt[5]; }
+						else if (a.srt[5] === b.srt[5] && a.srt[5] === 0) {
+							if (a.srt[6] !== b.srt[6]) { return a.srt[6] - b.srt[6]; }
+						}
+						return this.folderCollator.compare(a.srt[4], b.srt[4]) || this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+					});
+				}
 				break;
 			}
 			case 3: {
 				const idx = type === 'standard' ? 2 : 0;
-				let srtA, charA, lenA, typeA, idxA, srtB, charB, lenB, typeB, idxB, out, i;
-				data.sort((a, b) => {
-					out = 0;
-					srtA = a.srt[idx];
-					srtB = b.srt[idx];
-					if (srtA === srtB) { return 0; }
-					lenA = srtA.length;
-					lenB = srtB.length;
-					for (i = 0; i < lenA; i++) {
-						if (i >= lenB) { out = 1; break; }
-						charA = srtA[i];
-						charB = srtB[i];
-						if (charA !== ' ' && charB !== ' ') { break; }
-						else if (charA === ' ' && charB !== ' ') { out = -1; break; }
-						else if (charA !== ' ' && charB === ' ') { out = 1; break; }
-						else if (charA === ' ' && charB === ' ') { continue; }
+				if (ppt.viewSortingTrans && type === 'standard' || ppt.folderSortingTrans && type === 'folders') {
+					if (data.some((v) => typeof v.srt[4] === 'undefined')) {
+						data.forEach((v) => {
+							v.srt[4] = Language.transliterate(v.srt[idx].trim(), { languages: panel.sortingTransLangs });
+							v.srt[5] = v.srt[4].length;
+							v.srt[6] = v.srt[4].split('').map((c) => $.getSymbolIndex(c));
+							v.srt[7] = v.srt[4].split('').map((c, i) => $.getTypeWeight(c, v.srt[6][i], 'base'));;
+							v.srt[8] = Language.transliterate(v.srt[2], { languages: panel.sortingTransLangs });
+						});
 					}
-					if (out) { return out; }
-					else if (i === lenA) { return -1; }
-					srtA = srtA.trim();
-					srtB = srtB.trim();
-					lenA = srtA.length;
-					lenB = srtB.length;
-					for (i = 0; i < lenA; i++) {
-						if (i >= lenB) { out = 1; break; }
-						charA = srtA[i];
-						charB = srtB[i];
-						if (charA === ' ' || charB === ' ') { break; }
-						if ($.isNumeric(charA) && $.isNumeric(charB)) { break; }
-						idxA = $.getSymbolIndex(charA);
-						idxB = $.getSymbolIndex(charB);
-						if (!idxA || !idxB) {
-							if (!idxA) {
-								if ($.isNumeric(charA)) { out = idxB ? 1 : $.isNumeric(charB) ? 0 : -1; }
-								else if (idxB) { out = 1; }
+					let srtA, charA, lenA, typeA, idxA, srtB, charB, lenB, typeB, idxB, out, i;
+					data.sort((a, b) => {
+						out = 0;
+						srtA = a.srt[idx];
+						srtB = b.srt[idx];
+						if (srtA === srtB) { return 0; }
+						lenA = srtA.length;
+						lenB = srtB.length;
+						for (i = 0; i < lenA; i++) {
+							if (i >= lenB) { out = 1; break; }
+							charA = srtA[i];
+							charB = srtB[i];
+							if (charA !== ' ' && charB !== ' ') { break; }
+							else if (charA === ' ' && charB !== ' ') { out = -1; break; }
+							else if (charA !== ' ' && charB === ' ') { out = 1; break; }
+							else if (charA === ' ' && charB === ' ') { continue; }
+						}
+						if (out) { return out; }
+						else if (i === lenA) { return -1; }
+						srtA = a.srt[4];
+						srtB = b.srt[4];
+						lenA = a.srt[5];
+						lenB = b.srt[5];
+						for (i = 0; i < lenA; i++) {
+							if (i >= lenB) { out = 1; break; }
+							charA = srtA[i];
+							charB = srtB[i];
+							if (charA === ' ' || charB === ' ') { break; }
+							if ($.isNumeric(charA) && $.isNumeric(charB)) { break; }
+							idxA = a.srt[6][i];
+							idxB = b.srt[6][i];
+							if (!idxA || !idxB) {
+								if (!idxA) {
+									if ($.isNumeric(charA)) { out = idxB ? 1 : $.isNumeric(charB) ? 0 : -1; }
+									else if (idxB) { out = 1; }
+								}
+								if (out) { return out; }
+								if (idxA && !idxB && $.isNumeric(charB)) { out = -1; break; }
+								if (out) { return out; }
 							}
-							if (out) { return out; }
-							if (idxA && !idxB && $.isNumeric(charB)) { out = -1; break; }
-							if (out) { return out; }
+							typeA = a.srt[7][i];
+							typeB = b.srt[7][i];
+							if (typeA !== typeB) { out = typeA - typeB; break; }
+							else if (typeA === typeB) {
+								if (typeA === 0) {
+									if (idxA !== idxB) { out = idxA - idxB; break; }
+								} else if (typeA === 1 || typeA === 2 || typeA === 3) { break; }
+							}
 						}
-						typeA = $.getTypeWeight(charA, idxA, 'base');
-						typeB = $.getTypeWeight(charB, idxB, 'base');
-						if (typeA !== typeB) { out = typeA - typeB; break; }
-						else if (typeA === typeB) {
-							if (typeA === 0) {
-								if (idxA !== idxB) { out = idxA - idxB; break; }
-							} else if (typeA === 1 || typeA === 2 || typeA === 3) { break; }
-						}
+						if (out) { return out; }
+						return this.folderCollator.compare(srtA, srtB) || this.collator.compare(a.srt[8], b.srt[8]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+					});
+				} else {
+					if (data.some((v) => typeof v.srt[4] === 'undefined')) {
+						data.forEach((v) => {
+							v.srt[4] = v.srt[idx].trim();
+							v.srt[5] = v.srt[4].length;
+							v.srt[6] = v.srt[4].split('').map((c) => $.getSymbolIndex(c));
+							v.srt[7] = v.srt[4].split('').map((c, i) => $.getTypeWeight(c, v.srt[6][i], 'base'));;
+						});
 					}
-					if (out) { return out; }
-					return ppt.viewSortingTrans && type === 'standard' || ppt.folderSortingTrans && type === 'folders'
-						? this.folderCollator.compare(Language.transliterate(srtA), Language.transliterate(srtB)) || this.collator.compare(Language.transliterate(a.srt[2]), Language.transliterate(b.srt[2])) || (a.srt[3] && !b.srt[3] ? 1 : 0)
-						: this.folderCollator.compare(srtA, srtB) || this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
-				});
+					let srtA, charA, lenA, typeA, idxA, srtB, charB, lenB, typeB, idxB, out, i;
+					data.sort((a, b) => {
+						out = 0;
+						srtA = a.srt[idx];
+						srtB = b.srt[idx];
+						if (srtA === srtB) { return 0; }
+						lenA = srtA.length;
+						lenB = srtB.length;
+						for (i = 0; i < lenA; i++) {
+							if (i >= lenB) { out = 1; break; }
+							charA = srtA[i];
+							charB = srtB[i];
+							if (charA !== ' ' && charB !== ' ') { break; }
+							else if (charA === ' ' && charB !== ' ') { out = -1; break; }
+							else if (charA !== ' ' && charB === ' ') { out = 1; break; }
+							else if (charA === ' ' && charB === ' ') { continue; }
+						}
+						if (out) { return out; }
+						else if (i === lenA) { return -1; }
+						srtA = a.srt[4];
+						srtB = b.srt[4];
+						lenA = a.srt[5];
+						lenB = b.srt[5];
+						for (i = 0; i < lenA; i++) {
+							if (i >= lenB) { out = 1; break; }
+							charA = srtA[i];
+							charB = srtB[i];
+							if (charA === ' ' || charB === ' ') { break; }
+							if ($.isNumeric(charA) && $.isNumeric(charB)) { break; }
+							idxA = a.srt[6][i];
+							idxB = b.srt[6][i];
+							if (!idxA || !idxB) {
+								if (!idxA) {
+									if ($.isNumeric(charA)) { out = idxB ? 1 : $.isNumeric(charB) ? 0 : -1; }
+									else if (idxB) { out = 1; }
+								}
+								if (out) { return out; }
+								if (idxA && !idxB && $.isNumeric(charB)) { out = -1; break; }
+								if (out) { return out; }
+							}
+							typeA = a.srt[7][i];
+							typeB = b.srt[7][i];
+							if (typeA !== typeB) { out = typeA - typeB; break; }
+							else if (typeA === typeB) {
+								if (typeA === 0) {
+									if (idxA !== idxB) { out = idxA - idxB; break; }
+								} else if (typeA === 1 || typeA === 2 || typeA === 3) { break; }
+							}
+						}
+						if (out) { return out; }
+						return this.folderCollator.compare(srtA, srtB) || this.collator.compare(a.srt[2], b.srt[2]) || (a.srt[3] && !b.srt[3] ? 1 : 0);
+					});
+				}
 				break;
 			}
 		}
@@ -2607,15 +3099,15 @@ class Populate {
 	// Regorxxx ->
 
 	specialCharHas(name) {
-		return RegExp(this.specialChar).test(name);
+		return new RegExp(this.specialChar).test(name);
 	}
 
 	specialCharIsLeading(name) {
-		return RegExp('^' + this.specialChar).test(name);
+		return new RegExp('^' + this.specialChar).test(name);
 	}
 
 	specialCharPad(name) {
-		return name.replace(RegExp(this.specialChar + '+', 'g'), v => (v + '    ').slice(0, 5));
+		return name.replace(new RegExp(this.specialChar + '+', 'g'), v => (v + '    ').slice(0, 5));
 	}
 
 	specialCharSort(data) {
@@ -2639,8 +3131,8 @@ class Populate {
 	specialCharStrip(name) {
 		let [str1, ...str2] = name.split(' ');
 		str2 = str2.join(' ');
-		if (this.isDate(str1)) return `${str1} ${str2.replace(RegExp(this.specialChar, 'g'), '')}`;
-		return name.replace(RegExp(this.specialChar, 'g'), '');
+		if (this.isDate(str1)) return `${str1} ${str2.replace(new RegExp(this.specialChar, 'g'), '')}`;
+		return name.replace(new RegExp(this.specialChar, 'g'), '');
 	}
 
 	track(plLoaded) {
@@ -2655,24 +3147,24 @@ class Populate {
 
 	// Regorxxx <- Tooltip font | https://github.com/regorxxx/Library-Tree-SMP/issues/11
 	treeTooltipFont() {
-		return !panel.imgView
-			? [ui.font.mainTooltip.Name, ui.font.mainTooltip.Size, ui.font.mainTooltip.Style]
-			: [ui.font.groupTooltip.Name, ui.font.groupTooltip.Size, ui.font.groupTooltip.Style];
+		return panel.imgView
+			? [ui.font.groupTooltip.Name, ui.font.groupTooltip.Size, ui.font.groupTooltip.Style]
+			: [ui.font.mainTooltip.Name, ui.font.mainTooltip.Size, ui.font.mainTooltip.Style];
 	}
 	// Regorxxx ->
 
-	uniq(arr) {
-		this.sel_items = [...new Set(arr)].sort(this.numSort);
-	}
-
+	// Regorxxx <- Throttle selection playlist update
 	upDnKeyCheckScroll(vkey) {
-		const row = (panel.pos * ui.row.h - sbar.scroll) / ui.row.h;
-		if (sbar.rows_drawn - row < 3 || row < 0) sbar.checkScroll((panel.pos + 3) * ui.row.h - sbar.rows_drawn * ui.row.h);
-		else if (row < 2 && vkey == vk.up) sbar.checkScroll((panel.pos - 1) * ui.row.h);
+		const bAsync = ppt.plsRefreshLimit > 0;
+		const row = this.getTreeRow(panel.pos);
+		if (sbar.rows_drawn - row < 3 || row < 0) sbar.checkScroll((panel.pos + 3) * ui.row.h - sbar.rows_drawn * ui.row.h, void (0), bAsync);
+		else if (row < 2 && vkey == vk.up) sbar.checkScroll((panel.pos - 1) * ui.row.h, void (0), bAsync);
 		this.m.i = panel.pos;
 		this.setTreeSel(panel.pos);
 		panel.treePaint();
-		this.setPlaylist(panel.pos, this.tree[panel.pos]);
+		if (bAsync) { this.debounce.setPlaylist(panel.pos, this.tree[panel.pos]); }
+		else { this.setPlaylist(panel.pos, this.tree[panel.pos]); }
 		lib.treeState(false, ppt.rememberTree);
 	}
+	// Regorxxx ->
 }

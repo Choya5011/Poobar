@@ -1,5 +1,5 @@
 ﻿'use strict';
-//08/01/26
+//24/04/26
 
 /* exported extendGR, checkCompatible */
 
@@ -15,9 +15,7 @@ if (!Object.hasOwn) {
 		configurable: false,
 		writable: false,
 		value: function (object, property) {
-			if (object === null) {
-				throw new TypeError('Cannot convert undefined or null to object');
-			}
+			if (object === null) { throw new TypeError('Cannot convert undefined or null to object'); }
 			return Object.prototype.hasOwnProperty.call(Object(object), property); // NOSONAR
 		}
 	});
@@ -93,7 +91,7 @@ Object.defineProperty(fb, 'tfCache', {
 
 // Augment FbTitleFormat() constructor with 'Expression' property and add caching
 {
-	const oldProto = FbProfiler.prototype;
+	const oldProto = FbTitleFormat.prototype;
 	const old = FbTitleFormat;
 	FbTitleFormat = function FbTitleFormat() { // NOSONAR
 		const bCache = Object.hasOwn(fb.tfCache, arguments[0]);
@@ -111,8 +109,8 @@ Object.defineProperty(fb, 'tfCache', {
 */
 // Augment gr.DrawRoundRect() with error handling
 function extendGR(/** @type {GdiGraphics} */ gr, options = { DrawRoundRect: true, FillRoundRect: true, Repaint: true, Highlight: false, ImgBox: true, Debug: false }) {
-	if (!gr.Extended) { gr.Extended = options; }
-	else { Object.keys(options).forEach((opt) => { if (options[opt]) { gr.Extended[opt] = true; } }); }
+	if (gr.Extended) { Object.keys(options).forEach((opt) => { if (options[opt]) { gr.Extended[opt] = true; } }); }
+	else { gr.Extended = options; }
 	if (!gr.ExtendedDone) { gr.ExtendedDone = {}; }
 	if (options.DrawRoundRect && !gr.ExtendedDone.DrawRoundRect) {
 		const old = gr.DrawRoundRect.bind(gr);
@@ -217,6 +215,12 @@ function extendGR(/** @type {GdiGraphics} */ gr, options = { DrawRoundRect: true
 	}
 }
 
+// Patch GDI objects while using D2D to avoid breaking GDI-only code
+if (window.DrawMode === 1) {
+	if (typeof D2DBitmap !== 'undefined') { Object.defineProperty(GdiBitmap, Symbol.hasInstance, { value(instance) { return instance instanceof D2DBitmap; } }); }
+	if (typeof D2DFont !== 'undefined') { Object.defineProperty(GdiFont, Symbol.hasInstance, { value(instance) { return instance instanceof D2DFont; } }); }
+}
+
 /*
 	FbMetadbHandleList
 */
@@ -280,11 +284,11 @@ fb.GetQueryItemsCheck = (handleList = fb.GetLibraryItems(), query = 'ALL', bCach
 plman.AddPlaylistItemsOrLocations = (plsIdx, items /*[handle, handleList, filePath, ...]*/, bSync = false) => {
 	if (items.length === 0) { return bSync ? Promise.resolve(false) : false; }
 	if (plsIdx === -1) { return bSync ? Promise.resolve(false) : false; }
-	let lastType = typeof items[0].RawPath !== 'undefined'
-		? 'handle'
-		: typeof items[0].Count !== 'undefined'
-			? 'handleList'
-			: 'path';
+	let lastType = typeof items[0].RawPath === 'undefined'
+		? typeof items[0].Count === 'undefined'
+			? 'path'
+			: 'handleList'
+		: 'handle';
 	let queue = lastType === 'path' ? [] : new FbMetadbHandleList();
 	const timer = (item, type) => {
 		if (!bSync) { return 0; }
@@ -323,11 +327,11 @@ plman.AddPlaylistItemsOrLocations = (plsIdx, items /*[handle, handleList, filePa
 		}
 	};
 	const processItem = (item) => {
-		const type = typeof item.RawPath !== 'undefined'
-			? 'handle'
-			: typeof item.Count !== 'undefined'
-				? 'handleList'
-				: 'path';
+		const type = typeof item.RawPath === 'undefined'
+			? typeof item.Count === 'undefined'
+				? 'path'
+				: 'handleList'
+			: 'handle';
 		// Send queue
 		if (bSync) {
 			if (type !== lastType) { // Avoid crash if first item is a handle
@@ -422,9 +426,9 @@ if (FbProfiler) {
 		that.CheckPoint = (function CheckPoint(name) {
 			let point = this.CheckPoints.find((check) => check.name.toLowerCase() === name.toLowerCase());
 			if (point) {
-				point.time = this.Time;
+				point.last = this.Time;
 			} else {
-				point = { name, time: this.Time, acc: 0 };
+				point = { name, last: this.Time, times: [], time: 0, timeAcc: 0, calls: 0, callsAcc: 0, report: { interval: 0, id: null } };
 				this.CheckPoints.push(point);
 			}
 			return point;
@@ -433,18 +437,87 @@ if (FbProfiler) {
 			const point = this.CheckPoints.find((check) => check.name.toLowerCase() === name.toLowerCase());
 			if (point) {
 				const now = this.Time;
-				point.acc += now - point.time;
-				point.time = now;
+				const time = now - point.last;
+				point.times.push(time);
+				point.timeAcc += time;
+				point.time += time;
+				point.last = now;
+				point.calls += 1;
+				point.callsAcc += 1;
 			}
-			return point ? point.acc : null;
+			return point ? point.timeAcc : null;
 		}).bind(that);
 		that.ElapsedTimeSince = (function ElapsedTimeSince(name) {
 			const point = this.CheckPoints.find((check) => check.name.toLowerCase() === name.toLowerCase());
-			return (point ? this.Time - point.time : null);
+			return (point ? this.Time - point.last : null);
 		}).bind(that);
-		that.CheckPointPrint = (function CheckPointStep(name, message) {
+		that.CheckPointPrint = (function CheckPointStep(name, message, { bAverage = false, bPerInterval = false, bOnVisible = false } = {}) {
+			if (bOnVisible && !window.IsVisible) { return null; }
 			const point = this.CheckPoints.find((check) => check.name.toLowerCase() === name.toLowerCase());
-			if (point) { console.log('profiler (' + this.Name + '): ' + name + ' ' + point.acc + ' ms' + (message || '')); return true; }
+			if (point) {
+				const msTotal = bAverage
+					? (point.timeAcc / point.callsAcc).toFixed(1) + ' ms/call'
+					: point.timeAcc.toFixed(1) + ' ms';
+				if (bPerInterval) {
+					if (bAverage) {
+						const avg = (point.time / point.calls).toFixed(1);
+						const total = point.time.toFixed(1);
+						const max = point.times.reduce((max, v) => Math.max(max, v), -Infinity).toFixed(1);
+						const fps = (1000 / avg).toFixed(1);
+						console.log(
+							'--------------------------------------------------------------\n' +
+							'profiler (' + this.Name + '): ' + name + message + ' - ' + (point.report.interval / 1000).toFixed(1) + ' s interval\n' +
+							'--------------------------------------------------------------\n' +
+							'Average:\t\t' + avg + ' ms/call\n' +
+							'FPS:\t\t' + fps + ' fps\n' +
+							'Slowest:\t\t' + max + ' ms\n' +
+							'Total calls:\t' + point.calls + ' calls\n' +
+							'Total time:\t' + total + ' ms\n'
+						);
+					} else {
+						const ms = point.time.toFixed(1) + ' ms';
+						console.log('profiler (' + this.Name + '): ' + name + ' - ' + ms + ' on ' + point.calls + ' steps | ' + msTotal + ' on ' + point.callsAcc + ' total' + (message || ''));
+					}
+				} else {
+					console.log('profiler (' + this.Name + '): ' + name + ' - ' + msTotal + ' on ' + point.callsAcc + ' steps ' + (message || ''));
+				}
+				point.calls = 0;
+				point.time = 0;
+				return true;
+			}
+			return null;
+		}).bind(that);
+		that.CheckPointPrintInterval = (function CheckPointPrintInterval(interval, name, message, options) {
+			const point = this.CheckPoints.find((check) => check.name.toLowerCase() === name.toLowerCase());
+			if (point) {
+				if (point.report.id !== null) { clearInterval(point.report.id); point.report.id = null; }
+				point.report.interval = interval || 0;
+				if (point.report.interval) {
+					point.report.id = setInterval(() => this.CheckPointPrint(name, message, options), interval);
+				}
+				return true;
+			}
+			return null;
+		}).bind(that);
+		that.HasCheckPointPrintInterval = (function HasCheckPointPrintInterval(name) {
+			const point = this.CheckPoints.find((check) => check.name.toLowerCase() === name.toLowerCase());
+			return point && point.report.id !== null;
+		}).bind(that);
+		that.HasCheckPoint = (function HasCheckPoint(name) {
+			return this.CheckPoints.some((check) => check.name.toLowerCase() === name.toLowerCase());
+		}).bind(that);
+		that.GetCheckPoint = (function GetCheckPoint(name) {
+			return this.CheckPoints.find((check) => check.name.toLowerCase() === name.toLowerCase());
+		}).bind(that);
+		that.CheckPointReset = (function CheckPointReset(name) {
+			const point = this.CheckPoints.find((check) => check.name.toLowerCase() === name.toLowerCase());
+			if (point) {
+				point.last = this.Time;
+				point.time.length = 0;
+				point.timeAcc = 0;
+				point.calls = 0;
+				point.callsAcc = 0;
+			}
 			return null;
 		}).bind(that);
 		return that;
@@ -471,7 +544,7 @@ if (fb.AddLocationsAsync) {
 				});
 				setTimeout(() => removeEventListener(listener.event, void (0), listener.id), 60000);
 			} else {
-				throw new Error('callbacks_xxx.js is missing');
+				throw new TypeError('callbacks_xxx.js is missing');
 			}
 		});
 	};
@@ -519,14 +592,19 @@ window.Bugs.SetPlaylistLockedActions = ![
 	{ version: '3.6.1.2', target: 'jsplitter' }
 ].some((host) => isCompatible(host.version, host.target));
 
+window.Bugs.GetPlaybackQueueContents = ![
+	{ version: '1.7.26.1.11', target: 'smp' },
+	{ version: '3.7.6', target: 'jsplitter' }
+].some((host) => isCompatible(host.version, host.target));
+
 /* Helpers */
 
 function compareVersions(from, to) {
 	if (typeof from === 'string') { from = from.split('.'); }
 	if (typeof to === 'string') { to = to.split('.'); }
-	const collator = typeof strNumCollator !== 'undefined'
-		? strNumCollator // eslint-disable-line no-undef
-		: new Intl.Collator(void (0), { sensitivity: 'base', numeric: true });
+	const collator = typeof strNumCollator === 'undefined'
+		? new Intl.Collator(void (0), { sensitivity: 'base', numeric: true })
+		: strNumCollator; // eslint-disable-line no-undef
 	for (let i = 0; i < to.length; ++i) {
 		if (to[i] !== from[i]) {
 			return typeof from[i] === 'undefined'

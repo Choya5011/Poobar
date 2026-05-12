@@ -1,6 +1,4 @@
-/*
- * This file contains: variables, initTabs, exInitTabs, updateTabSize, get_font, p_tabs
- */
+'use strict';
 
 // Variables
 let tabs = [];
@@ -17,52 +15,70 @@ const SF_CENTER_VCENTER = SF_CENTER | SF_VCENTER;
 const DT_SINGLELINE = 0x00000020;
 
 // Get panels
-function initTabs() {
+function initTabs(ignore = null) {
     tabs = [];
-    for (let i = 0;; i++) {
-        let p;
-        try {
-            p = window.GetPanelByIndex(i);
-        } catch (e) {
-            break;  // Stop if error occurs (no more panels)
+
+    if (!ignore || ignore.length === 0) {
+        for (let i = 0; ; i++) {
+            let p;
+            try {
+                p = window.GetPanelByIndex(i);
+            } catch (e) {
+                break; // Stop if error occurs (no more panels)
+            }
+            if (!p) break; // Also stop if null/undefined
+            tabs.push({ index: i, name: p.Text || ('P' + (i + 1)) });
         }
-        if (!p) break;  // Also stop if null/undefined
-        tabs.push({ index: i, name: p.Text || ('Panel ' + (i + 1)) });
+    } else if (Array.isArray(ignore) && typeof ignore[0] === 'number') {
+        for (let i = 0; ; i++) {
+            if (ignore.includes(i)) continue; // Skip ignored indexes
+            let p;
+            try {
+                p = window.GetPanelByIndex(i);
+            } catch (e) {
+                break;
+            }
+            if (!p) break;
+            tabs.push({ index: i, name: p.Text || ('P' + (i + 1)) });
+        }
+    } else {
+        for (let i = 0; ; i++) {
+            let p;
+            try {
+                p = window.GetPanelByIndex(i);
+            } catch (e) {
+                break;
+            }
+            if (!p) break;
+            if (ignore.includes(p.Text || p.Name)) continue; // Skip ignored strings
+            tabs.push({ index: i, name: p.Text || ('P' + (i + 1)) });
+        }
     }
-    if (!tabs.length) tabs.push({ index: 0, name: 'Panel 1' });
+
+    if (!tabs.length) {
+        tabs.push({ index: 0, name: 'P1' });
+    }
+
+    if (activeTab >= tabs.length) {
+        activeTab = 0;
+    }
 
     for (let i = 0; i < tabs.length; i++) {
-        try { const p = window.GetPanelByIndex(tabs[i].index); if (p) p.Show(i === activeTab); } catch (e) { console.log(window.ScriptInfo.Name + ': Missing Panels \nNo panels found inside main panel: re-import theme'); fb.ShowPopupMessage('Error: No Panels present\nPlease re-install the theme or insert panels according to main panel theme structure\n\nNote: use "ctrl + p" to access properties in case of errors', window.ScriptInfo.Name); }
-    }
-}
-
-// Get panels with exceptions. Used in poo main panel.
-function exInitTabs(ignoreArr) {
-    tabs = [];
-    for (let i = 0;; i++) {
-        if (ignoreArr.includes(i)) continue;  // Skip ignored indexes
-
-        let p;
         try {
-            p = window.GetPanelByIndex(i);
+            const p = window.GetPanelByIndex(tabs[i].index);
+            if (p) p.Show(i === activeTab);
         } catch (e) {
-            break;  // Stop if error occurs (no more panels)
+            console.log(window.ScriptInfo.Name + ': Missing panels\nNo child panels found');
+            fb.ShowPopupMessage('Error: No child panels present\nPlease re-install the theme or insert panels according to script instructions\n\nNote: use "ctrl + p" to access properties in case of errors', window.ScriptInfo.Name);
         }
-        if (!p) break;  // Also stop if null/undefined
-        tabs.push({ index: i, name: p.Text || ('Panel ' + (i + 1)) });
     }
-    if (!tabs.length) tabs.push({ index: 0, name: 'Panel 1' });
-
-    for (let i = 0; i < tabs.length; i++) {
-        try { const p = window.GetPanelByIndex(tabs[i].index); if (p) p.Show(i === activeTab); } catch (e) { console.log(window.ScriptInfo.Name + ': Missing Panels \nNo panels found inside main panel: re-import theme'); fb.ShowPopupMessage('Error: No Panels present\nPlease re-install the theme or insert panels according to main panel theme structure\n\nNote: use "ctrl + p" to access properties in case of errors', window.ScriptInfo.Name); }
-    }
-}
+};
 
 // Tab size
-function updateTabSize(ppt, mp) {
+function updateTabSize(ppt, offset = 0) {
     if (ppt.orientation.enabled) {
         // scale height when vertical | 45-70 clamp in 1440p
-        const height = mp ? wh - cpV : wh;
+        const height = wh - offset; // #
         TAB_W = Math.max(_scale(26.25), Math.min(_scale(52.5), Math.round(ww / 28.44)));
         TAB_H = Math.max(TAB_MIN_H, Math.floor(height / Math.max(1, tabs.length)));
     } else {
@@ -121,67 +137,55 @@ function get_font(orientation, fontMode) {
     };
 }
 
-const tab = { // Tab painting logic, tab background painting is still handled in the script itself. Not here.
-    paint_pt(gr, ppt) { // tabs
-        const { default_font, default_font_hover, fluent_font, fluent_font_hover } = get_font(ppt.orientation.enabled, ppt.fontMode.enabled);
-        const tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
-        const tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
+function _paint(gr, ppt, mp = false) {
+    if (ppt.round.enabled) { gr.SetSmoothingMode(2); } else { gr.SetSmoothingMode(0); }
 
-        updateTabSize(ppt);
-        for (let i = 0; i < tabs.length; i++) {
-            const text = tabs[i].name;
-            let font = (i === hoveredTab) ? tabFont_hover : tabFont;
-            let tab_textCol = i === hoveredTab ? g_textcolour_hl : g_textcolour;
-            if (ppt.orientation.enabled) {
-                // Vertical tabs
-                const y = i * TAB_H;
-                const h = (i === tabs.length - 1) ? wh - TAB_H * (tabs.length - 1) : TAB_H;
+    // #
+    const { default_font, default_font_hover, fluent_font, fluent_font_hover } = get_font(ppt.orientation.enabled, ppt.fontMode.enabled);
+    const tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
+    const tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
+
+    updateTabSize(ppt); let arc;
+    if (ppt.round.enabled && ppt.orientation.enabled) { arc = TAB_W * 0.2 } else if (ppt.round.enabled && !ppt.orientation.enabled) { arc = TAB_H * 0.2 }
+    for (let i = 0; i < tabs.length; i++) {
+        const text = tabs[i].name;
+        let font = (i === hoveredTab) ? tabFont_hover : tabFont;
+        let tab_textCol = i === hoveredTab ? g_textcolour_hl : g_textcolour;
+        if (ppt.orientation.enabled) {
+            // Vertical tabs
+            const y = i * TAB_H;
+            let h;
+            if (!mp) {
+                h = (i === tabs.length - 1) ? wh - TAB_H * (tabs.length - 1) : TAB_H;
+            } else {
+                h = (i === tabs.length - 1) ? wh - cpV - TAB_H * (tabs.length - 1) : TAB_H;
+            }
+
+            if (!ppt.round.enabled) {
                 if (i === hoveredTab && ppt.hover.enabled) gr.FillSolidRect(0, y, TAB_W, h, g_color_highlight);
                 if (i === activeTab && i !== hoveredTab && ppt.selected.enabled) gr.FillSolidRect(0, y, TAB_W, h, g_color_selected_bg);
-                if (i >= 1 && i < tabs.length && ppt.borders.enabled) gr.DrawLine(_scale(6), TAB_H * i, TAB_W - _scale(6), TAB_H * i, 0.5, g_color_selected_bg);
-                gr.GdiDrawText(text, font, tab_textCol, 0, y, TAB_W, h, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
             } else {
-                // Horizontal tabs
-                const x = i * TAB_W;
-                const w = (i === tabs.length - 1) ? ww - TAB_W * (tabs.length - 1) : TAB_W;
+                if (i === hoveredTab && ppt.hover.enabled) gr.FillRoundRect(0, y, TAB_W, h, arc, arc, g_color_highlight);
+                if (i === activeTab && i !== hoveredTab && ppt.selected.enabled) gr.FillRoundRect(0, y, TAB_W, h, arc, arc, g_color_selected_bg);
+            }
+
+            if (i >= 1 && i < tabs.length && ppt.borders.enabled) gr.DrawLine(_scale(6), TAB_H * i, TAB_W - _scale(6), TAB_H * i, 0.5, g_color_selected_bg);
+            gr.GdiDrawText(text.charAt(0), font, tab_textCol, 0, y, TAB_W, h, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
+        } else {
+            // Horizontal tabs
+            const x = i * TAB_W;
+            const w = (i === tabs.length - 1) ? ww - TAB_W * (tabs.length - 1) : TAB_W;
+
+            if (!ppt.round.enabled) {
                 if (i === hoveredTab && ppt.hover.enabled) gr.FillSolidRect(x, 0, w, TAB_H, g_color_highlight);
                 if (i === activeTab && i !== hoveredTab && ppt.selected.enabled) gr.FillSolidRect(x, 0, w, TAB_H, g_color_selected_bg);
-                if (i >= 1 && i < tabs.length && ppt.borders.enabled) gr.DrawLine(TAB_W * i, _scale(4), TAB_W * i, TAB_H - _scale(4), 0.5, g_color_selected_bg);
-                gr.GdiDrawText(text, font, tab_textCol, x + 5, 0, w - 10, TAB_H, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
-            }
-        }
-    },
-
-    paint_mp(gr, ppt) { // main panel tabs
-        const { default_font, default_font_hover, fluent_font, fluent_font_hover } = get_font();
-        const tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
-        const tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
-
-        updateTabSize(ppt, true);
-        let tab_hl_col = g_color_selected_bg;
-        for (let i = 0; i < tabs.length; i++) {
-            const text = tabs[i].name;
-            let font = (i === hoveredTab) ? tabFont_hover : tabFont;
-            let tab_textCol = i === hoveredTab ? g_textcolour_hl : g_textcolour;
-            if (ppt.orientation.enabled) {
-                // Vertical tabs
-                const y = i * TAB_H;
-                const h = (i === tabs.length - 1) ? wh - cpV - TAB_H * (tabs.length - 1) : TAB_H; // modified for MP
-                if (!ppt.bgShow.enabled) gr.FillSolidRect(0, y, TAB_W, h, g_backcolour);
-                if (i === hoveredTab) gr.FillSolidRect(0, y, TAB_W, h, g_color_highlight);
-                if (i === activeTab && i !== hoveredTab) gr.FillSolidRect(0, y, TAB_W, h, tab_hl_col);
-                if (i >= 1 && i < tabs.length && ppt.borders.enabled) gr.DrawLine(_scale(6), TAB_H * i, TAB_W - _scale(6), TAB_H * i, 0.5, g_color_selected_bg);
-                gr.GdiDrawText(text, font, tab_textCol, 0, y, TAB_W, h, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
             } else {
-                // Horizontal tabs
-                const x = i * TAB_W;
-                const w = (i === tabs.length - 1) ? ww - TAB_W * (tabs.length - 1) : TAB_W;
-                if (!ppt.bgShow.enabled) gr.FillSolidRect(x, 0, w, TAB_H, g_backcolour);
-                if (i === hoveredTab) gr.FillSolidRect(x, 0, w, TAB_H, g_color_highlight);
-                if (i === activeTab && i !== hoveredTab) gr.FillSolidRect(x, 0, w, TAB_H, tab_hl_col);
-                if (i >= 1 && i < tabs.length && ppt.borders.enabled) gr.DrawLine(TAB_W * i, _scale(4), TAB_W * i, TAB_H - _scale(4), 0.5, g_color_selected_bg);
-                gr.GdiDrawText(text, font, tab_textCol, x + 5, 0, w - 10, TAB_H, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
+                if (i === hoveredTab && ppt.hover.enabled) gr.FillRoundRect(x, 0, w, TAB_H, arc, arc, g_color_highlight);
+                if (i === activeTab && i !== hoveredTab && ppt.selected.enabled) gr.FillRoundRect(x, 0, w, TAB_H, arc, arc, g_color_selected_bg);
             }
+
+            if (i >= 1 && i < tabs.length && ppt.borders.enabled) gr.DrawLine(TAB_W * i, _scale(4), TAB_W * i, TAB_H - _scale(4), 0.5, g_color_selected_bg);
+            gr.GdiDrawText(text, font, tab_textCol, x + 5, 0, w - 10, TAB_H, DT_SINGLELINE | SF_CENTER_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
         }
     }
-};
+}

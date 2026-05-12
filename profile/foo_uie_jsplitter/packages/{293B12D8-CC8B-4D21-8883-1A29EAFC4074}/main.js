@@ -1,13 +1,13 @@
 ﻿'use strict';
-//26/02/26
+//28/04/26
 
-if (!window.ScriptInfo.PackageId) { window.DefineScript('Not-A-Waveform-Seekbar-SMP', { author: 'regorxxx', version: '3.4.0' }); }
+if (!window.ScriptInfo.PackageId) { window.DefineScript('Not-A-Waveform-Seekbar-SMP', { author: 'regorxxx', version: '4.0.0' }); }
 
 // GDI/D2D draw mode
 window.DrawMode = Math.max(Math.min(window.GetProperty('Draw mode: GDI (0), D2D (1)', 0), 1), 0);
 
 include('helpers\\helpers_xxx.js');
-/* global folders:readable, globSettings:readable, globTags:readable, soFeat:readable, globFonts:readable, globProfiler:readable, VK_CONTROL:readable, popup:readable, VK_ALT:readable, VK_SHIFT:readable */
+/* global folders:readable, globSettings:readable, globTags:readable, soFeat:readable, globFonts:readable, globProfiler:readable, VK_CONTROL:readable, popup:readable, VK_ALT:readable, VK_SHIFT:readable, VK_RIGHT:readable, VK_UP:readable, VK_LEFT:readable, VK_DOWN:readable, TTDT_INITIAL:readable, TTDT_AUTOPOP:readable */
 include('helpers\\helpers_xxx_flags.js');
 /* global VK_LWIN:readable, MK_LBUTTON:readable */
 include('helpers\\helpers_xxx_UI.js');
@@ -52,7 +52,7 @@ let seekbarProperties = {
 	analysis: ['Analysis config',
 		JSON.stringify({
 			binaryMode: 'audiowaveform',
-			resolution: 2,
+			resolution: 10,
 			compressionMode: 'utf-16',
 			storeMode: 'library',
 			trackMode: ['playing', 'selected', 'blank'],
@@ -268,8 +268,8 @@ seekbar.applyUiSettings = function (settings, bForce) {
 };
 
 seekbar.tooltip = new _tt(null);
-seekbar.tooltip.SetDelayTime(3, seekbarProperties.bShowTooltipOnClick[1] ? 500 : 1500);
-seekbar.tooltip.SetDelayTime(2, seekbarProperties.bShowTooltipOnClick[1] ? Infinity : 3000);
+seekbar.tooltip.SetDelayTime(TTDT_INITIAL, seekbarProperties.bShowTooltipOnClick[1] ? 500 : 1500);
+seekbar.tooltip.SetDelayTime(TTDT_AUTOPOP, seekbarProperties.bShowTooltipOnClick[1] ? Infinity : 3000);
 
 globProfiler.Print('seekbar');
 
@@ -284,8 +284,8 @@ if (!seekbarProperties.firstPopup[1]) {
 
 // Update check
 if (seekbarProperties.bAutoUpdateCheck[1]) {
-	/* global checkUpdate:readable */
 	include('helpers\\helpers_xxx_web_update.js');
+	/* global checkUpdate:readable */
 	setTimeout(checkUpdate, 120000, { bDownload: globSettings.bAutoUpdateDownload, bOpenWeb: globSettings.bAutoUpdateOpenWeb });
 }
 
@@ -296,8 +296,8 @@ if (seekbarProperties.bAutoUpdateCheck[1]) {
 const queueSelection = () => {
 	if (seekbar.getPreferredTrackMode() === 'selected') {
 		const handle = seekbar.getHandle();
-		if (!seekbar.compareTrack(handle)) { seekbar.newTrackQueue(handle); return true; }
-		else { return false; }
+		if (seekbar.compareTrack(handle)) { return false; }
+		else { seekbar.newTrackQueue(handle); return true; }
 	}
 };
 
@@ -429,6 +429,11 @@ addEventListener('on_mouse_wheel_h', (step) => {
 	seekbar.wheel(step);
 });
 
+addEventListener('on_key_down', (k) => {
+	if (k === VK_RIGHT || k === VK_UP) { seekbar.wheel(1); }
+	else if (k === VK_LEFT || k === VK_DOWN) { seekbar.wheel(-1); }
+});
+
 addEventListener('on_notify_data', (name, info) => {
 	if (name === 'bio_imgChange' || name === 'bio_chkTrackRev' || name === 'xxx-scripts: panel name reply') { return; }
 	switch (name) { // NOSONAR
@@ -470,6 +475,7 @@ addEventListener('on_notify_data', (name, info) => {
 {
 	const initHandle = seekbar.getHandle();
 	if (initHandle) {
+		seekbar.checkAllowedFile(initHandle);
 		if (window.IsVisible) { window.Repaint(); }
 		if (seekbar.getPreferredTrackMode() === 'selected') {
 			setTimeout(() => { on_item_focus_change(); }, 0);

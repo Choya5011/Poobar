@@ -1,0 +1,163 @@
+﻿Library-Tre-SMP panels can be controlled by third party panels using
+'window.NotifyOthers(callback, arg)' SMP/JSplitter functions.
+
+General notes:
+--------------
+• Example: window.NotifyOthers('Library-Tree-SMP: do it', { window: [] })
+• Window arg should be an array with desired target panel names to control.
+• If not provided or empty, all panels will execute the action.
+• Panel notifications only work within same JS host (no SMP <-> JSplitter).
+• User presets may only be triggered if relevant panel setting is enabled.
+
+Callbacks:
+----------
+• 'Library-Tree-SMP: new'
+	-> { window: string[] }
+	- Based on current selection within panel
+
+• 'Library-Tree-SMP: insert'
+	-> { window: string[] }
+	- Based on current selection within panel
+
+• 'Library-Tree-SMP: add'
+	-> { window: string[] }
+	- Based on current selection within panel
+
+• 'Library-Tree-SMP: show now playing'
+	-> { window: string[] }
+	- Jumps to now playing track on panel (if possible)
+
+• 'Library-Tree-SMP: show handle'
+	-> { window: string[], handle: FbMetadbHandle }
+	- Jumps to provided track on panel (if possible)
+
+• 'Library-Tree-SMP: switch show art'
+	-> { window: string[] }
+	- Switches between tree/art modes
+
+• 'Library-Tree-SMP: show art'
+	-> { window: string[] }
+	- Switches to art mode
+
+• 'Library-Tree-SMP: show tree'
+	-> { window: string[] }
+	- Switches to tree mode
+
+• 'Library-Tree-SMP: switch show artists / albums'
+	-> { window: string[], forceShowArt: boolean }
+	- Switches between show artists / albums art
+
+• 'Library-Tree-SMP: cycle show art type'
+	-> { window: string[], forceShowArt: boolean }
+	- Switches between show art types (artist/album/tf)
+	- forceShowArt = true to also force art mode
+
+• 'Library-Tree-SMP: show artists'
+	-> { window: string[], forceShowArt: boolean }
+	- Switches to show artists art
+	- forceShowArt = true to also force art mode
+
+• 'Library-Tree-SMP: show albums'
+	-> { window: string[], forceShowArt: boolean }
+	- Switches to show albums art
+	- forceShowArt = true to also force art mode
+
+• 'Library-Tree-SMP: show art (tf)'
+	-> { window: string[], forceShowArt: boolean }
+	- Switches to show art (tf)
+	- forceShowArt = true to also force art mode
+
+• 'Library-Tree-SMP: switch art type'
+	-> { window: string[], artName: string, artIdx: number, forceShowArt: boolean }
+	- Switches to specific art type
+	- artIdx = -1 or 0 for front art
+	- artName follows menu names
+	- forceShowArt = true to also force art mode
+
+• 'Library-Tree-SMP: cycle art type'
+	-> { window: string[], forceShowArt: boolean }
+	- Switches between all art types
+	- forceShowArt = true to also force art mode
+
+• 'Library-Tree-SMP: collapse all'
+	-> { window: string[] }
+	- Collapses all tree nodes
+
+• 'Library-Tree-SMP: quicksearch'
+	-> { window: string[], search: string }
+	- Simulates quicksearch with given string
+
+• 'Library-Tree-SMP: search'
+	-> { window: string[], search: string }
+	- Performs search with given string
+
+• 'Library-Tree-SMP: search clear'
+	-> { window: string[] }
+	- Clears search input box
+
+• 'Library-Tree-SMP: search focus'
+	-> { window: string[] }
+	- Sets focus to search input box
+
+• 'Library-Tree-SMP: switch view'
+	-> { window: string[], viewName: string, viewIdx: number, skipPresets: boolean }
+	- Switches to specific panel view
+	- viewIdx = -1 for folder view
+	- viewName follows menu names
+	- skipPresets allow to bypass user-set preset rules
+
+• 'Library-Tree-SMP: switch filter'
+	-> { window: string[], filterName: string, filterIdx: number, skipPresets: boolean }
+	- Switches to specific panel filter
+	- filterIdx = -1 or 0 for no filter
+	- filterName follow menu names
+	- skipPresets allow to bypass user-set preset rules
+
+• 'Library-Tree-SMP: switch source'
+	-> { window: string[], sourceName: string, sourceIdx: number, sourcePlaylistName: string, sourcePlaylistIdx: number[]|number, sourcePanel: string, skipPresets: boolean }
+	- Switches to specific panel source
+	- sourceIdx = -1 or 0 for library
+	- sourcePlaylistIdx = -1 for active playlist
+	- sourceName follows menu names
+	- sourceName allows alternate names:
+	  Playlist|Playlists|Playlist(s)
+	  Panel|Panels|Panel(s)
+	- sourcePanel allows multiples values, joined with '|'
+	- sourcePanel allows multiple values, joined with '|'
+	- skipPresets allow to bypass user-set preset rules
+
+• 'Library-Tree-SMP: switch statistics'
+	-> { window: string[], statisticsName: string, statisticsIdx: number }
+	- Switches to specific panel stats
+	- statisticsIdx = -1 or 0 for default stats (usually # tracks)
+	- statisticsName follows menu names
+	- statisticsName can be matched by entire label (all), user label
+	  only or 'custom-X (...)' labels (custom entries only)
+
+Example: (copy code below into a new blank panel)
+---------------------------------------------
+'use strict';
+// Example script to switch Library-Tree-SMP sources depending on the active playlist
+// Library viewer playlist will switch to Library source, otherwise Playlist(s) source is used
+// Note Panel notifications only work within same JS host (no SMP <-> JSplitter)
+
+const panelName = '{7D3749BB-45F9-46AF-B114-E7F2F103BB62}'; // Set here your Library-Tree-SMP panel name
+const libraryPls= 'Library Viewer Selection'; // Set here your library viewer playlist name
+
+const changeSource = (() => {
+	let lastPls = plman.ActivePlaylist !== -1 ? plman.GetPlaylistName(plman.ActivePlaylist) : '';
+	return () => {
+		if (plman.ActivePlaylist !== -1) {
+			const name = plman.GetPlaylistName(plman.ActivePlaylist);
+			if (lastPls !== name) {
+				if (name === libraryPls) { window.NotifyOthers('Library-Tree-SMP: switch source', { window: [panelName], sourceName: 'library' }); }
+				else { window.NotifyOthers('Library-Tree-SMP: switch source', { window: [panelName], sourceName: 'playlists', sourcePlaylistIdx: -1 }); }
+				lastPls = name;
+			}
+		} else if (lastPls) { window.NotifyOthers('Library-Tree-SMP: switch source', { window: [panelName], sourceName: 'library' }); }
+	};
+})();
+
+function on_playlist_switch() { changeSource(); }
+
+function on_playlists_changed() { changeSource(); }

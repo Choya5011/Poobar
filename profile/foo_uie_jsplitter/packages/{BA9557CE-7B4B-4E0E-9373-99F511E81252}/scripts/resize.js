@@ -1,4 +1,5 @@
 ﻿'use strict';
+//24/04/26
 
 class ResizeHandler {
 	constructor() {
@@ -80,7 +81,7 @@ class ResizeHandler {
 	}
 
 	editText() {
-		return (ppt.text_only ? 'Type: Text Only' + (panel.style.showFilmStrip ? '\n - Layout Adjust: Drag Line' : '') : (ppt.img_only ? 'Type: Image Only' + (panel.style.showFilmStrip ? '\n - Layout Adjust: Drag Line' : '') : 'Name: ' + panel.style.name[ppt.style] + (ppt.style < 4 ? '\n\nType: Auto\n - Layout Adjust: Drag Line' + (panel.style.showFilmStrip && !ppt.img_only && ppt.style != 4 ? 's' : '') + '\n - Image Strength: Shift + Wheel Over Text' : ppt.style == 4 ? '\n\nType: Auto' + (panel.style.showFilmStrip && !ppt.img_only ? '\n - Layout Adjust: Drag Line' : '') + '\n - Image Strength: Shift + Wheel Over Text' : '\n\nType: Freestyle\n - Layout Adjust: Drag Lines or Boxes: Ctrl (Any), Ctrl + Alt (Image), Ctrl + Shift (Text) or Ctrl + Alt + Shift (Filmstrip)\n - Overlay Strength: Shift + Wheel Over Text'))) + (img.isType('Refl') && !ppt.text_only && ppt.style != 4 ? '\n - Reflection Strength: Shift + Wheel Over Main Image' : '') + (!ppt.img_only ? '\n - Text Size: Ctrl + Wheel Over Text' : '') + '\n - ' + (ppt.style != 4 ? '' : 'Text ') +'Padding: Display Tab';
+		return (ppt.text_only ? 'Type: Text Only' + (panel.style.showFilmStrip ? '\n - Layout Adjust: Drag Line' : '') : (ppt.img_only ? 'Type: Image Only' + (panel.style.showFilmStrip ? '\n - Layout Adjust: Drag Line' : '') : 'Name: ' + panel.style.name[ppt.style] + (ppt.style < 4 ? '\n\nType: Auto\n - Layout Adjust: Drag Line' + (panel.style.showFilmStrip && !ppt.img_only && ppt.style != 4 ? 's' : '') + '\n - Image Strength: Shift + Wheel Over Text' : ppt.style == 4 ? '\n\nType: Auto' + (panel.style.showFilmStrip && !ppt.img_only ? '\n - Layout Adjust: Drag Line' : '') + '\n - Image Strength: Shift + Wheel Over Text' : '\n\nType: Freestyle\n - Layout Adjust: Drag Lines or Boxes: Ctrl (Any), Ctrl + Alt (Image), Ctrl + Shift (Text) or Ctrl + Alt + Shift (Filmstrip)\n - Overlay Strength: Shift + Wheel Over Text'))) + (img.isType('Refl') && !ppt.text_only && ppt.style != 4 ? '\n - Reflection Strength: Shift + Wheel Over Main Image' : '') + (ppt.img_only ? '' : '\n - Text Size: Ctrl + Wheel Over Text') + '\n - ' + (ppt.style == 4 ? 'Text ' : '') + 'Padding: Display Tab';
 	}
 
 	filmMove(x, y) {
@@ -109,19 +110,19 @@ class ResizeHandler {
 		switch (ppt.filmStripPos) {
 			case 0:
 				ppt.filmStripSize = (ppt.filmStripSize * panel.h + y - this.y_start) / panel.h;
-				ppt.filmStripSize = $.clamp(parseFloat(ppt.filmStripSize.toFixed(15)), 0.02, filmStrip.max_sz / panel.h);
+				ppt.filmStripSize = $.clamp(Number.parseFloat(ppt.filmStripSize.toFixed(15)), 0.02, filmStrip.max_sz / panel.h);
 				break;
 			case 1:
 				ppt.filmStripSize = (ppt.filmStripSize * panel.w + this.x_start - x) / panel.w;
-				ppt.filmStripSize = $.clamp(parseFloat(ppt.filmStripSize.toFixed(15)), 0.02, filmStrip.max_sz / panel.w);
+				ppt.filmStripSize = $.clamp(Number.parseFloat(ppt.filmStripSize.toFixed(15)), 0.02, filmStrip.max_sz / panel.w);
 				break;
 			case 2:
 				ppt.filmStripSize = (ppt.filmStripSize * panel.h + this.y_start - y) / panel.h;
-				ppt.filmStripSize = $.clamp(parseFloat(ppt.filmStripSize.toFixed(15)), 0.02, filmStrip.max_sz / panel.h);
+				ppt.filmStripSize = $.clamp(Number.parseFloat(ppt.filmStripSize.toFixed(15)), 0.02, filmStrip.max_sz / panel.h);
 				break;
 			case 3:
 				ppt.filmStripSize = (ppt.filmStripSize * panel.w + x - this.x_start) / panel.w;
-				ppt.filmStripSize = $.clamp(parseFloat(ppt.filmStripSize.toFixed(15)), 0.02, filmStrip.max_sz / panel.w);
+				ppt.filmStripSize = $.clamp(Number.parseFloat(ppt.filmStripSize.toFixed(15)), 0.02, filmStrip.max_sz / panel.w);
 				break;
 		}
 		filmStrip.logScrollPos();
@@ -176,7 +177,8 @@ class ResizeHandler {
 				sv = true;
 			}
 			if (sv) {
-				ppt.style == 4 ? ppt.styleOverlay = JSON.stringify(panel.style.overlay) : ppt.styleFree = JSON.stringify(panel.style.free);
+				if (ppt.style == 4) { ppt.styleOverlay = JSON.stringify(panel.style.overlay); }
+				else { ppt.styleFree = JSON.stringify(panel.style.free); }
 			} else {
 				panel.im.l = $.clamp(obj.imL, 0, 1);
 				panel.im.r = $.clamp(obj.imR, 0, 1);
@@ -202,21 +204,21 @@ class ResizeHandler {
 				if (!this.down) {
 					this.si = y > panel.ibox.t - 5 && y < panel.ibox.t + 5 && x > panel.ibox.l + 10 && x < panel.ibox.l + panel.ibox.w - 10 ? 'top' :
 						y > panel.ibox.t - 5 && y < panel.ibox.t + 15 && x > panel.ibox.l && x < panel.ibox.l + 10 ? 'nw' :
-						y > panel.ibox.t - 5 && y < panel.ibox.t + 15 && x > panel.ibox.l + panel.ibox.w - 10 && x < panel.ibox.l + panel.ibox.w ? 'ne' :
-						y > panel.ibox.t + panel.ibox.h - 5 && y < panel.ibox.t + panel.ibox.h + 5 && x > panel.ibox.l + 10 && x < panel.ibox.l + panel.ibox.w - 5 ? 'bottom' :
-						y > panel.ibox.t + panel.ibox.h - 15 && y < panel.ibox.t + panel.ibox.h + 5 && x > panel.ibox.l && x < panel.ibox.l + 10 ? 'sw' :
-						y > panel.ibox.t + panel.ibox.h - 15 && y < panel.ibox.t + panel.ibox.h + 5 && x > panel.ibox.l + panel.ibox.w - 10 && x < panel.ibox.l + panel.ibox.w ? 'se' :
-						y > panel.ibox.t && y < panel.ibox.t + panel.ibox.h && x > panel.ibox.l - 5 && x < panel.ibox.l + 5 ? 'left' :
-						y > panel.ibox.t && y < panel.ibox.t + panel.ibox.h && x > panel.ibox.l + panel.ibox.w - 5 && x < panel.ibox.l + panel.ibox.w + 5 ? 'right' :
-						y > panel.ibox.t + 20 && y < panel.ibox.t + panel.ibox.h - 20 && x > panel.ibox.l + 20 && x < panel.ibox.l + panel.ibox.w - 20 ? 'all' : '';
+							y > panel.ibox.t - 5 && y < panel.ibox.t + 15 && x > panel.ibox.l + panel.ibox.w - 10 && x < panel.ibox.l + panel.ibox.w ? 'ne' :
+								y > panel.ibox.t + panel.ibox.h - 5 && y < panel.ibox.t + panel.ibox.h + 5 && x > panel.ibox.l + 10 && x < panel.ibox.l + panel.ibox.w - 5 ? 'bottom' :
+									y > panel.ibox.t + panel.ibox.h - 15 && y < panel.ibox.t + panel.ibox.h + 5 && x > panel.ibox.l && x < panel.ibox.l + 10 ? 'sw' :
+										y > panel.ibox.t + panel.ibox.h - 15 && y < panel.ibox.t + panel.ibox.h + 5 && x > panel.ibox.l + panel.ibox.w - 10 && x < panel.ibox.l + panel.ibox.w ? 'se' :
+											y > panel.ibox.t && y < panel.ibox.t + panel.ibox.h && x > panel.ibox.l - 5 && x < panel.ibox.l + 5 ? 'left' :
+												y > panel.ibox.t && y < panel.ibox.t + panel.ibox.h && x > panel.ibox.l + panel.ibox.w - 5 && x < panel.ibox.l + panel.ibox.w + 5 ? 'right' :
+													y > panel.ibox.t + 20 && y < panel.ibox.t + panel.ibox.h - 20 && x > panel.ibox.l + 20 && x < panel.ibox.l + panel.ibox.w - 20 ? 'all' : '';
 					this.setCursor(this.si);
 				}
 				if (!this.down || !this.si) return;
 				const filmStrip = {
-					t: !ppt.filmStripOverlay ? panel.filmStripSize.t : 0,
-					b: !ppt.filmStripOverlay ? panel.filmStripSize.b : 0,
-					l: !ppt.filmStripOverlay ? panel.filmStripSize.l : 0,
-					r: !ppt.filmStripOverlay ? panel.filmStripSize.r : 0
+					t: ppt.filmStripOverlay ? 0 : panel.filmStripSize.t,
+					b: ppt.filmStripOverlay ? 0 : panel.filmStripSize.b,
+					l: ppt.filmStripOverlay ? 0 : panel.filmStripSize.l,
+					r: ppt.filmStripOverlay ? 0 : panel.filmStripSize.r
 				}
 				let imT = Math.round(panel.im.t * panel.h) + filmStrip.t;
 				let imB = Math.round(panel.im.b * panel.h) + filmStrip.b;
@@ -298,10 +300,10 @@ class ResizeHandler {
 				}
 				if (!this.down || !this.si) return;
 				const filmStrip = {
-					t: !ppt.filmStripOverlay ? panel.filmStripSize.t : 0,
-					b: !ppt.filmStripOverlay ? panel.filmStripSize.b : 0,
-					l: !ppt.filmStripOverlay ? panel.filmStripSize.l : 0,
-					r: !ppt.filmStripOverlay ? panel.filmStripSize.r : 0
+					t: ppt.filmStripOverlay ? 0 : panel.filmStripSize.t,
+					b: ppt.filmStripOverlay ? 0 : panel.filmStripSize.b,
+					l: ppt.filmStripOverlay ? 0 : panel.filmStripSize.l,
+					r: ppt.filmStripOverlay ? 0 : panel.filmStripSize.r
 				}
 				const ph = panel.h - filmStrip.t - filmStrip.b;
 				const pw = panel.w - filmStrip.l - filmStrip.r;
@@ -319,7 +321,7 @@ class ResizeHandler {
 						ppt.rel_imgs = (ppt.rel_imgs * pw + x - this.x_init) / pw;
 						break;
 				}
-				ppt.rel_imgs = $.clamp(parseFloat(ppt.rel_imgs.toFixed(15)), 0.1, 0.9);
+				ppt.rel_imgs = $.clamp(Number.parseFloat(ppt.rel_imgs.toFixed(15)), 0.1, 0.9);
 				this.sizes();
 				break;
 			}
@@ -333,21 +335,21 @@ class ResizeHandler {
 		if (!this.down) {
 			this.st = y > panel.tbox.t - 5 && y < panel.tbox.t + 5 && x > panel.tbox.l + 10 && x < panel.tbox.l + panel.tbox.w - 10 ? 'top' :
 				y > panel.tbox.t - 5 && y < panel.tbox.t + 15 && x > panel.tbox.l && x < panel.tbox.l + 10 ? 'nw' :
-				y > panel.tbox.t - 5 && y < panel.tbox.t + 15 && x > panel.tbox.l + panel.tbox.w - 10 && x < panel.tbox.l + panel.tbox.w ? 'ne' :
-				y > panel.tbox.t + panel.tbox.h - 5 && y < panel.tbox.t + panel.tbox.h + 5 && x > panel.tbox.l + 10 && x < panel.tbox.l + panel.tbox.w - 10 ? 'bottom' :
-				y > panel.tbox.t + panel.tbox.h - 15 && y < panel.tbox.t + panel.tbox.h + 5 && x > panel.tbox.l && x < panel.tbox.l + 10 ? 'sw' :
-				y > panel.tbox.t + panel.tbox.h - 15 && y < panel.tbox.t + panel.tbox.h + 5 && x > panel.tbox.l + panel.tbox.w - 10 && x < panel.tbox.l + panel.tbox.w ? 'se' :
-				y > panel.tbox.t + 10 && y < panel.tbox.t + panel.tbox.h && x > panel.tbox.l - 5 && x < panel.tbox.l + 5 ? 'left' :
-				y > panel.tbox.t + 10 && y < panel.tbox.t + panel.tbox.h && x > panel.tbox.l + panel.tbox.w - 5 && x < panel.tbox.l + panel.tbox.w + 5 ? 'right' :
-				y > panel.tbox.t + 20 && y < panel.tbox.t + panel.tbox.h - 20 && x > panel.tbox.l + 20 && x < panel.tbox.l + panel.tbox.w - 20 ? 'all' : '';
+					y > panel.tbox.t - 5 && y < panel.tbox.t + 15 && x > panel.tbox.l + panel.tbox.w - 10 && x < panel.tbox.l + panel.tbox.w ? 'ne' :
+						y > panel.tbox.t + panel.tbox.h - 5 && y < panel.tbox.t + panel.tbox.h + 5 && x > panel.tbox.l + 10 && x < panel.tbox.l + panel.tbox.w - 10 ? 'bottom' :
+							y > panel.tbox.t + panel.tbox.h - 15 && y < panel.tbox.t + panel.tbox.h + 5 && x > panel.tbox.l && x < panel.tbox.l + 10 ? 'sw' :
+								y > panel.tbox.t + panel.tbox.h - 15 && y < panel.tbox.t + panel.tbox.h + 5 && x > panel.tbox.l + panel.tbox.w - 10 && x < panel.tbox.l + panel.tbox.w ? 'se' :
+									y > panel.tbox.t + 10 && y < panel.tbox.t + panel.tbox.h && x > panel.tbox.l - 5 && x < panel.tbox.l + 5 ? 'left' :
+										y > panel.tbox.t + 10 && y < panel.tbox.t + panel.tbox.h && x > panel.tbox.l + panel.tbox.w - 5 && x < panel.tbox.l + panel.tbox.w + 5 ? 'right' :
+											y > panel.tbox.t + 20 && y < panel.tbox.t + panel.tbox.h - 20 && x > panel.tbox.l + 20 && x < panel.tbox.l + panel.tbox.w - 20 ? 'all' : '';
 			this.setCursor(this.st);
 		}
 		if (!this.down || !this.st) return;
 		const filmStrip = {
-			t: !ppt.filmStripOverlay ? panel.filmStripSize.t : 0,
-			b: !ppt.filmStripOverlay ? panel.filmStripSize.b : 0,
-			l: !ppt.filmStripOverlay ? panel.filmStripSize.l : 0,
-			r: !ppt.filmStripOverlay ? panel.filmStripSize.r : 0
+			t: ppt.filmStripOverlay ? 0 : panel.filmStripSize.t,
+			b: ppt.filmStripOverlay ? 0 : panel.filmStripSize.b,
+			l: ppt.filmStripOverlay ? 0 : panel.filmStripSize.l,
+			r: ppt.filmStripOverlay ? 0 : panel.filmStripSize.r
 		}
 		let txT = Math.round(panel.tx.t * panel.h) + filmStrip.t;
 		let txB = Math.round(panel.tx.b * panel.h) + filmStrip.b;

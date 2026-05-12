@@ -1,9 +1,8 @@
 ﻿'use strict';
-//03/12/25
+//27/04/26
 
 /* global ui:readable, panel:readable, ppt:readable, lib:readable, pop:readable, but:readable, timer:readable, $:readable, vk:readable, tooltip:readable, sbar:readable, Tooltip:readable, searchMenu:readable */
-/* global MK_CONTROL:readable, MK_SHIFT */
-/* global globTags:readable */
+/* global MK_CONTROL:readable, MK_SHIFT, SmoothingMode:readable */
 /* global Language:readable */
 
 /* exported Search, Find */
@@ -34,7 +33,7 @@ class Search {
 
 		this.searchTooltipText = () => {
 			if (!panel.search.txt || !panel.search.txt.length) { return ''; }
-			let tooltipText = panel.search.txt;
+			let tooltipText = panel.search.txt.replace(/&/g, '&&');
 			tooltipText += '\n----------------------------------------------';
 			const count = pop.tree[0] && pop.tree[0].root && pop.tree[0].tracksCount ? pop.tree[0].tracksCount : panel.list.Count;
 			tooltipText += '\nFound ' + count + ' tracks';
@@ -45,7 +44,7 @@ class Search {
 			this.tt('');
 		};
 		// Regorxxx ->
-		// Regorxxx <- Drag n' drop to search box
+		// Regorxxx <- Drag n' drop to search box | Drag n' drop to queue
 		this.getDragDropTags = (mask) => {
 			const bCtrl = (mask & MK_CONTROL) === MK_CONTROL;
 			const bAlt = (mask & 32) === 32;
@@ -53,10 +52,32 @@ class Search {
 				bAlt
 					? ppt.searchDragTagsAlt
 					: bCtrl ? ppt.searchDragTagsCtrl : ppt.searchDragTags,
-				bAlt
-					? [globTags.artistRaw]
-					: [globTags.artistRaw, globTags.genre]
-			);
+				[]
+			).flatMap((tag) => {
+				if (typeof tag === 'object') {
+					const [hasFrom, hasTo] = [Object.hasOwn(tag, 'from'), Object.hasOwn(tag, 'to')];
+					const [isArrFrom, isArrTo] = [Array.isArray(tag.from), Array.isArray(tag.to)];
+					const fromArr = [];
+					const toArr = [];
+					if (hasFrom) {
+						if (isArrFrom) { fromArr.push(...tag.from); }
+						else { fromArr.push(tag.from); }
+					} else if (hasTo) {
+						if (isArrTo) { fromArr.push(...tag.to); }
+						else { fromArr.push(tag.to); }
+					}
+					if (hasTo) {
+						if (isArrTo) { toArr.push(...tag.to); }
+						else { toArr.push(tag.to); }
+					} else if (hasFrom) {
+						if (isArrFrom) { toArr.push(...tag.from); }
+						else { toArr.push(tag.from); }
+					}
+					return fromArr.flatMap((from) => toArr.map((to) => { return { from, to: to }; }));
+				} else {
+					return [{ from: tag, to: tag, bInternalRemap: true }];
+				}
+			});
 		};
 
 		this.getDragDropOperators = (mask) => {
@@ -83,18 +104,18 @@ class Search {
 
 		this.getDragDropQuery = (selItems, searchTags, operators) => {
 			if (!operators.track) { selItems = new FbMetadbHandleList(selItems[0]); }
-			const trackQueries = $.getHandleListTags(selItems, searchTags).map((trackTags) => {
+			const trackQueries = $.getHandleListTags(selItems, searchTags.map((t) => t.from)).map((trackTags) => {
 				return $.queryJoin(
 					searchTags.map((searchTag, i) => {
 						if (!operators.tag && i > 0) { return; }
 						const values = [...new Set(trackTags[i].filter(Boolean).map(s => s.toLowerCase()))];
 						if (!operators.value) { values.length = 1; }
-						return searchTag.toUpperCase() === 'ALBUM ARTIST'
+						return searchTag.bInternalRemap && searchTag.to.toUpperCase() === 'ALBUM ARTIST'
 							? $.queryJoin([
 								$.queryCombinations(values, 'ALBUM ARTIST', operators.value),
 								$.queryCombinations(values, 'ARTIST', operators.value),
 							].filter(Boolean), 'OR')
-							: $.queryCombinations(values, searchTag, operators.value);
+							: $.queryCombinations(values, searchTag.to, operators.value);
 					}).filter(Boolean),
 					operators.tag
 				);
@@ -123,19 +144,6 @@ class Search {
 				}
 			}
 			return input;
-		};
-
-		this.getDragDropTooltipText = (method, mask) => {
-			if (method === 0 && panel.folderView) { // Auto: tags or path
-				return 'Add paths to search box';
-			} else { // Tags
-				const searchTags = this.getDragDropTags(mask);
-				const operators = this.getDragDropOperators(mask);
-				const tagsDisplay = operators.tag
-					? searchTags.join(' ' + operators.tag + ' ')
-					: searchTags[0];
-				return (operators.query || !panel.search.txt ? 'Add' : 'Replace') + ' query: ' + tagsDisplay;
-			}
 		};
 		// Regorxxx ->
 		// Regorxxx <- RegExp library search
@@ -177,7 +185,7 @@ class Search {
 	// Methods
 
 	calcText() {
-		$.gr(1, 1, false, g => this.txt_w = g.CalcTextWidth(panel.search.txt.substr(this.offset), ui.font.main, true));
+		$.gr(1, 1, false, g => this.txt_w = g.CalcTextWidth(panel.search.txt.slice(this.offset), ui.font.main, true));
 	}
 
 	clear() {
@@ -193,7 +201,7 @@ class Search {
 		pop.notifySelection();
 	}
 
-	draw(gr) {
+	draw(/** @type {GdiGraphics} */gr) {
 		if (!ppt.searchShow) return;
 		this.start = $.clamp(this.start, 0, panel.search.txt.length);
 		this.end = $.clamp(this.end, 0, panel.search.txt.length);
@@ -203,13 +211,22 @@ class Search {
 		if (panel.search.txt) {
 			this.drawSel(gr);
 			this.getOffset(gr);
-			gr.GdiDrawText(panel.search.txt.substr(this.offset), ui.font.main, ui.col.search, panel.search.x, 0, panel.search.w, panel.search.sp, panel.l);
+			gr.GdiDrawText(panel.search.txt.slice(this.offset), ui.font.main, ui.col.search, panel.search.x, 0, panel.search.w, panel.search.sp, panel.l);
+			// Regorxxx <- Dynamic search selection color
+			if (this.start !== this.end && ui.col.dynSearch !== ui.col.search) {
+				const clamp = panel.search.x + panel.search.w;
+				const left = Math.min(this.start, this.end);
+				const right = Math.max(this.start, this.end);
+				gr.SetTextRenderingHint(3);
+				gr.GdiDrawText(panel.search.txt.slice(left, right), ui.font.main, ui.col.dynSearch, Math.min(panel.search.x + this.get_cursor_x(left), clamp), 0, Math.min(panel.search.x + this.get_cursor_x(right), clamp), panel.search.sp, panel.l);
+				gr.SetTextRenderingHint();
+			}
+			// Regorxxx ->
 		} else {
-			if (!ui.img.blurDark) gr.GdiDrawText('Search', ui.font.search, ui.col.txt_box, panel.search.x, 0, panel.search.w, panel.search.sp, panel.l);
-			else {
+			if (ui.img.blurDark) {
 				gr.SetTextRenderingHint(5);
 				gr.DrawString('Search', ui.font.search, ui.col.txt_box, panel.search.x, -1, panel.search.w, panel.search.sp, panel.s_lc);
-			}
+			} else { gr.GdiDrawText('Search', ui.font.search, ui.col.txt_box, panel.search.x, 0, panel.search.w, panel.search.sp, panel.l); }
 		}
 		this.drawCursor(gr);
 	}
@@ -222,15 +239,15 @@ class Search {
 	}
 
 	drawSel(gr) {
-		if (this.start == this.end) return;
+		if (this.start == this.end) { return; }
 		const clamp = panel.search.x + panel.search.w;
-		gr.DrawLine(Math.min(panel.search.x + this.get_cursor_x(this.start), clamp), panel.search.sp / 2, Math.min(panel.search.x + this.get_cursor_x(this.end), clamp), panel.search.sp / 2, ui.row.h - 3, ui.col.searchSel);
+		gr.DrawLine(Math.min(panel.search.x + this.get_cursor_x(this.start), clamp), panel.search.sp / 2, Math.min(panel.search.x + this.get_cursor_x(this.end), clamp), panel.search.sp / 2, ui.row.h - 3, ui.col.dynSearchSel); // Regorxxx <- Dynamic search selection color ->
 	}
 
 	get_cursor_x(pos) {
 		let x = 0;
 		$.gr(1, 1, false, g => {
-			if (pos >= this.offset) x = g.CalcTextWidth(panel.search.txt.substr(this.offset, pos - this.offset), ui.font.main, true);
+			if (pos >= this.offset) x = g.CalcTextWidth(panel.search.txt.slice(this.offset, pos), ui.font.main, true);
 		});
 		return x;
 	}
@@ -241,7 +258,7 @@ class Search {
 			const nx = x - panel.search.x;
 			let pos = 0;
 			for (i = this.offset; i < panel.search.txt.length; i++) {
-				pos += g.CalcTextWidth(panel.search.txt.substr(i, 1), ui.font.main, true);
+				pos += g.CalcTextWidth(panel.search.txt.slice(i, i + 1), ui.font.main, true);
 				if (pos >= nx + 3) break;
 			}
 		});
@@ -250,31 +267,44 @@ class Search {
 
 	getOffset(gr) {
 		let j = 0;
-		let tx = gr.CalcTextWidth(panel.search.txt.substr(this.offset, this.cx - this.offset), ui.font.main, true);
+		let tx = gr.CalcTextWidth(panel.search.txt.slice(this.offset, this.cx), ui.font.main, true);
 		while (tx >= panel.search.w && panel.search.w > 0 && j < 500) {
 			j++;
 			this.offset++;
-			tx = gr.CalcTextWidth(panel.search.txt.substr(this.offset, this.cx - this.offset), ui.font.main, true);
+			tx = gr.CalcTextWidth(panel.search.txt.slice(this.offset, this.cx), ui.font.main, true);
 		}
 	}
 
+	// Regorxxx <- Search double click and triple click selection
 	lbtn_dblclk(x, y) {
-		if (y < panel.search.h && x > but.q.h + but.margin && x < panel.search.x + panel.search.w && panel.search.txt.length) {
+		if (this.trace(x, y, 'input') && panel.search.txt.length) { // Regorxxx <- Code cleanup ->
+			panel.search.cursor = false;
+			let anchor = panel.search.txt.split('').slice(this.start).indexOf(' ');
+			this.end = anchor === -1
+				? panel.search.txt.length
+				: this.start + anchor;
+			anchor = panel.search.txt.split('').slice(0, this.start).reverse().indexOf(' ');
+			this.start = anchor === -1
+				? 0
+				: this.start - anchor;
+			panel.searchPaint();
+		}
+	}
+
+	lbtn_tplclk(x, y) {
+		if (this.trace(x, y, 'input') && panel.search.txt.length) {
 			panel.search.cursor = false;
 			this.start = 0;
 			this.end = panel.search.txt.length;
 			panel.searchPaint();
 		}
 	}
+	// Regorxxx ->
 
 	lbtn_dn(x, y) {
 		panel.searchPaint();
-		this.lbtnDn = panel.search.active = (y < panel.search.h && x > but.q.x - but.margin / 2 + but.q.h + but.margin && x < panel.search.x + panel.search.w);
-		if (!this.lbtnDn) {
-			this.offset = this.start = this.end = this.cx = 0;
-			timer.clear(timer.cursor);
-			return;
-		} else {
+		this.lbtnDn = panel.search.active = this.trace(x, y, 'button'); // Regorxxx <- Code cleanup ->
+		if (this.lbtnDn) {
 			if (this.shift) {
 				this.start = this.cx;
 				this.end = this.cx = this.getCursorChrPos(x);
@@ -283,20 +313,32 @@ class Search {
 				this.start = this.end = this.cx;
 			}
 			timer.searchCursor(true);
+		} else {
+			this.offset = this.start = this.end = this.cx = 0;
+			timer.clear(timer.cursor);
+			return;
 		}
 		panel.searchPaint();
 	}
 
 	lbtn_up() {
-		if (this.start != this.end) timer.clear(timer.cursor);
+		if (this.start != this.end) { timer.clear(timer.cursor); }
 		this.lbtnDn = false;
 	}
 
+	// Regorxxx <- Tooltip over search input box | Code cleanup
+	trace(x, y, element) {
+		switch ((element || '').toLowerCase()) {
+			case 'input': return y < panel.search.h && x > (but.q.x + but.q.h + but.margin) && x < (panel.search.x + panel.search.w);
+			case 'button': return y < panel.search.h && x > (but.q.x - but.margin / 2 + but.q.h + but.margin) && x < (panel.search.x + panel.search.w);
+			default: return y < panel.search.h && x > panel.search.x && x < (panel.search.w + panel.search.x);
+		}
+	}
+	// Regorxxx ->
+
 	move(x, y) {
 		// Regorxxx <- Tooltip over search input box
-		if (y < panel.search.h && x > panel.search.x && x < (panel.search.w + panel.search.x)) {
-			this.tt(this.searchTooltipText());
-		}
+		if (this.trace(x, y, 'input')) { this.tt(this.searchTooltipText()); }
 		// Regorxxx ->
 		if (y > panel.search.h || !this.lbtnDn) return;
 		const cursorChrPos = this.getCursorChrPos(x);
@@ -327,7 +369,7 @@ class Search {
 
 	on_char(code, force) {
 		let searchDone = false;
-		let text = String.fromCharCode(code) || '';
+		let text = typeof code === 'number' ? String.fromCodePoint(code) : '';
 		if (force) panel.search.active = true;
 		if (!panel.search.active || code == 5 || code == 9 || code == 12) return;
 		panel.search.cursor = false;
@@ -340,7 +382,7 @@ class Search {
 					pop.cache.search = {};
 					lib.setNodes();
 					panel.setHeight(true);
-					if (panel.search.txt.length > 2) window.NotifyOthers(window.Name, !lib.list.Count ? lib.list : panel.list);
+					if (panel.search.txt.length > 2) window.NotifyOthers(window.Name, lib.list.Count ? panel.list : lib.list);
 					else if (!panel.search.txt.length) pop.notifySelection();
 					lib.search.cancel();
 					this.logHistory(true); // Regorxxx <- Fix search history on enter ->
@@ -377,7 +419,7 @@ class Search {
 				this.record();
 				if (this.start == this.end) {
 					if (this.cx > 0) {
-						panel.search.txt = panel.search.txt.substr(0, this.cx - 1) + panel.search.txt.substr(this.cx, panel.search.txt.length - this.cx);
+						panel.search.txt = panel.search.txt.slice(0, this.cx - 1) + panel.search.txt.slice(this.cx);
 						if (this.offset > 0) this.offset--;
 						this.cx--;
 					}
@@ -430,7 +472,7 @@ class Search {
 				this.record();
 				if (this.start == this.end) {
 					if (this.cx < panel.search.txt.length) {
-						panel.search.txt = panel.search.txt.substr(0, this.cx) + panel.search.txt.substr(this.cx + 1, panel.search.txt.length - this.cx - 1);
+						panel.search.txt = panel.search.txt.slice(0, this.cx) + panel.search.txt.slice(this.cx + 1);
 					}
 				} else {
 					if (this.end - this.start == panel.search.txt.length) {
@@ -505,14 +547,7 @@ class Search {
 			case vk.left:
 			case vk.right:
 				if (vkey == vk.left) {
-					if (!this.ctrl) {
-						if (this.offset > 0) {
-							if (this.cx <= this.offset) {
-								this.offset--;
-								this.cx--;
-							} else this.cx--;
-						} else if (this.cx > 0) this.cx--;
-					} else {
+					if (this.ctrl) {
 						let boundary = 0;
 						for (let k = this.cx - 1; k > 0; k--) {
 							if (panel.search.txt[k] != ' ' && panel.search.txt[k - 1] == ' ') {
@@ -525,11 +560,17 @@ class Search {
 						}
 						this.cx = boundary;
 						this.offset = this.offset >= this.end - this.start ? this.offset - this.end + this.start : 0;
+					} else {
+						if (this.offset > 0) {
+							if (this.cx <= this.offset) {
+								this.offset--;
+								this.cx--;
+							} else this.cx--;
+						} else if (this.cx > 0) this.cx--;
 					}
 				}
 				if (vkey == vk.right && this.cx < panel.search.txt.length) {
-					if (!this.ctrl) this.cx++;
-					else {
+					if (this.ctrl) {
 						let boundary = panel.search.txt.length;
 						for (let k = this.cx; k < panel.search.txt.length; k++) {
 							if (panel.search.txt[k] == ' ' && panel.search.txt[k + 1] != ' ') {
@@ -538,7 +579,7 @@ class Search {
 							}
 						}
 						this.cx = boundary;
-					}
+					} else { this.cx++; }
 				}
 				this.start = this.end = this.cx;
 				if (this.shift) {
@@ -574,7 +615,7 @@ class Search {
 					let newRightSide = rightSide.slice(boundary);
 					if (newRightSide.length && !/\s$/.test(leftSide) && !/^\s/.test(newRightSide)) newRightSide = ' ' + newRightSide;
 					panel.search.txt = leftSide + newRightSide;
-					this.cx = !/\s$/.test(leftSide) ? leftSide.length + 1 : leftSide.length;
+					this.cx = /\s$/.test(leftSide) ? leftSide.length : leftSide.length + 1;
 					if (this.offset > 0) {
 						this.offset -= initial - panel.search.txt.length;
 					}
@@ -599,7 +640,7 @@ class Search {
 	}
 
 	rbtn_up(x, y) {
-		this.paste = $.getClipboardData() ? true : false;
+		this.paste = !!$.getClipboardData();
 		searchMenu.load(x, y);
 	}
 
@@ -633,31 +674,48 @@ class Find {
 		this.jSearch = '';
 		this.jump_search = true;
 		this.initials = null;
-		this.prevChar = null; // Regorxxx <- Fixed quick-search on same letter
+		this.prevChar = null; // Regorxxx <- Fixed quick-search on same letter ->
+		this.bAnyPosition = false; // Regorxxx <- Quick-search at any position of string ->
 	}
 
 	// Methods
 
+	// Regorxxx <- Quick-search at any position of string
 	draw(gr) {
 		if (this.jSearch) {
-			gr.SetSmoothingMode(4);
-			this.j.w = gr.CalcTextWidth(this.jSearch, ui.font.find) + 25;
+			gr.SetSmoothingMode(SmoothingMode.AntiAlias);
+			const text = this.jSearch.length
+				? (this.bAnyPosition ? '*' : '') + this.jSearch.toUpperCase()
+				: '';
+			this.j.w = gr.CalcTextWidth(text, ui.font.find) + 25;
 			gr.FillRoundRect(this.j.x - this.j.w / 2, this.j.y, this.j.w, this.j.h, this.arc1, this.arc1, 0x96000000);
 			gr.DrawRoundRect(this.j.x - this.j.w / 2, this.j.y, this.j.w, this.j.h, this.arc1, this.arc1, 1, 0x64000000);
 			gr.DrawRoundRect(this.j.x - this.j.w / 2 + 1, this.j.y + 1, this.j.w - 2, this.j.h - 2, this.arc2, this.arc2, 1, 0x28ffffff);
-			gr.GdiDrawText(this.jSearch, ui.font.find, $.RGB(0, 0, 0), this.j.x - this.j.w / 2 + 1, this.j.y + 1, this.j.w, this.j.h, panel.cc);
-			gr.GdiDrawText(this.jSearch, ui.font.find, this.jump_search ? 0xfffafafa : 0xffff4646, this.j.x - this.j.w / 2, this.j.y, this.j.w, this.j.h, panel.cc);
-			gr.SetSmoothingMode(0);
+			gr.GdiDrawText(text, ui.font.find, $.RGB(0, 0, 0), this.j.x - this.j.w / 2 + 1, this.j.y + 1, this.j.w, this.j.h, panel.cc);
+			gr.GdiDrawText(text, ui.font.find, this.jump_search ? 0xfffafafa : 0xffff4646, this.j.x - this.j.w / 2, this.j.y, this.j.w, this.j.h, panel.cc);
+			gr.SetSmoothingMode();
 		}
 	}
+	// Regorxxx ->
 
+	// Regorxxx <- Up/down navigation during quicksearch | Code cleanup
 	on_char(code) {
-		const text = String.fromCharCode(code);
+		// Regorxxx <- Quick-search at any position of string
+		const bCtrl = utils.IsKeyPressed(vk.ctrl);
+		const bShift = utils.IsKeyPressed(vk.shift);
+		if (bCtrl) {
+			if (vk.hasKey(code)) { return; }
+			code += 96;
+		}
+		// Regorxxx <- Quick-search at any position of string
+		const text = String.fromCodePoint(code).toLowerCase(); // Regorxxx <- Quick-search optimization ->
 		let advance = false;
 		if (panel.pos >= 0 && panel.pos < pop.tree.length) {
 			const char = pop.tree[panel.pos].name.replace(/@!#.*?@!#/g, '').charAt(0).toLowerCase();
-			// Regorxxx <- Fixed quick-search on same letter. Fix quick-searck for non ascii first char, greek and cyrilic
-			const normChar = $.asciify(Language.transliterate(char));
+			// Regorxxx <- Fixed quick-search on same letter | Fix quick-searck for non ascii first char, greek and cyrilic | Quicksearch transliteration
+			const normChar = ppt.findTrans
+				? $.asciify(Language.transliterate(char, { languages: panel.sortingTransLangs }))
+				: $.asciify(char);
 			if (pop.tree[panel.pos].sel && (char === text || normChar === text) && this.prevChar == text) { advance = true; }
 			this.prevChar = text;
 			timer.clear(timer.jsearch3);
@@ -669,122 +727,223 @@ class Find {
 		}
 		switch (true) {
 			case advance:
-				if (utils.IsKeyPressed(0x0A) || utils.IsKeyPressed(0x08) || utils.IsKeyPressed(0x09) || utils.IsKeyPressed(0x11) || utils.IsKeyPressed(0x1B) || utils.IsKeyPressed(0x6A) || utils.IsKeyPressed(0x6D)) return;
-				if (!panel.search.active) {
-					let init = '';
-					let cur = 'currentArr';
-					if (!this.initials) { // reset in buildTree
-						this.initials = {};
-						pop.tree.forEach((v, i) => {
-							if (!v.root) {
-								const nm = v.name.replace(/@!#.*?@!#/g, '');
-								init = $.asciify(Language.transliterate(nm.charAt(0).toLowerCase())); // Regorxxx <- Fix quick-searck for non ascii first char, greek and cyrilic ->
-								if (cur != init && !this.initials[init]) {
-									this.initials[init] = [i];
-									cur = init;
-								} else {
-									this.initials[init].push(i);
-								}
-							}
-						});
-					}
-
-					this.jump_search = false;
-					if (panel.pos >= 0 && panel.pos < pop.tree.length) {
-						this.matches = this.initials[text];
-						this.ix = this.matches.indexOf(panel.pos);
-						this.ix++;
-						if (this.ix >= this.matches.length) this.ix = 0;
-						panel.pos = this.matches[this.ix];
-						this.jump_search = true;
-					}
-					if (this.jump_search) {
-						pop.clearSelected();
-						pop.sel_items = [];
-						pop.tree[panel.pos].sel = true;
-						pop.setPos(panel.pos);
-						pop.getTreeSel();
-						lib.treeState(false, ppt.rememberTree);
-						panel.treePaint();
-						if (panel.imgView) pop.showItem(panel.pos, 'focus');
-						else {
-							const row = (panel.pos * ui.row.h - sbar.scroll) / ui.row.h;
-							if (sbar.rows_drawn - row < 3 || row < 0) sbar.checkScroll((panel.pos + 3) * ui.row.h - sbar.rows_drawn * ui.row.h);
-						}
-						if (ppt.libSource) {
-							// if (pop.autoFill.key) pop.load(pop.sel_items, true, false, false, !ppt.sendToCur, false);
-							if (pop.autoFill.key) pop.load({ bAddToPls: false, bAutoPlay: false, bUseDefaultPls: !ppt.sendToCur, bInsertToPls: false });
-							pop.track(pop.autoFill.key);
-						} else if (panel.pos >= 0 && panel.pos < pop.tree.length) pop.setPlaylistSelection(panel.pos, pop.tree[panel.pos]);
-					} else {
-						this.jSearch = text;
-						panel.treePaint();
-						timer.clear(timer.jsearch2);
-						timer.jsearch2.id = setTimeout(() => {
-							this.jSearch = '';
-							panel.treePaint();
-							timer.jsearch2.id = null;
-						}, 1200);
-					}
-				}
+				this.advance(text);
 				break;
 			case !advance:
-				if (utils.IsKeyPressed(0x09) || utils.IsKeyPressed(0x11) || utils.IsKeyPressed(0x1B) || utils.IsKeyPressed(0x6A) || utils.IsKeyPressed(0x6D)) return;
-				if (!panel.search.active) {
-					let found = false;
-					let pos = -1;
-					switch (code) {
-						case vk.back:
-							this.jSearch = this.jSearch.substr(0, this.jSearch.length - 1);
-							break;
-						case vk.enter:
-							this.jSearch = '';
-							return;
-						default:
-							this.jSearch += text;
-							break;
-					}
-					pop.clearSelected();
-					if (!this.jSearch) return;
-					pop.sel_items = [];
-					this.jump_search = true;
-					panel.treePaint();
-					timer.clear(timer.jsearch1);
-					timer.jsearch1.id = setTimeout(() => {
-						pop.tree.some((v, i) => {
-							const name = $.asciify(Language.transliterate(v.name.replace(/@!#.*?@!#/g, ''))); // Regorxxx <- Fix quick-searck for non ascii first char, greek and cyrilic ->
-							if (name != panel.rootName && name.substring(0, this.jSearch.length).toLowerCase() == this.jSearch.toLowerCase()) {
-								found = true;
-								pos = i;
-								v.sel = true;
-								pop.setPos(pos);
-								pop.getTreeSel();
-								lib.treeState(false, ppt.rememberTree);
-								return true;
-							}
-						});
-						if (!found) this.jump_search = false;
-						panel.treePaint();
-						if (found) pop.showItem(pos, 'focus');
-						timer.jsearch1.id = null;
-					}, 500);
-
-					timer.clear(timer.jsearch2);
-					timer.jsearch2.id = setTimeout(() => {
-						if (found) {
-							if (ppt.libSource) {
-								// if (pop.autoFill.key) pop.load(pop.sel_items, true, false, false, !ppt.sendToCur, false);
-								if (pop.autoFill.key) pop.load({ bAddToPls: false, bAutoPlay: false, bUseDefaultPls: !ppt.sendToCur, bInsertToPls: false });
-								pop.track(pop.autoFill.key);
-							} else if (pos >= 0 && pos < pop.tree.length) pop.setPlaylistSelection(pos, pop.tree[pos]);
-						}
-						this.jSearch = '';
-						panel.treePaint();
-						timer.jsearch2.id = null;
-					}, 1200);
-				}
+				this.match(text, code, bShift || bCtrl);
 		}
 	}
+
+	advance(text) {
+		if (utils.IsKeyPressed(0x0A) || utils.IsKeyPressed(0x08) || utils.IsKeyPressed(0x09) || utils.IsKeyPressed(0x11) || utils.IsKeyPressed(0x1B) || utils.IsKeyPressed(0x6A) || utils.IsKeyPressed(0x6D)) return;
+		if (!panel.search.active) {
+			let init = '';
+			let cur = 'currentArr';
+			if (!this.initials) { // reset in buildTree
+				this.initials = {};
+				pop.tree.forEach((v, i) => {
+					if (!v.root) {
+						// Regorxxx <- Fix quick-searck for non ascii first char, greek and cyrilic | Quicksearch transliteration
+						init = ppt.findTrans
+							? $.asciify(Language.transliterate(v.name.replace(/@!#.*?@!#/g, '').charAt(0).toLowerCase(), { languages: panel.sortingTransLangs }))
+							: $.asciify(v.name.replace(/@!#.*?@!#/g, '').charAt(0).toLowerCase());
+						// Regorxxx ->
+						if (cur != init && !this.initials[init]) {
+							this.initials[init] = [i];
+							cur = init;
+						} else {
+							this.initials[init].push(i);
+						}
+					}
+				});
+			}
+
+			this.jump_search = false;
+			if (panel.pos >= 0 && panel.pos < pop.tree.length) {
+				this.matches = this.initials[text];
+				this.ix = this.matches.indexOf(panel.pos);
+				this.ix++;
+				if (this.ix >= this.matches.length) { this.ix = 0; }
+				panel.pos = this.matches[this.ix];
+				this.jump_search = true;
+			}
+			if (this.jump_search) {
+				pop.clearSelected();
+				pop.sel_items = [];
+				pop.lastSelMul = []; // Regorxxx <- Rectangle selection on art view ->
+				this.select(panel.pos);
+				panel.treePaint();
+				if (panel.imgView) { pop.showItem(panel.pos, 'focus'); }
+				else {
+					const row = (panel.pos * ui.row.h - sbar.scroll) / ui.row.h;
+					if (sbar.rows_drawn - row < 3 || row < 0) sbar.checkScroll((panel.pos + 3) * ui.row.h - sbar.rows_drawn * ui.row.h);
+				}
+				this.send(panel.pos);
+			} else {
+				this.jSearch = text;
+				panel.treePaint();
+				this.sendAndClear();
+			}
+		}
+	}
+
+	match(text, code, bAnyPosition) {
+		if (utils.IsKeyPressed(0x09) || utils.IsKeyPressed(0x1B) || utils.IsKeyPressed(0x6A) || utils.IsKeyPressed(0x6D)) return;
+		if (!panel.search.active) {
+			let next = -1;
+			let ms = 500; // Regorxxx <- Customizable quicksearch timer ->
+			switch (code) {
+				case vk.back:
+					this.jSearch = this.jSearch.slice(0, - 1);
+					break;
+				// Regorxxx <- Quick-search at any position of string
+				case vk.enter:
+					this.jSearch = '';
+					this.bAnyPosition = false;
+					return;
+				default:
+					// Regorxxx <- Customizable quicksearch timer
+					if (this.jSearch.length === 0) {
+						if (bAnyPosition) { this.bAnyPosition = true; }
+						ms = ppt.findTimerInit;
+					} else {
+						ms = ppt.findTimerNext;
+					}
+					// Regorxxx ->
+					this.jSearch += text;
+					break;
+				// Regorxxx ->
+			}
+			pop.clearSelected();
+			if (!this.jSearch) return;
+			pop.sel_items = [];
+			pop.lastSelMul = []; // Regorxxx <- Rectangle selection on art view ->
+			this.jump_search = true;
+			panel.treePaint();
+			timer.clear(timer.jsearch1);
+			timer.jsearch1.id = setTimeout(() => {
+				({ next } = this.findMatch());
+				if (next !== -1) { this.select(next); }
+				if (next === -1) { this.jump_search = false; }
+				panel.treePaint();
+				if (next !== -1) pop.showItem(next, 'focus');
+				timer.jsearch1.id = null;
+			}, ms); // Regorxxx <- Customizable quicksearch timer ->
+			this.sendAndClear(next);
+		}
+	}
+
+	nextMatch(bReverse) {
+		if (utils.IsKeyPressed(0x09) || utils.IsKeyPressed(0x1B) || utils.IsKeyPressed(0x6A) || utils.IsKeyPressed(0x6D)) return;
+		if (!panel.search.active) {
+			const currPos = panel.pos;
+			let next = -1;
+			let first = -1;
+			pop.clearSelected();
+			if (!this.jSearch) { return; }
+			pop.sel_items = [];
+			pop.lastSelMul = []; // Regorxxx <- Rectangle selection on art view ->
+			this.jump_search = true;
+			panel.treePaint();
+			({ first, next } = bReverse
+				? this.findMatchReversed(currPos)
+				: this.findMatch(currPos)
+			);
+			if (next === -1 && first !== -1) { next = first; }
+			if (next !== -1) { this.select(next); }
+			if (next === -1) { this.jump_search = false; }
+			panel.treePaint();
+			if (next !== -1) { pop.showItem(next, 'focus'); }
+			this.sendAndClear(next);
+		}
+	}
+
+	sendAndClear(pos = -1) {
+		timer.clear(timer.jsearch2);
+		timer.jsearch2.id = setTimeout(() => {
+			this.send(pos);
+			this.jSearch = '';
+			this.bAnyPosition = false; // Regorxxx <- Quick-search at any position of string ->
+			panel.treePaint();
+			timer.jsearch2.id = null;
+		}, 1200);
+	}
+
+	send(pos) {
+		if (pos === -1) {
+			if (panel.isStandardSource()) {
+				if (pop.autoFill.key) { pop.load({ bAddToPls: false, bAutoPlay: false, bUseDefaultPls: !ppt.sendToCur, bInsertToPls: false }); }
+				pop.track(pop.autoFill.key);
+			} else if (pos >= 0 && pos < pop.tree.length) { pop.setPlaylistSelection(pos, pop.tree[pos]); }
+		}
+	}
+
+	select(pos = -1) {
+		if (pos === -1) { return false; }
+		pop.tree[pos].sel = true;
+		pop.setPos(pos);
+		pop.getTreeSel();
+		lib.treeState(false, ppt.rememberTree);
+		return true;
+	}
+
+	findMatch(currPos = -1) {
+		let next = -1;
+		let first = -1;
+		pop.tree.some((v, i) => {
+			// Regorxxx <- Fix quick-searck for non ascii first char, greek and cyrilic | Quicksearch transliteration
+			const name = v.name.replace(/@!#.*?@!#/g, '');
+			const nameNorm = ppt.findTrans
+				? $.asciify(Language.transliterate(name, { languages: panel.sortingTransLangs }))
+				: $.asciify(name);
+			// Regorxxx ->
+			if (nameNorm != panel.rootName && (name.toLowerCase()[this.bAnyPosition ? 'includes' : 'startsWith'](this.jSearch) || nameNorm.toLowerCase()[this.bAnyPosition ? 'includes' : 'startsWith'](this.jSearch))) {
+				if (i <= currPos) {
+					if (first === -1) { first = i; }
+					return false;
+				} else {
+					next = i;
+					return true;
+				}
+			}
+		});
+		return { first, next };
+	}
+
+	findMatchReversed(currPos = -1) {
+		let next = -1;
+		let first = -1;
+		const len = pop.tree.length - 1;
+		for (let i = len, v; i >= 0; i--) {
+			v = pop.tree[i];
+			// Regorxxx <- Fix quick-searck for non ascii first char, greek and cyrilic | Quicksearch transliteration
+			const name = v.name.replace(/@!#.*?@!#/g, '');
+			const nameNorm = ppt.findTrans
+				? $.asciify(Language.transliterate(name, { languages: panel.sortingTransLangs }))
+				: $.asciify(name);
+			// Regorxxx ->
+			if (name != panel.rootName && (name.toLowerCase()[this.bAnyPosition ? 'includes' : 'startsWith'](this.jSearch) || nameNorm.toLowerCase()[this.bAnyPosition ? 'includes' : 'startsWith'](this.jSearch))) {
+				if (i >= currPos) {
+					if (first === -1) { first = i; }
+				} else {
+					next = i;
+					break;
+				}
+			}
+		};
+		return { first, next };
+	}
+
+	on_key_down(vKey) {
+		if (this.jSearch) {
+			if (vKey === vk.dn) {
+				this.nextMatch();
+			} else if (vKey === vk.up) {
+				this.nextMatch(true);
+			}
+		}
+	}
+	// Regorxxx ->
 
 	on_size() {
 		this.j.x = Math.round(ui.w / 2);

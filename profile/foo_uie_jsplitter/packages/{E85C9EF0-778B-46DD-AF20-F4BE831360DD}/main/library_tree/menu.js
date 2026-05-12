@@ -1,8 +1,11 @@
-﻿'use strict';
-//09/01/26
+'use strict';
+//28/04/26
 
 /* global ui:readable, panel:readable, ppt:readable, pop:readable, but:readable, $:readable, sbar:readable, img:readable, search:readable, men:readable, vk:readable, lib:readable, popUpBox:readable */
-/* global MF_STRING:readable, MF_GRAYED:readable, folders:readable */
+/* global globSettings:readable, folders:readable */
+/* global MF_STRING:readable, MF_CHECKED:readable, MF_GRAYED:readable */
+/* global _explorer:readable */
+/* global Input:readable */
 
 /* exported MenuItems, Btn, Tooltip, TooltipTimer, Transition */
 
@@ -79,7 +82,7 @@ class MenuManager {
 	}
 
 	get(v) {
-		if (v instanceof Function) return v();
+		if (typeof v === 'function') return v();
 		return v;
 	}
 
@@ -96,26 +99,62 @@ class MenuManager {
 		ln = this.menuItems.length;
 		while (i < ln) {
 			const v = this.menuItems[i];
-			!v.appendMenu ? this.addItem(v) : this.appendMenu(v);
+			v.appendMenu ? this.appendMenu(v) : this.addItem(v);
 			i++;
 		}
 
+		// Regorxxx <- Contextual menu options
 		let Context;
-		if (men.show_context) {
-			Context = fb.CreateContextMenuManager();
-			Context.InitContext(men.items);
-			this.menu[this.baseMenu].AppendMenuSeparator();
-			Context.BuildMenu(this.menu[this.baseMenu], 5000);
+		if (men.show_context && ppt.contextMenuShow > 0) {
+			switch (ppt.contextMenuShow) {
+				case 1: { // On main menu
+					Context = fb.CreateContextMenuManager();
+					Context.InitContext(men.items);
+					this.menu[this.baseMenu].AppendMenuSeparator();
+					Context.BuildMenu(this.menu[this.baseMenu], 5000);
+					break;
+				}
+				case 2: { // On submenu
+					const subMenuName = 'Items (contextual menu)';
+					Context = fb.CreateContextMenuManager();
+					Context.InitContext(men.items);
+					this.menu[this.baseMenu].AppendMenuSeparator();
+					this.createMenu(subMenuName);
+					this.menu[subMenuName].AppendTo(this.menu[this.baseMenu], 0, subMenuName);
+					Context.BuildMenu(this.menu[subMenuName], 5000);
+					break;
+				}
+				case 3: { // On secondary menu
+					const subMenuName = 'Items (contextual menu)...';
+					this.menu[this.baseMenu].AppendMenuSeparator();
+					this.menu[this.baseMenu].AppendMenuItem(0, 4999, subMenuName);
+					this.func[4999] = () => {
+						let items = men.items;
+						setTimeout(() => {
+							this.clear();
+							this.createMenu(this.baseMenu);
+							Context = fb.CreateContextMenuManager();
+							Context.InitContext(items);
+							items = null;
+							Context.BuildMenu(this.menu[this.baseMenu], 0);
+							const idx = this.menu[this.baseMenu].TrackPopupMenu(x, y);
+							Context.ExecuteByID(idx);
+						}, 100);
+					};
+					break;
+				}
+			}
 		}
+		// Regorxxx ->
 
 		const idx = this.menu[this.baseMenu].TrackPopupMenu(x, y);
 		this.run(idx);
 
-		if (men.show_context) {
+		if (men.show_context && ppt.contextMenuShow > 0) { // Regorxxx <- Contextual menu options ->
 			if (idx >= 5000 && idx <= 5800) Context.ExecuteByID(idx - 5000);
 			men.show_context = false;
 		}
-
+		if (ppt.filterShow && ppt.multiBtnShow) { but.multiBtnKeyUp(); } // Regorxxx <- Filter / View / Source button ->
 		this.clear();
 	}
 
@@ -128,13 +167,17 @@ class MenuManager {
 
 	run(idx) {
 		const v = this.func[idx];
-		if (v instanceof Function) v();
+		if (typeof v === 'function') v();
 	}
 }
 
 const clearArr = true;
 const menu = new MenuManager('mainMenu', clearArr);
+// Regorxxx <- Filter / View / Source button
 const fMenu = new MenuManager('filterMenu', clearArr);
+const vMenu = new MenuManager('viewsMenu', clearArr);
+const soMenu = new MenuManager('sourceMenu', clearArr);
+// Regorxxx ->
 const sMenu = new MenuManager('searchHistoryMenu', clearArr);
 const searchMenu = new MenuManager('searchMenu');
 
@@ -159,45 +202,113 @@ class MenuItems {
 		menu.newMenu({ hide: !this.settingsBtnDn && ppt.settingsShow && this.validItem });
 
 		if (this.validItem) {
-			// Regorxxx <- Code cleanup
-			['Send to current playlist' + '\tEnter', 'Add to current playlist' + '\tShift+enter', 'Send to new playlist' + '\tCtrl+enter'].forEach((v, i) => menu.newItem({
-				str: v,
-				func: () => this.setPlaylist(i),
-				flags: this.getPaylistFlag(i),
-				separator: i == 2
-			}));
-			// Regorxxx ->
-			// Regorxxx <- Top tracks
-			{
-				const target = ' (' + (ppt.sendToCur ? 'current' : 'default') + ' playlist)';
+			// Regorxxx <- Queue source
+			if (panel.isQueueSource()) {
 				menu.newItem({
-					str: 'Send top track' + target,
-					func: () => this.setPlaylist(6),
+					str: 'Select all',
+					func: () => pop.on_char(vk.selAll)
 				});
 				menu.newItem({
-					str: 'Add top tracks' + target,
-					func: () => this.setPlaylist(7),
-					separator: true
+					str: 'Select none',
+					func: () => pop.on_char(vk.selNone)
 				});
-			}
-			// Regorxxx ->
-			// Regorxxx <- Code cleanup
-			menu.newItem({
-				str: 'Show nowplaying',
-				func: () => this.setPlaylist(3),
-				flags: this.getPaylistFlag(3),
-			});
-			// Regorxxx ->
-			// Regorxxx <- Show previously playing. Check if item is tracked
-			{
-				const prevPlaying = fb.GetPrevPlaying();
-				const handle = prevPlaying ? prevPlaying.handle : null;
-				const item = handle ? panel.list.Find(handle) : -1;
 				menu.newItem({
-					str: 'Show prev. played' + (handle && item === -1 ? '\tnot found' : ''),
-					func: () => pop.selShow(item),
-					flags: item !== -1 ? MF_STRING : MF_GRAYED
+					str: 'Invert selection',
+					func: () => pop.on_char(vk.selInvert)
 				});
+				menu.newItem({ separator: true });
+				menu.newItem({
+					str: 'Move to front queue',
+					func: () => panel.moveToFrontQueue(this.items, ppt.queueSorting)
+				});
+				menu.newItem({
+					str: 'Move to back queue',
+					func: () => panel.moveToBackQueue(this.items, ppt.queueSorting)
+				});
+				menu.newItem({
+					str: 'Move in queue...',
+					func: () => {
+						const pos = Input.number('int positive', 1, 'Set queue index:\n(n > 0)', window.ScriptInfo.Name + ': Move in queue', 5, [(n) => n > 0]) || (Input.isLastEqual ? Input.lastInput : null);
+						if (pos === null) { return null; }
+						panel.moveToPosQueue(this.items, pos, ppt.queueSorting);
+					}
+				});
+				menu.newItem({ separator: true });
+				menu.newItem({
+					str: 'Remove from queue',
+					func: () => panel.removeFromQueue(this.items)
+				});
+				menu.newItem({
+					str: 'Flush playback queue',
+					func: () => plman.FlushPlaybackQueue()
+				});
+				menu.newItem({ separator: true });
+			} else {
+				// Regorxxx <- Code cleanup
+				['Send to current playlist' + '\tEnter', 'Add to current playlist' + '\tShift+enter', 'Send to new playlist' + '\tCtrl+enter'].forEach((v, i) => menu.newItem({
+					str: v,
+					func: () => this.setPlaylist(i),
+					flags: this.getPaylistFlag(i),
+					separator: i == 2
+				}));
+				// Regorxxx ->
+				// Regorxxx <- Top tracks
+				{
+					const target = ' (' + (ppt.sendToCur ? 'current' : 'default') + ' playlist)';
+					menu.newItem({
+						str: 'Send top track' + target,
+						func: () => this.setPlaylist(6),
+					});
+					menu.newItem({
+						str: 'Add top tracks' + target,
+						func: () => this.setPlaylist(7),
+						separator: true
+					});
+				}
+				// Regorxxx ->
+				// Regorxxx <- Auto-DJ feature
+				if (panel.isAutoDjSource()) {
+					menu.newItem({
+						str: 'Remove from Auto-DJ',
+						func: () => panel.removeFromAutoDjSource(this.items),
+						flags: this.items.Count >= 1 ? MF_STRING : MF_GRAYED
+					});
+					menu.newItem({ separator: true });
+				} else {
+					menu.newItem({
+						str: 'Start Auto-DJ from panel selection',
+						func: () => panel.startAutoDj(this.items),
+						flags: this.items.Count > 1 ? MF_STRING : MF_GRAYED,
+						hide: panel.autoDj.running
+					});
+					menu.newItem({
+						str: 'Append panel selection to Auto-DJ',
+						func: () => panel.addToAutoDjSource(this.items, true),
+						flags: this.items.Count && panel.autoDj.running && panel.autoDj.source ? MF_STRING : MF_GRAYED,
+						hide: !panel.autoDj.running
+					});
+					menu.newItem({ separator: true });
+				}
+				// Regorxxx ->
+				// Regorxxx <- Code cleanup
+				menu.newItem({
+					str: 'Show nowplaying',
+					func: () => this.setPlaylist(3),
+					flags: this.getPaylistFlag(3),
+				});
+				// Regorxxx ->
+				// Regorxxx <- Show previously playing. Check if item is tracked
+				{
+					const prevPlaying = fb.GetPrevPlaying();
+					const handle = prevPlaying ? prevPlaying.handle : null;
+					const item = handle ? panel.list.Find(handle) : -1;
+					menu.newItem({
+						str: 'Show prev. played' + (handle && item === -1 ? '\tnot found' : ''),
+						func: () => pop.selShow(item),
+						flags: item === -1 ? MF_GRAYED : MF_STRING
+					});
+				}
+				// Regorxxx ->
 			}
 			// Regorxxx ->
 			// Regorxxx <- Show selection. Check if item is tracked
@@ -207,7 +318,7 @@ class MenuItems {
 				menu.newItem({
 					str: 'Show selection' + (handle && item === -1 ? '\tnot found' : ''),
 					func: () => pop.selShow(item),
-					flags: item !== -1 ? MF_STRING : MF_GRAYED
+					flags: item === -1 ? MF_GRAYED : MF_STRING
 				});
 			}
 			// Regorxxx ->
@@ -216,20 +327,25 @@ class MenuItems {
 
 		if (this.validItem && ppt.albumArtOptionsShow) {
 			menu.newItem({
-				str: !panel.imgView ? 'Show album art' : (!ppt.facetView ? 'Show tree' : 'Show text'),
+				str: panel.imgView ? (ppt.facetView ? 'Show text' : 'Show tree') : 'Show album art',
 				func: () => this.setPlaylist(4),
 				flags: !panel.pn_h_auto || ppt.pn_h != ppt.pn_h_min ? MF_STRING : MF_GRAYED,
 				separator: !panel.imgView //|| this.show_context && !ui.style.topBarShow
 			});
 		}
 
+		// Regorxxx <- Code cleanup
 		if (this.validItem && panel.imgView) {
-			menu.newItem({
-				str: ppt.artId != 4 ? 'Show artists' : 'Show albums',
-				func: () => { ppt.artId = ppt.artId != 4 ? 4 : 0; this.setPlaylist(5); },
-				separator: this.show_context && !ui.style.topBarShow
+			const switchArtArr = img.getArtSwitchTypes(ppt.artId);
+			switchArtArr.forEach((switchArt) => {
+				menu.newItem({
+					str: switchArt.showMenu,
+					func: () => { ppt.artId = switchArt.idx; this.setPlaylist(5); }
+				});
 			});
+			menu.newItem({ separator: this.show_context && !ui.style.topBarShow });
 		}
+		// Regorxxx ->
 
 		if (this.validItem && !panel.imgView) {
 			['Collapse all\tNum -', 'Expand\tNum *'].forEach((v, i) => menu.newItem({
@@ -244,231 +360,445 @@ class MenuItems {
 
 		const mainMenu = () => this.show_context ? 'Settings' : 'baseMenu';
 
-		menu.newMenu({ menuName: 'Views', appendTo: mainMenu(), separator: true });
-		// Regorxxx <- Allow separators on views
-		panel.menu.forEach((v, i) => {
-			const bSeparator = (v || '').toLowerCase() === 'separator';
-			if (bSeparator) {
+		this.addViewsEntries(menu, mainMenu()); // Regorxxx <- Filter / View / Source button ->
+		this.addSourceEntries(menu, mainMenu()); // Regorxxx <- Filter / View / Source button ->
+		menu.newItem({ menuName: mainMenu(), separator: true });
+		// Regorxxx <- New statistics
+		{
+			menu.newMenu({ menuName: 'Statistics', appendTo: mainMenu(), separator: true });
+			const statsMenus = [
+				{ menuName: 'File properties', idx: [1, 2, 3] },
+				{ menuName: 'Rating', idx: [4, 5] },
+				{ menuName: 'Playback', idx: [7, 8, 9, 10, 11] },
+				{ menuName: 'Loved stats', idx: [12, 13, 14] },
+				{ menuName: 'File tags', idx: [6] },
+				'sep',
+				{ menuName: 'Sum [custom]', idx: [15, 16, 17] },
+				{ menuName: 'Average [custom]', idx: [18, 19, 20] },
+				{ menuName: 'P-Mean [custom]', idx: [21, 22, 23] },
+				'sep'
+			];
+			const statsEntries = this.statisticsTypes();
+			menu.newItem({
+				menuName: 'Statistics',
+				str: statsEntries[0],
+				func: () => this.setStatistics(0),
+				checkRadio: !ppt.itemShowStatistics,
+				separator: true
+			});
+			statsMenus.forEach((m) => {
+				if (m === 'sep') { menu.newItem({ menuName: 'Statistics', separator: true }); }
+				else { menu.newMenu({ ...m, appendTo: 'Statistics', flags: m.idx.includes(ppt.itemShowStatistics) ? MF_CHECKED : void (0) }); }
+			});
+			[...this.statisticsTypes(), 'Configure statistics...'].forEach((v, i) => {
+				if (i === 0) { return; }
+				const menuName = (statsMenus.find((m) => m.idx && m.idx.includes(i)) || {}).menuName || 'Statistics';
 				menu.newItem({
-					menuName: 'Views',
-					separator: true
+					menuName,
+					str: v,
+					func: () => this.setStatistics(i),
+					checkRadio: i == ppt.itemShowStatistics,
+					separator: !i
+				});
+			});
+		}
+		// Regorxxx ->
+		// Regorxxx <- Code cleanup | Art cache folder
+		{
+			menu.newMenu({ menuName: 'Album art', appendTo: mainMenu(), hide: !panel.imgView });
+			img.getArtTypes().forEach((v, i) => menu.newItem({ // Regorxxx <- External integration  ->
+				menuName: 'Album art',
+				str: v,
+				func: () => this.setAlbumartType(i),
+				checkRadio: i == ppt.artId,
+			}));
+			menu.newItem({ menuName: 'Album art', separator: true });
+			['Group: auto', 'Group: top level', 'Group: two levels', 'Change group name...'].forEach((v, i) => menu.newItem({
+				menuName: 'Album art',
+				str: v,
+				func: () => this.setAlbumartGroup(i),
+				flags: i === 3 && (panel.folderView || ppt.rootNode != 3) ? MF_GRAYED : MF_STRING,
+				checkRadio: i === ppt.albumArtGrpLevel,
+				separator: i == 2
+			}));
+			menu.newItem({ menuName: 'Album art', separator: true });
+			menu.newItem({ // Regorxxx <- External integration ->
+				menuName: 'Album art',
+				str: 'Configure album art...',
+				func: () => panel.open('albumArt'),
+			});
+			menu.newItem({ menuName: 'Album art', separator: true });
+			menu.newItem({
+				menuName: 'Album art',
+				str: 'Open cache',
+				flags: ppt.albumArtDiskCache ? MF_STRING : MF_GRAYED,
+				func: () => {
+					if ($.folder(img.cachePath)) { _explorer(img.cachePath); }
+					else { $.buildPth(img.cachePath); }
+				}
+			});
+		}
+		// Regorxxx ->
+		// Regorxxx <- Auto-DJ feature
+		{
+			menu.newMenu({ menuName: 'Auto-DJ', appendTo: mainMenu(), separator: true, flags: panel.autoDj.running ? MF_CHECKED : MF_STRING });
+			if (!panel.isAutoDjSource()) {
+				menu.newItem({
+					menuName: 'Auto-DJ',
+					str: 'From panel selection',
+					func: () => panel.startAutoDj(this.items),
+					flags: this.items.Count > 1 ? MF_STRING : MF_GRAYED,
+					checkItem: !!(panel.autoDj.running && panel.autoDj.source)
+				});
+				menu.newItem({
+					menuName: 'Auto-DJ',
+					str: 'From current view',
+					func: () => panel.startAutoDj(panel.list),
+					flags: panel.list.Count > 1 ? MF_STRING : MF_GRAYED
+				});
+				menu.newItem({
+					menuName: 'Auto-DJ',
+					str: 'From live view',
+					func: () => panel.startAutoDj(),
+					flags: panel.list.Count > 1 ? MF_STRING : MF_GRAYED,
+					checkItem: !!(panel.autoDj.running && !panel.autoDj.source)
+				});
+				menu.newItem({ menuName: 'Auto-DJ', separator: true });
+				menu.newItem({
+					menuName: 'Auto-DJ',
+					str: 'Append panel selection',
+					func: () => panel.addToAutoDjSource(this.items, true),
+					flags: this.items.Count && panel.autoDj.running && panel.autoDj.source ? MF_STRING : MF_GRAYED
+				});
+				menu.newItem({
+					menuName: 'Auto-DJ',
+					str: 'Append current view',
+					func: () => panel.addToAutoDjSource(panel.list, true),
+					flags: panel.list.Count && panel.autoDj.running && panel.autoDj.source ? MF_STRING : MF_GRAYED
+				});
+				menu.newItem({ menuName: 'Auto-DJ', separator: true });
+			}
+			menu.newItem({
+				menuName: 'Auto-DJ',
+				str: 'Stop Auto-DJ',
+				func: () => panel.stopAutoDj(),
+				flags: panel.autoDj.running ? MF_STRING : MF_GRAYED
+			});
+			menu.newItem({ menuName: 'Auto-DJ', separator: true });
+			if (panel.isAutoDjSource()) {
+				menu.newItem({
+					menuName: 'Auto-DJ',
+					str: 'Show prev. source...',
+					func: () => this.setCachedSource(0, void (0), 'Prev. Source', { bOmitMsg: true, bSkipPresets: true }), // Regorxxx <- Internal cache of views | Preset rules ->
+					flags: MF_STRING
 				});
 			} else {
 				menu.newItem({
-					menuName: 'Views',
-					str: v,
-					func: () => this.setView(i),
-					checkRadio: i == ppt.viewBy,
-					separator: i > panel.menu.length - 3
-				});
-			}
-		});
-		// Regorxxx ->
-
-		// Regorxxx <- Queue source
-		if (ppt.libSource === 3) {
-			menu.newItem({
-				menuName: 'Views',
-				str: 'Sort by Queue idx',
-				func: () => { ppt.toggle('queueSorting'); lib.treeState(false, 2); },
-				checkItem: ppt.queueSorting
-			});
-		}
-		const d = {};
-		this.getSortData(d);
-		menu.newMenu({ menuName: d.menuName, appendTo: 'Views', flags: d.sortType && (ppt.libSource !== 3 || !ppt.queueSorting) ? MF_STRING : MF_GRAYED, separator: true });
-		// Regorxxx ->
-		if (d.sortType) {
-			menu.newItem({
-				menuName: d.menuName,
-				str: ['', 'By year', 'Albums by year'][d.sortType],
-				flags: MF_GRAYED,
-				separator: true
-			});
-			const menuSort = [[], ['Default', 'Ascending', 'Descending'], ['Default', 'Ascending (hide year)', 'Ascending (show year)', 'Descending (hide year)', 'Descending (show year)', 'Action: year after album', 'Action: year before album']][d.sortType];
-			menuSort.forEach((v, i) => menu.newItem({
-				menuName: d.menuName,
-				str: v,
-				func: () => this.sortByDate(i, d),
-				flags: i > 4 && (d.sortIX == 1 || d.sortIX == 3) ? MF_GRAYED : MF_STRING,
-				checkRadio: d.sortIX == -1 && !i || i == d.sortIX || d.sortType == 2 && i == 5 && !ppt.yearBeforeAlbum || i == 6 && ppt.yearBeforeAlbum,
-				separator: i == 0 || d.sortType == 2 && (i == 2 || i == 4)
-			}));
-		}
-
-		menu.newItem({
-			menuName: 'Views',
-			str: 'Configure views...',
-			func: () => panel.open('views')
-		});
-
-		menu.newMenu({ menuName: 'Statistics', appendTo: mainMenu(), separator: true });
-		// Regorxxx <- New statistics
-		[...this.statisticsTypes(), 'Configure statistics...'].forEach((v, i) => menu.newItem({
-			menuName: 'Statistics',
-			str: v,
-			func: () => this.setStatistics(i),
-			checkRadio: i == ppt.itemShowStatistics,
-			separator: !i || i == 7 || i == 11 || i == 14 || i === 17 || i === 20
-		}));
-		// Regorxxx ->
-
-		menu.newMenu({ menuName: 'Album art', appendTo: mainMenu(), hide: !panel.imgView });
-		[...this.artTypes(), 'Group: auto', 'Group: top level', 'Group: two levels', 'Change group name...', 'Configure album art...'].forEach((v, i) => menu.newItem({ // Regorxxx <- External integration ->
-			menuName: 'Album art',
-			str: v,
-			func: () => this.setAlbumart(i),
-			flags: i == 8 && (panel.folderView || ppt.rootNode != 3) ? MF_GRAYED : MF_STRING,
-			checkRadio: i == ppt.artId || i - 5 == ppt.albumArtGrpLevel,
-			separator: i == 4 || i == 7 || i == 8
-		}));
-
-		menu.newMenu({ menuName: 'Quick setup', appendTo: mainMenu() });
-		['Traditional', 'Modern [default]', 'Ultra-Modern', 'Clean', 'Facet'].forEach((v, i) => menu.newItem({
-			menuName: 'Quick setup',
-			str: v,
-			func: () => panel.set('quickSetup', i),
-			separator: i == 3 || i == 4
-		}));
-
-		if (ppt.albumArtOptionsShow) {
-			['Covers [labels right]', 'Covers [labels bottom]', 'Covers [labels blend]', 'Artist photos [labels right]', 'Album art size +', 'Album art size -', 'Flow mode', 'Always load preset with current \'view\' pattern'].forEach((v, i) => menu.newItem({
-				menuName: 'Quick setup',
-				str: v,
-				func: () => panel.set('quickSetup', i + 5),
-				flags: i == 4 && (ppt.thumbNailSize == 7 || !panel.imgView || ppt.albumArtFlowMode) || i == 5 && (ppt.thumbNailSize == 0 || !panel.imgView || ppt.albumArtFlowMode) ? MF_GRAYED : MF_STRING,
-				checkItem: i == 7 && ppt.presetLoadCurView,
-				separator: i == 2 || i == 3 || i == 5 || i == 6
-			}));
-		}
-		// Regorxxx <- Background image position
-		menu.newItem({
-			menuName: 'Quick setup',
-			separator: true
-		});
-		menu.newItem({
-			menuName: 'Quick setup',
-			str: 'Background grid mode...',
-			func: () => {
-				let panels = 1;
-				try {
-					panels = utils.InputBox(0, 'Set total number of Library Tree panels:\n\nBackground image will be adjusted to extend over all panels, showing only a portion of the image in every panel.\n\nIt only works on horizontal rows.', 'Background grid mode: number of panels', 1, true);
-				} catch (e) { return; } // eslint-disable-line no-unused-vars
-				if (!panels || panels < 1) { return; }
-				let pos = 1;
-				try {
-					pos = utils.InputBox(0, 'Set panel position within the row:' + '\nFrom 1 to ' + panels, 'Background grid mode: panel position', 1, true);
-				} catch (e) { return; } // eslint-disable-line no-unused-vars
-				if (!pos || pos < 1) { return; }
-				ppt.xOffsetBg = 100 / panels * (pos - 1);
-				ppt.wOffsetBg = 100 / panels * (panels - pos);
-				panel.load();
-			},
-			flags: panel.imgView ? MF_GRAYED : MF_STRING,
-			checkItem: ppt.xOffsetBg !== 0 || ppt.wOffsetBg !== 0
-		});
-		// Regorxxx ->
-
-		menu.newMenu({ menuName: 'Source', appendTo: mainMenu(), separator: true });
-		// Regorxxx <- External integration | Queue source
-		this.sourceTypes().forEach((v, i) => menu.newItem({
-			menuName: 'Source',
-			str: v,
-			func: () => this.setSource(i),
-			checkRadio: i == (ppt.libSource - 1 < 0 || ppt.fixedPlaylist
-				? 2
-				: ppt.libSource > 2
-					? ppt.libSource
-					: ppt.libSource - 1
-			),
-			separator: i == this.sourceTypes().length - 1
-		}));
-		// Regorxxx ->
-
-		menu.newItem({
-			menuName: 'Source',
-			str: 'Select source panel',
-			func: () => this.setSourcePanel(),
-			flags: ppt.libSource != 2 ? MF_GRAYED : MF_STRING,
-			separator: true
-		});
-
-		menu.newMenu({ menuName: 'Select playlist(s)', appendTo: 'Source', flags: ppt.libSource !== 0 ? MF_GRAYED : MF_STRING }); // Regorxxx <- Don't allow playlist selection if source is not playlist ->
-		menu.newItem({
-			menuName: 'Select playlist(s)',
-			str: 'Active playlist',
-			func: () => this.setActivePlaylist(),
-			checkRadio: ppt.libSource == 0,
-			separator: true
-		});
-
-		const pl_no = Math.ceil(this.pl.length / 30);
-		// Regorxxx <- Allow multiple fixed playlists as source | Allow fixed playlist by GUID
-		const pl_ix = ppt.fixedPlaylist ? lib.getFixedPlaylistSources() : [-1];
-		for (let j = 0; j < pl_no; j++) {
-			const n = '# ' + (j * 30 + 1 + ' - ' + Math.min(this.pl.length, 30 + j * 30) + (30 + j * 30 > pl_ix && ((j * 30) - 1) < pl_ix ? '  >>>' : ''));
-			menu.newMenu({ menuName: n, appendTo: 'Select playlist(s)' });
-			for (let i = j * 30; i < Math.min(this.pl.length, 30 + j * 30); i++) {
-				if (i === j * 30) {
-					menu.newItem({
-						menuName: n,
-						str: 'Shift to join / Ctrl to use GUID:',
-						flags: MF_GRAYED,
-						separator: true
-					});
-				}
-				menu.newItem({
-					menuName: n,
-					str: this.pl[i].menuName,
-					func: () => this.setFixedPlaylist(i),
-					checkRadio: pl_ix.includes(this.pl[i].ix)
+					menuName: 'Auto-DJ',
+					str: 'Show queue...',
+					func: () => this.setCachedSource(4, 'Prev. Source', void (0), { bOmitMsg: true, bSkipPresets: true }), // Regorxxx <- Internal cache of views | Preset rules ->
+					flags: panel.autoDj.running || fb.IsPlaying ? MF_STRING : MF_GRAYED
 				});
 			}
 		}
 		// Regorxxx ->
-
-		menu.newMenu({ menuName: 'Refresh', appendTo: mainMenu(), separator: true });
-		for (let i = 0; i < 5; i++) menu.newItem({
-			menuName: 'Refresh',
-			str: ['Refresh selected images...', 'Refresh all images...', 'Reset zoom...', 'Refresh library...', 'Reload...'][i],
-			func: () => this.setMode(i),
-			flags: panel.imgView && !i && this.items.Count || !panel.imgView || i ? MF_STRING : MF_GRAYED,
-			separator: i == 1 && panel.imgView,
-			hide: i < 2 && !panel.imgView || i == 3 && ppt.libAutoSync
-		});
-
-		// Regorxxx <- Auto-DJ feature
+		// Regorxxx <- Code cleanup | New quicksetup presets
 		{
-			menu.newMenu({ menuName: 'Auto-DJ', appendTo: mainMenu(), separator: true });
+			menu.newMenu({ menuName: 'Quick setup', appendTo: mainMenu() });
+			[
+				{ name: 'Traditional', idx: 0 },
+				{ name: 'Modern [default]', idx: 1 },
+				{ name: 'Ultra-Modern', idx: 2 },
+				{ name: 'Clean', idx: 3, separator: true },
+				{ name: 'Facets', idx: 4, },
+				{ name: 'Playback Queue viewer', idx: 13 },
+				{ name: 'Playback Queue flow', idx: 14, separator: true },
+
+			].forEach((v) => menu.newItem({
+				menuName: 'Quick setup',
+				str: v.name,
+				func: () => panel.set('quickSetup', v.idx),
+				flags: v.flags || MF_STRING,
+				checkItem: v.checkItem || false,
+				separator: v.separator
+			}));
+
+			if (ppt.albumArtOptionsShow) {
+				menu.newMenu({ menuName: 'Art options', appendTo: 'Quick setup' });
+				[
+					{ name: 'Covers [labels right]', idx: 5 },
+					{ name: 'Covers [labels bottom]', idx: 6 },
+					{ name: 'Covers [labels blend]', idx: 7, separator: true },
+					{ name: 'Artist photos [labels right]', idx: 8, separator: true },
+					{ name: 'Album art size +', idx: 9, flags: ppt.thumbNailSize == 7 || !panel.imgView || ppt.albumArtFlowMode ? MF_GRAYED : MF_STRING },
+					{ name: 'Album art size -', idx: 10, flags: ppt.thumbNailSize == 0 || !panel.imgView || ppt.albumArtFlowMode ? MF_GRAYED : MF_STRING, separator: true },
+					{ name: 'Flow mode', idx: 11 }
+
+				].forEach((v) => menu.newItem({
+					menuName: 'Art options',
+					str: v.name,
+					func: () => panel.set('quickSetup', v.idx),
+					flags: v.flags || MF_STRING,
+					checkItem: v.checkItem || false,
+					separator: v.separator
+				}));
+				// Regorxxx <- Background image position
+				menu.newItem({ menuName: 'Art options', separator: true });
+				menu.newItem({
+					menuName: 'Art options',
+					str: 'Background grid mode...',
+					func: () => {
+						let panels = 1;
+						try {
+							panels = utils.InputBox(0, 'Set total number of Library Tree panels:\n\nBackground image will be adjusted to extend over all panels, showing only a portion of the image in every panel.\n\nIt only works on horizontal rows.', 'Background grid mode: number of panels', 1, true);
+						} catch (e) { return; } // eslint-disable-line no-unused-vars
+						if (!panels || panels < 1) { return; }
+						let pos = 1;
+						try {
+							pos = utils.InputBox(0, 'Set panel position within the row:' + '\nFrom 1 to ' + panels, 'Background grid mode: panel position', 1, true);
+						} catch (e) { return; } // eslint-disable-line no-unused-vars
+						if (!pos || pos < 1) { return; }
+						ppt.xOffsetBg = 100 / panels * (pos - 1);
+						ppt.wOffsetBg = 100 / panels * (panels - pos);
+						panel.load();
+					},
+					flags: panel.imgView ? MF_GRAYED : MF_STRING,
+					checkItem: ppt.xOffsetBg !== 0 || ppt.wOffsetBg !== 0
+				});
+				// Regorxxx ->
+				menu.newItem({ menuName: 'Quick setup', separator: true });
+			}
+
+			[
+				{ name: 'Keep current \'view\' pattern', checkItem: ppt.presetLoadCurView, idx: 12 }
+
+			].forEach((v) => menu.newItem({
+				menuName: 'Quick setup',
+				str: v.name,
+				func: () => panel.set('quickSetup', v.idx),
+				flags: v.flags || MF_STRING,
+				checkItem: v.checkItem || false,
+				separator: v.separator
+			}));
+		}
+		// Regorxxx ->
+		// Regorxxx <- Code cleanup | Art cache folder
+		{
+			menu.newMenu({ menuName: 'Refresh', appendTo: mainMenu(), separator: true });
+			if (panel.imgView) {
+				['Refresh selected images', 'Refresh all images'].forEach((str, i) => {
+					menu.newItem({
+						menuName: 'Refresh',
+						str,
+						func: () => this.setMode(i),
+						flags: this.items.Count ? MF_STRING : MF_GRAYED
+					});
+				});
+				menu.newItem({ menuName: 'Refresh', separator: true });
+			}
+			if (!ppt.libAutoSync) {
+				menu.newItem({
+					menuName: 'Refresh',
+					str: 'Refresh library',
+					func: () => this.setMode(3)
+				});
+				menu.newItem({ menuName: 'Refresh', separator: true });
+			}
 			menu.newItem({
-				menuName: 'Auto-DJ',
-				str: 'Enable (panel selection)',
-				func: () => panel.addToAutoDj(this.items),
-				flags: this.items.Count ? MF_STRING : MF_GRAYED
+				menuName: 'Refresh',
+				str: 'Reset zoom',
+				func: () => this.setMode(2),
 			});
+			menu.newItem({ menuName: 'Refresh', separator: true });
 			menu.newItem({
-				menuName: 'Auto-DJ',
-				str: 'Enable (view)',
-				func: () => panel.addToAutoDj(panel.list),
-				flags: panel.list.Count ? MF_STRING : MF_GRAYED,
-				separator: true
-			});
-			menu.newItem({
-				menuName: 'Auto-DJ',
-				str: 'Disable',
-				func: () => panel.stopAutoDj(),
-				flags: panel.autoDj ? MF_STRING : MF_GRAYED
+				menuName: 'Refresh',
+				str: 'Reload panel',
+				func: () => this.setMode(4),
 			});
 		}
 		// Regorxxx ->
-
-		for (let i = 0; i < 2; i++) menu.newItem({
+		// Regorxxx <- Updates check
+		{
+			menu.newMenu({ menuName: 'Updates', appendTo: mainMenu(), separator: true });
+			menu.newItem({
+				menuName: 'Updates',
+				str: 'Automatically check for updates',
+				func: () => {
+					ppt.toggle('bAutoUpdateCheck');
+					if (ppt.bAutoUpdateCheck) {
+						include('..\\..\\helpers\\helpers_xxx_web_update.js');
+						/* global checkUpdate:readable */
+						setTimeout(checkUpdate, 120000, { bDownload: globSettings.bAutoUpdateDownload, bOpenWeb: globSettings.bAutoUpdateOpenWeb });
+					}
+				},
+				checkItem: ppt.bAutoUpdateCheck,
+			});
+			menu.newItem({ menuName: 'Updates', separator: true });
+			menu.newItem({
+				menuName: 'Updates',
+				str: 'Check for updates...',
+				func: () => {
+					if (typeof checkUpdate === 'undefined') { include('..\\..\\helpers\\helpers_xxx_web_update.js'); }
+					checkUpdate({ bDownload: globSettings.bAutoUpdateDownload, bOpenWeb: globSettings.bAutoUpdateOpenWeb, bDisableWarning: false })
+						.then((bFound) => !bFound && fb.ShowPopupMessage('No updates found.', window.FullPanelName + ': Update check'));
+				}
+			});
+		}
+		// Regorxxx ->
+		// Regorxxx <- Quick help | External integration | Preset rules
+		{
+			menu.newMenu({ menuName: 'Help', appendTo: mainMenu() });
+			menu.newItem({
+				menuName: 'Help',
+				str: 'Quick help',
+				func: () => {
+					fb.ShowPopupMessage(
+						'List view:' +
+						'\n-----------------' +
+						[
+							{ key: 'Ctrl + A', action: 'Select all nodes|Select none.' },
+							{ key: 'Ctrl + <', action: 'Invert selected nodes.' },
+							{ key: 'Ctrl + C', action: 'Copy selected tracks.' },
+							{ key: 'Ctrl + V', action: 'Paste selected tracks.' },
+							{ key: 'Ctrl + E', action: 'Set focus at Search box.' },
+							{ key: 'Enter', action: 'Send to current playlist.' },
+							{ key: 'Shift + Enter', action: 'Add to current playlist.' },
+							{ key: 'Ctrl + Enter', action: 'Send to new playlist.' },
+							{ key: 'Page Up|Page Down', action: 'Scroll up|Scroll down.' },
+							{ key: 'Home|End', action: 'Scroll to top|Scroll to bottom.' },
+							{ key: 'Up|Down', action: 'Navigate tree.' },
+							{ key: 'Left|Right', action: 'Collapse|Expand nodes.' },
+							{ key: 'Alt + Up', action: 'Jump to first node within same level.' },
+							{ key: 'Alt + Down', action: 'Jump to last node within same level.' },
+							{ key: 'Num *', action: 'Expand current nodes' },
+							{ key: 'Num -', action: 'Collapse all nodes.' }
+						].map((s) => '\n• ' + s.key + ': ' + s.action).join('') +
+						'\n' +
+						'\nQuick-Search:' +
+						'\n-------------' +
+						'\n• Tree can be navigated by pressing any char. i.e. pressing \'A\'.' +
+						'\n• Multiple presses will jump between nodes with such initial (cycling).' +
+						'\n• Full strings can also be pressed, looking for first match (at start).' +
+						'\n• Pressing Shift|Ctrl first will allow matches at any position.' +
+						'\n• Use Up|Down keys to navigate between all found matches.' +
+						'\n• Asymmetric search and transliteration.' +
+						'\n' +
+						'\nDrag n\' drop (tracks):' +
+						'\n----------------------' +
+						'\n• Standard: add selection to playlist.' +
+						'\n• On Search Box: add query based on tracks (Ctrl|Alt modifiers).' +
+						'\n• On Playback Queue: add tracks to playback queue (Ctrl modifier).' +
+						'\n' +
+						'\nSearch Box:' +
+						'\n--------------' +
+						'\n• RegExp support: /[expression]/[flags], flags can be any of \'gimsuyt\'.' +
+						'\n\t∙ Flag \'t\' applies transliteration to tag values before matching.' +
+						'\n• Query sorting support: sorting expressions can be used along queries.' +
+						'\n\t∙ Ascending: [...] SORT ASCENDING BY [...] | [...] SORT BY [...]' +
+						'\n\t∙ Ascending: [...] SORT ASCENDING BY [...]' +
+						'\n\t∙ Descending:  [...] SORT DESCENDING BY [...]' +
+						'\n\t∙ Sorting without filtering: ALL SORT BY [...] | SORT BY [...]' +
+						[
+							{ key: 'Ctrl + A', action: 'Select all.' },
+							{ key: 'Ctrl + C', action: 'Copy selected text.' },
+							{ key: 'Ctrl + V', action: 'Paste selected text.' },
+							{ key: 'Ctrl + X', action: 'Cut selected text.' },
+							{ key: 'Back', action: 'Delete left characters.' },
+							{ key: 'Delete', action: 'Delete right characters.' },
+							{ key: 'Ctrl + Back', action: 'Delete left word.' },
+							{ key: 'Enter', action: 'Search.' },
+							{ key: 'Ctrl + Z', action: 'Undo.' },
+							{ key: 'Ctrl + Y', action: 'Redo.' },
+							{ key: 'Esc', action: 'Cancel search (and clean input).' },
+							{ key: 'Home', action: 'Set cursor at left.' },
+							{ key: 'End', action: 'Set cursor at right.' },
+							{ key: 'Left|Right', action: 'Move cursor.' },
+						].map((s) => '\n• ' + s.key + ': ' + s.action).join('') +
+						'\n' +
+						'\nPanel Sorting:' +
+						'\n----------------------' +
+						'\n• Sorting is applied directly from View TF pattern.' +
+						'\n• Can be overridden by query expressions at Search box and Filters.' +
+						'\n• Specific sources have additional settings (e.g. Playback Queue).' +
+						'\n• Selection sorting can be set independently (e.g. sending to playlist).' +
+						'\n• If not specified, selection sorting will use panel sorting by default.' +
+						'\n• Panel Sorting priority: Search box > Filter > Source > View' +
+						'\n' +
+						'\nUI:' +
+						'\n----------------------' +
+						'\n• Ctrl + Alt + Mouse Wheel to resize UI elements under mouse.' +
+						'\n• Double click scrollbar thumb to show now playing/focused item.' +
+						'\n• Double click scrollbar buttons to scroll to top/bottom.' +
+						'\n' +
+						'\nTransliteration support:' +
+						'\n-----------------------' +
+						'\n• Greek, Cyrillic, Chinese (Pinyin), Japanese (Katakana and Hiragana).' +
+						'\n' +
+						'\nSMP / JSplitter Panel:' +
+						'\n----------------------' +
+						'\n• Shift + Win + R. Click: open SMP panel menu.'
+						, window.PanelName + ': Quick help'
+					);
+				}
+			});
+			menu.newItem({ menuName: 'Help', separator: true });
+			menu.newItem({
+				menuName: 'Help',
+				str: 'foobar2000 Query syntax',
+				func: () => this.setSearchHistory(0),
+			});
+			menu.newItem({
+				menuName: 'Help',
+				str: window.ScriptInfo.Name + ' syntax',
+				func: () => this.setSearchHistory(-2),
+			});
+			menu.newItem({
+				menuName: 'Help',
+				str: 'RegExp reference',
+				func: () => this.setSearchHistory(-1)
+			});
+			menu.newItem({ menuName: 'Help', separator: true });
+			menu.newItem({
+				menuName: 'Help',
+				str: 'External integration',
+				func: () => {
+					fb.ShowPopupMessage(
+						$.open(folders.xxx + 'helpers\\readme\\library_tree_callbacks.txt'),
+						window.PanelName + ': External integration'
+					);
+				}
+			});
+			menu.newItem({
+				menuName: 'Help',
+				str: 'Preset rules',
+				func: () => {
+					fb.ShowPopupMessage(
+						$.open(folders.xxx + 'helpers\\readme\\library_tree_presets.txt'),
+						window.PanelName + ': Preset rules'
+					);
+				}
+			});
+		}
+		// Regorxxx ->
+		menu.newItem({ menuName: mainMenu(), separator: true });
+		// Regorxxx <- Code cleanup
+		menu.newItem({
 			menuName: mainMenu(),
-			str: [popUpBox.ok ? 'Options...' : 'Options: see console', 'Configure...'][i],
-			func: () => !i ? panel.open() : window.EditScript(),
-			separator: !i && this.shift,
-			hide: !this.settingsBtnDn && ppt.settingsShow && this.validItem && !this.shift || i && !this.shift
+			str: popUpBox.ok ? 'More settings...' : 'Settings: see console',
+			func: () => panel.open(),
+			hide: !this.settingsBtnDn && ppt.settingsShow && this.validItem && !this.shift
 		});
+		// Regorxxx ->
+	}
+
+	// Regorxxx <- Filter / View / Source button
+	multiBtnMenu(type = but.multiBtn.type) {
+		if (!ppt.multiBtnShow) { return fMenu; }
+		switch (type) {
+			case 'filter': return fMenu;
+			case 'view': return vMenu;
+			case 'source': return soMenu;
+		}
 	}
 
 	filterMenu() {
@@ -482,7 +812,7 @@ class MenuItems {
 				});
 			} else {
 				fMenu.newItem({
-					str: i != panel.filter.menu.length ? (!i ? 'No filter' : panel.filter.menu[i]) : 'Auto-manage scroll',
+					str: i === panel.filter.menu.length ? 'Auto-manage scroll' : (i ? panel.filter.menu[i] : 'No filter'),
 					func: () => panel.set('Filter', i),
 					checkItem: i == panel.filter.menu.length && !ppt.reset,
 					checkRadio: i == ppt.filterBy && i < panel.filter.menu.length,
@@ -518,6 +848,188 @@ class MenuItems {
 		});
 	}
 
+	viewsMenu() {
+		vMenu.newMenu({});
+		this.addViewsEntries(vMenu);
+	}
+
+	addViewsEntries(menu, appendTo) {
+		if (appendTo) { menu.newMenu({ menuName: 'Views', appendTo }); }
+		// Regorxxx <- Allow separators on views
+		panel.menu.forEach((v, i) => {
+			const bSeparator = (v || '').toLowerCase() === 'separator';
+			if (bSeparator) {
+				menu.newItem({
+					menuName: appendTo ? 'Views' : void (0),
+					separator: true
+				});
+			} else {
+				menu.newItem({
+					menuName: appendTo ? 'Views' : void (0),
+					str: v,
+					func: () => this.setView(i, { bSkipPresets: vk.k('shift') }), // Regorxxx <- Preset rules ->
+					checkRadio: i == ppt.viewBy,
+					separator: i > panel.menu.length - 3
+				});
+			}
+		});
+		// Regorxxx ->
+
+		// Regorxxx <- Queue source | Support playlist sorting | Support SORT BY query sorting ->
+		const isQueueLike = panel.isQueueLikeSource();
+		const isPlsLike = panel.isPlaylistSource();
+		if (isQueueLike) {
+			menu.newItem({
+				menuName: appendTo ? 'Views' : void (0),
+				str: 'Sort by Queue idx',
+				func: () => { ppt.toggle('queueSorting'); lib.treeState(false, 2); },
+				flags: lib.filterSort || lib.searchSort ? MF_GRAYED : MF_STRING,
+				checkItem: ppt.queueSorting && !lib.filterSort && !lib.searchSort
+			});
+		} else if (isPlsLike) {
+			menu.newItem({
+				menuName: appendTo ? 'Views' : void (0),
+				str: 'Sort by Playlist idx',
+				func: () => { ppt.toggle('plsSorting'); lib.treeState(false, 2); },
+				flags: lib.filterSort || lib.searchSort ? MF_GRAYED : MF_STRING,
+				checkItem: ppt.plsSorting && !lib.filterSort && !lib.searchSort
+			});
+		}
+		const d = {};
+		this.getSortData(d);
+		menu.newMenu({
+			menuName: d.menuName,
+			appendTo: appendTo ? 'Views' : void (0),
+			flags: d.sortType && (!isQueueLike || !ppt.queueSorting) && (!isPlsLike || !ppt.plsSorting) && !lib.filterSort && !lib.searchSort ? MF_STRING : MF_GRAYED,
+			separator: true
+		});
+		// Regorxxx ->
+		if (d.sortType) {
+			menu.newItem({
+				menuName: d.menuName,
+				str: ['', 'By year', 'Albums by year'][d.sortType],
+				flags: MF_GRAYED,
+				separator: true
+			});
+			const menuSort = [[], ['Default', 'Ascending', 'Descending'], ['Default', 'Ascending (hide year)', 'Ascending (show year)', 'Descending (hide year)', 'Descending (show year)', 'Action: year after album', 'Action: year before album']][d.sortType];
+			menuSort.forEach((v, i) => menu.newItem({
+				menuName: d.menuName,
+				str: v,
+				func: () => this.sortByDate(i, d),
+				flags: i > 4 && (d.sortIX == 1 || d.sortIX == 3) ? MF_GRAYED : MF_STRING,
+				checkRadio: d.sortIX == -1 && !i || i == d.sortIX || d.sortType == 2 && i == 5 && !ppt.yearBeforeAlbum || i == 6 && ppt.yearBeforeAlbum,
+				separator: i == 0 || d.sortType == 2 && (i == 2 || i == 4)
+			}));
+		}
+
+		menu.newItem({
+			menuName: appendTo ? 'Views' : void (0),
+			str: 'Configure views...',
+			func: () => panel.open('views')
+		});
+	}
+
+	sourceMenu() {
+		soMenu.newMenu({});
+		this.addSourceEntries(soMenu);
+	}
+
+	addSourceEntries(menu, appendTo) {
+		if (appendTo) { menu.newMenu({ menuName: 'Source', appendTo }); }
+		// Regorxxx <- External integration | Queue source
+		const sourceIdx = ppt.libSource - 1 < 0 || ppt.fixedPlaylist
+			? 2
+			: ppt.libSource > 2
+				? ppt.libSource
+				: ppt.libSource - 1;
+		this.sourceTypes().forEach((v, i) => menu.newItem({
+			menuName: appendTo ? 'Source' : void (0),
+			str: v,
+			func: () => {
+				// Regorxxx <- Internal cache of views
+				const queueCache = new Set([3, 4]);
+				if (queueCache.has(i) && !queueCache.has(ppt.libSource)) {
+					this.setCachedSource(i, 'Prev. Source', void (0));
+				} else if (!queueCache.has(i) && queueCache.has(ppt.libSource)) {
+					this.setCachedSource(i, void (0), 'Prev. Source');
+				} else {
+					// TODO this.setCachedSource(i, this.sourceTypes()[sourceIdx], v);
+					this.setSource(i);
+				}
+				// Regorxxx ->
+			},
+			checkRadio: i == sourceIdx,
+			separator: i == this.sourceTypes().length - 1
+		}));
+		// Regorxxx ->
+
+		menu.newItem({
+			menuName: appendTo ? 'Source' : void (0),
+			str: 'Select source panel(s)...',
+			func: () => this.setSourcePanel(),
+			flags: panel.isPanelSource() ? MF_STRING : MF_GRAYED,
+			separator: true
+		});
+		menu.newMenu({ menuName: 'Select playlist(s)', appendTo: appendTo ? 'Source' : void (0), flags: sourceIdx === 2 ? MF_STRING : MF_GRAYED }); // Regorxxx <- Don't allow playlist selection if source is not playlist ->
+		// Regorxxx <- Playing playlist source
+		menu.newItem({
+			menuName: 'Select playlist(s)',
+			str: 'Active playlist',
+			func: () => this.setActivePlaylist(),
+			checkRadio: panel.isActivePlaylistSource(true)
+		});
+		menu.newItem({
+			menuName: 'Select playlist(s)',
+			str: 'Playing playlist',
+			func: () => this.setPlayingPlaylist(),
+			checkRadio: panel.isPlayingPlaylistSource(true)
+		});
+		menu.newItem({ menuName: 'Select playlist(s)', separator: true });
+		if (panel.isPlayingPlaylistSource(true)) {
+			menu.newItem({
+				menuName: 'Select playlist(s)',
+				str: 'Fallback to Active',
+				func: () => ppt.toggle('playlistFallback'),
+				checkItem: ppt.playlistFallback
+			});
+			menu.newItem({
+				menuName: 'Select playlist(s)',
+				str: 'Also while not playing',
+				func: () => ppt.toggle('playlistFallbackStop'),
+				flags: ppt.playlistFallback ? MF_STRING : MF_GRAYED,
+				checkItem: ppt.playlistFallback && ppt.playlistFallbackStop
+			});
+			menu.newItem({ menuName: 'Select playlist(s)', separator: true });
+		}
+		// Regorxxx ->
+
+		const pl_no = Math.ceil(this.pl.length / 30);
+		// Regorxxx <- Allow multiple fixed playlists as source | Allow fixed playlist by GUID
+		const pl_ix = panel.isFixedPlaylistSource() ? panel.getFixedPlaylistSources() : [-1];
+		for (let j = 0; j < pl_no; j++) {
+			const n = '# ' + (j * 30 + 1 + ' - ' + Math.min(this.pl.length, 30 + j * 30) + (30 + j * 30 > pl_ix && ((j * 30) - 1) < pl_ix ? '  >>>' : ''));
+			menu.newMenu({ menuName: n, appendTo: 'Select playlist(s)' });
+			for (let i = j * 30; i < Math.min(this.pl.length, 30 + j * 30); i++) {
+				if (i === j * 30) {
+					menu.newItem({
+						menuName: n,
+						str: 'Shift to join / Ctrl to use GUID:',
+						flags: MF_GRAYED,
+						separator: true
+					});
+				}
+				menu.newItem({
+					menuName: n,
+					str: this.pl[i].menuName,
+					func: () => this.setFixedPlaylist(i),
+					checkRadio: pl_ix.includes(this.pl[i].ix)
+				});
+			}
+		}
+		// Regorxxx ->
+	}
+	// Regorxxx ->
+
 	searchHistoryMenu() {
 		sMenu.newMenu({});
 		// Regorxxx <- RegExp library search and menu cleanup | Syntax help
@@ -531,7 +1043,7 @@ class MenuItems {
 		if (search.menu.length) {
 			for (let i = 1; i < search.menu.length + 2; i++) {
 				sMenu.newItem({
-					str: i < search.menu.length + 1 ? search.menu[i - 1].search : 'Clear history',
+					str: i < search.menu.length + 1 ? search.menu[i - 1].search.trim().cut(80) : 'Clear history', // Regorxxx <- Cut and trim search history entries ->
 					func: () => this.setSearchHistory(i),
 					flags: i != 1 || search.menu.length ? MF_STRING : MF_GRAYED,
 					separator: search.menu.length && i == search.menu.length
@@ -588,7 +1100,7 @@ class MenuItems {
 		d.valueLength = d.value.length;
 		let l = d.sortYear.length;
 		while (l-- && l) {
-			d.value = d.value.replace(RegExp($.regexEscape(d.sortYear[l]), 'gi'), ''); // Regorxxx <- Sorting identification should not be case sensitive ->
+			d.value = d.value.replace(new RegExp($.regexEscape(d.sortYear[l]), 'gi'), ''); // Regorxxx <- Sorting identification should not be case-sensitive ->
 			if (d.valueLength != d.value.length) {
 				d.sortIX = l;
 				d.valueLength = d.value.length;
@@ -597,7 +1109,7 @@ class MenuItems {
 		if (d.sortIX == -1) {
 			l = d.sortAlbumsByYearAfter.length;
 			while (l-- && l) {
-				d.value = d.value.replace(RegExp($.regexEscape(d.sortAlbumsByYearAfter[l]), 'gi'), '%ALBUM%'); // Regorxxx <- Sorting identification should not be case sensitive ->
+				d.value = d.value.replace(new RegExp($.regexEscape(d.sortAlbumsByYearAfter[l]), 'gi'), '%ALBUM%'); // Regorxxx <- Sorting identification should not be case-sensitive ->
 				if (d.valueLength != d.value.length) {
 					d.sortIX = l;
 					d.valueLength = d.value.length;
@@ -607,19 +1119,25 @@ class MenuItems {
 		if (d.sortIX == -1) {
 			l = d.sortAlbumsByYearBefore.length;
 			while (l-- && l) {
-				d.value = d.value.replace(RegExp($.regexEscape(d.sortAlbumsByYearBefore[l]), 'gi'), '%ALBUM%'); // Regorxxx <- Sorting identification should not be case sensitive ->
+				d.value = d.value.replace(new RegExp($.regexEscape(d.sortAlbumsByYearBefore[l]), 'gi'), '%ALBUM%'); // Regorxxx <- Sorting identification should not be case-sensitive ->
 				if (d.valueLength != d.value.length) {
 					d.sortIX = l;
 					d.valueLength = d.value.length;
 				}
 			}
 		}
-		// Regorxxx <- Sorting identification should not be case sensitive
+		// Regorxxx <- Sorting identification should not be case-sensitive
 		if (d.value.includes('//') && /%YEAR%|%DATE%/i.test(d.value)) { d.sortType = 1; }
 		else if (/%ALBUM%/i.test(d.value)) { d.sortType = 2; }
 		// Regorxxx ->
 
-		d.menuName = d.sortType ? 'Sort selected view' : 'Sort N/A for selected view pattern';
+		// Regorxxx <- Support SORT BY query sorting
+		d.menuName = lib.searchSort || lib.filterSort
+			? lib.searchSort
+				? 'Sort N/A (Search sorting)'
+				: 'Sort N/A (Filter sorting)'
+			: d.sortType ? 'Sort selected view' : 'Sort N/A for selected view pattern';
+		// Regorxxx ->
 	}
 
 	loadView(clearCache, view, sel) {
@@ -627,7 +1145,8 @@ class MenuItems {
 		sbar.setCol();
 		but.createImages();
 		if (clearCache) img.clearCache();
-		if (sel !== undefined) {
+		if (typeof sel === 'undefined') { panel.set('view', view, true); }
+		else {
 			const handle = sel >= panel.list.Count ? null : panel.list[sel];
 			panel.set('view', view, true);
 			if (handle) {
@@ -637,11 +1156,11 @@ class MenuItems {
 					if (pop.inRange(item, v.item)) idx = i;
 				});
 				if (idx != -1) {
-					if (!panel.imgView) pop.focusShow(idx);
-					else pop.showItem(idx, 'focus');
+					if (panel.imgView) { pop.showItem(idx, 'focus'); }
+					else { pop.focusShow(idx); }
 				}
 			}
-		} else panel.set('view', view, true);
+		}
 		but.refresh(true);
 	}
 
@@ -667,12 +1186,12 @@ class MenuItems {
 
 		let item = pop.tree[this.ix];
 		let row = -1;
-		const level = pop.tree.length > this.ix && this.ix != -1 ? !pop.inlineRoot ? item.level : Math.max(item.level - 1, 0) : -1;
+		const level = pop.tree.length > this.ix && this.ix != -1 ? pop.inlineRoot ? Math.max(item.level - 1, 0) : item.level : -1;
 
-		this.validItem = this.settingsBtnDn ? false : !panel.imgView ? y < panel.tree.y + pop.rows * sbar.row.h && pop.tree.length > this.ix && this.ix != -1 && (x < Math.round(ppt.treeIndent * level) + ui.icon.w + ppt.margin && (!item.track || item.root) || pop.check_ix(item, x, y, true)) : pop.tree.length > this.ix && this.ix != -1;
+		this.validItem = this.settingsBtnDn ? false : panel.imgView ? pop.tree.length > this.ix && this.ix != -1 : y < panel.tree.y + pop.rows * sbar.row.h && pop.tree.length > this.ix && this.ix != -1 && (x < Math.round(ppt.treeIndent * level) + ui.icon.w + ppt.margin && (!item.track || item.root) || pop.check_ix(item, x, y, true));
 
 		if (!this.validItem && !this.settingsBtnDn && ppt.settingsShow && y > panel.search.sp) {
-			this.ix = pop.row.i != -1 ? pop.row.i : !panel.imgView ? pop.tree.length - 1 : -1;
+			this.ix = pop.row.i == -1 ? panel.imgView ? -1 : pop.tree.length - 1 : pop.row.i;
 			if (this.ix < pop.tree.length && this.ix != -1) {
 				item = pop.tree[this.ix];
 				this.validItem = true;
@@ -682,10 +1201,12 @@ class MenuItems {
 		if (this.validItem) {
 			if (!item.sel) {
 				pop.clearSelected();
+				pop.sel_items = []; // Regorxxx <- Performance improvement for contextual menu ->
+				pop.lastSelMul = []; // Regorxxx <- Rectangle selection on art view ->
 				item.sel = true;
 			}
-			pop.getTreeSel();
-			this.expandable = pop.trackCount(pop.tree[this.ix].item) > this.treeExpandLimit || pop.tree[this.ix].track || panel.imgView ? false : true;
+			if (!pop.sel_items.length) { pop.getTreeSel(); } // Regorxxx <- Performance improvement for contextual menu ->
+			this.expandable = !(pop.trackCount(pop.tree[this.ix].item) > this.treeExpandLimit || pop.tree[this.ix].track || panel.imgView);
 			if (this.expandable && pop.tree.length) {
 				let count = 0;
 				pop.tree.forEach((v, m, arr) => {
@@ -702,38 +1223,59 @@ class MenuItems {
 			}
 			this.items = pop.getHandleList();
 			this.show_context = true;
-		} else this.items = pop.getHandleList('newItems');
+		} else {
+			this.items = this.settingsBtnDn ? pop.getHandleList() : pop.getHandleList('newItems'); // Regorxxx <- Performance improvement for settings button ->
+		}
 
 		menu.load(x, y);
 		this.r_up = false;
 	}
 
-	setActivePlaylist() {
+	// Regorxxx <- Preset rules | Playing playlist source
+	setActivePlaylist({ bSkipPresets = false } = {}) {
 		ppt.libSource = 0;
 		ppt.fixedPlaylist = false;
 		ppt.fixedPlaylistName = 'ActivePlaylist';
+		if (!bSkipPresets && ppt.presetRulesOnSourceUse) {
+			const rule = panel.getPresetRule({ sourceBy: ppt.libSource });
+			if (panel.applyPresetRule(rule)) { return; };
+		}
 		if (panel.imgView) img.clearCache();
 		lib.searchCache = {};
-		if (ppt.showSource) panel.setRootName();
+		panel.setRootName(); // Regorxxx <- Filter / View / Source button ->
+		if (panel.viewNeedsUpdateTf('playlist')) { panel.getView(panel.grp[ppt.viewBy].type); } // Regorxxx <- Expand TF support on view patterns ->
 		lib.treeState(false, 2);
 	}
 
-	setAlbumart(i) {
-		let clearCache = false;
+	setPlayingPlaylist({ bSkipPresets = false } = {}) {
+		ppt.playingPlaylist = true;
+		this.setActivePlaylist({ bSkipPresets });
+	}
+	// Regorxxx ->
+
+	// Regorxxx <- Custom TF art | Code cleanup
+	setAlbumartType(i) {
 		switch (i) {
 			case 0:
 			case 1:
 			case 2:
 			case 3:
 			case 4:
+			case 5:
 				ppt.artId = i;
 				break;
-			case 5:
-			case 6:
-			case 7:
-				ppt.albumArtGrpLevel = i - 5;
+		}
+		this.loadView(false, ppt.albumArtViewBy);
+	}
+
+	setAlbumartGroup(i) {
+		switch (i) {
+			case 0:
+			case 1:
+			case 2:
+				ppt.albumArtGrpLevel = i;
 				break;
-			case 8: {
+			case 3: {
 				const key = `${panel.grp[ppt.viewBy].type.trim()}${panel.lines}`;
 				const ok_callback = (status, input) => {
 					if (status != 'cancel') {
@@ -758,12 +1300,10 @@ class MenuItems {
 				}
 				break;
 			}
-			case 9:
-				panel.open('albumArt');
-				break;
 		}
-		this.loadView(clearCache, ppt.albumArtViewBy);
+		this.loadView(false, ppt.albumArtViewBy);
 	}
+	// Regorxxx ->
 
 	setEdit(i) {
 		switch (i) {
@@ -780,20 +1320,34 @@ class MenuItems {
 	}
 
 	// Regorxxx <- Allow multiple fixed playlists as source | Allow fixed playlist by GUID
-	setFixedPlaylist(i) {
-		const id = vk.k('ctrl')
-			? this.pl[i].guid || this.pl[i].name
-			: this.pl[i].name;
-		if (vk.k('shift') && ppt.fixedPlaylistName.length) {
-			ppt.fixedPlaylistName += '|' + id;
+	setFixedPlaylist(i, { bUseUUID = vk.k('ctrl'), bSkipPresets = false } = {}) {
+		if (Array.isArray(i)) {
+			i.forEach((j) => {
+				const id = bUseUUID
+					? this.pl[j].guid || this.pl[j].name
+					: this.pl[j].name;
+				ppt.fixedPlaylistName = ppt.fixedPlaylistName.length
+					? ppt.fixedPlaylistName + '|' + id
+					: id;
+			});
 		} else {
-			ppt.fixedPlaylistName = id;
+			const id = bUseUUID
+				? this.pl[i].guid || this.pl[i].name
+				: this.pl[i].name;
+			ppt.fixedPlaylistName = vk.k('shift') && ppt.fixedPlaylistName.length
+				? ppt.fixedPlaylistName + '|' + id
+				: id;
 		}
 		ppt.fixedPlaylist = true;
+		if (!bSkipPresets && ppt.presetRulesOnSourceUse) {
+			const rule = panel.getPresetRule({ sourceBy: ppt.libSource });
+			if (panel.applyPresetRule(rule)) { return; };
+		}
 		ppt.libSource = 1;
-		if (panel.imgView) img.clearCache();
-		if (ppt.showSource) panel.setRootName();
+		if (panel.imgView) { img.clearCache(); }
+		panel.setRootName(); // Regorxxx <- Filter / View / Source button ->
 		lib.searchCache = {};
+		if (panel.viewNeedsUpdateTf('playlist')) { panel.getView(panel.grp[ppt.viewBy].type); } // Regorxxx <- Expand TF support on view patterns ->
 		lib.treeState(false, 2);
 	}
 	// Regorxxx ->
@@ -822,8 +1376,7 @@ class MenuItems {
 		switch (i) {
 			case 0:
 				pop.load({ bAddToPls: false, bAutoPlay: pop.autoPlay.send, bUseDefaultPls: false, bInsertToPls: false }); // Regorxxx <- Code cleanup ->
-				panel.treePaint();
-				lib.treeState(false, ppt.rememberTree);
+				lib.treeState(false, ppt.rememberTree) || panel.treePaint(); // Regorxxx <- Code cleanup | Improve repainting ->
 				break;
 			case 1:
 				pop.load({ bAddToPls: true, bAutoPlay: false, bUseDefaultPls: false, bInsertToPls: false }); // Regorxxx <- Code cleanup ->
@@ -831,8 +1384,7 @@ class MenuItems {
 				break;
 			case 2:
 				pop.sendToNewPlaylist();
-				panel.treePaint();
-				lib.treeState(false, ppt.rememberTree);
+				lib.treeState(false, ppt.rememberTree) || panel.treePaint(); // Regorxxx <- Code cleanup | Improve repainting ->
 				break;
 			case 3:
 				pop.nowPlayingShow();
@@ -842,19 +1394,18 @@ class MenuItems {
 				pop.clearTree();
 				ppt.toggle('albumArtShow');
 				panel.imgView = ppt.albumArtShow;
-				this.loadView(false, !panel.imgView ? (ppt.artTreeSameView ? ppt.viewBy : ppt.treeViewBy) : (ppt.artTreeSameView ? ppt.viewBy : ppt.albumArtViewBy), pop.sel_items[0]);
+				this.loadView(false, panel.imgView ? (ppt.artTreeSameView ? ppt.viewBy : ppt.albumArtViewBy) : (ppt.artTreeSameView ? ppt.viewBy : ppt.treeViewBy), pop.sel_items[0]);
 				break;
 			case 5:
 				lib.logTree();
 				pop.clearTree();
-				this.loadView(false, !panel.imgView ? (ppt.artTreeSameView ? ppt.viewBy : ppt.treeViewBy) : (ppt.artTreeSameView ? ppt.viewBy : ppt.albumArtViewBy), pop.sel_items[0]);
+				this.loadView(false, panel.imgView ? (ppt.artTreeSameView ? ppt.viewBy : ppt.albumArtViewBy) : (ppt.artTreeSameView ? ppt.viewBy : ppt.treeViewBy), pop.sel_items[0]);
 				break;
 			// Regorxxx <- Top tracks
 			case 6:
 			case 7:
 				pop.loadTopTracks(i === 7, !ppt.sendToCur);
-				panel.treePaint();
-				lib.treeState(false, ppt.rememberTree);
+				lib.treeState(false, ppt.rememberTree) || panel.treePaint(); // Regorxxx <- Code cleanup | Improve repainting ->
 				break;
 			// Regorxxx ->
 		}
@@ -896,24 +1447,25 @@ class MenuItems {
 		}
 	}
 
-	setSource(i) {
+	// Regorxxx <- External integration | Internal cache of views | Preset rules
+	setSource(i, { bOmitMsg = false, bProcessTree = true, bSkipPresets = false } = {}) {
 		switch (i) {
-			case 0:
+			case 0: // Library
 				ppt.libSource = 1;
 				ppt.fixedPlaylist = false;
 				break;
-			case 1:
+			case 1: // Panel
 				ppt.libSource = 2;
 				ppt.fixedPlaylist = false;
-				if (ppt.panelSourceMsg && popUpBox.isHtmlDialogSupported()) popUpBox.message();
+				if (!bOmitMsg && ppt.panelSourceMsg && popUpBox.isHtmlDialogSupported()) { popUpBox.message(); } // Regorxxx <- External integration ->
 				break;
-			case 2: {
+			case 2: { // Playlist
 				// Regorxxx <- Allow multiple fixed playlists as source | Allow fixed playlist by GUID
-				const fixedPlaylistIndex = lib.getFixedPlaylistSources();
-				if (fixedPlaylistIndex.length !== 0) { ppt.fixedPlaylist = true; }
+				const fixedPlaylistIndex = panel.getFixedPlaylistSources();
+				ppt.fixedPlaylist = fixedPlaylistIndex.length !== 0;
 				// Regorxxx ->
 				ppt.libSource = ppt.fixedPlaylist ? 1 : 0;
-				if (ppt.panelSourceMsg && popUpBox.isHtmlDialogSupported()) popUpBox.message();
+				if (!bOmitMsg && ppt.panelSourceMsg && popUpBox.isHtmlDialogSupported()) { popUpBox.message(); } // Regorxxx <- External integration ->
 				break;
 			}
 			// Regorxxx <- Queue source
@@ -922,12 +1474,28 @@ class MenuItems {
 				break;
 			}
 			// Regorxxx ->
+			// Regorxxx <- Auto-DJ source
+			case 4: {
+				ppt.libSource = 4;
+				break;
+			}
+			// Regorxxx ->
+		}
+		if (!bSkipPresets && ppt.presetRulesOnSourceUse) {
+			const rule = panel.getPresetRule({ sourceBy: ppt.libSource });
+			if (panel.applyPresetRule(rule)) { return; };
 		}
 		if (panel.imgView) img.clearCache();
 		lib.searchCache = {};
-		if (ppt.showSource) panel.setRootName();
-		lib.treeState(false, 2);
+		panel.setRootName(); // Regorxxx <- Filter / View / Source button |  Expand TF support on view patterns->
+		// Regorxxx <- Internal cache of views
+		if (bProcessTree) {
+			if (panel.viewNeedsUpdateTf('source')) { panel.getView(panel.grp[ppt.viewBy].type); }
+			lib.treeState(false, 2);
+		}
+		// Regorxxx ->
 	}
+	// Regorxxx ->
 
 	setSourcePanel() {
 		const ok_callback = (status, input) => {
@@ -938,7 +1506,7 @@ class MenuItems {
 		const caption = 'Panel source name';
 		const def = ppt.panelSelectionPlaylist;
 		// Regorxxx <- Better info. Don't create cache playlists if possible. Chained facets updates.
-		const prompt = 'Enter source panel name:\n\n• To get the name, go to the library tree panel to be used as source\n• Press Shift + Windows + R. Click and choose \'configure panel\'\n• Paste the panel name or ID, at the top, into here\n• Edit source panel name if required\n• Name is also used for a cache playlist that remembers last open state\n• The cache will be hidden, unless not supported by JS host component\n• For more than one source panel, use pipe separator, e.g. Genre|Artist\n• For chained panels only the immediate parent\'s name is needed';
+		const prompt = 'Enter source panel name:\n\n• To get the name, go to the Library-Tree-SMP panel to be used as source\n• Press Shift + Windows + R. Click and choose \'configure panel\'\n• Paste the panel name or ID, at the top, into here\n• Edit source panel name if required\n• Name is also used for a cache playlist that remembers last open state\n• The cache will be hidden, unless not supported by JS host component\n• For more than one source panel, use pipe separator, e.g. Genre|Artist\n• For chained panels only the immediate parent\'s name is needed';
 		// Regorxxx ->
 		const fallback = popUpBox.isHtmlDialogSupported() ? popUpBox.input(caption, prompt, ok_callback, '', def) : true;
 		if (fallback) {
@@ -952,6 +1520,18 @@ class MenuItems {
 			ok_callback(status, ns);
 		}
 	}
+
+	// Regorxxx <- Internal cache of views | Preset rules
+	setCachedSource(i, from, to, { bOmitMsg = false, bSkipPresets = false } = {}) {
+		if (ppt.libSourceCache) {
+			if (typeof from !== 'undefined') { lib.setViewCache(from); }
+			if (lib.getViewCache(to)) {
+				return this.setSource(i, { bOmitMsg, bSkipPresets, bProcessTree: false });
+			}
+		}
+		return this.setSource(i, { bOmitMsg, bSkipPresets });
+	}
+	// Regorxxx ->
 
 	setStatistics(i) {
 		if (i < pop.statistics.length) { // Regorxxx <- New statistics
@@ -970,7 +1550,7 @@ class MenuItems {
 				'filter': {}
 			};
 			pop.statisticsShow = ppt.itemShowStatistics;
-			pop.label = !ppt.labelStatistics || !pop.statisticsShow ? '' : pop.statistics[pop.statisticsShow];
+			pop.label = !ppt.labelStatistics || !pop.statisticsShow ? '' : pop.statistics[pop.statisticsShow].name; // Regorxxx <- New statistics | Code cleanup ->
 			const statisticsShown = ppt.itemShowStatistics > 0;
 			if (panel.imgView && curStatisticsShown != statisticsShown) {
 				img.labels = { statistics: ppt.itemShowStatistics ? 1 : 0 };
@@ -994,22 +1574,27 @@ class MenuItems {
 		pop.checkAutoHeight();
 	}
 
-	setView(i) {
+	// Regorxxx <- Preset rules
+	setView(i, { bSkipPresets = false } = {}) {
 		if (i < panel.menu.length) {
+			bSkipPresets = bSkipPresets && ppt.presetRulesOnViewUse;
+			if (bSkipPresets) { ppt.toggle('presetRulesOnViewUse'); }
 			if (ppt.artTreeSameView) {
 				ppt.treeViewBy = i;
 				ppt.albumArtViewBy = i;
 			} else {
-				if (!panel.imgView) ppt.treeViewBy = i;
-				else ppt.albumArtViewBy = i;
+				if (panel.imgView) { ppt.albumArtViewBy = i; }
+				else { ppt.treeViewBy = i; }
 				if (ppt.treeViewBy != ppt.albumArtViewBy) {
 					ppt.set(panel.imgView ? 'Tree' : 'Tree Image', null);
 					ppt.set(panel.imgView ? 'Tree Search' : 'Tree Image Search', null);
 				}
 			}
 			panel.set('view', i);
+			if (bSkipPresets) { ppt.toggle('presetRulesOnViewUse'); }
 		}
 	}
+	// Regorxxx ->
 
 	sortByDate(i, d) {
 		let sortByIX = -1;
@@ -1022,7 +1607,7 @@ class MenuItems {
 			if (i) {
 				let str = d.value.split('//');
 				if (str[1]) {
-					// Regorxxx <- Sorting identification should not be case sensitive ->
+					// Regorxxx <- Sorting identification should not be case-sensitive ->
 					str[1] = str[1].trim().replace(/(\|\s*)(.*?(%YEAR%|%DATE%))/gi, '$1' + d.sortYear[i] + '$2');
 					if (!/\|.*?(%YEAR%|%DATE%)/i.test(str[1])) { str[1] = d.sortYear[i] + str[1]; }
 					// Regorxxx ->
@@ -1030,16 +1615,16 @@ class MenuItems {
 				} else d.value = str[0];
 			}
 		} else if (d.sortType == 2 && i && sortByIX != -1) {
-			d.value = d.value.replace(/%ALBUM%/gi, d.sortAlbumByYear[sortByIX]); // Regorxxx <- Sorting identification should not be case sensitive ->
+			d.value = d.value.replace(/%ALBUM%/gi, d.sortAlbumByYear[sortByIX]); // Regorxxx <- Sorting identification should not be case-sensitive ->
 		}
 		if (d.sortType == 1 || sortByIX != -1) {
 			const expanded = [];
-			const ix = pop.get_ix(!panel.imgView ? 0 : img.panel.x + 1, (!panel.imgView || img.style.vertical ? panel.tree.y : panel.tree.x) + sbar.row.h / 2, true, false);
-			const curName = ix != -1 ? pop.tree[ix].name : '';
+			const ix = pop.get_ix(panel.imgView ? img.panel.x + 1 : 0, (!panel.imgView || img.style.vertical ? panel.tree.y : panel.tree.x) + sbar.row.h / 2, true, false);
+			const curName = ix == -1 ? '' : pop.tree[ix].name;
 			const scrollPos = sbar.scroll;
 			const selected = [];
 			pop.tree.forEach((v, i) => {
-				const level = !ppt.rootNode ? v.level : v.level - 1; // 1 level memory: more is less reliable
+				const level = ppt.rootNode ? v.level - 1 : v.level; // 1 level memory: more is less reliable
 				if (!level) {
 					if (v.child.length) expanded.push(i);
 					if (v.sel) selected.push(i);
@@ -1048,14 +1633,14 @@ class MenuItems {
 			ppt.set(d.name, d.value);
 			pop.clearTree();
 			panel.getViews();
-			this.setView(ppt.viewBy);
+			this.setView(ppt.viewBy, { bSkipPresets: true }); // Regorxxx <- Preset rules ->
 			if (ix < pop.tree.length) {
-				const name = ix != -1 ? pop.tree[ix].name : '';
+				const name = ix == -1 ? '' : pop.tree[ix].name;
 				if (name && name == curName) {
 					expanded.forEach(v => {
 						if (v < pop.tree.length) {
 							const item = pop.tree[v];
-							pop.branch(item, !item.root ? false : true, true);
+							pop.branch(item, !!item.root, true);
 						}
 					});
 					selected.forEach(v => {
@@ -1070,13 +1655,9 @@ class MenuItems {
 	}
 
 	// Regorxxx <- External integration
-	artTypes() {
-		return ['Front', 'Back', 'Disc', 'Icon', 'Artist'];
-	}
-
 	statisticsTypes() {
 		const userCustomTypes = ppt.tfCustomLabels.split('|');
-		['Custom-1 (sum)', 'Custom-2 (sum)', 'Custom-3 (sum)', 'Custom-1 (avg)', 'Custom-2 (avg)', 'Custom-3 (avg)']
+		['Custom-1 (sum)', 'Custom-2 (sum)', 'Custom-3 (sum)', 'Custom-1 (avg)', 'Custom-2 (avg)', 'Custom-3 (avg)', 'Custom-1 (p-mean)', 'Custom-2 (p-mean)', 'Custom-3 (p-mean)']
 			.forEach((t, i) => {
 				if (!userCustomTypes[i] || !userCustomTypes[i].length) { userCustomTypes[i] = t; }
 				else { userCustomTypes[i] += ' [' + t + ']'; }
@@ -1087,7 +1668,7 @@ class MenuItems {
 	}
 
 	sourceTypes() {
-		return ['Library', 'Panel', 'Playlist', 'Playback Queue']; // Regorxxx <- Queue source ->
+		return ['Library', 'Panel(s)', 'Playlist(s)', 'Playback Queue', 'Auto-DJ Queue']; // Regorxxx <- Queue source | Auto-DJ source ->
 	}
 	// Regorxxx ->
 }

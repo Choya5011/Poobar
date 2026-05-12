@@ -1,11 +1,11 @@
 ﻿'use strict';
-//23/01/26
+//17/04/26
 
 /* exported createBackgroundMenu */
 
 /* global Chroma:readable, folders:readable */
 include('window_xxx_helpers.js');
-/* global MF_GRAYED:readable, MF_STRING:readable,  */
+/* global MF_GRAYED:readable, MF_STRING:readable, MF_CHECKED:readable  */
 include('..\\..\\helpers\\menu_xxx.js');
 /* global _menu:readable */
 include('..\\..\\helpers\\helpers_xxx_file.js');
@@ -112,6 +112,30 @@ function createBackgroundMenu(appendTo, parentMenu, options = { nameColors: fals
 				this.changeConfig({ config: { coverModeOptions: { path: input } }, callbackArgs: { bSaveProperties: true } });
 			}
 		}));
+		menu.newSeparator(subMenu);
+		{
+			const subMenuSecond = menu.newMenu('By priority', subMenu, this.coverModePriority.length ? MF_CHECKED : MF_STRING);
+			const modes = ['front', 'back', 'disc', 'icon', 'artist']
+				.map((mode) => [mode, mode + '_embedded', mode + '_stub'])
+				.flat(Infinity);
+			let bDone, i = 1;
+			modes.forEach((mode) => {
+				if (this.coverModePriority.includes(mode)) {
+					menu.newEntry({ menuName: subMenuSecond, entryText: '(' + i + ') ' + mode, flags: MF_GRAYED });
+					bDone = true;
+					i++;
+				}
+			});
+			if (!bDone) { menu.newEntry({ menuName: subMenuSecond, entryText: ' - none - ', flags: MF_GRAYED }); }
+			menu.newSeparator(subMenuSecond);
+			menu.newEntry({
+				menuName: subMenuSecond, entryText: 'Edit art types...', func: () => {
+					const input = Input.json('array strings', this.coverModePriority, 'Enter art types:\n(array of strings)\n\nAllowed: ' + this.getCoverModes(false).join(', ') + '\nSuffix \'_stub\' or \'_embedded\' can also be added.\n\ne.g. ["front", "back_stub", "artist"]' , window.Name + ' (' + window.ScriptInfo.Name + '): Y-axis margin', 2);
+					if (input === null) { return; }
+					this.changeConfig({ config: { coverModePriority: [...new Set(input)] }, callbackArgs: { bSaveProperties: true } });
+				},
+			});
+		}
 		if (['path', 'folder'].includes(this.coverMode.toLowerCase())) {
 			menu.newSeparator(subMenu);
 			menu.newEntry({
@@ -186,6 +210,12 @@ function createBackgroundMenu(appendTo, parentMenu, options = { nameColors: fals
 			{ isEq: null, key: this.coverModeOptions.bCircularBlur, value: null, newValue: !this.coverModeOptions.bCircularBlur, entryText: 'Circular blur' }
 		].forEach(createMenuOption('coverModeOptions', 'bCircularBlur', subMenu, true));
 		menu.getLastEntry().flags = this.coverModeOptions.blur === 0 || !this.showCover ? MF_GRAYED : MF_STRING;
+		if (this.useD2D) {
+			[
+				{ isEq: null, key: this.coverModeOptions.bDirectionalBlur, value: null, newValue: !this.coverModeOptions.bDirectionalBlur, entryText: 'Directional blur' }
+			].forEach(createMenuOption('coverModeOptions', 'bDirectionalBlur', subMenu, true));
+			menu.getLastEntry().flags = this.coverModeOptions.blur === 0 || !this.showCover ? MF_GRAYED : MF_STRING;
+		}
 		[
 			{ key: 'blur', entryText: 'Blur...', checks: [(num) => num >= 0 && num < Infinity], inputHint: '\n(0 to ∞)' },
 			{ entryText: menu.separator },
@@ -195,9 +225,12 @@ function createBackgroundMenu(appendTo, parentMenu, options = { nameColors: fals
 			{ key: 'mute', entryText: 'Mute...', checks: [(num) => num >= 0 && num <= 100], inputHint: '\n0 is disabled, 100 is max effect.\n(0 to 100)' },
 			{ key: 'bloom', entryText: 'Bloom...', checks: [(num) => num >= 0 && num <= 100], inputHint: '\n0 is disabled, 100 is max effect.\n(0 to 100)' },
 			{ key: 'edgeGlow', entryText: 'Edge...', checks: [(num) => num >= 0 && num <= 100], inputHint: '\n0 is disabled, 100 is max effect.\n(0 to 100)' },
+			{ key: 'vignette', entryText: 'Vignette...', checks: [(num) => num >= 0 && num <= 100], inputHint: '\n0 is disabled, 100 is max effect.\n(0 to 100)' },
 			{ entryText: menu.separator },
 			{ key: 'alpha', entryText: 'Opacity...', checks: [(num) => num >= 0 && num <= 100], inputHint: '\n0 is transparent, 100 is opaque.\n(0 to 100)' },
+			{ key: 'histogram', entryText: 'Histogram...', checks: [(num) => num >= 0 && num <= 1024], inputHint: '\n0 is disabled, otherwise sets the number of bins.\n(0 to 1024)', bD2D: true },
 		].forEach((option) => {
+			if (option.bD2D && !this.useD2D) { return; }
 			if (menu.isSeparator(option)) { menu.newSeparator(subMenu); return; }
 			const prevVal = option.key === 'alpha' ? Math.round(this.coverModeOptions[option.key] * 100 / 255) : this.coverModeOptions[option.key];
 			menu.newEntry({
@@ -209,6 +242,12 @@ function createBackgroundMenu(appendTo, parentMenu, options = { nameColors: fals
 				}, flags: this.useCover && (option.key === 'alpha' || this.showCover || this.colorMode === 'blend') ? MF_STRING : MF_GRAYED
 			});
 		});
+		if (this.useD2D) {
+			menu.newSeparator(subMenu);
+			[
+				{ isEq: null, key: this.coverModeOptions.bGrayScale, value: null, newValue: !this.coverModeOptions.bGrayScale, entryText: 'Grayscale' }
+			].forEach(createMenuOption('coverModeOptions', 'bGrayScale', subMenu, true));
+		}
 		menu.newSeparator(subMenu);
 		[
 			{ isEq: null, key: this.coverModeOptions.bFlipX, value: null, newValue: !this.coverModeOptions.bFlipX, entryText: 'Flip on X-axis' }
@@ -216,6 +255,12 @@ function createBackgroundMenu(appendTo, parentMenu, options = { nameColors: fals
 		[
 			{ isEq: null, key: this.coverModeOptions.bFlipY, value: null, newValue: !this.coverModeOptions.bFlipY, entryText: 'Flip on Y-axis' }
 		].forEach(createMenuOption('coverModeOptions', 'bFlipY', subMenu, true));
+		if (window.DrawMode === 1 && typeof Effects !== 'undefined') {
+			menu.newSeparator(subMenu);
+			[
+				{ isEq: null, key: this.coverModeOptions.bGdiEffects, value: null, newValue: !this.coverModeOptions.bGdiEffects, entryText: 'Force GDI+ effects' }
+			].forEach(createMenuOption('coverModeOptions', 'bGdiEffects', subMenu, true));
+		}
 	}
 	menu.newSeparator(mainMenuName);
 	{
@@ -238,7 +283,7 @@ function createBackgroundMenu(appendTo, parentMenu, options = { nameColors: fals
 				this.changeConfig({ config: { coverMode: this.getDefaultCoverMode() }, callbackArgs: { bSaveProperties: true } });
 			}
 		}));
-		menu.getLastEntry().flags = !this.useCover ? MF_GRAYED : MF_STRING;
+		menu.getLastEntry().flags = this.useCover ? MF_STRING : MF_GRAYED;
 		menu.newCheckMenuLast(() => this.coverMode === 'none' ? 0 : (this.coverModeOptions.bNowPlaying ? 1 : 2), 4);
 		menu.newSeparator(subMenu);
 		[
@@ -300,7 +345,7 @@ function createBackgroundMenu(appendTo, parentMenu, options = { nameColors: fals
 		menu.getLastEntry().flags = ['bigradient'].includes(this.colorMode) ? MF_STRING : MF_GRAYED;
 		menu.newSeparator(subMenu);
 		[
-			{ key: 'blendIntensity', entryText: 'Blend blur intensity...', type: 'int positive', checks: [(num) => num >= 0 && num < 90], inputHint: '\nBlur intensity.\n(0 to 90)' },
+			{ key: 'blendIntensity', entryText: 'Blend blur intensity...', type: 'int positive', checks: [(num) => num >= 0 && num <= 90], inputHint: '\nBlur intensity.\n(0 to 90)' },
 			{ key: 'blendAlpha', entryText: 'Blend opacity...', type: 'int positive', checks: [(num) => num >= 0 && num <= 100], inputHint: '\n0 is transparent, 100 is opaque.\n(0 to 100)' },
 		].forEach((option) => {
 			const prevVal = option.key === 'blendAlpha' ? Math.round(this.colorModeOptions[option.key] * 100 / 255) : this.colorModeOptions[option.key];
@@ -318,7 +363,7 @@ function createBackgroundMenu(appendTo, parentMenu, options = { nameColors: fals
 	[
 		{ isEq: null, key: this.coverModeOptions.bProcessColors, value: null, newValue: !this.coverModeOptions.bProcessColors, entryText: 'Process art colors' }
 	].forEach(createMenuOption('coverModeOptions', 'bProcessColors', mainMenuName, true));
-	menu.getLastEntry().flags = !this.useCover ? MF_GRAYED : MF_STRING;
+	menu.getLastEntry().flags = this.useCover ? MF_STRING : MF_GRAYED;
 
 	if (options.onInit) { options.onInit(menu); }
 

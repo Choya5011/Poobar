@@ -1,15 +1,17 @@
 ﻿"use strict";
 
-const img = gdi.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Field.jpg`);
+// Use pixel data from a real image as example
+const example = gdi.Image(`${fb.ComponentPath}\\samples\\d2d\\images\\Field.jpg`).GetPixelData();
 
-let imgPixelData = img.GetPixelData();
+// Create a temp folder
+const filePath = "js_data\\temp\\Field.bin";
+if (!utils.IsDirectory(fb.ProfilePath + filePath)) { utils.CreateFolder(fb.ProfilePath + 'js_data\\temp\\'); }
 
-utils.WriteBinaryFile("D:\\Field.bin", imgPixelData);
-
-let rData = utils.ReadBinaryFile("D:\\Field.bin");
-
-let rImg = gdi.CreateImageFromPixelData(rData, 2208, 1242);
+// Write data to a file, and load it
+utils.WriteBinaryFile(fb.ProfilePath + filePath, example);
+const imgPixelData = utils.ReadBinaryFile(fb.ProfilePath + filePath);
+const img = gdi.CreateImageFromPixelData(imgPixelData, 2208, 1242);
 
 function on_paint(gr) {
-	gr.DrawImage(rImg, 0, 0, img.Width, img.Height, 0, 0, img.Width, img.Height);
+	gr.DrawImage(img, 0, 0, img.Width, img.Height, 0, 0, img.Width, img.Height);
 }

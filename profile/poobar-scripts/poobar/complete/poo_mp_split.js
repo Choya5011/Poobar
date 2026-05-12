@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-window.DefineScript('Poobar Main Panel', {author:'Choya', options:{grab_focus:false}});
+window.DefineScript('Poobar Split Main Panel', {author:'Choya', options:{grab_focus:false}});
 window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
@@ -11,39 +11,42 @@ include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_tab.js');
 include(fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js');
 include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.js');
 
+// * required properties for _paint
 let ppt = {
-	hPanelScale : new _p ('- PANEL_PLACEMENT: Horizontal Monitor Panel Division (0-1)', 0.5),
-	vPanelScale : new _p ('- PANEL_PLACEMENT: Vertical Monitor Panel Division (0-1)', 0.4),
-	cpH : new _p ('- PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
-	cpV : new _p ('- PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 108),
+	hPanelScale : new _p('- PANEL_PLACEMENT: Horizontal Screen Panel Division (0-1)', 0.5),
+	vPanelScale : new _p('- PANEL_PLACEMENT: Vertical Screen Panel Division (0-1)', 0.4),
+	cpH : new _p('- PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
+	cpV : new _p('- PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 108),
 	unify : new _p('- PANEL_BEHAVIOR: Unify background across panels', false),
 
-    bgShow : new _p('_TAB_DISPLAY: Show Wallpaper', false),
-    bgBlur : new _p('_TAB_DISPLAY: Wallpaper Blurred', false),
-    bgMode : new _p('_TAB_DISPLAY: Wallpaper Mode', false),
-    col_mode : new _p('_TAB_PROPERTY: Color Mode (1,2,3)', 1),
-    borders : new _p('_TAB_PROPERTY: Show tab separators', true),
-    overlay : new _p('_TAB_DISPLAY: Show tab shadow/overlay', false),
-    orientation : new _p('_TAB_DISPLAY: Tab Orientation', false),
-    fontMode : new _p ('_TAB_DISPLAY: Switch  Icon or Text Font', false),
-    bgPath : new _p('_TAB_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image"),
+    bgShow : new _p('_DISPLAY: Show Wallpaper', false),
+    bgBlur : new _p('_DISPLAY: Wallpaper Blurred', false),
+    bgMode : new _p('_DISPLAY: Wallpaper Mode', false),
+    overlay: new _p('_DISPLAY: Show Tab Shadow', true),
+    borders: new _p('_DISPLAY: Show Tab Separators', false), // *
+    hover: new _p('_DISPLAY: Show Hover Highlight', true), // *
+    selected: new _p('_DISPLAY: Show Selected Highlight', true), // *
+    round: new _p('_DISPLAY: Round Highlight Corners', false), // *
+    orientation: new _p('_DISPLAY: Tab Orientation', false), // *
+    fontMode: new _p ('_DISPLAY: Switch  Icon or Text Font', false), // *
+
+    col_mode: new _p('_PROPERTY: Color Mode: Sys(1), Dyn(2), Cus(3)', 1),
+    bgPath : new _p('_PROPERTY: Default Wallpaper Path', "path\\to\\custom\\image")
 };
 
 let ww, wh = 0;
-let cpH = _scale(ppt.cpH.value); // Control Panel Height in Horizontal orientation
-let cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
-let paintRect = false;
+const cpH = _scale(ppt.cpH.value); // Control Panel Height in Horizontal orientation
+const cpV = _scale(ppt.cpV.value); // Control Panel Height in vertical orientation
 
 update_art(ppt);
 get_colours(ppt.col_mode.value, true);
 
 // _layout usage instruction found at: fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js'
 const panelNames = ['Fluent Control Panel', '', '', 'Smooth Browser'];
-let layout = new _layout(panelNames, 150, ppt.unify.enabled);
+const layout = new _layout(panelNames, 150, ppt.unify.enabled);
 
 layout.horizontal({
     func: () => {
-        paintRect = true;
         const psH = (wh <= scaler.s730 && ww > scaler.s800 && ppt.hPanelScale.value >= 0.5) ? ppt.hPanelScale.value - 0.1 : ppt.hPanelScale.value; // layout.p.p3/layout.p.p2 placement ratio in horizontal orientation (.5 splitscreen)
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
@@ -59,7 +62,6 @@ layout.horizontal({
 
 layout.halfscreen({
     func: () => {
-        paintRect = true;
         const psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value; // (layout.p.p3 & layout.p.p4)/layout.p.p2 placement ratio in vertical orientation
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
@@ -76,7 +78,6 @@ layout.halfscreen({
 
 layout.normalvertical({
     func: () => {
-        paintRect = true;
         const psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
@@ -93,7 +94,6 @@ layout.normalvertical({
 
 layout.narrowvertical({
     func: () => {
-        paintRect = true;
         const psV = (wh < scaler.s600) ? ppt.vPanelScale.value + 0.2 : ppt.vPanelScale.value;
         if (layout.p.p4) layout.p.p4.Hidden = true;
         if (layout.p.p3) layout.p.p3.Hidden = true;
@@ -109,7 +109,6 @@ layout.narrowvertical({
 
 layout.miniplayer({
     func: () => {
-        paintRect = false;
         if (layout.p.p3) layout.p.p3.Hidden = true;
         if (layout.p.p2) layout.p.p2.Hidden = true;
         if (layout.p.p4) layout.p.p4.Hidden = true;
@@ -117,8 +116,8 @@ layout.miniplayer({
         if (layout.p.p1) { layout.p.p1.Move(0, wh - cpV, ww, cpV); layout.p.p1.ShowCaption = false; layout.p.p1.Locked = true; layout.p.p1.Hidden = false; }
     },
     debouncefunc: () => {
-        exInitTabs([1, 3]);
-        updateTabSize(ppt, true);
+        initTabs([1, 3]);
+        updateTabSize(ppt, cpV);
         let panelW = ppt.orientation.enabled ? ww - TAB_W : ww;
         let panelH = ppt.orientation.enabled ? wh - cpV : wh - cpV - TAB_H;
         let switchH = ppt.orientation.enabled ? 0 : TAB_H;
@@ -139,8 +138,7 @@ layout.miniplayer({
 
 layout.miniplayer_2({
     func: () => {
-        paintRect = true;
-        exInitTabs([3]);
+        initTabs([3]);
         try {
             for (let i = 0; i < tabs.length; i++) {
                 const p = window.GetPanelByIndex(tabs[i].index);
@@ -170,7 +168,7 @@ window.SetTimeout(function() {
 }, 180);
 
 function on_paint(gr) {
-    if (!paintRect && !ppt.bgShow.enabled) {
+    if (!layout.cc('miniplayer') && !ppt.bgShow.enabled) {
         const rX = (ppt.orientation.enabled) ? TAB_W : 0;
         const rY = (ppt.orientation.enabled) ? 0 : TAB_H;
         const rW = (ppt.orientation.enabled) ? ww - TAB_W : ww;
@@ -194,9 +192,9 @@ function on_paint(gr) {
         }
     }
 
-    if (layout.layout() === 'miniplayer' && ww >= scaler.s300) tab.paint_mp(gr, ppt);
+    if (layout.cc('miniplayer') && !ppt.bgShow.enabled) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
 
-    if (paintRect && !ppt.bgShow.enabled) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
+    if (layout.cc('miniplayer') && ww >= scaler.s300) _paint(gr, ppt, true);
 }
 
 function on_colours_changed() {
@@ -208,11 +206,11 @@ function on_playback_new_track() {
     get_colours(ppt.col_mode.value, true);
     update_art(ppt);
     window.Repaint();
-    if ((layout.layout() !== ('halfscreen' || 'normalvertical' || 'narrowvertical')) && !ppt.bgMode.enabled) { layout.refresh_pt_panels([layout.p.p4]); } else if (!ppt.bgMode.enabled) { layout.refresh_pt_panels(); }
+    if ((!layout.cc('halfscreen') || !layout.cc('normalvertical') || !layout.cc('narrowvertical')) && !ppt.bgMode.enabled) { layout.refresh_pt_panels([layout.p.p4]); } else if (!ppt.bgMode.enabled) { layout.refresh_pt_panels(); }
 }
 
 function on_mouse_lbtn_up(x, y) {
-    updateTabSize(ppt, true);
+    //updateTabSize(ppt, cpV);
     let switchTab_WH = (ppt.orientation.enabled) ? TAB_W : TAB_H;
     let switchTab_HW = (ppt.orientation.enabled) ? TAB_H : TAB_W;
     let switch_xy = (ppt.orientation.enabled) ? x : y;
@@ -238,7 +236,7 @@ function on_mouse_move(x, y) {
     let switch_xy = (ppt.orientation.enabled) ? x : y;
     let switch_yx = (ppt.orientation.enabled) ? y : x;
     if (switch_xy <= TAB_WH) {
-        updateTabSize(ppt, true);
+        updateTabSize(ppt, cpV);
         const idx = Math.floor(switch_yx / TAB_WH);
         if (idx !== hoveredTab && idx >= 0 && idx < tabs.length) {
             hoveredTab = idx;
@@ -259,50 +257,92 @@ function on_mouse_rbtn_up(x, y) {
 
     menu.newEntry({entryText: 'Configure main panel:', flags: MF_GRAYED});
 
-    menu.newEntry({entryText: 'sep'});
+    menu.newSeparator();
 
-    const or_menu = menu.newMenu('Orientation');
-    menu.newCheckMenu(or_menu, 'Horizontal', 'Vertical', () => !ppt.orientation.enabled ? 0 : 1);
-    menu.newEntry({menuName: or_menu, entryText: 'Horizontal', func: () => {ppt.orientation.enabled = false; update_art(ppt, true); on_size(); window.Repaint();}});
-    menu.newEntry({menuName: or_menu, entryText: 'Vertical', func: () => {ppt.orientation.enabled = true; update_art(ppt, true); on_size(); window.Repaint();}});
+    {
+        const menuName = menu.newMenu('Orientation');
+        menu.newCheckMenu(menuName, 'Horizontal', 'Vertical', () => !ppt.orientation.enabled ? 0 : 1);
+        menu.newEntry({menuName, entryText: 'Horizontal', func: () => {ppt.orientation.enabled = false; update_art(ppt, true); on_size(); window.Repaint();}});
+        menu.newEntry({menuName, entryText: 'Vertical', func: () => {ppt.orientation.enabled = true; update_art(ppt, true); on_size(); window.Repaint();}});
+    }
 
-    const show_menu = menu.newMenu('Show...');
-    menu.newEntry({menuName: show_menu, entryText: 'Separators', func: () => {ppt.borders.toggle(); window.Repaint();}, flags: () => ppt.borders.enabled ? MF_CHECKED : MF_STRING});
+    {
+        const menuName = menu.newMenu('Show...');
+        menu.newEntry({menuName, entryText: 'Separators', func: () => {ppt.borders.toggle(); window.Repaint();}, flags: () => ppt.borders.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Selected', func: () => {ppt.selected.toggle(); window.Repaint();}, flags: () => ppt.selected.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Hover', func: () => {ppt.hover.toggle(); window.Repaint();}, flags: () => ppt.hover.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Round highlights', func: () => {ppt.round.toggle(); window.Repaint();}, flags: () => ppt.round.enabled ? MF_CHECKED : MF_STRING});
+    }
 
-    menu.newEntry({entryText: 'sep'});
+    menu.newSeparator();
 
-    const tp_menu = menu.newMenu('Unified Background');
-    menu.newEntry({menuName: tp_menu, entryText: 'Unify child-panel backgrounds', flags: MF_GRAYED});
-    menu.newEntry({menuName: tp_menu, entryText: 'sep'});
-    menu.newEntry({menuName: tp_menu, entryText: 'Enable', func: () => {ppt.unify.toggle(); window.Reload(); if (ppt.unify.enabled) {let tp_readme; try { tp_readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001); } catch (e) { tp_readme = 'Transparency readme not found.\nAvoid without instructions, will cause glitches otherwise.' }; fb.ShowPopupMessage(tp_readme, 'Unified background & pseudotransparency'); tp_readme = null;} }, flags: () => ppt.unify.enabled ? MF_CHECKED : MF_STRING});
+    {
+        const menuName = menu.newMenu('Unified Background');
+        menu.newEntry({menuName, entryText: 'Unify child-panel backgrounds', flags: MF_GRAYED});
+        menu.newSeparator(menuName);
+        menu.newEntry({menuName, entryText: 'Enable', func: () => { ppt.unify.toggle(); window.Reload(); }, flags: () => ppt.unify.enabled ? MF_CHECKED : MF_STRING});
+        menu.newSeparator(menuName);
+        menu.newEntry({
+            menuName,
+            entryText: 'Readme...',
+            func: () => {
+                let readme;
+                try {
+                   readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\tp_readme.txt', 65001);
+                } catch (e) {
+                    readme = 'Transparency readme not found.\n\nAvoid without instructions, might cause glitches otherwise.'
+                };
+                fb.ShowPopupMessage(readme, 'Unified background & pseudotransparency');
+                readme = null;
+            }
+        });
+    }
 
-    const bg_menu = menu.newMenu('Background');
-    menu.newEntry({menuName: bg_menu, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
-    menu.newEntry({menuName: bg_menu, entryText: 'sep'});
-    menu.newEntry({menuName: bg_menu, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); if (ppt.unify.enabled) paintRect = false; window.Repaint(); layout.refresh_pt_panels([layout.p.p4]);}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: bg_menu, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt, true); window.Repaint(); layout.refresh_pt_panels([layout.p.p4]);}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: bg_menu, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint(); layout.refresh_pt_panels([layout.p.p4]);}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: bg_menu, entryText: 'sep'});
-    menu.newCheckMenu(bg_menu, 'Playing album cover', 'Default', () => !ppt.bgMode.enabled ? 0 : 1);
-    menu.newEntry({menuName: bg_menu, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt, true); window.Repaint();}});
-    menu.newEntry({menuName: bg_menu, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt, true); window.Repaint();}});
+    {
+        const menuName = menu.newMenu('Background');
+        menu.newEntry({menuName, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
+        menu.newSeparator(menuName);
+        menu.newEntry({menuName, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); window.Repaint();}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt, true); window.Repaint();}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint();}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
+        menu.newSeparator(menuName);
+        menu.newCheckMenu(menuName, 'Playing album cover', 'Default', () => !ppt.bgMode.enabled ? 0 : 1);
+        menu.newEntry({menuName, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt, true); window.Repaint();}});
+        menu.newEntry({menuName, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt, true); window.Repaint();}});
+    }
 
-    const col_menu = menu.newMenu('Colours');
-    menu.newEntry({menuName: col_menu, entryText: 'System', func: () => {ppt.col_mode.value = 1; get_colours(ppt.col_mode.value, true); window.Repaint();}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: col_menu, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; get_colours(ppt.col_mode.value, true); window.Repaint();}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
-    menu.newEntry({menuName: col_menu, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; get_colours(ppt.col_mode.value, true); window.ShowProperties(); window.Repaint();}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
+    {
+        const menuName = menu.newMenu('Colours');
+        menu.newEntry({menuName, entryText: 'System', func: () => {ppt.col_mode.value = 1; get_colours(ppt.col_mode.value, true); window.Repaint();}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; get_colours(ppt.col_mode.value, true); window.Repaint();}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; get_colours(ppt.col_mode.value, true); window.ShowProperties(); window.Repaint();}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
+    }
 
-    const font_menu = menu.newMenu('Font');
-    menu.newCheckMenu(font_menu, 'Segoe Fluent Icons', 'System', () => !ppt.fontMode.enabled ? 0 : 1);
-    menu.newEntry({menuName: font_menu, entryText: 'Segoe Fluent Icons', func: () => {ppt.fontMode.enabled = false; window.Repaint();}});
-    menu.newEntry({menuName: font_menu, entryText: 'System', func: () => {ppt.fontMode.enabled = true; window.Repaint();}});
-    //menu.newEntry({menuName: font_menu, entryText: 'Custom', func: () => {}});
+    {
+        const menuName = menu.newMenu('Font');
+        menu.newCheckMenu(menuName, 'Segoe Fluent Icons', 'System', () => !ppt.fontMode.enabled ? 0 : 1);
+        menu.newEntry({menuName, entryText: 'Segoe Fluent Icons', func: () => {ppt.fontMode.enabled = false; window.Repaint();}});
+        menu.newEntry({menuName, entryText: 'System', func: () => {ppt.fontMode.enabled = true; window.Repaint();}});
+        //menu.newEntry({menuName: menuName, entryText: 'Custom', func: () => {}});
+    }
 
-    menu.newEntry({entryText: 'sep'});
+    menu.newSeparator();
 
-    menu.newEntry({entryText: 'Open readme...', func: () => {let readme; try { readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\mp_readme.txt', 65001); } catch (e) { readme = 'readme file not found' }; fb.ShowPopupMessage(readme, window.ScriptInfo.Name); readme = null;}});
+    menu.newEntry({
+        entryText: 'Open readme...',
+        func: () => {
+            let readme;
+            try {
+                readme = utils.ReadTextFile(fb.ProfilePath + 'poobar-scripts\\poobar\\readmes\\mp_readme.txt', 65001);
+            } catch (e) {
+                readme = 'readme file not found'
+            };
+            fb.ShowPopupMessage(readme, window.ScriptInfo.Name);
+            readme = null;
+        }
+    });
 
-    menu.newEntry({entryText: 'sep'});
+    menu.newSeparator();
 
     menu.newEntry({entryText: 'Panel Properties', func: () => {window.ShowProperties();}});
     menu.newEntry({entryText: 'Configure...', func: () => {window.ShowConfigureV2();}});

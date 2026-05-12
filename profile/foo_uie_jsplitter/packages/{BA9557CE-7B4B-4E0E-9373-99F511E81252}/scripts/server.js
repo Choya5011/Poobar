@@ -1,4 +1,5 @@
 ﻿'use strict';
+//24/04/26
 
 class Server {
 	constructor() {
@@ -13,7 +14,7 @@ class Server {
 		this.bioCache = `${cfg.storageFolder}cache_bio.json`;
 		this.disambig = '';
 		this.exp = Math.max(panel.d * cfg.exp / 28, panel.d);
-		if (!this.exp || isNaN(this.exp)) this.exp = panel.d;
+		if (!this.exp || Number.isNaN(this.exp)) this.exp = panel.d;
 		this.imgToRecycle = [];
 		if ($.file(this.bioCache)) this.imgToRecycle = $.jsonParse(this.bioCache, false, 'file-utf8'); // Regorxxx <- Force UTF-8 ->
 		this.langFallback = false;
@@ -56,11 +57,11 @@ class Server {
 				focus: focus || false,
 				arr: []
 			},
-			{
-				ix: 0,
-				focus: focus || false,
-				arr: []
-			});
+				{
+					ix: 0,
+					focus: focus || false,
+					arr: []
+				});
 		}, 2000, {
 			'leading': true,
 			'trailing': true
@@ -109,7 +110,7 @@ class Server {
 
 	createImgDlFile() {
 		const n = `${cfg.storageFolder}foo_lastfm_img.vbs`
-		
+
 		if (!$.file(n)) {
 			const dl_im = 'If (WScript.Arguments.Count <> 2) Then\r\nWScript.Quit\r\nEnd If\r\n\r\nurl = WScript.Arguments(0)\r\nfile = WScript.Arguments(1)\r\n\r\nSet objFSO = Createobject("Scripting.FileSystemObject")\r\nIf objFSO.Fileexists(file) Then\r\nSet objFSO = Nothing\r\nWScript.Quit\r\nEnd If\r\n\r\nSet objXMLHTTP = CreateObject("MSXML2.XMLHTTP")\r\nobjXMLHTTP.open "GET", url, false\r\nobjXMLHTTP.send()\r\n\r\nIf objXMLHTTP.Status = 200 Then\r\nSet objADOStream = CreateObject("ADODB.Stream")\r\nobjADOStream.Open\r\nobjADOStream.Type = 1\r\nobjADOStream.Write objXMLHTTP.ResponseBody\r\nobjADOStream.Position = 0\r\nobjADOStream.SaveToFile file\r\nobjADOStream.Close\r\nSet objADOStream = Nothing\r\nEnd If\r\n\r\nSet objFSO = Nothing\r\nSet objXMLHTTP = Nothing';
 			$.save(n, dl_im, false);
@@ -144,16 +145,14 @@ class Server {
 					let langOK = false;
 					for (i = 0; i < this.similar.length; i++) {
 						if (langCheck.includes(this.similar[i])) {
-							if (i == cfg.lang.ix) langOK = true;
-							else if (this.langFallback && !i) langOK = true;
+							if (i == cfg.lang.ix || this.langFallback && !i) langOK = true;
 							if (!langOK) return true;
 							break;
 						}
 					}
 					for (i = 0; i < listeners.length; i++) {
 						if (langCheck.includes(listeners[i])) {
-							if (i == cfg.lang.ix) langOK = true;
-							else if (this.langFallback && !i) langOK = true;
+							if (i == cfg.lang.ix || this.langFallback && !i) langOK = true;
 							if (!langOK) return true;
 							break;
 						}
@@ -164,16 +163,14 @@ class Server {
 					let langOK = false;
 					for (i = 0; i < releaseDate.length; i++) {
 						if (langCheck.includes(releaseDate[i])) {
-							if (i == cfg.lang.ix) langOK = true;
-							else if (this.langFallback && !i) langOK = true;
+							if (i == cfg.lang.ix || this.langFallback && !i) langOK = true;
 							if (!langOK) return true;
 							break;
 						}
 					}
 					for (i = 0; i < listeners.length; i++) {
 						if (langCheck.includes(listeners[i])) {
-							if (i == cfg.lang.ix) langOK = true;
-							else if (this.langFallback && !i) langOK = true;
+							if (i == cfg.lang.ix || this.langFallback && !i) langOK = true;
 							if (!langOK) return true;
 							break;
 						}
@@ -182,8 +179,7 @@ class Server {
 				}
 				case 2: {
 					let langOK = false;
-					if (langCheck.includes(`Wikipedia language: ${cfg.language}`)) langOK = true;
-					else if (this.langFallback && langCheck.includes(`Wikipedia language: EN`)) langOK = true;
+					if (langCheck.includes(`Wikipedia language: ${cfg.language}`) || this.langFallback && langCheck.includes(`Wikipedia language: EN`)) langOK = true;
 					if (!langOK) return true;
 					break;
 				}
@@ -197,7 +193,7 @@ class Server {
 	download(force, art, alb, name) {
 		this.getBio(force, art, 0);
 		if (name == 'bio_lookUpItem') this.getBio(force, art, 1); // am bio direct
-		this.getRev(force, art, alb, force == 2 ? true : false);
+		this.getRev(force, art, alb, force == 2);
 	}
 
 	downloadDynamic() {
@@ -222,12 +218,12 @@ class Server {
 	getBio(force, art, type) {
 		const stndBio = !art.ix || art.ix + 1 > art.arr.length;
 		let artist_done = false;
-		let new_artist = stndBio ? name.artist(art.focus, true) : art.arr[art.ix].name;
+		let new_artist = stndBio ? name.artist(art.focus, true) : art.arr[art.ix].name; // NOSONAR name
 		if (new_artist == this.artist && !force || new_artist == '') artist_done = true; else this.artist = new_artist;
-		
-		const album = name.album(art.focus, true);
-		let title = name.title(art.focus, true);
-		
+
+		const album = name.album(art.focus, true); // NOSONAR name
+		let title = name.title(art.focus, true); // NOSONAR name
+
 		let supCache = false;
 		if (!stndBio) supCache = cfg.supCache && !lib.inLibrary(0, this.artist);
 
@@ -282,7 +278,7 @@ class Server {
 					} else timer.decelerating();
 
 					if (cfg.lfmSim && stndBio) {
-						const fo_sim = !panel.isRadio(art.focus) ? panel.cleanPth(cfg.pth.foLfmSim, art.focus, 'server') : panel.cleanPth(cfg.remap.foLfmSim, art.focus, 'remap', this.artist, '', 1);
+						const fo_sim = panel.isRadio(art.focus) ? panel.cleanPth(cfg.remap.foLfmSim, art.focus, 'remap', this.artist, '', 1) : panel.cleanPth(cfg.pth.foLfmSim, art.focus, 'server');
 						const pth_sim = fo_sim + $.clean(this.artist) + ' And Similar Artists.json';
 						let len = 0;
 						let valid = false;
@@ -303,13 +299,12 @@ class Server {
 					if (stndBio && cfg.photoLimit && !panel.lock) { // purge imgToRecycle
 						let j = this.imgToRecycle.length;
 						while (j--) {
-							if (this.imgToRecycle[j].a != name.artist(true) && this.imgToRecycle[j].a != name.artist(false)) {
+							if (this.imgToRecycle[j].a != name.artist(true) && this.imgToRecycle[j].a != name.artist(false)) { // NOSONAR name
 								try {
 									if ($.file(this.imgToRecycle[j].p)) {
 										$.create(cfg.photoRecycler);
 										const fn = fso.GetBaseName(this.imgToRecycle[j].p) + '.jpg'
-										if (!$.file(cfg.photoRecycler + fn)) fso.MoveFile(this.imgToRecycle[j].p, cfg.photoRecycler);
-										else
+										if ($.file(cfg.photoRecycler + fn)) {
 											for (let i = 0; i < 100; i++) {
 												const new_fn = fn.replace('.jpg', '_' + i + '.jpg');
 												if (!$.file(cfg.photoRecycler + new_fn)) {
@@ -317,8 +312,10 @@ class Server {
 													break;
 												}
 											}
+										}
+										else { fso.MoveFile(this.imgToRecycle[j].p, cfg.photoRecycler); }
 									}
-								} catch (e) {}
+								} catch (e) { }
 								if (!$.file(this.imgToRecycle[j].p)) this.imgToRecycle.splice(j, 1)
 							}
 						}
@@ -390,7 +387,7 @@ class Server {
 		const stndAlb = !alb.ix || alb.ix + 1 > alb.arr.length;
 		const new_album_id = stndAlb ? $.eval(cfg.tf.albumArtist + cfg.tf.album, alb.focus, true) : alb.arr[alb.ix].artist + alb.arr[alb.ix].album;
 		const new_composition_id = stndAlb ? $.eval(cfg.tf.albumArtist + cfg.tf.composition, alb.focus, true) : '';
-		const new_title_id = name.title(art.focus, true);
+		const new_title_id = name.title(art.focus, true); // NOSONAR name
 		let supCache = false;
 
 		let title_done = false;
@@ -410,10 +407,10 @@ class Server {
 		this.id.album = new_album_id;
 		this.id.composition = new_composition_id;
 
-		this.album = stndAlb ? name.album(alb.focus, true) : alb.arr[alb.ix].album;
-		this.albm = stndAlb ? name.albm(alb.focus, true) : alb.arr[alb.ix].album;
-		this.albumArtist = stndAlb ? name.albumArtist(alb.focus, true) : alb.arr[alb.ix].artist;
-		this.composition = cfg.classicalModeEnable && stndAlb ? name.composition(alb.focus, true) : '';
+		this.album = stndAlb ? name.album(alb.focus, true) : alb.arr[alb.ix].album; // NOSONAR name
+		this.albm = stndAlb ? name.albm(alb.focus, true) : alb.arr[alb.ix].album; // NOSONAR name
+		this.albumArtist = stndAlb ? name.albumArtist(alb.focus, true) : alb.arr[alb.ix].artist; // NOSONAR name
+		this.composition = cfg.classicalModeEnable && stndAlb ? name.composition(alb.focus, true) : ''; // NOSONAR name
 
 		if ((!this.album && !this.composition) || !this.albumArtist) return this.getBio(force, art, 1);
 
@@ -423,7 +420,7 @@ class Server {
 		} else if (force && cfg.dlRevImg) this.getRevImg(this.albumArtist, this.album, '', '', force);
 
 		const am_rev = panel.getPth('rev', alb.focus, this.albumArtist, this.album, stndAlb, supCache, $.clean(this.albumArtist), $.clean(this.albumArtist), $.clean(this.album), 'foAmRev', true, true);
-		const artiste = stndAlb ? name.artist(alb.focus, true) : this.albumArtist;
+		const artiste = stndAlb ? name.artist(alb.focus, true) : this.albumArtist; // NOSONAR name
 		const am_bio = panel.getPth('bio', alb.focus, artiste, '', stndAlb, cfg.supCache && !lib.inLibrary(0, artiste), $.clean(artiste), '', '', 'foAmBio', true, true);
 		const va = this.albumArtist.toLowerCase() == cfg.va.toLowerCase() || this.albumArtist.toLowerCase() != artiste.toLowerCase();
 
@@ -443,23 +440,23 @@ class Server {
 					else if (rev_upd) dn_type = 'review';
 					else if (art_upd) dn_type = 'biography';
 					const dl_am_rev = new DldAllmusicRev;
-					dl_am_rev.init(server.url.am + 'albums/' + encodeURIComponent(this.album + (!va ? ' ' + this.albumArtist : '')), 'https://allmusic.com', this.album, this.albumArtist, artiste, va, dn_type, am_rev.fo, am_rev.pth, am_bio.fo, am_bio.pth, art, force);
+					dl_am_rev.init(server.url.am + 'albums/' + encodeURIComponent(this.album + (va ? '' : ' ' + this.albumArtist)), 'https://allmusic.com', this.album, this.albumArtist, artiste, va, dn_type, am_rev.fo, am_rev.pth, am_bio.fo, am_bio.pth, art, force);
 				}
 			}
 		} else this.getBio(force, art, 1);
 
 		if (cfg.dlAmRev && this.composition && !onlyForceLfm) {
-			const am_comp = panel.getPth('rev', alb.focus, this.albumArtist, this.composition, stndAlb, supCache, $.clean(this.albumArtist), $.clean(this.albumArtist), $.clean(this.composition), 'foAmRev', true, true);	
+			const am_comp = panel.getPth('rev', alb.focus, this.albumArtist, this.composition, stndAlb, supCache, $.clean(this.albumArtist), $.clean(this.albumArtist), $.clean(this.composition), 'foAmRev', true, true);
 			const comp_upd = !alb.ix && (force || !$.file(am_comp.pth) && !this.done('Rev ' + cfg.partialMatch + ' ' + am_comp.pth, this.exp));
 
 			if (comp_upd) {
 				const artUpd = cfg.dlAmBio && (force || this.expired(am_bio.pth, this.exp, 'Bio ' + cfg.partialMatch + ' ' + am_comp.pth, false) && !$.open(am_bio.pth).includes('Custom Biography'));
-				const dn_type = comp_upd && artUpd ? 'composition+biography' : 'composition';
+				const dn_type = artUpd ? 'composition+biography' : 'composition';
 				const amAlbumArtist = this.albumArtist;
 				const amWork = this.composition;
 				setTimeout(() => {
-				const dl_am_comp = new DldAllmusicRev;
-					dl_am_comp.init(server.url.am + 'compositions/' + encodeURIComponent(amWork + (!va ? ' ' + amAlbumArtist : '')), 'https://allmusic.com', amWork, amAlbumArtist, artiste, va, dn_type, am_rev.fo, am_comp.pth, am_bio.fo, am_bio.pth, art, force);
+					const dl_am_comp = new DldAllmusicRev;
+					dl_am_comp.init(server.url.am + 'compositions/' + encodeURIComponent(amWork + (va ? '' : ' ' + amAlbumArtist)), 'https://allmusic.com', amWork, amAlbumArtist, artiste, va, dn_type, am_rev.fo, am_comp.pth, am_bio.fo, am_bio.pth, art, force);
 				}, 3200); // throttle
 			}
 		}
@@ -483,41 +480,37 @@ class Server {
 				const wikiAlbum = this.album;
 				const wikiAlbumArtist = this.albumArtist;
 				const wikiStnd = stndAlb;
-				const wikiTitle = name.title(alb.focus, true);
+				const wikiTitle = name.title(alb.focus, true); // NOSONAR name
 
 				if (this.expired(wiki_rev.pth, this.exp, '', wikiRev, 2) && !custRev || force == 2 && !custRev || force == 1) {
 					setTimeout(() => {
 						const wiki_alb = new DldWikipedia(() => wiki_alb.onStateChange());
-						wiki_alb.search(0, wikiAlbumArtist.toLowerCase() != cfg.va.toLowerCase() ? wikiAlbumArtist : 'Various Artists', wikiAlbum, wikiAlbum, wikiTitle, wikiStnd ? 1 : '!stndAlb', wiki_rev.fo, wiki_rev.pth, alb.focus, force);
+						wiki_alb.search(0, wikiAlbumArtist.toLowerCase() == cfg.va.toLowerCase() ? 'Various Artists' : wikiAlbumArtist, wikiAlbum, wikiAlbum, wikiTitle, wikiStnd ? 1 : '!stndAlb', wiki_rev.fo, wiki_rev.pth, alb.focus, force);
 					}, 1200); // wait for mbid & Qid
 				}
 			}
 
 			if (this.composition) {
 				const wiki_comp = panel.getPth('rev', alb.focus, this.albumArtist, this.composition, stndAlb, supCache, $.clean(this.albumArtist), $.clean(this.albumArtist), $.clean(this.composition), 'foWikiRev', true, true);
-				const wikiAlbum = name.album(alb.focus, true);
+				const wikiAlbum = name.album(alb.focus, true); // NOSONAR name
 				const wikiAlbumArtist = this.albumArtist;
 				const wikiComp = $.open(wiki_comp.pth);
 				const wikiStnd = stndAlb;
-				const wikiTitle = name.title(alb.focus, true);
+				const wikiTitle = name.title(alb.focus, true); // NOSONAR name
 				const wikiWork = this.composition;
 				const custRev = wikiComp.includes('Custom Review');
 
 				if ((!this.expired(wiki_comp.pth, this.exp, '', wikiComp, 2) || custRev) && !force || custRev && force == 2) return;
 				setTimeout(() => {
 					const wk_comp = new DldWikipedia(() => wk_comp.onStateChange());
-					wk_comp.search(0, wikiAlbumArtist.toLowerCase() != cfg.va.toLowerCase() ? wikiAlbumArtist : 'Various Artists', wikiWork, wikiAlbum, wikiTitle, wikiStnd ? 2 : '!stndComp', wiki_comp.fo, wiki_comp.pth, alb.focus, force);
+					wk_comp.search(0, wikiAlbumArtist.toLowerCase() == cfg.va.toLowerCase() ? 'Various Artists' : wikiAlbumArtist, wikiWork, wikiAlbum, wikiTitle, wikiStnd ? 2 : '!stndComp', wiki_comp.fo, wiki_comp.pth, alb.focus, force);
 				}, 3600); // wait for mbid & Qid & limit call frequency
 			}
 		}
 	}
 
 	getRevImg(a, l, pe, fe, force) { // !stndAlb
-		if (!force) {
-			if (this.done(a + ' - ' + l + ' ' + this.auto_corr + ' ' + fe, this.exp)) return;
-			const lfm_cov = new LfmAlbum(() => lfm_cov.onStateChange());
-			lfm_cov.search(a, l, false, pe, fe, l, false, true);
-		} else {
+		if (force) {
 			const metadb = lib.inLibrary(2, a, l);
 			if (metadb) {
 				const g_img = utils.GetAlbumArtV2(metadb, 0, false);
@@ -528,6 +521,10 @@ class Server {
 				const lfm_cov = new LfmAlbum(() => lfm_cov.onStateChange());
 				lfm_cov.search(a, l, false, pth.pe[cfg.supCache], pth.pe[cfg.supCache] + pth.fe, l, true, true);
 			}
+		} else {
+			if (this.done(a + ' - ' + l + ' ' + this.auto_corr + ' ' + fe, this.exp)) return;
+			const lfm_cov = new LfmAlbum(() => lfm_cov.onStateChange());
+			lfm_cov.search(a, l, false, pe, fe, l, false, true);
 		}
 	}
 
@@ -593,7 +590,7 @@ class Server {
 		if (cfg.dlWikiRev) {
 			const wikiTracks = panel.getPth('track', tr.focus, tr.artist, 'Track Reviews', '', '', $.clean(tr.artist), '', 'Track Reviews', 'foWikiRev', true, true);
 			const wikiText = $.jsonParse(wikiTracks.pth, false, 'file-utf8'); // Regorxxx <- Force UTF-8 ->
-			const wikiAlbum = name.album(tr.focus, true);
+			const wikiAlbum = name.album(tr.focus, true); // NOSONAR name
 			const wikiArtist = tr.artist;
 			const wikiTrk = trk;
 
@@ -605,7 +602,7 @@ class Server {
 			}
 		}
 	}
-	
+
 	match(p_a, p_release, list, type, wikipedia, force) {
 		let a = p_a.toLowerCase();
 		let i = 0;
@@ -634,21 +631,21 @@ class Server {
 				rel = stripAmp(rel);
 				list.forEach(v => v.rel = stripAmp(v.rel));
 				server.getSortedScores(list, rel, 'rel', 'damerauLevenshtein');
-				const pm = !force ? cfg.fuzzyMatchReview : Math.min(force, cfg.fuzzyMatchReview);
+				const pm = force ? Math.min(force, cfg.fuzzyMatchReview) : cfg.fuzzyMatchReview;
 				for (i = 0; i < list.length; i++)
 					if (list[i].score * 100 >= pm && a == list[i].art) return i;
 				break;
 			}
 			case type == 'song': {
 				server.getSortedScores(list, rel, 'rel', 'damerauLevenshtein');
-				const pm = !force ? cfg.fuzzyMatchTrack : Math.min(force, cfg.fuzzyMatchTrack);
+				const pm = force ? Math.min(force, cfg.fuzzyMatchTrack) : cfg.fuzzyMatchTrack;
 				for (i = 0; i < list.length; i++)
 					if (list[i].score * 100 >= pm && a == list[i].art) return i;
 				break;
 			}
 			case type == 'composition': {
 				server.getSortedScores(list, p_release, 'title', 'fuzzyset');
-				const pm = !force ? cfg.fuzzyMatchComposition : Math.min(force, cfg.fuzzyMatchComposition);
+				const pm = force ? Math.min(force, cfg.fuzzyMatchComposition) : cfg.fuzzyMatchComposition;
 				for (i = 0; i < list.length; i++)
 					if (list[i].score * 100 >= pm && a == list[i].art) return i;
 				break;
@@ -685,8 +682,8 @@ class Server {
 	updateNotFound(f) {
 		if (!$.file(this.notFound)) return;
 		const m = $.jsonParse(this.notFound, false, 'file-utf8'); // Regorxxx <- Force UTF-8 ->
-		for (let k = 0; k < m.length; k++)
-			if (m[k].name == f) return;
+		for (const element of m)
+			if (element.name == f) return;
 		m.push({
 			'name': f,
 			'time': Date.now()
@@ -702,7 +699,7 @@ class Server {
 				delete this.urlRequested[v];
 			}
 		});
-		const done = this.urlRequested[n] ? true : false;
+		const done = !!this.urlRequested[n];
 		if (!done) {
 			this.urlRequested[n] = now;
 			window.NotifyOthers('bio_webRequest', n);
@@ -711,9 +708,9 @@ class Server {
 	}
 }
 
-const damerauLevenshtein=(t,e,n={})=>{const h='insWeight'in n?n.insWeight:1,l='delWeight'in n?n.delWeight:1,g='subWeight'in n?n.subWeight:1,r=!('useDamerau'in n)||n.useDamerau;let i=[];if(0===t.length)return e.length*h;if(0===e.length)return t.length*l;for(let e=0;e<=t.length;e+=1)i[e]=[],i[e][0]=e*l;for(let t=0;t<=e.length;t+=1)i[0][t]=t*h;for(let n=1;n<=t.length;n+=1)for(let s=1;s<=e.length;s+=1){let a=g;t.charAt(n-1)===e.charAt(s-1)&&(a=0);const c=i[n-1][s]+l,u=i[n][s-1]+h,o=i[n-1][s-1]+a;let f=c;if(u<f&&(f=u),o<f&&(f=o),r&&n>1&&s>1&&t.charAt(n-1)===e.charAt(s-2)&&t.charAt(n-2)===e.charAt(s-1)){const t=i[n-2][s-2]+a;t<f&&(f=t)}i[n][s]=f}return 1-i[t.length][e.length]/(t.length>e.length?t.length:e.length)} // handles tranpositions (most noticeable on short items) else same as levenshtein (5 * faster than FuzzySet ~0.005ms/run) https://github.com/mrshu/node-weighted-damerau-levenshtein
+const damerauLevenshtein = (t, e, n = {}) => { const h = 'insWeight' in n ? n.insWeight : 1, l = 'delWeight' in n ? n.delWeight : 1, g = 'subWeight' in n ? n.subWeight : 1, r = !('useDamerau' in n) || n.useDamerau; let i = []; if (0 === t.length) return e.length * h; if (0 === e.length) return t.length * l; for (let e = 0; e <= t.length; e += 1)i[e] = [], i[e][0] = e * l; for (let t = 0; t <= e.length; t += 1)i[0][t] = t * h; for (let n = 1; n <= t.length; n += 1)for (let s = 1; s <= e.length; s += 1) { let a = g; t.charAt(n - 1) === e.charAt(s - 1) && (a = 0); const c = i[n - 1][s] + l, u = i[n][s - 1] + h, o = i[n - 1][s - 1] + a; let f = c; if (u < f && (f = u), o < f && (f = o), r && n > 1 && s > 1 && t.charAt(n - 1) === e.charAt(s - 2) && t.charAt(n - 2) === e.charAt(s - 1)) { const t = i[n - 2][s - 2] + a; t < f && (f = t) } i[n][s] = f } return 1 - i[t.length][e.length] / (Math.max(t.length, e.length)) } // NOSONAR handles tranpositions (most noticeable on short items) else same as levenshtein (5 * faster than FuzzySet ~0.005ms/run) https://github.com/mrshu/node-weighted-damerau-levenshtein
 
-const FuzzySet=(t,e,r,n)=>{const i={};t=t||[],i.gramSizeLower=r||2,i.gramSizeUpper=n||3,i.useLevenshtein='boolean'!=typeof e||e,i.exactSet={},i.matchDict={},i.items={};const h=(t,e)=>{if(null===t&&null===e)throw'Trying to compare two null values';if(null===t||null===e)return 0;const r=((t,e)=>{const r=[];let n,i;for(let h=0;h<=e.length;h++)for(let o=0;o<=t.length;o++)i=h&&o?t.charAt(o-1)===e.charAt(h-1)?n:Math.min(r[o],r[o-1],n)+1:h+o,n=r[o],r[o]=i;return r.pop()})(t=String(t),e=String(e));return t.length>e.length?1-r/t.length:1-r/e.length},o=/[^a-zA-Z0-9\u00C0-\u00FF, ]+/g,s=(t,e)=>{const r={},n=function(t,e){e=e||2;let r='-'+t.toLowerCase().replace(o,'')+'-',n=e-r.length,i=[];if(n>0)for(let t=0;t<n;++t)r+='-';for(let t=0;t<r.length-e+1;++t)i.push(r.slice(t,t+e));return i}(t,e=e||2);let i=0;for(;i<n.length;++i)n[i]in r?r[n[i]]+=1:r[n[i]]=1;return r};i.get=function(t,e,r){void 0===r&&(r=.33);const n=this._get(t,r);return n||void 0===e?n:e},i._get=function(t,e){for(let r=this.gramSizeUpper;r>=this.gramSizeLower;--r){const n=this.__get(t,r,e);if(n&&n.length>0)return n}return null},i.__get=function(t,e,r){let n,i,o,a,c,l=this._normalizeStr(t),u={},f=s(l,e),g=this.items[e],m=0;for(n in f)if(i=f[n],m+=Math.pow(i,2),n in this.matchDict)for(o=0;o<this.matchDict[n].length;++o)a=this.matchDict[n][o][0],c=this.matchDict[n][o][1],a in u?u[a]+=i*c:u[a]=i*c;if((t=>{for(let e in t)if(t.hasOwnProperty(e))return!1;return!0})(u))return null;let p,S=Math.sqrt(m),z=[];for(let t in u)p=u[t],z.push([p/(S*g[t][0]),g[t][1]]);const w=function(t,e){return t[0]<e[0]?1:t[0]>e[0]?-1:0};if(z.sort(w),this.useLevenshtein){var _=[],x=Math.min(50,z.length);for(o=0;o<x;++o)_.push([h(z[o][1],l),z[o][1]]);(z=_).sort(w)}return _=[],z.forEach(t=>{t[0]>=r&&_.push([t[0],this.exactSet[t[1]]])}),_},i.add=function(t){if(this._normalizeStr(t)in this.exactSet)return!1;let e=this.gramSizeLower;for(;e<this.gramSizeUpper+1;++e)this._add(t,e)},i._add=function(t,e){const r=this._normalizeStr(t),n=this.items[e]||[],i=n.length;n.push(0);let h,o,a=s(r,e),c=0;for(h in a)o=a[h],c+=Math.pow(o,2),h in this.matchDict?this.matchDict[h].push([i,o]):this.matchDict[h]=[[i,o]];const l=Math.sqrt(c);n[i]=[l,r],this.items[e]=n,this.exactSet[r]=t},i._normalizeStr=function(t){if('[object String]'!==Object.prototype.toString.call(t))throw'Must use a string as argument to FuzzySet functions';return t.toLowerCase()},i.length=function(){let t,e=0;for(t in this.exactSet)this.exactSet.hasOwnProperty(t)&&(e+=1);return e},i.isEmpty=function(){for(let t in this.exactSet)if(this.exactSet.hasOwnProperty(t))return!1;return!0},i.values=function(){let t,e=[];for(t in this.exactSet)this.exactSet.hasOwnProperty(t)&&e.push(this.exactSet[t]);return e};let a=i.gramSizeLower;for(;a<i.gramSizeUpper+1;++a)i.items[a]=[];for(a=0;a<t.length;++a)i.add(t[a]);return i} // best for items longer than a few words: used w/o levenshtein to help identify similar words and handle variously named compositions: may perform less well than other methods if few words (0.025ms/run) https://github.com/Glench/fuzzyset.js
+const FuzzySet = (t, e, r, n) => { const i = {}; t = t || [], i.gramSizeLower = r || 2, i.gramSizeUpper = n || 3, i.useLevenshtein = 'boolean' != typeof e || e, i.exactSet = {}, i.matchDict = {}, i.items = {}; const h = (t, e) => { if (null === t && null === e) throw 'Trying to compare two null values'; if (null === t || null === e) return 0; const r = ((t, e) => { const r = []; let n, i; for (let h = 0; h <= e.length; h++)for (let o = 0; o <= t.length; o++)i = h && o ? t.charAt(o - 1) === e.charAt(h - 1) ? n : Math.min(r[o], r[o - 1], n) + 1 : h + o, n = r[o], r[o] = i; return r.pop() })(t = String(t), e = String(e)); return t.length > e.length ? 1 - r / t.length : 1 - r / e.length }, o = /[^a-zA-Z0-9\u00C0-\u00FF, ]+/g, s = (t, e) => { const r = {}, n = function (t, e) { e = e || 2; let r = '-' + t.toLowerCase().replace(o, '') + '-', n = e - r.length, i = []; if (n > 0) for (let t = 0; t < n; ++t)r += '-'; for (let t = 0; t < r.length - e + 1; ++t)i.push(r.slice(t, t + e)); return i }(t, e = e || 2); let i = 0; for (; i < n.length; ++i)n[i] in r ? r[n[i]] += 1 : r[n[i]] = 1; return r }; i.get = function (t, e, r) { void 0 === r && (r = .33); const n = this._get(t, r); return n || void 0 === e ? n : e }, i._get = function (t, e) { for (let r = this.gramSizeUpper; r >= this.gramSizeLower; --r) { const n = this.__get(t, r, e); if (n && n.length > 0) return n } return null }, i.__get = function (t, e, r) { let n, i, o, a, c, l = this._normalizeStr(t), u = {}, f = s(l, e), g = this.items[e], m = 0; for (n in f) if (i = f[n], m += Math.pow(i, 2), n in this.matchDict) for (o = 0; o < this.matchDict[n].length; ++o)a = this.matchDict[n][o][0], c = this.matchDict[n][o][1], a in u ? u[a] += i * c : u[a] = i * c; if ((t => { for (let e in t) if (t.hasOwnProperty(e)) return !1; return !0 })(u)) return null; let p, S = Math.sqrt(m), z = []; for (let t in u) p = u[t], z.push([p / (S * g[t][0]), g[t][1]]); const w = function (t, e) { return t[0] < e[0] ? 1 : t[0] > e[0] ? -1 : 0 }; if (z.sort(w), this.useLevenshtein) { var _ = [], x = Math.min(50, z.length); for (o = 0; o < x; ++o)_.push([h(z[o][1], l), z[o][1]]); (z = _).sort(w) } return _ = [], z.forEach(t => { t[0] >= r && _.push([t[0], this.exactSet[t[1]]]) }), _ }, i.add = function (t) { if (this._normalizeStr(t) in this.exactSet) return !1; let e = this.gramSizeLower; for (; e < this.gramSizeUpper + 1; ++e)this._add(t, e) }, i._add = function (t, e) { const r = this._normalizeStr(t), n = this.items[e] || [], i = n.length; n.push(0); let h, o, a = s(r, e), c = 0; for (h in a) o = a[h], c += Math.pow(o, 2), h in this.matchDict ? this.matchDict[h].push([i, o]) : this.matchDict[h] = [[i, o]]; const l = Math.sqrt(c); n[i] = [l, r], this.items[e] = n, this.exactSet[r] = t }, i._normalizeStr = function (t) { if ('[object String]' !== Object.prototype.toString.call(t)) throw 'Must use a string as argument to FuzzySet functions'; return t.toLowerCase() }, i.length = function () { let t, e = 0; for (t in this.exactSet) this.exactSet.hasOwnProperty(t) && (e += 1); return e }, i.isEmpty = function () { for (let t in this.exactSet) if (this.exactSet.hasOwnProperty(t)) return !1; return !0 }, i.values = function () { let t, e = []; for (t in this.exactSet) this.exactSet.hasOwnProperty(t) && e.push(this.exactSet[t]); return e }; let a = i.gramSizeLower; for (; a < i.gramSizeUpper + 1; ++a)i.items[a] = []; for (a = 0; a < t.length; ++a)i.add(t[a]); return i } // NOSONAR best for items longer than a few words: used w/o levenshtein to help identify similar words and handle variously named compositions: may perform less well than other methods if few words (0.025ms/run) https://github.com/Glench/fuzzyset.js
 
-class Levenshtein{constructor(){this.peq=new Uint32Array(65536)}myers_32(t,e){const h=t.length,r=e.length,n=1<<h-1;let o=-1,l=0,s=h,c=r;for(;c--;)this.peq[e.charCodeAt(c)]=0;for(c=h;c--;)this.peq[t.charCodeAt(c)]|=1<<c;for(c=0;c<r;c++){let t=this.peq[e.charCodeAt(c)];const h=t|l;(l|=~((t|=(t&o)+o^o)|o))&n&&s++,(o&=t)&n&&s--,o=o<<1|~(h|(l=l<<1|1)),l&=h}return s}myers_x(t,e){const h=e.length,r=t.length,n=[],o=[],l=Math.ceil(h/32),s=Math.ceil(r/32);let c=r;for(let t=0;t<l;t++)o[t]=-1,n[t]=0;let i=0;for(;i<s-1;i++){let l=0,s=-1;const a=32*i,g=Math.min(32,r-a);let f=h;for(;f--;)this.peq[e.charCodeAt(f)]=0;for(f=a;f<a+g;f++)this.peq[t.charCodeAt(f)]|=1<<f;c=r;for(let t=0;t<h;t++){const h=this.peq[e.charCodeAt(t)],r=o[t/32|0]>>>t%32&1,c=n[t/32|0]>>>t%32&1,i=h|l,a=((h|c)&s)+s^s|h|c;let g=l|~(a|s),f=s&a;g>>>31^r&&(o[t/32|0]^=1<<t%32),f>>>31^c&&(n[t/32|0]^=1<<t%32),s=(f=f<<1|c)|~(i|(g=g<<1|r)),l=g&i}}let a=0,g=-1;const f=32*i,p=Math.min(32,r-f);let q=h;for(;q--;)this.peq[e.charCodeAt(q)]=0;for(q=f;q<f+p;q++)this.peq[t.charCodeAt(q)]|=1<<q;c=r;for(let t=0;t<h;t++){const h=this.peq[e.charCodeAt(t)],l=o[t/32|0]>>>t%32&1,s=n[t/32|0]>>>t%32&1,i=h|a,f=((h|s)&g)+g^g|h|s;let p=a|~(f|g),q=g&f;c+=p>>>r%32-1&1,c-=q>>>r%32-1&1,p>>>31^l&&(o[t/32|0]^=1<<t%32),q>>>31^s&&(n[t/32|0]^=1<<t%32),g=(q=q<<1|s)|~(i|(p=p<<1|l)),a=p&i}return c}get(t,e){if(t.length<e.length){const h=e;e=t,t=h}return 1-(0===e.length?t.length:t.length<=32?this.myers_32(t,e):this.myers_x(t,e))/(t.length>e.length?t.length:e.length)}} // fastest (12 * faster than FuzzySet ~0.002ms/run) https://github.com/ka-weihe/fastest-levenshtein
+class Levenshtein { constructor() { this.peq = new Uint32Array(65536) } myers_32(t, e) { const h = t.length, r = e.length, n = 1 << h - 1; let o = -1, l = 0, s = h, c = r; for (; c--;)this.peq[e.charCodeAt(c)] = 0; for (c = h; c--;)this.peq[t.charCodeAt(c)] |= 1 << c; for (c = 0; c < r; c++) { let t = this.peq[e.charCodeAt(c)]; const h = t | l; (l |= ~((t |= (t & o) + o ^ o) | o)) & n && s++, (o &= t) & n && s--, o = o << 1 | ~(h | (l = l << 1 | 1)), l &= h } return s } myers_x(t, e) { const h = e.length, r = t.length, n = [], o = [], l = Math.ceil(h / 32), s = Math.ceil(r / 32); let c = r; for (let t = 0; t < l; t++)o[t] = -1, n[t] = 0; let i = 0; for (; i < s - 1; i++) { let l = 0, s = -1; const a = 32 * i, g = Math.min(32, r - a); let f = h; for (; f--;)this.peq[e.charCodeAt(f)] = 0; for (f = a; f < a + g; f++)this.peq[t.charCodeAt(f)] |= 1 << f; c = r; for (let t = 0; t < h; t++) { const h = this.peq[e.charCodeAt(t)], r = o[t / 32 | 0] >>> t % 32 & 1, c = n[t / 32 | 0] >>> t % 32 & 1, i = h | l, a = ((h | c) & s) + s ^ s | h | c; let g = l | ~(a | s), f = s & a; g >>> 31 ^ r && (o[t / 32 | 0] ^= 1 << t % 32), f >>> 31 ^ c && (n[t / 32 | 0] ^= 1 << t % 32), s = (f = f << 1 | c) | ~(i | (g = g << 1 | r)), l = g & i } } let a = 0, g = -1; const f = 32 * i, p = Math.min(32, r - f); let q = h; for (; q--;)this.peq[e.charCodeAt(q)] = 0; for (q = f; q < f + p; q++)this.peq[t.charCodeAt(q)] |= 1 << q; c = r; for (let t = 0; t < h; t++) { const h = this.peq[e.charCodeAt(t)], l = o[t / 32 | 0] >>> t % 32 & 1, s = n[t / 32 | 0] >>> t % 32 & 1, i = h | a, f = ((h | s) & g) + g ^ g | h | s; let p = a | ~(f | g), q = g & f; c += p >>> r % 32 - 1 & 1, c -= q >>> r % 32 - 1 & 1, p >>> 31 ^ l && (o[t / 32 | 0] ^= 1 << t % 32), q >>> 31 ^ s && (n[t / 32 | 0] ^= 1 << t % 32), g = (q = q << 1 | s) | ~(i | (p = p << 1 | l)), a = p & i } return c } get(t, e) { if (t.length < e.length) { const h = e; e = t, t = h } return 1 - (0 === e.length ? t.length : t.length <= 32 ? this.myers_32(t, e) : this.myers_x(t, e)) / (Math.max(t.length, e.length)) } } // NOSONAR fastest (12 * faster than FuzzySet ~0.002ms/run) https://github.com/ka-weihe/fastest-levenshtein
 const levenshtein = new Levenshtein;
