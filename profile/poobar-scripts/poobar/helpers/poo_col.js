@@ -1,6 +1,92 @@
-/**
- * Color related functions
- */
+'use strict';
+
+const ColourTypeCUI = {
+    text: 0,
+    selection_text: 1,
+    inactive_selection_text: 2,
+    background: 3,
+    selection_background: 4,
+    inactive_selection_background: 5,
+    active_item_frame: 6
+};
+
+const ColourTypeDUI = {
+    text: 0,
+    background: 1,
+    highlight: 2,
+    selection: 3
+};
+
+let g_textcolour = 0;
+let g_textcolour_hl = 0;
+let g_backcolour = 0;
+let g_color_selected_bg = 0;
+let g_color_highlight = 0;
+
+function get_colours(col_mode, flag) {
+    let arr;
+    let nowPlayingColours = [];
+    let customCol = {};
+
+    customCol.textCol = window.GetProperty("_PROPERTY: CUSTOM COLOR TEXT NORMAL", "180-180-180").split("-");
+    customCol.textCol_hl = window.GetProperty("_PROPERTY: CUSTOM COLOR TEXT HIGHLIGHT", "000-000-000").split("-");
+    customCol.backCol = window.GetProperty("_PROPERTY: CUSTOM COLOR BACKGROUND NORMAL", "025-025-035").split("-");
+    if (flag) {
+        customCol.selected = window.GetProperty("_PROPERTY: CUSTOM COLOR BACKGROUND SELECTED", "015-177-255").split("-");
+        customCol.highlight = window.GetProperty("_PROPERTY: CUSTOM COLOR HIGHLIGHT", "255-175-050").split("-");
+    }
+
+    if (col_mode === 2) nowPlayingColours = GetNowPlayingColours();
+
+    if (window.InstanceType === 1) { // DUI
+        if (col_mode === 1) {
+            g_textcolour = window.GetColourDUI(ColourTypeDUI.text);
+            g_textcolour_hl = window.GetColourDUI(ColourTypeDUI.highlight);
+            g_backcolour = window.GetColourDUI(ColourTypeDUI.background);
+            g_color_selected_bg = setAlpha(window.GetColourDUI(ColourTypeDUI.selection), 184);
+            //g_color_selected_bg = window.GetColourDUI(ColourTypeDUI.selection);
+            g_color_highlight = setAlpha(window.GetColourDUI(ColourTypeDUI.highlight), 144);
+        } else if (col_mode === 2) {
+            g_textcolour = nowPlayingColours[1];
+            g_textcolour_hl = nowPlayingColours[3];
+            g_backcolour = nowPlayingColours[0];
+            g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
+            g_color_highlight = setAlpha(nowPlayingColours[2], 200);
+            //g_color_highlight = nowPlayingColours[2];
+        }
+    } else if (window.InstanceType === 0) { // CUI
+        if (col_mode === 1) {
+            g_textcolour = window.GetColourCUI(ColourTypeCUI.text);
+            g_textcolour_hl = window.GetColourCUI(ColourTypeCUI.selection_text);
+            g_backcolour = window.GetColourCUI(ColourTypeCUI.background);
+            g_color_selected_bg = setAlpha(window.GetColourCUI(ColourTypeCUI.inactive_selection_background), 184);
+            //g_color_selected_bg = window.GetColourCUI(ColourTypeCUI.inactive_selection_background);
+            g_color_highlight = setAlpha(window.GetColourCUI(ColourTypeCUI.selection_background), 144);
+        } else if (col_mode === 2) {
+            g_textcolour = nowPlayingColours[1];
+            g_textcolour_hl = nowPlayingColours[3];
+            g_backcolour = nowPlayingColours[0];
+            g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
+            g_color_highlight = setAlpha(nowPlayingColours[2], 200);
+            //g_color_highlight = nowPlayingColours[2];
+        }
+    }
+
+    if (col_mode === 3) {
+        arr = customCol.textCol;
+        g_textcolour = RGB(arr[0], arr[1], arr[2]);
+        arr = customCol.textCol_hl;
+        g_textcolour_hl = RGB(arr[0], arr[1], arr[2]);
+        arr = customCol.backCol;
+        g_backcolour = RGB(arr[0], arr[1], arr[2]);
+        if (flag) {
+            arr = customCol.selected;
+            g_color_selected_bg = setAlpha(RGB(arr[0], arr[1], arr[2]), 144);
+            arr = customCol.highlight;
+            g_color_highlight = RGB(arr[0], arr[1], arr[2]);
+        }
+    }
+}
 
 /*======================================================
  * JSP3 Helpers by marc 2003
@@ -16,9 +102,9 @@ function getAlpha(colour) { return ((colour >>> 24) & 0xff); }
 
 // Lunminance and DetermineTextColour are based on code from the foobar2000 SDK.
 function Luminance(colour) {
-	var r = getRed(colour);
-	var g = getGreen(colour)
-	var b = getBlue(colour);
+	const r = getRed(colour);
+	const g = getGreen(colour)
+	const b = getBlue(colour);
 	return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0;
 }
 
@@ -44,9 +130,9 @@ function GetNowPlayingColours() {
  	const metadb = fb.IsPlaying ? fb.GetNowPlaying() : fb.GetFocusItem();
 
  	if (metadb) {
- 		var img = utils.GetAlbumArtV2(metadb, 0, false); // 3rd arg is want_stub - we don't want that
+ 		let img = utils.GetAlbumArtV2(metadb, 0, false); // 3rd arg is want_stub - we don't want that
  		if (img) {
- 			var extracted_colours = img.GetColourScheme(10).map(function (item) {
+ 			const extracted_colours = img.GetColourScheme(10).map(function (item) {
                 return {
                     colour: item,
                     luminance: Luminance(item),
@@ -64,19 +150,21 @@ function GetNowPlayingColours() {
               }
             }
 
- 			var text_colour = DetermineTextColour(background_colour);
+ 			const text_colour = DetermineTextColour(background_colour);
 
+ 			let selected_background_colour;
+            let selected_text_colour;
  			// extreme edge case where image is solid :/
  			if (extracted_colours.length == 1) {
  				// invert
- 				var selected_background_colour = text_colour;
- 				var selected_text_colour = background_colour;
+ 				selected_background_colour = text_colour;
+ 				selected_text_colour = background_colour;
  			} else {
- 				var l = extracted_colours[0].luminance;
+ 				let l = extracted_colours[0].luminance;
  				extracted_colours.pop();
 
- 				var diff = 0;
- 				var idx = 0;
+ 				let diff = 0;
+ 				let idx = 0;
  				extracted_colours.forEach(function (item, i) {
  					var tmp = Math.abs(l - item.luminance);
  					if (tmp > diff) {
@@ -85,95 +173,17 @@ function GetNowPlayingColours() {
  					}
  				});
 
- 				var selected_background_colour = extracted_colours[idx].colour;
- 				var selected_text_colour = DetermineTextColour(selected_background_colour);
+ 				selected_background_colour = extracted_colours[idx].colour;
+ 				selected_text_colour = DetermineTextColour(selected_background_colour);
  			}
  			return [background_colour, text_colour, selected_background_colour, selected_text_colour];
  		}
  	}
- 	return [window.GetColourCUI(ColourTypeCUI.background), window.GetColourCUI(ColourTypeCUI.text), window.GetColourCUI(ColourTypeCUI.inactive_selection_background), window.GetColourCUI(ColourTypeCUI.selection_text)];
-}
 
-/*======================================================*/
-
-/**
- * Colours
-*/
-const ColourTypeCUI = {
-    text: 0,
-    selection_text: 1,
-    inactive_selection_text: 2,
-    background: 3,
-    selection_background: 4,
-    inactive_selection_background: 5,
-    active_item_frame: 6
-};
-
-const ColourTypeDUI = {
-    text: 0,
-    background: 1,
-    highlight: 2,
-    selection: 3
-};
-
-let g_is_default_ui = window.InstanceType;
-let g_textcolour = 0;
-let g_textcolour_hl = 0;
-let g_backcolour = 0;
-let g_color_selected_bg = 0;
-let g_color_highlight = 0;
-
-function get_colours(col_mode, flag) {
-    let arr;
-    let nowPlayingColours = [];
-    if (col_mode === 2) nowPlayingColours = GetNowPlayingColours();
-
-    if (col_mode === 3) {
-        arr = window.GetProperty("CUSTOM COLOR TEXT NORMAL", "180-180-180").split("-");
-        g_textcolour = RGB(arr[0], arr[1], arr[2]);
-        arr = window.GetProperty("CUSTOM COLOR TEXT HIGHLIGHT", "000-000-000").split("-");
-        g_textcolour_hl = RGB(arr[0], arr[1], arr[2]);
-        arr = window.GetProperty("CUSTOM COLOR BACKGROUND NORMAL", "025-025-035").split("-");
-        g_backcolour = RGB(arr[0], arr[1], arr[2]);
-        if (flag) {
-            arr = window.GetProperty("CUSTOM COLOR BACKGROUND SELECTED", "015-177-255").split("-");
-            g_color_selected_bg = setAlpha(RGB(arr[0], arr[1], arr[2]), 144);
-            arr = window.GetProperty("CUSTOM COLOR HIGHLIGHT", "255-175-050").split("-");
-            g_color_highlight = RGB(arr[0], arr[1], arr[2]);
-        }
-    }
-
-    if (g_is_default_ui && col_mode !== 3) {
-        if (col_mode === 1) {
-            g_textcolour = window.GetColourDUI(ColourTypeDUI.text);
-            g_textcolour_hl = window.GetColourDUI(ColourTypeDUI.highlight);
-            g_backcolour = window.GetColourDUI(ColourTypeDUI.background);
-            g_color_selected_bg = setAlpha(window.GetColourDUI(ColourTypeDUI.selection), 184);
-            //g_color_selected_bg = window.GetColourDUI(ColourTypeDUI.selection);
-            g_color_highlight = setAlpha(window.GetColourDUI(ColourTypeDUI.highlight), 144);
-        } else if (col_mode === 2) {
-            g_textcolour = nowPlayingColours[1];
-            g_textcolour_hl = nowPlayingColours[3];
-            g_backcolour = nowPlayingColours[0];
-            g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
-            g_color_highlight = setAlpha(nowPlayingColours[2], 200);
-            //g_color_highlight = nowPlayingColours[2];
-        }
-    } else { // CUI
-        if (col_mode === 1) {
-            g_textcolour = window.GetColourCUI(ColourTypeCUI.text);
-            g_textcolour_hl = window.GetColourCUI(ColourTypeCUI.selection_text);
-            g_backcolour = window.GetColourCUI(ColourTypeCUI.background);
-            g_color_selected_bg = setAlpha(window.GetColourCUI(ColourTypeCUI.inactive_selection_background), 184);
-            //g_color_selected_bg = window.GetColourCUI(ColourTypeCUI.inactive_selection_background);
-            g_color_highlight = setAlpha(window.GetColourCUI(ColourTypeCUI.selection_background), 144);
-        } else if (col_mode === 2) {
-            g_textcolour = nowPlayingColours[1];
-            g_textcolour_hl = nowPlayingColours[3];
-            g_backcolour = nowPlayingColours[0];
-            g_color_selected_bg = setAlpha(nowPlayingColours[2], 144);
-            g_color_highlight = setAlpha(nowPlayingColours[2], 200);
-            //g_color_highlight = nowPlayingColours[2];
-        }
-    }
+ 	return [ // fallback
+ 	    window.GetColourCUI(ColourTypeCUI.background),
+ 	    window.GetColourCUI(ColourTypeCUI.text),
+ 	    window.GetColourCUI(ColourTypeCUI.inactive_selection_background),
+ 	    window.GetColourCUI(ColourTypeCUI.selection_text)
+ 	];
 }

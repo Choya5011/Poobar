@@ -78,7 +78,7 @@ function initTabs(ignore = null) {
 function updateTabSize(ppt, offset = 0) {
     if (ppt.orientation.enabled) {
         // scale height when vertical | 45-70 clamp in 1440p
-        const height = wh - offset; // #
+        const height = wh - offset;
         TAB_W = Math.max(_scale(26.25), Math.min(_scale(52.5), Math.round(ww / 28.44)));
         TAB_H = Math.max(TAB_MIN_H, Math.floor(height / Math.max(1, tabs.length)));
     } else {
@@ -137,7 +137,7 @@ function get_font(orientation, fontMode) {
     };
 }
 
-function _paint(gr, ppt, mp = false) {
+function _paint(gr, ppt, mp = false, offset = 0) {
     if (ppt.round.enabled) { gr.SetSmoothingMode(2); } else { gr.SetSmoothingMode(0); }
 
     // #
@@ -145,7 +145,8 @@ function _paint(gr, ppt, mp = false) {
     const tabFont = (ppt.fontMode.enabled) ? default_font : fluent_font;
     const tabFont_hover = (ppt.fontMode.enabled) ? default_font_hover : fluent_font_hover;
 
-    updateTabSize(ppt); let arc;
+    let arc;
+    updateTabSize(ppt, offset); // #
     if (ppt.round.enabled && ppt.orientation.enabled) { arc = TAB_W * 0.2 } else if (ppt.round.enabled && !ppt.orientation.enabled) { arc = TAB_H * 0.2 }
     for (let i = 0; i < tabs.length; i++) {
         const text = tabs[i].name;

@@ -157,10 +157,10 @@ function _background(gr, mode = 1) {
 
 }
 
-function refresh_pt_panel() {
+function refresh_child() {
     const p = window.GetPanelByIndex(tabs[activeTab].index);
     if (ptArr.includes(p.Text)) {
-        if (p.Name == caption.spec) {
+        if (p.Name === caption.spec) {
             p.ShowCaption = true; p.ShowCaption = false;
         } else {
             p.Hidden = true; p.Hidden = false;
@@ -176,7 +176,7 @@ function on_colours_changed() {
 function on_playback_new_track() {
     get_colours(ppt.col_mode.value, true);
     update_art(ppt, true);
-    refresh_pt_panel();
+    refresh_child();
 }
 
 function on_mouse_lbtn_up(x, y) {
@@ -248,17 +248,17 @@ function on_mouse_rbtn_up(x, y) {
 
     {
         const menuName = menu.newMenu('Background mode');
-        menu.newEntry({menuName, entryText: 'Normal', func: () => {ppt.tab_mode.value = 1; update_art(ppt, true); on_size(); window.Repaint(); refresh_pt_panel();}, flags: () => ppt.tab_mode.value === 1 ? MF_CHECKED : MF_STRING});
-        menu.newEntry({menuName, entryText: 'Overlap', func: () => {ppt.tab_mode.value = 2; update_art(ppt, true); on_size(); window.Repaint(); refresh_pt_panel();}, flags: () => ppt.tab_mode.value === 2 ? MF_CHECKED : MF_STRING});
-        menu.newEntry({menuName, entryText: 'Transparent', func: () => {ppt.tab_mode.value = 3; on_size(); window.Repaint(); refresh_pt_panel();}, flags: () => ppt.tab_mode.value === 3 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Normal', func: () => {ppt.tab_mode.value = 1; update_art(ppt, true); on_size(); window.Repaint(); refresh_child();}, flags: () => ppt.tab_mode.value === 1 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Overlap', func: () => {ppt.tab_mode.value = 2; update_art(ppt, true); on_size(); window.Repaint(); refresh_child();}, flags: () => ppt.tab_mode.value === 2 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Transparent', func: () => {ppt.tab_mode.value = 3; on_size(); window.Repaint(); refresh_child();}, flags: () => ppt.tab_mode.value === 3 ? MF_CHECKED : MF_STRING});
     }
 
     {
         const menuName = menu.newMenu('Transparency', 'main', ppt.tab_mode.value === 3 ? MF_STRING : MF_GRAYED);
         menu.newEntry({menuName, entryText: 'Borrow Overlap Features:', flags: MF_GRAYED});
         menu.newSeparator(menuName);
-        menu.newEntry({menuName, entryText: 'Album Art', func: () => { ppt.tp_aa.toggle(); window.Repaint(); refresh_pt_panel(); }, flags: () => ppt.tp_aa.enabled ? MF_CHECKED : MF_STRING});
-        menu.newEntry({menuName, entryText: 'Panel Shadow', func: () => { ppt.tp_oly.toggle(); window.Repaint(); refresh_pt_panel(); }, flags: () => ppt.tp_oly.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Album Art', func: () => { ppt.tp_aa.toggle(); window.Repaint(); refresh_child(); }, flags: () => ppt.tp_aa.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Panel Shadow', func: () => { ppt.tp_oly.toggle(); window.Repaint(); refresh_child(); }, flags: () => ppt.tp_oly.enabled ? MF_CHECKED : MF_STRING});
         menu.newSeparator(menuName);
         menu.newEntry({
             menuName,
@@ -280,20 +280,20 @@ function on_mouse_rbtn_up(x, y) {
         const menuName = menu.newMenu('Background', 'main', ppt.tab_mode.value === 3 ? MF_GRAYED : MF_STRING);
         menu.newEntry({menuName, entryText: 'Background Wallpaper:', flags: MF_GRAYED});
         menu.newSeparator(menuName);
-        menu.newEntry({menuName, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
-        menu.newEntry({menuName, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Enable', func: () => {ppt.bgShow.toggle(); get_colours(ppt.col_mode.value, true); update_art(ppt, true); refresh_child(); window.Repaint();}, flags: () => ppt.bgShow.enabled ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Blur', func: () => {ppt.bgBlur.toggle(); update_art(ppt, true); refresh_child(); window.Repaint();}, flags: () => ppt.bgBlur.enabled ? MF_CHECKED : MF_STRING});
         menu.newEntry({menuName, entryText: 'Shadow', func: () => {ppt.overlay.toggle(); window.Repaint();}, flags: () => ppt.overlay.enabled ? MF_CHECKED : MF_STRING});
         menu.newSeparator(menuName);
         menu.newCheckMenu(menuName, 'Playing album cover', 'Default', () => !ppt.bgMode.enabled ? 0 : 1);
         menu.newEntry({menuName, entryText: 'Playing album cover', func: () => {ppt.bgMode.enabled = false; update_art(ppt, true); window.Repaint();}});
-        menu.newEntry({menuName, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt, true); refresh_pt_panel(); window.Repaint();}});
+        menu.newEntry({menuName, entryText: 'Default', func: () => {ppt.bgMode.enabled = true; if (ppt.bgMode.enabled && !/\.(bmp|gif|jpe?g|png|tiff?|ico)$/i.test(ppt.bgPath.value)) window.ShowProperties(); update_art(ppt, true); refresh_child(); window.Repaint();}});
     }
 
     {
         const menuName = menu.newMenu('Colours');
-        menu.newEntry({menuName, entryText: 'System', func: () => {ppt.col_mode.value = 1; get_colours(ppt.col_mode.value, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
-        menu.newEntry({menuName, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; get_colours(ppt.col_mode.value, true); refresh_pt_panel(); window.Repaint();}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
-        menu.newEntry({menuName, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; get_colours(ppt.col_mode.value, true); refresh_pt_panel(); window.ShowProperties(); window.Repaint();}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'System', func: () => {ppt.col_mode.value = 1; get_colours(ppt.col_mode.value, true); refresh_child(); window.Repaint();}, flags: () => ppt.col_mode.value === 1 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Dynamic', func: () => {ppt.col_mode.value = 2; get_colours(ppt.col_mode.value, true); refresh_child(); window.Repaint();}, flags: () => ppt.col_mode.value === 2 ? MF_CHECKED : MF_STRING});
+        menu.newEntry({menuName, entryText: 'Custom', func: () => {ppt.col_mode.value = 3; get_colours(ppt.col_mode.value, true); refresh_child(); window.ShowProperties(); window.Repaint();}, flags: () => ppt.col_mode.value === 3 ? MF_CHECKED : MF_STRING});
     }
 
     {

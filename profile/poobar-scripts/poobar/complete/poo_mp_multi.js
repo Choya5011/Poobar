@@ -16,6 +16,7 @@ include(fb.ProfilePath + 'poobar-scripts\\Menu-Framework-SMP\\helpers\\menu_xxx.
 let ppt = {
 	cpH : new _p('- PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
 	cpV : new _p('- PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 120),
+	delay: new _p('- PANEL_BEHAVIOR: Default delay (ms)', 150),
 	unify : new _p('- PANEL_BEHAVIOR: Unify background across panels', false),
 
     bgShow : new _p('_DISPLAY: Show Wallpaper', false),
@@ -42,8 +43,8 @@ update_art(ppt);
 get_colours(ppt.col_mode.value, true);
 
 // _layout usage instruction found at: fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js'
-const panelNames = ['control_panel', '', '', ''];
-let layout = new _layout(panelNames, 150, ppt.unify.enabled);
+const panelNames = ['Fluent Control Panel', '', '', ''];
+let layout = new _layout(panelNames, ppt.delay.value, ppt.unify.enabled);
 
 layout.horizontal({
     func: () => {
@@ -112,7 +113,7 @@ layout.miniplayer({
     },
     debouncefunc: () => {
         initTabs([3]);
-        updateTabSize(ppt, true);
+        updateTabSize(ppt, cpV);
         let panelW = ppt.orientation.enabled ? ww - TAB_W : ww;
         let panelH = ppt.orientation.enabled ? wh - cpV : wh - cpV - TAB_H;
         let switchH = ppt.orientation.enabled ? 0 : TAB_H;
@@ -199,7 +200,7 @@ function on_playback_new_track() {
 }
 
 function on_mouse_lbtn_up(x, y) {
-    updateTabSize(ppt, true);
+    //updateTabSize(ppt, cpV);
     let switchTab_WH = (ppt.orientation.enabled) ? TAB_W : TAB_H;
     let switchTab_HW = (ppt.orientation.enabled) ? TAB_H : TAB_W;
     let switch_xy = (ppt.orientation.enabled) ? x : y;
@@ -225,7 +226,7 @@ function on_mouse_move(x, y) {
     let switch_xy = (ppt.orientation.enabled) ? x : y;
     let switch_yx = (ppt.orientation.enabled) ? y : x;
     if (switch_xy <= TAB_WH) {
-        updateTabSize(ppt, true);
+        //updateTabSize(ppt, cpV);
         const idx = Math.floor(switch_yx / TAB_WH);
         if (idx !== hoveredTab && idx >= 0 && idx < tabs.length) {
             hoveredTab = idx;

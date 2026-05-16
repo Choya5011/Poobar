@@ -17,6 +17,7 @@ let ppt = {
 	vPanelScale : new _p('- PANEL_PLACEMENT: Vertical Screen Panel Division (0-1)', 0.4),
 	cpH : new _p('- PANEL_PLACEMENT: Control Panel Height (Horizontal mode)', 105),
 	cpV : new _p('- PANEL_PLACEMENT: Control Panel Height (Vertical mode)', 108),
+	delay: new _p('- PANEL_BEHAVIOR: Default delay (ms)', 150),
 	unify : new _p('- PANEL_BEHAVIOR: Unify background across panels', false),
 
     bgShow : new _p('_DISPLAY: Show Wallpaper', false),
@@ -43,7 +44,7 @@ get_colours(ppt.col_mode.value, true);
 
 // _layout usage instruction found at: fb.ProfilePath + 'poobar-scripts\\poobar\\helpers\\poo_layout.js'
 const panelNames = ['Fluent Control Panel', '', '', 'Smooth Browser'];
-const layout = new _layout(panelNames, 150, ppt.unify.enabled);
+const layout = new _layout(panelNames, ppt.delay.value, ppt.unify.enabled);
 
 layout.horizontal({
     func: () => {
@@ -194,7 +195,7 @@ function on_paint(gr) {
 
     if (layout.cc('miniplayer') && !ppt.bgShow.enabled) gr.FillSolidRect(0, 0, ww, wh, g_backcolour);
 
-    if (layout.cc('miniplayer') && ww >= scaler.s300) _paint(gr, ppt, true);
+    if (layout.cc('miniplayer') && ww >= scaler.s300) _paint(gr, ppt, true, cpV);
 }
 
 function on_colours_changed() {
@@ -206,7 +207,12 @@ function on_playback_new_track() {
     get_colours(ppt.col_mode.value, true);
     update_art(ppt);
     window.Repaint();
-    if ((!layout.cc('halfscreen') || !layout.cc('normalvertical') || !layout.cc('narrowvertical')) && !ppt.bgMode.enabled) { layout.refresh_pt_panels([layout.p.p4]); } else if (!ppt.bgMode.enabled) { layout.refresh_pt_panels(); }
+
+    if ((!layout.cc('halfscreen') || !layout.cc('normalvertical') || !layout.cc('narrowvertical')) && !ppt.bgMode.enabled) {
+        layout.refreshChildren([layout.p.p4]);
+    } else if (!ppt.bgMode.enabled) {
+        layout.refreshChildren();
+    }
 }
 
 function on_mouse_lbtn_up(x, y) {
@@ -236,7 +242,7 @@ function on_mouse_move(x, y) {
     let switch_xy = (ppt.orientation.enabled) ? x : y;
     let switch_yx = (ppt.orientation.enabled) ? y : x;
     if (switch_xy <= TAB_WH) {
-        updateTabSize(ppt, cpV);
+        //updateTabSize(ppt, cpV);
         const idx = Math.floor(switch_yx / TAB_WH);
         if (idx !== hoveredTab && idx >= 0 && idx < tabs.length) {
             hoveredTab = idx;

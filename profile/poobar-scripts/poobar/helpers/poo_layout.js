@@ -82,7 +82,7 @@ function _layout(panelNames, defaultDelay, unify = false) {
         }
     };
 
-    this.refresh_pt_panels = function(excludePanels) {
+    this.refreshChildren = function(excludePanels) {
         if (!this.unify) return;
 
         excludePanels = excludePanels || [];

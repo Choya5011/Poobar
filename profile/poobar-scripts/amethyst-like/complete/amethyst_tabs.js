@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-window.DefineScript('Horizontal/Vertical Poobar Tabs', {author:'Choya', options:{grab_focus:false}});
+window.DefineScript('Amethyst Vertical Tabs', {author:'Choya', options:{grab_focus:false}});
 window.DrawMode = +window.GetProperty('- Draw mode: GDI (false), D2D (true)', false);
 include(fb.ComponentPath + 'samples\\complete\\js\\lodash.min.js');
 include(fb.ComponentPath + 'samples\\complete\\js\\helpers.js');
@@ -119,8 +119,8 @@ function on_size() {
 }
 
 function on_paint(gr) {
-    if (ppt.bgShow.enabled && bg_img) {
-        _drawImage(gr, bg_img, 0, 0, TAB_W, panel.h, image.crop);
+    if (ppt.bgShow.enabled && art.bg) {
+        _drawImage(gr, art.bg, 0, 0, TAB_W, panel.h, image.crop);
         const overlayColor = window.IsDark ? _RGBA(0, 0, 0, 128) : _RGBA(255, 255, 255, 128);
         gr.FillSolidRect(0, 0, panel.w, panel.h, overlayColor);
     } else if (!ppt.bgShow.enabled) {
